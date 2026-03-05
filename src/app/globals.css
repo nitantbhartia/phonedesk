@@ -73,3 +73,10 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Onboarding form input focus */
+.onboarding-input:focus {
+  outline: none;
+  border-color: #F4A261;
+  box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.1);
+}
