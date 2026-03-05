@@ -61,10 +61,14 @@ export default function LandingPage() {
   const handleStartTrial = async () => {
     setAuthError("");
     setIsSigningIn(true);
+    const callbackUrl =
+      typeof window === "undefined"
+        ? "/onboarding"
+        : `${window.location.origin}/onboarding`;
 
     try {
       const result = await signIn("google", {
-        callbackUrl: "/onboarding",
+        callbackUrl,
         redirect: true,
       });
 
