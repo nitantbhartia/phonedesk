@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ const STEPS = [
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -93,6 +94,51 @@ export default function OnboardingPage() {
       router.push("/");
     }
   }, [status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const resumeOnboarding = async () => {
+      const requestedStep = Number(searchParams.get("step") || "1");
+      const normalizedStep =
+        Number.isFinite(requestedStep) && requestedStep >= 1
+          ? Math.min(requestedStep, STEPS.length)
+          : 1;
+
+      try {
+        const response = await fetch("/api/business/profile");
+        if (!response.ok) {
+          throw new Error("Failed to load business profile");
+        }
+
+        const data = await response.json();
+        const hasCalendarConnection = Boolean(
+          data.business?.calendarConnections?.some(
+            (connection: { isActive?: boolean }) => connection.isActive
+          )
+        );
+
+        if (!cancelled) {
+          setCalendarConnected(hasCalendarConnection);
+          setStep(normalizedStep);
+        }
+      } catch {
+        if (!cancelled) {
+          setStep(normalizedStep);
+        }
+      }
+    };
+
+    void resumeOnboarding();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, status]);
 
   if (status === "loading") {
     return (

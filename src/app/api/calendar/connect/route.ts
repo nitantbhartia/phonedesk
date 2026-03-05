@@ -16,6 +16,17 @@ export async function GET(req: NextRequest) {
   const provider = url.searchParams.get("provider");
   const redirect = url.searchParams.get("redirect") || "/settings/calendar";
   const stateParam = url.searchParams.get("state");
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+
+  const buildRedirectUrl = (path: string, params?: Record<string, string>) => {
+    const target = new URL(path, appUrl);
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        target.searchParams.set(key, value);
+      }
+    }
+    return target;
+  };
 
   // If no code, redirect to OAuth
   if (!code) {
@@ -41,9 +52,7 @@ export async function GET(req: NextRequest) {
   // Handle OAuth callback
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.redirect(
-      new URL("/", process.env.NEXT_PUBLIC_APP_URL!)
-    );
+    return NextResponse.redirect(buildRedirectUrl("/"));
   }
 
   const business = await prisma.business.findUnique({
@@ -51,9 +60,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (!business) {
-    return NextResponse.redirect(
-      new URL("/onboarding", process.env.NEXT_PUBLIC_APP_URL!)
-    );
+    return NextResponse.redirect(buildRedirectUrl("/onboarding"));
   }
 
   let parsedState: { redirect?: string; provider?: string } = {};
@@ -121,20 +128,19 @@ export async function GET(req: NextRequest) {
       }
 
       return NextResponse.redirect(
-        new URL(redirectPath, process.env.NEXT_PUBLIC_APP_URL!)
+        buildRedirectUrl(redirectPath)
       );
     } catch (error) {
       console.error("Google Calendar OAuth error:", error);
       return NextResponse.redirect(
-        new URL(
-          `${redirectPath}?error=calendar_connect_failed`,
-          process.env.NEXT_PUBLIC_APP_URL!
-        )
+        buildRedirectUrl(redirectPath, {
+          error: "calendar_connect_failed",
+        })
       );
     }
   }
 
   return NextResponse.redirect(
-    new URL(redirectPath, process.env.NEXT_PUBLIC_APP_URL!)
+    buildRedirectUrl(redirectPath)
   );
 }
