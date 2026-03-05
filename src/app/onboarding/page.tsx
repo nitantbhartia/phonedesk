@@ -118,7 +118,7 @@ export default function OnboardingPage() {
       const requestedStep = Number(params.get("step") || "1");
       const normalizedStep =
         Number.isFinite(requestedStep) && requestedStep >= 1
-          ? Math.min(requestedStep, STEPS.length)
+          ? Math.min(requestedStep, STEP_CONFIG.length)
           : 1;
 
       try {
