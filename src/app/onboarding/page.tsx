@@ -3,32 +3,13 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import {
-  Building2,
-  Scissors,
-  Calendar,
-  Phone,
-  TestTube,
-  Rocket,
-  Plus,
-  Trash2,
-  CheckCircle,
-  ArrowRight,
-  ArrowLeft,
-} from "lucide-react";
+  OnboardingLayout,
+  OnboardingLabel,
+  OnboardingInput,
+  OnboardingSelect,
+  OnboardingFooter,
+} from "@/components/onboarding/onboarding-layout";
 
 interface ServiceEntry {
   name: string;
@@ -36,13 +17,43 @@ interface ServiceEntry {
   duration: string;
 }
 
-const STEPS = [
-  { icon: Building2, label: "Business Info" },
-  { icon: Scissors, label: "Services" },
-  { icon: Calendar, label: "Calendar" },
-  { icon: Phone, label: "Call Forwarding" },
-  { icon: TestTube, label: "Test Call" },
-  { icon: Rocket, label: "Go Live" },
+const TIME_OPTIONS = [
+  "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM",
+  "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
+  "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM",
+];
+
+const STEP_CONFIG = [
+  {
+    title: "Tell us about your shop",
+    subtitle: "This helps your AI assistant speak naturally to your clients.",
+    proTip: "Providing accurate pricing helps your AI assistant qualify leads and book higher-value appointments.",
+  },
+  {
+    title: "Add your services & pricing",
+    subtitle: "Your AI will share these details with callers and use them for booking.",
+    proTip: "Adding duration estimates helps the AI schedule appointments without overlaps.",
+  },
+  {
+    title: "Connect your calendar",
+    subtitle: "RingPaw checks your calendar for availability and adds new bookings.",
+    proTip: "Connecting your calendar lets the AI instantly confirm appointment times without back-and-forth.",
+  },
+  {
+    title: "Set up call forwarding",
+    subtitle: "Forward missed calls from your business phone to your new RingPaw number.",
+    proTip: "Use conditional forwarding to only route unanswered calls to your AI receptionist.",
+  },
+  {
+    title: "Make a test call",
+    subtitle: "Call your RingPaw number to hear your AI receptionist in action.",
+    proTip: "Try asking about pricing, availability, or booking an appointment to see the full experience.",
+  },
+  {
+    title: "You're all set!",
+    subtitle: "Review your setup and go live when you're ready.",
+    proTip: "You can always fine-tune your AI assistant's personality and responses in Settings.",
+  },
 ];
 
 export default function OnboardingPage() {
@@ -60,6 +71,15 @@ export default function OnboardingPage() {
   const [address, setAddress] = useState("");
   const [timezone, setTimezone] = useState("America/Los_Angeles");
 
+  // Business hours
+  const [hours, setHours] = useState<
+    Record<string, { open: string; close: string; enabled: boolean }>
+  >({
+    "Mon - Fri": { open: "9:00 AM", close: "5:00 PM", enabled: true },
+    Saturday: { open: "10:00 AM", close: "2:00 PM", enabled: true },
+    Sunday: { open: "9:00 AM", close: "5:00 PM", enabled: false },
+  });
+
   // Step 2: Services
   const [services, setServices] = useState<ServiceEntry[]>([
     { name: "Full Groom", price: "75", duration: "90" },
@@ -67,17 +87,6 @@ export default function OnboardingPage() {
     { name: "Nail Trim", price: "20", duration: "15" },
   ]);
   const [bookingMode, setBookingMode] = useState<"SOFT" | "HARD">("SOFT");
-
-  // Business hours
-  const [hours, setHours] = useState<Record<string, { open: string; close: string; enabled: boolean }>>({
-    mon: { open: "09:00", close: "17:00", enabled: true },
-    tue: { open: "09:00", close: "17:00", enabled: true },
-    wed: { open: "09:00", close: "17:00", enabled: true },
-    thu: { open: "09:00", close: "17:00", enabled: true },
-    fri: { open: "09:00", close: "17:00", enabled: true },
-    sat: { open: "09:00", close: "17:00", enabled: true },
-    sun: { open: "09:00", close: "17:00", enabled: false },
-  });
 
   // Step 3: Calendar
   const [calendarConnected, setCalendarConnected] = useState(false);
@@ -145,20 +154,23 @@ export default function OnboardingPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="min-h-screen bg-paw-sky flex items-center justify-center">
+        <div className="animate-pulse text-paw-brown/50 font-medium">
+          Loading...
+        </div>
       </div>
     );
   }
-
-  const progress = (step / STEPS.length) * 100;
 
   async function saveBusinessProfile() {
     setLoading(true);
     try {
       const businessHours: Record<string, { open: string; close: string }> = {};
       for (const [day, h] of Object.entries(hours)) {
-        if (h.enabled) businessHours[day] = { open: h.open, close: h.close };
+        if (h.enabled) {
+          const key = day === "Mon - Fri" ? "mon-fri" : day.toLowerCase();
+          businessHours[key] = { open: h.open, close: h.close };
+        }
       }
 
       const res = await fetch("/api/business/profile", {
@@ -188,7 +200,6 @@ export default function OnboardingPage() {
   }
 
   async function connectGoogleCalendar() {
-    // Redirect to Google OAuth for calendar access
     const params = new URLSearchParams({
       provider: "google",
       redirect: "/onboarding?step=4",
@@ -199,7 +210,7 @@ export default function OnboardingPage() {
   async function provisionNumber() {
     setLoading(true);
     try {
-      const areaCode = city ? "619" : "415"; // Simplified - would use city lookup
+      const areaCode = city ? "619" : "415";
       const res = await fetch("/api/provision-number", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -209,12 +220,9 @@ export default function OnboardingPage() {
       if (!res.ok) throw new Error("Failed to provision number");
       const data = await res.json();
       setProvisionedNumber(data.phoneNumber);
-      setStep(5);
     } catch (error) {
       console.error("Error provisioning number:", error);
-      // For demo, continue anyway
       setProvisionedNumber("(619) 555-0199");
-      setStep(5);
     } finally {
       setLoading(false);
     }
@@ -245,591 +253,748 @@ export default function OnboardingPage() {
     setServices(services.filter((_, i) => i !== index));
   }
 
-  function updateService(index: number, field: keyof ServiceEntry, value: string) {
+  function updateService(
+    index: number,
+    field: keyof ServiceEntry,
+    value: string
+  ) {
     const updated = [...services];
     updated[index] = { ...updated[index], [field]: value };
     setServices(updated);
   }
 
+  const config = STEP_CONFIG[step - 1];
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Phone className="w-4 h-4 text-white" />
+    <OnboardingLayout
+      currentStep={step}
+      title={config.title}
+      subtitle={config.subtitle}
+      proTip={config.proTip}
+    >
+      {/* Step 1: Business Profile */}
+      {step === 1 && (
+        <form
+          className="space-y-8"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setStep(2);
+          }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <OnboardingLabel htmlFor="businessName">
+                Business Name
+              </OnboardingLabel>
+              <OnboardingInput
+                id="businessName"
+                placeholder="e.g. Happy Paws Grooming"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+              />
             </div>
-            <span className="font-bold">RingPaw AI</span>
+            <div className="space-y-2">
+              <OnboardingLabel htmlFor="ownerName">Owner Name</OnboardingLabel>
+              <OnboardingInput
+                id="ownerName"
+                placeholder="Your full name"
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="text-sm text-muted-foreground">
-            Step {step} of {STEPS.length}
-          </div>
-        </div>
-        <div className="container mx-auto px-4 pb-4">
-          <Progress value={progress} className="h-2" />
-        </div>
-      </div>
 
-      {/* Step indicators */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-center gap-2 mb-8">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
-            const isActive = i + 1 === step;
-            const isDone = i + 1 < step;
-            return (
-              <div
-                key={s.label}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary text-white"
-                    : isDone
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-400"
-                }`}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <OnboardingLabel htmlFor="phone">Phone Number</OnboardingLabel>
+              <OnboardingInput
+                id="phone"
+                placeholder="(619) 555-0100"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <OnboardingLabel htmlFor="address">Address</OnboardingLabel>
+              <OnboardingInput
+                id="address"
+                placeholder="123 Main St, San Diego, CA"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <OnboardingLabel htmlFor="city">City</OnboardingLabel>
+              <OnboardingInput
+                id="city"
+                placeholder="San Diego"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <OnboardingLabel htmlFor="state">State</OnboardingLabel>
+              <OnboardingInput
+                id="state"
+                placeholder="CA"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <OnboardingLabel>Timezone</OnboardingLabel>
+              <OnboardingSelect
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full px-5 py-4 rounded-2xl"
               >
-                {isDone ? (
-                  <CheckCircle className="w-3.5 h-3.5" />
-                ) : (
-                  <Icon className="w-3.5 h-3.5" />
-                )}
-                <span className="hidden sm:inline">{s.label}</span>
-              </div>
-            );
-          })}
-        </div>
+                <option value="America/New_York">Eastern</option>
+                <option value="America/Chicago">Central</option>
+                <option value="America/Denver">Mountain</option>
+                <option value="America/Los_Angeles">Pacific</option>
+              </OnboardingSelect>
+            </div>
+          </div>
 
-        {/* Step Content */}
-        <div className="max-w-2xl mx-auto">
-          {/* Step 1: Business Info */}
-          {step === 1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Tell us about your business</CardTitle>
-                <CardDescription>
-                  This info helps our AI greet callers and represent your business.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="businessName">Business Name</Label>
-                    <Input
-                      id="businessName"
-                      placeholder="Pawfect Grooming"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ownerName">Your Name</Label>
-                    <Input
-                      id="ownerName"
-                      placeholder="Sarah"
-                      value={ownerName}
-                      onChange={(e) => setOwnerName(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Business Phone Number</Label>
-                  <Input
-                    id="phone"
-                    placeholder="(619) 555-0100"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Business Address</Label>
-                  <Input
-                    id="address"
-                    placeholder="123 Main St, San Diego, CA"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      placeholder="San Diego"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      placeholder="CA"
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select value={timezone} onValueChange={setTimezone}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="America/New_York">Eastern</SelectItem>
-                      <SelectItem value="America/Chicago">Central</SelectItem>
-                      <SelectItem value="America/Denver">Mountain</SelectItem>
-                      <SelectItem value="America/Los_Angeles">Pacific</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="pt-4">
-                  <h3 className="font-medium mb-3">Business Hours</h3>
-                  <div className="space-y-2">
-                    {Object.entries(hours).map(([day, h]) => (
-                      <div key={day} className="flex items-center gap-3">
-                        <Switch
-                          checked={h.enabled}
-                          onCheckedChange={(checked) =>
-                            setHours({ ...hours, [day]: { ...h, enabled: checked } })
-                          }
-                        />
-                        <span className="w-10 text-sm font-medium capitalize">
-                          {day}
-                        </span>
-                        {h.enabled ? (
-                          <>
-                            <Input
-                              type="time"
-                              value={h.open}
-                              onChange={(e) =>
-                                setHours({
-                                  ...hours,
-                                  [day]: { ...h, open: e.target.value },
-                                })
-                              }
-                              className="w-32"
-                            />
-                            <span className="text-muted-foreground">to</span>
-                            <Input
-                              type="time"
-                              value={h.close}
-                              onChange={(e) =>
-                                setHours({
-                                  ...hours,
-                                  [day]: { ...h, close: e.target.value },
-                                })
-                              }
-                              className="w-32"
-                            />
-                          </>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            Closed
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={() => setStep(2)}
-                    disabled={!businessName || !ownerName}
+          {/* Business Hours */}
+          <div className="space-y-4">
+            <OnboardingLabel>Business Hours</OnboardingLabel>
+            <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
+              {Object.entries(hours).map(([day, h]) => (
+                <div
+                  key={day}
+                  className="flex items-center justify-between py-1"
+                >
+                  <span
+                    className={`font-bold w-24 ${
+                      h.enabled ? "text-paw-brown" : "text-paw-brown/40"
+                    }`}
                   >
-                    Next <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 2: Services */}
-          {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your services & pricing</CardTitle>
-                <CardDescription>
-                  The AI will share these with callers and use them for booking.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {services.map((service, i) => (
-                  <div key={i} className="flex items-end gap-3">
-                    <div className="flex-1 space-y-1">
-                      <Label>Service Name</Label>
-                      <Input
-                        placeholder="Full Groom"
-                        value={service.name}
-                        onChange={(e) => updateService(i, "name", e.target.value)}
-                      />
-                    </div>
-                    <div className="w-28 space-y-1">
-                      <Label>Price ($)</Label>
-                      <Input
-                        type="number"
-                        placeholder="75"
-                        value={service.price}
-                        onChange={(e) => updateService(i, "price", e.target.value)}
-                      />
-                    </div>
-                    <div className="w-28 space-y-1">
-                      <Label>Duration (min)</Label>
-                      <Input
-                        type="number"
-                        placeholder="60"
-                        value={service.duration}
+                    {day}
+                  </span>
+                  {h.enabled ? (
+                    <div className="flex items-center gap-3">
+                      <OnboardingSelect
+                        value={h.open}
                         onChange={(e) =>
-                          updateService(i, "duration", e.target.value)
+                          setHours({
+                            ...hours,
+                            [day]: { ...h, open: e.target.value },
+                          })
                         }
-                      />
+                      >
+                        {TIME_OPTIONS.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </OnboardingSelect>
+                      <span className="text-paw-brown/30 font-bold">to</span>
+                      <OnboardingSelect
+                        value={h.close}
+                        onChange={(e) =>
+                          setHours({
+                            ...hours,
+                            [day]: { ...h, close: e.target.value },
+                          })
+                        }
+                      >
+                        {TIME_OPTIONS.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </OnboardingSelect>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeService(i)}
-                      disabled={services.length <= 1}
-                    >
-                      <Trash2 className="w-4 h-4 text-muted-foreground" />
-                    </Button>
+                  ) : (
+                    <span className="text-sm font-bold text-paw-brown/40">
+                      Closed
+                    </span>
+                  )}
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={h.enabled}
+                      onChange={(e) =>
+                        setHours({
+                          ...hours,
+                          [day]: { ...h, enabled: e.target.checked },
+                        })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <OnboardingFooter
+            showBack={true}
+            backLabel="Cancel"
+            onBack={() => router.push("/")}
+            onNext={() => setStep(2)}
+            nextDisabled={!businessName || !ownerName}
+          />
+        </form>
+      )}
+
+      {/* Step 2: Services & Pricing */}
+      {step === 2 && (
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <OnboardingLabel>Services &amp; Pricing</OnboardingLabel>
+            <div className="space-y-3">
+              {services.map((service, i) => (
+                <div
+                  key={i}
+                  className="flex gap-3 items-center bg-white p-3 rounded-2xl border-2 border-paw-brown/5 shadow-sm"
+                >
+                  <input
+                    type="text"
+                    placeholder="Service Name (e.g. Full Groom)"
+                    value={service.name}
+                    onChange={(e) => updateService(i, "name", e.target.value)}
+                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none"
+                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-paw-brown/50 font-bold">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={service.price}
+                      onChange={(e) => updateService(i, "price", e.target.value)}
+                      className="w-24 pl-7 pr-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown focus:outline-none"
+                    />
                   </div>
-                ))}
-
-                <Button variant="outline" onClick={addService} className="w-full">
-                  <Plus className="mr-2 w-4 h-4" /> Add Service
-                </Button>
-
-                <div className="pt-4 border-t">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Default Booking Mode</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {bookingMode === "SOFT"
-                          ? "Soft booking: holds slot for 2 hours, sends confirm link"
-                          : "Hard booking: confirms immediately on calendar"}
-                      </p>
-                    </div>
-                    <Select
-                      value={bookingMode}
-                      onValueChange={(v) => setBookingMode(v as "SOFT" | "HARD")}
+                  <div className="relative">
+                    <input
+                      type="number"
+                      placeholder="min"
+                      value={service.duration}
+                      onChange={(e) =>
+                        updateService(i, "duration", e.target.value)
+                      }
+                      className="w-20 px-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown text-center focus:outline-none"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-paw-brown/40 text-xs font-bold">
+                      min
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeService(i)}
+                    disabled={services.length <= 1}
+                    className="p-2 text-paw-brown/30 hover:text-paw-orange transition-colors disabled:opacity-30"
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
                     >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SOFT">Soft Book</SelectItem>
-                        <SelectItem value="HARD">Hard Book</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addService}
+                className="flex items-center gap-2 text-sm font-bold text-paw-orange hover:text-paw-brown transition-colors px-2"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add another service
+              </button>
+            </div>
+          </div>
+
+          {/* Booking Mode */}
+          <div className="space-y-4">
+            <OnboardingLabel>Default Booking Mode</OnboardingLabel>
+            <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-paw-brown">
+                    {bookingMode === "SOFT" ? "Soft Booking" : "Hard Booking"}
+                  </p>
+                  <p className="text-sm text-paw-brown/50 mt-1">
+                    {bookingMode === "SOFT"
+                      ? "Holds slot for 2 hours, sends confirmation link"
+                      : "Confirms immediately on calendar"}
+                  </p>
+                </div>
+                <OnboardingSelect
+                  value={bookingMode}
+                  onChange={(e) =>
+                    setBookingMode(e.target.value as "SOFT" | "HARD")
+                  }
+                  className="px-4 py-3 rounded-2xl"
+                >
+                  <option value="SOFT">Soft Book</option>
+                  <option value="HARD">Hard Book</option>
+                </OnboardingSelect>
+              </div>
+            </div>
+          </div>
+
+          <OnboardingFooter
+            onBack={() => setStep(1)}
+            onNext={saveBusinessProfile}
+            nextLabel="Continue Setup"
+            loading={loading}
+          />
+        </div>
+      )}
+
+      {/* Step 3: Calendar Sync */}
+      {step === 3 && (
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <OnboardingLabel>Connect a Calendar</OnboardingLabel>
+            <div className="space-y-3">
+              <button
+                onClick={connectGoogleCalendar}
+                className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group"
+              >
+                <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center shrink-0">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#DC2626"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" x2="16" y1="2" y2="6" />
+                    <line x1="8" x2="8" y1="2" y2="6" />
+                    <line x1="3" x2="21" y1="10" y2="10" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-paw-brown">
+                    Google Calendar
+                  </div>
+                  <div className="text-sm text-paw-brown/50">
+                    Read availability &amp; write bookings
                   </div>
                 </div>
-
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(1)}>
-                    <ArrowLeft className="mr-2 w-4 h-4" /> Back
-                  </Button>
-                  <Button onClick={saveBusinessProfile} disabled={loading}>
-                    {loading ? "Saving..." : "Next"}
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 3: Calendar */}
-          {step === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Connect your calendar</CardTitle>
-                <CardDescription>
-                  RingPaw checks your calendar for availability and adds new
-                  bookings. Connect up to 3 calendars.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4">
-                  <button
-                    onClick={connectGoogleCalendar}
-                    className="flex items-center gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors text-left"
-                  >
-                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-red-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Google Calendar</div>
-                      <div className="text-sm text-muted-foreground">
-                        Read availability & write bookings
-                      </div>
-                    </div>
-                    {calendarConnected ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => {/* Calendly OAuth */}}
-                    className="flex items-center gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors text-left"
-                  >
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Calendly</div>
-                      <div className="text-sm text-muted-foreground">
-                        Read availability & create invitees
-                      </div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                  </button>
-
-                  <button
-                    onClick={() => {/* Cal.com API key */}}
-                    className="flex items-center gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors text-left"
-                  >
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Cal.com</div>
-                      <div className="text-sm text-muted-foreground">
-                        Read availability & write bookings
-                      </div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                  </button>
-                </div>
-
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(2)}>
-                    <ArrowLeft className="mr-2 w-4 h-4" /> Back
-                  </Button>
-                  <Button onClick={() => setStep(4)}>
-                    {calendarConnected ? "Next" : "Skip for Now"}
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 4: Call Forwarding */}
-          {step === 4 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Set up call forwarding</CardTitle>
-                <CardDescription>
-                  Forward missed calls from your business phone to your new
-                  RingPaw number.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {!provisionedNumber ? (
-                  <div className="text-center py-8">
-                    <Phone className="w-12 h-12 text-primary mx-auto mb-4" />
-                    <h3 className="font-medium mb-2">
-                      First, let&apos;s get you a RingPaw number
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      We&apos;ll provision a local number in your area code.
-                    </p>
-                    <Button onClick={provisionNumber} disabled={loading}>
-                      {loading ? "Provisioning..." : "Get My Number"}
-                    </Button>
+                {calendarConnected ? (
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#22C55E"
+                      strokeWidth="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                   </div>
                 ) : (
-                  <>
-                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
-                      <div className="text-sm text-muted-foreground mb-1">
-                        Your RingPaw Number
-                      </div>
-                      <div className="text-2xl font-bold text-primary">
-                        {provisionedNumber}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="font-medium">
-                        Set up call forwarding on your iPhone:
-                      </h3>
-                      <ol className="space-y-3 text-sm">
-                        <li className="flex gap-3">
-                          <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                            1
-                          </span>
-                          <span>
-                            Open <strong>Settings</strong> &rarr;{" "}
-                            <strong>Phone</strong> &rarr;{" "}
-                            <strong>Call Forwarding</strong>
-                          </span>
-                        </li>
-                        <li className="flex gap-3">
-                          <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                            2
-                          </span>
-                          <span>Toggle on Call Forwarding</span>
-                        </li>
-                        <li className="flex gap-3">
-                          <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                            3
-                          </span>
-                          <span>
-                            Enter your RingPaw number:{" "}
-                            <strong>{provisionedNumber}</strong>
-                          </span>
-                        </li>
-                      </ol>
-
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
-                        <strong>For conditional forwarding</strong> (forward
-                        only when busy/unanswered), use this carrier code:
-                        <br />
-                        <code className="bg-amber-100 px-2 py-0.5 rounded mt-1 inline-block">
-                          *61*{provisionedNumber.replace(/\D/g, "")}#
-                        </code>
-                      </div>
-                    </div>
-                  </>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                  >
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
                 )}
+              </button>
 
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(3)}>
-                    <ArrowLeft className="mr-2 w-4 h-4" /> Back
-                  </Button>
-                  {provisionedNumber && (
-                    <Button onClick={() => setStep(5)}>
-                      Next <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  )}
+              <button className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center shrink-0">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#2563EB"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" x2="16" y1="2" y2="6" />
+                    <line x1="8" x2="8" y1="2" y2="6" />
+                    <line x1="3" x2="21" y1="10" y2="10" />
+                  </svg>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 5: Test Call */}
-          {step === 5 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Make a test call</CardTitle>
-                <CardDescription>
-                  Call your RingPaw number to hear your AI receptionist in action.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center py-8">
-                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <TestTube className="w-10 h-10 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">
-                    Call {provisionedNumber || "your RingPaw number"}
-                  </h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Try booking an appointment as if you were a customer. The AI
-                    will greet you with your business name and walk through the
-                    booking flow.
-                  </p>
-
-                  {!testCallDone ? (
-                    <Button
-                      size="lg"
-                      onClick={() => setTestCallDone(true)}
-                    >
-                      I&apos;ve Made My Test Call
-                    </Button>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2 text-green-600">
-                      <CheckCircle className="w-5 h-5" />
-                      <span className="font-medium">Test call completed!</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(4)}>
-                    <ArrowLeft className="mr-2 w-4 h-4" /> Back
-                  </Button>
-                  <Button onClick={() => setStep(6)} disabled={!testCallDone}>
-                    Next <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 6: Go Live */}
-          {step === 6 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>You&apos;re all set!</CardTitle>
-                <CardDescription>
-                  Review your setup and go live when ready.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                  <Rocket className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-green-900 mb-2">
-                    Ready to launch!
-                  </h3>
-                  <p className="text-green-700 text-sm">
-                    Your AI receptionist will answer calls, book appointments,
-                    and text you summaries.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <div>
-                      <div className="font-medium text-sm">{businessName}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Business profile configured
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <div>
-                      <div className="font-medium text-sm">
-                        {services.filter((s) => s.name).length} services
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Services and pricing set
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <div>
-                      <div className="font-medium text-sm">
-                        {provisionedNumber || "Phone number"}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        RingPaw number provisioned
-                      </div>
-                    </div>
+                <div className="flex-1">
+                  <div className="font-bold text-paw-brown">Calendly</div>
+                  <div className="text-sm text-paw-brown/50">
+                    Read availability &amp; create invitees
                   </div>
                 </div>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
 
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(5)}>
-                    <ArrowLeft className="mr-2 w-4 h-4" /> Back
-                  </Button>
-                  <Button size="lg" onClick={goLive} disabled={loading}>
-                    {loading ? "Activating..." : "Go Live!"}
-                    <Rocket className="ml-2 w-4 h-4" />
-                  </Button>
+              <button className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group">
+                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center shrink-0">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#6B7280"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" x2="16" y1="2" y2="6" />
+                    <line x1="8" x2="8" y1="2" y2="6" />
+                    <line x1="3" x2="21" y1="10" y2="10" />
+                  </svg>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="flex-1">
+                  <div className="font-bold text-paw-brown">Cal.com</div>
+                  <div className="text-sm text-paw-brown/50">
+                    Read availability &amp; write bookings
+                  </div>
+                </div>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <OnboardingFooter
+            onBack={() => setStep(2)}
+            onNext={() => setStep(4)}
+            nextLabel={calendarConnected ? "Continue Setup" : "Skip for Now"}
+          />
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* Step 4: Call Forwarding */}
+      {step === 4 && (
+        <div className="space-y-8">
+          {!provisionedNumber ? (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-paw-brown"
+                >
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-paw-brown mb-2">
+                First, let&apos;s get you a RingPaw number
+              </h3>
+              <p className="text-paw-brown/50 font-medium mb-8 max-w-md mx-auto">
+                We&apos;ll provision a local number in your area code so your AI
+                receptionist can start taking calls.
+              </p>
+              <button
+                onClick={provisionNumber}
+                disabled={loading}
+                className="px-10 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+              >
+                {loading ? "Provisioning..." : "Get My Number"}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-3xl p-6 text-center">
+                <div className="text-sm font-bold text-paw-brown/60 uppercase tracking-wider mb-2">
+                  Your RingPaw Number
+                </div>
+                <div className="text-3xl font-extrabold text-paw-brown">
+                  {provisionedNumber}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <OnboardingLabel>
+                  Set up call forwarding on your phone
+                </OnboardingLabel>
+                <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
+                  {[
+                    {
+                      num: 1,
+                      text: (
+                        <>
+                          Open <strong>Settings</strong> &rarr;{" "}
+                          <strong>Phone</strong> &rarr;{" "}
+                          <strong>Call Forwarding</strong>
+                        </>
+                      ),
+                    },
+                    { num: 2, text: "Toggle on Call Forwarding" },
+                    {
+                      num: 3,
+                      text: (
+                        <>
+                          Enter your RingPaw number:{" "}
+                          <strong>{provisionedNumber}</strong>
+                        </>
+                      ),
+                    },
+                  ].map((item) => (
+                    <div key={item.num} className="flex items-start gap-4">
+                      <div className="w-8 h-8 bg-paw-brown text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">
+                        {item.num}
+                      </div>
+                      <span className="text-paw-brown font-medium pt-1">
+                        {item.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-paw-amber/10 border-2 border-paw-amber/20 rounded-2xl p-4">
+                  <p className="text-sm text-paw-brown font-medium">
+                    <strong>For conditional forwarding</strong> (forward only
+                    when busy/unanswered), dial:
+                  </p>
+                  <code className="bg-paw-amber/20 text-paw-brown px-3 py-1 rounded-lg mt-2 inline-block font-bold text-sm">
+                    *61*{provisionedNumber.replace(/\D/g, "")}#
+                  </code>
+                </div>
+              </div>
+            </>
+          )}
+
+          <OnboardingFooter
+            onBack={() => setStep(3)}
+            onNext={() => setStep(5)}
+            nextDisabled={!provisionedNumber}
+          />
+        </div>
+      )}
+
+      {/* Step 5: Test Call */}
+      {step === 5 && (
+        <div className="space-y-8">
+          <div className="text-center py-8">
+            <div className="w-24 h-24 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="text-paw-brown"
+              >
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" x2="8" y1="13" y2="13" />
+                <line x1="16" x2="8" y1="17" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
+
+            <h2 className="text-2xl font-extrabold text-paw-brown mb-3">
+              Call {provisionedNumber || "your RingPaw number"}
+            </h2>
+            <p className="text-paw-brown/50 font-medium mb-8 max-w-md mx-auto">
+              Try booking an appointment as if you were a customer. The AI will
+              greet you with your business name and walk through the booking
+              flow.
+            </p>
+
+            {!testCallDone ? (
+              <button
+                onClick={() => setTestCallDone(true)}
+                className="px-10 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
+              >
+                I&apos;ve Made My Test Call
+              </button>
+            ) : (
+              <div className="inline-flex items-center gap-3 bg-green-50 text-green-700 px-6 py-3 rounded-full font-bold">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Test call completed!
+              </div>
+            )}
+          </div>
+
+          <OnboardingFooter
+            onBack={() => setStep(4)}
+            onNext={() => setStep(6)}
+            nextDisabled={!testCallDone}
+          />
+        </div>
+      )}
+
+      {/* Step 6: Go Live */}
+      {step === 6 && (
+        <div className="space-y-8">
+          <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#16A34A"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+                <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+                <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+                <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-green-900 mb-2">
+              Ready to launch!
+            </h3>
+            <p className="text-green-700 font-medium">
+              Your AI receptionist will answer calls, book appointments, and
+              text you summaries.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <OnboardingLabel>Setup Summary</OnboardingLabel>
+            {[
+              {
+                label: businessName || "Business Profile",
+                desc: "Business profile configured",
+              },
+              {
+                label: `${services.filter((s) => s.name).length} services`,
+                desc: "Services and pricing set",
+              },
+              {
+                label: calendarConnected
+                  ? "Calendar connected"
+                  : "Calendar skipped",
+                desc: calendarConnected
+                  ? "Calendar sync enabled"
+                  : "You can connect later in Settings",
+              },
+              {
+                label: provisionedNumber || "Phone number",
+                desc: "RingPaw number provisioned",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-paw-brown/5"
+              >
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#22C55E"
+                    strokeWidth="3"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-paw-brown text-sm">
+                    {item.label}
+                  </div>
+                  <div className="text-xs text-paw-brown/50">{item.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setStep(5)}
+              className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={goLive}
+              disabled={loading}
+              className="px-10 py-4 bg-green-600 text-white rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50"
+            >
+              {loading ? "Activating..." : "Go Live!"}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+                <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+                <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+                <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+    </OnboardingLayout>
   );
 }
