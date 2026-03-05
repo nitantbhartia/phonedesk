@@ -6,7 +6,8 @@ import {
   buildAgentConfig,
   createRetellLLM,
   createRetellAgent,
-  provisionRetellPhoneNumber,
+  updateRetellLLM,
+  updateRetellAgent,
 } from "@/lib/retell";
 
 export async function POST() {
@@ -18,7 +19,6 @@ export async function POST() {
   const business = await prisma.business.findUnique({
     where: { userId: session.user.id },
     include: {
-      phoneNumber: true,
       services: { where: { isActive: true } },
       retellConfig: true,
     },
@@ -28,48 +28,53 @@ export async function POST() {
     return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
-  // Return existing number if already provisioned
-  if (business.phoneNumber) {
-    return NextResponse.json({
-      phoneNumber: business.phoneNumber.number,
-      alreadyProvisioned: true,
-    });
-  }
+  const config = buildAgentConfig(business);
 
   try {
-    // Ensure we have a Retell agent first
-    let agentId = business.retellConfig?.agentId;
-
-    if (!agentId) {
-      const config = buildAgentConfig(business);
-
-      // Create LLM (Response Engine)
+    if (business.retellConfig?.agentId && business.retellConfig?.llmId) {
+      // Update existing LLM and agent
+      await updateRetellLLM(business.retellConfig.llmId, {
+        generalPrompt: config.generalPrompt,
+        beginMessage: config.beginMessage,
+        tools: config.tools,
+      });
+      await updateRetellAgent(business.retellConfig.agentId, {
+        agentName: config.agentName,
+        webhookUrl: config.webhookUrl,
+      });
+      await prisma.retellConfig.update({
+        where: { businessId: business.id },
+        data: {
+          systemPrompt: config.generalPrompt,
+          greeting: config.beginMessage,
+        },
+      });
+    } else {
+      // Create new LLM and agent
       const llm = await createRetellLLM({
         generalPrompt: config.generalPrompt,
         beginMessage: config.beginMessage,
         tools: config.tools,
       });
 
-      // Create Agent
       const agent = await createRetellAgent({
         llmId: llm.llm_id,
         agentName: config.agentName,
         voiceId: config.voiceId,
         webhookUrl: config.webhookUrl,
       });
-      agentId = agent.agent_id;
 
       await prisma.retellConfig.upsert({
         where: { businessId: business.id },
         create: {
           businessId: business.id,
-          agentId,
+          agentId: agent.agent_id,
           llmId: llm.llm_id,
           systemPrompt: config.generalPrompt,
           greeting: config.beginMessage,
         },
         update: {
-          agentId,
+          agentId: agent.agent_id,
           llmId: llm.llm_id,
           systemPrompt: config.generalPrompt,
           greeting: config.beginMessage,
@@ -77,37 +82,11 @@ export async function POST() {
       });
     }
 
-    // Provision phone number through Retell
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const result = await provisionRetellPhoneNumber({
-      agentId,
-      nickname: `${business.name} - RingPaw AI`,
-      smsWebhookUrl: `${appUrl}/api/sms/webhook`,
-    });
-
-    // Save to database
-    await prisma.phoneNumber.create({
-      data: {
-        businessId: business.id,
-        number: result.phone_number,
-        retellPhoneNumber: result.phone_number,
-        provider: "RETELL",
-      },
-    });
-
-    // Update onboarding step
-    await prisma.business.update({
-      where: { id: business.id },
-      data: { onboardingStep: 5 },
-    });
-
-    return NextResponse.json({
-      phoneNumber: result.phone_number,
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error provisioning number:", error);
+    console.error("Error configuring Retell:", error);
     return NextResponse.json(
-      { error: "Failed to provision phone number. Check Retell configuration." },
+      { error: "Failed to configure voice agent" },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "./prisma";
-import { sendSms } from "./twilio";
+import { sendSms } from "./retell";
 
 function getGemini() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -67,7 +67,7 @@ export async function executeCommand(
 ): Promise<string> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    include: { services: true, twilioNumber: true, appointments: true },
+    include: { services: true, phoneNumber: true, appointments: true },
   });
 
   if (!business) return "Business not found.";

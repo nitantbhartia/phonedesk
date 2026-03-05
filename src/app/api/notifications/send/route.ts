@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       customerPhone: { not: null },
     },
     include: {
-      business: { include: { twilioNumber: true } },
+      business: { include: { phoneNumber: true } },
     },
   });
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   for (const appointment of appointments) {
     try {
-      if (appointment.business.twilioNumber) {
+      if (appointment.business.phoneNumber) {
         await sendAppointmentReminder(
           appointment.business as Parameters<typeof sendAppointmentReminder>[0],
           appointment
