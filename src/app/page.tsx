@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
 export default function LandingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [authError, setAuthError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
@@ -27,6 +28,13 @@ export default function LandingPage() {
 
     const resolvePostAuthRoute = async () => {
       setIsResolvingRedirect(true);
+
+      const requestedCallback = searchParams.get("callbackUrl");
+      if (requestedCallback?.includes("/onboarding")) {
+        router.push("/onboarding");
+        setIsResolvingRedirect(false);
+        return;
+      }
 
       try {
         const response = await fetch("/api/business/profile");
@@ -56,7 +64,7 @@ export default function LandingPage() {
     return () => {
       cancelled = true;
     };
-  }, [session, router]);
+  }, [session, router, searchParams]);
 
   const handleStartTrial = async () => {
     setAuthError("");
