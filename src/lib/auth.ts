@@ -43,20 +43,24 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
+      // Relative paths are always safe
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
       }
 
+      // Allow same-origin URLs (compare origins, not full baseUrl)
       try {
         const target = new URL(url);
-        if (target.origin === baseUrl) {
+        const base = new URL(baseUrl);
+        if (target.origin === base.origin) {
           return target.toString();
         }
       } catch {
-        return baseUrl;
+        // Invalid URL, fall through to default
       }
 
-      return baseUrl;
+      // Default: go to onboarding for new users, otherwise homepage
+      return `${baseUrl}/onboarding`;
     },
   },
   pages: {
