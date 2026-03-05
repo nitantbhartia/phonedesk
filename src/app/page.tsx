@@ -2,7 +2,7 @@
 
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Phone,
@@ -16,12 +16,34 @@ import {
 export default function LandingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [authError, setAuthError] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
     if (session) {
       router.push("/dashboard");
     }
   }, [session, router]);
+
+  const handleStartTrial = async () => {
+    setAuthError("");
+    setIsSigningIn(true);
+
+    try {
+      const result = await signIn("google", {
+        callbackUrl: "/onboarding",
+        redirect: true,
+      });
+
+      if (result?.error) {
+        setAuthError("Google sign-in is not configured correctly yet.");
+        setIsSigningIn(false);
+      }
+    } catch {
+      setAuthError("Google sign-in failed. Check your Railway auth variables.");
+      setIsSigningIn(false);
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -41,7 +63,7 @@ export default function LandingPage() {
           </div>
           <span className="text-xl font-bold">RingPaw AI</span>
         </div>
-        <Button onClick={() => signIn("google", { callbackUrl: "/onboarding" })}>
+        <Button onClick={() => void handleStartTrial()} disabled={isSigningIn}>
           Get Started
         </Button>
       </header>
@@ -63,14 +85,19 @@ export default function LandingPage() {
           <Button
             size="lg"
             className="text-lg px-8"
-            onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
+            onClick={() => void handleStartTrial()}
+            disabled={isSigningIn}
           >
-            Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
+            {isSigningIn ? "Redirecting..." : "Start Free Trial"}
+            <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
           <Button size="lg" variant="outline" className="text-lg px-8">
             Watch Demo
           </Button>
         </div>
+        {authError ? (
+          <p className="mt-4 text-sm text-red-600">{authError}</p>
+        ) : null}
       </section>
 
       {/* Features */}
@@ -228,7 +255,8 @@ function PricingCard({
       <Button
         className="w-full"
         variant={popular ? "default" : "outline"}
-        onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
+        onClick={() => void handleStartTrial()}
+        disabled={isSigningIn}
       >
         Get Started
       </Button>
