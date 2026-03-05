@@ -69,28 +69,14 @@ function LandingPageContent() {
     };
   }, [session, router, searchParams]);
 
-  const handleStartTrial = async () => {
+  const handleStartTrial = () => {
     setAuthError("");
     setIsSigningIn(true);
-    const callbackUrl =
-      typeof window === "undefined"
-        ? "/onboarding"
-        : `${window.location.origin}/onboarding`;
-
-    try {
-      const result = await signIn("google", {
-        callbackUrl,
-        redirect: true,
-      });
-
-      if (result?.error) {
-        setAuthError("Google sign-in is not configured correctly yet.");
-        setIsSigningIn(false);
-      }
-    } catch {
-      setAuthError("Google sign-in failed. Check your Railway auth variables.");
+    // Use relative path so NextAuth's redirect callback always matches baseUrl
+    signIn("google", { callbackUrl: "/onboarding" }).catch(() => {
+      setAuthError("Google sign-in failed. Check your auth configuration.");
       setIsSigningIn(false);
-    }
+    });
   };
 
   if (status === "loading" || isResolvingRedirect) {
