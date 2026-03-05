@@ -2,22 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 
-// Retell inbound SMS webhook
-// Retell sends: { event: "chat_inbound", chat_inbound: { agent_id, from_number, to_number } }
-// For owner commands and customer keywords (CANCEL/CONFIRM), we handle them here.
+// Retell inbound SMS webhook (set via inbound_sms_webhook_url on the phone number)
+// Retell sends: { agent_id, from_number, to_number }
+// We respond with optional overrides: { chat_inbound: { override_agent_id, dynamic_variables, metadata } }
+// Note: Retell's inbound SMS webhook notifies us that an SMS arrived. The actual
+// message content is handled by the Retell chat agent. For owner commands and
+// customer keywords (CANCEL/CONFIRM), we use dynamic_variables to pass context.
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  // Handle Retell inbound SMS webhook format
-  const chatInbound = body.chat_inbound;
-  if (!chatInbound) {
-    return NextResponse.json({ ok: true });
-  }
-
-  const from = chatInbound.from_number as string;
-  const to = chatInbound.to_number as string;
-  const messageBody = chatInbound.message || "";
+  // Retell inbound SMS webhook sends from_number and to_number at root level
+  const from = (body.from_number || body.chat_inbound?.from_number) as string;
+  const to = (body.to_number || body.chat_inbound?.to_number) as string;
+  const messageBody = body.message || body.chat_inbound?.message || "";
 
   if (!from || !to) {
     return NextResponse.json({ ok: true });

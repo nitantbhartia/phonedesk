@@ -68,9 +68,10 @@ async function handleCallEnded(call: RetellCallPayload) {
 
   const business = phoneNum.business;
 
-  // Calculate duration from timestamps
-  const duration =
-    call.start_timestamp && call.end_timestamp
+  // Calculate duration - Retell provides duration_ms or we compute from timestamps
+  const duration = call.duration_ms
+    ? Math.round(call.duration_ms / 1000)
+    : call.start_timestamp && call.end_timestamp
       ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
       : null;
 
@@ -157,6 +158,7 @@ interface RetellCallPayload {
   direction?: string;
   start_timestamp?: number;
   end_timestamp?: number;
+  duration_ms?: number;
   disconnection_reason?: string;
   transcript?: string;
   transcript_object?: unknown[];
@@ -164,7 +166,11 @@ interface RetellCallPayload {
   call_analysis?: {
     custom_analysis_data?: Record<string, unknown>;
     call_summary?: string;
+    user_sentiment?: string;
+    call_successful?: boolean;
     [key: string]: unknown;
   };
   metadata?: Record<string, unknown>;
+  retell_llm_dynamic_variables?: Record<string, string>;
+  collected_dynamic_variables?: Record<string, string>;
 }
