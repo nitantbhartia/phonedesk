@@ -18,11 +18,44 @@ export default function LandingPage() {
   const router = useRouter();
   const [authError, setAuthError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
 
   useEffect(() => {
-    if (session) {
-      router.push("/dashboard");
-    }
+    if (!session) return;
+
+    let cancelled = false;
+
+    const resolvePostAuthRoute = async () => {
+      setIsResolvingRedirect(true);
+
+      try {
+        const response = await fetch("/api/business/profile");
+        if (!response.ok) {
+          throw new Error("Failed to load business profile");
+        }
+
+        const data = await response.json();
+        const onboardingComplete = Boolean(data.business?.onboardingComplete);
+
+        if (!cancelled) {
+          router.push(onboardingComplete ? "/dashboard" : "/onboarding");
+        }
+      } catch {
+        if (!cancelled) {
+          router.push("/onboarding");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsResolvingRedirect(false);
+        }
+      }
+    };
+
+    void resolvePostAuthRoute();
+
+    return () => {
+      cancelled = true;
+    };
   }, [session, router]);
 
   const handleStartTrial = async () => {
@@ -45,7 +78,7 @@ export default function LandingPage() {
     }
   };
 
-  if (status === "loading") {
+  if (status === "loading" || isResolvingRedirect) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
