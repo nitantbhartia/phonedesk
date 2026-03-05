@@ -1,16 +1,17 @@
 import { prisma } from "./prisma";
 import { sendSms } from "./twilio";
 import { formatDateTime } from "./utils";
-import type { Appointment, Business, Call, TwilioNumber } from "@prisma/client";
+import type { Appointment, Business, PhoneNumber } from "@prisma/client";
+
+type BusinessWithPhone = Business & { phoneNumber: PhoneNumber | null };
 
 export async function sendBookingNotificationToOwner(
-  business: Business & { twilioNumber: TwilioNumber | null },
-  appointment: Appointment,
-  call?: Call | null
+  business: BusinessWithPhone,
+  appointment: Appointment
 ) {
-  if (!business.phone || !business.twilioNumber) return;
+  if (!business.phone || !business.phoneNumber) return;
 
-  const fromNumber = business.twilioNumber.phoneNumber;
+  const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime);
 
   const message = [
@@ -20,8 +21,8 @@ export async function sendBookingNotificationToOwner(
     `Customer: ${appointment.customerName} (${appointment.customerPhone || "no phone"})`,
     appointment.calendarEventId ? `Added to calendar.` : "",
     appointment.status === "PENDING"
-      ? "⏳ Soft-booked (2hr hold)"
-      : "✅ Confirmed",
+      ? "Soft-booked (2hr hold)"
+      : "Confirmed",
   ]
     .filter(Boolean)
     .join("\n");
@@ -30,20 +31,20 @@ export async function sendBookingNotificationToOwner(
 }
 
 export async function sendBookingConfirmationToCustomer(
-  business: Business & { twilioNumber: TwilioNumber | null },
+  business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!appointment.customerPhone || !business.twilioNumber) return;
+  if (!appointment.customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.twilioNumber.phoneNumber;
+  const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime);
 
   const message = [
     `Hi ${appointment.customerName}! Your appointment at ${business.name} is ${appointment.status === "CONFIRMED" ? "confirmed" : "tentatively booked"}.`,
     "",
-    `🐾 ${appointment.petName || "Your pet"} - ${appointment.serviceName || "Grooming"}`,
-    `📅 ${time}`,
-    business.address ? `📍 ${business.address}` : "",
+    `${appointment.petName || "Your pet"} - ${appointment.serviceName || "Grooming"}`,
+    time,
+    business.address ? business.address : "",
     "",
     appointment.status === "PENDING" && appointment.confirmLink
       ? `Please confirm: ${appointment.confirmLink}`
@@ -57,13 +58,13 @@ export async function sendBookingConfirmationToCustomer(
 }
 
 export async function sendMissedCallNotification(
-  business: Business & { twilioNumber: TwilioNumber | null },
+  business: BusinessWithPhone,
   callerPhone: string,
   callerName?: string
 ) {
-  if (!business.phone || !business.twilioNumber) return;
+  if (!business.phone || !business.phoneNumber) return;
 
-  const fromNumber = business.twilioNumber.phoneNumber;
+  const fromNumber = business.phoneNumber.number;
 
   const message = [
     `[RingPaw] Missed call - no booking made.`,
@@ -75,18 +76,18 @@ export async function sendMissedCallNotification(
 }
 
 export async function sendAppointmentReminder(
-  business: Business & { twilioNumber: TwilioNumber | null },
+  business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!appointment.customerPhone || !business.twilioNumber) return;
+  if (!appointment.customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.twilioNumber.phoneNumber;
+  const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime);
 
   const message = [
     `Reminder: ${appointment.petName || "Your pet"}'s ${appointment.serviceName || "grooming"} appointment at ${business.name} is tomorrow!`,
-    `📅 ${time}`,
-    business.address ? `📍 ${business.address}` : "",
+    time,
+    business.address || "",
     "Reply CANCEL to cancel. See you soon!",
   ]
     .filter(Boolean)
@@ -94,7 +95,6 @@ export async function sendAppointmentReminder(
 
   await sendSms(appointment.customerPhone, message, fromNumber);
 
-  // Mark reminder as sent
   await prisma.appointment.update({
     where: { id: appointment.id },
     data: { reminderSent: true },

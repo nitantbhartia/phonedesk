@@ -74,7 +74,7 @@ model Business {
   onboardingStep  Int      @default(1)
   onboardingComplete Boolean @default(false)
 
-  twilioNumber    TwilioNumber?
+  phoneNumber     PhoneNumber?
   services        Service[]
   calendarConnections CalendarConnection[]
   calls           Call[]
@@ -97,15 +97,20 @@ enum BookingMode {
   SOFT
 }
 
-model TwilioNumber {
-  id            String   @id @default(cuid())
-  businessId    String   @unique
-  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  phoneNumber   String   @unique
-  twilioSid     String   @unique
-  capabilities  Json?    // { voice: true, sms: true }
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
+model PhoneNumber {
+  id            String        @id @default(cuid())
+  businessId    String        @unique
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  number        String        @unique
+  vapiPhoneId   String?       @unique // Vapi phone number resource ID
+  provider      PhoneProvider @default(VAPI)
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+}
+
+enum PhoneProvider {
+  VAPI
+  TWILIO  // future: if owner brings own Twilio number
 }
 
 model Service {
@@ -164,7 +169,6 @@ model Call {
   businessId      String
   business        Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
   vapiCallId      String?     @unique
-  twilioCallSid   String?
   callerPhone     String?
   callerName      String?
   duration        Int?        // seconds

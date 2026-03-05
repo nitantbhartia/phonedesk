@@ -37,20 +37,20 @@ async function handleFunctionCall(body: Record<string, unknown>) {
 
   // Identify business from the called number
   const calledNumber = message?.call?.phoneNumber?.number;
-  const twilioNumber = calledNumber
-    ? await prisma.twilioNumber.findFirst({
-        where: { phoneNumber: calledNumber },
+  const phoneNum = calledNumber
+    ? await prisma.phoneNumber.findFirst({
+        where: { number: calledNumber },
         include: { business: { include: { services: true } } },
       })
     : null;
 
-  if (!twilioNumber?.business) {
+  if (!phoneNum?.business) {
     return NextResponse.json({
       result: "I apologize, but I'm having trouble accessing the system right now. Let me take your information and have someone call you back.",
     });
   }
 
-  const business = twilioNumber.business;
+  const business = phoneNum.business;
 
   switch (name) {
     case "checkAvailability": {
@@ -137,7 +137,7 @@ async function handleFunctionCall(body: Record<string, unknown>) {
         // Send notifications
         const fullBusiness = await prisma.business.findUnique({
           where: { id: business.id },
-          include: { twilioNumber: true },
+          include: { phoneNumber: true },
         });
 
         if (fullBusiness) {
@@ -200,16 +200,16 @@ async function handleEndOfCall(body: Record<string, unknown>) {
   const callData = message?.call;
   const calledNumber = callData?.phoneNumber?.number;
 
-  const twilioNumber = calledNumber
-    ? await prisma.twilioNumber.findFirst({
-        where: { phoneNumber: calledNumber },
-        include: { business: { include: { twilioNumber: true } } },
+  const phoneNum = calledNumber
+    ? await prisma.phoneNumber.findFirst({
+        where: { number: calledNumber },
+        include: { business: { include: { phoneNumber: true } } },
       })
     : null;
 
-  if (!twilioNumber?.business) return NextResponse.json({ ok: true });
+  if (!phoneNum?.business) return NextResponse.json({ ok: true });
 
-  const business = twilioNumber.business;
+  const business = phoneNum.business;
   const extractedData = message?.analysis?.structuredData || {};
 
   // Create call record
@@ -254,18 +254,18 @@ async function handleStatusUpdate(body: Record<string, unknown>) {
 
   if (message?.status === "in-progress") {
     const calledNumber = message?.call?.phoneNumber?.number;
-    const twilioNumber = calledNumber
-      ? await prisma.twilioNumber.findFirst({
-          where: { phoneNumber: calledNumber },
+    const phoneNum = calledNumber
+      ? await prisma.phoneNumber.findFirst({
+          where: { number: calledNumber },
         })
       : null;
 
-    if (twilioNumber) {
+    if (phoneNum) {
       // Create in-progress call record
       await prisma.call.upsert({
         where: { vapiCallId: message.call?.id || "" },
         create: {
-          businessId: twilioNumber.businessId,
+          businessId: phoneNum.businessId,
           vapiCallId: message.call?.id,
           status: "IN_PROGRESS",
         },

@@ -1,10 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { provisionPhoneNumber } from "@/lib/twilio";
+import {
+  buildAssistantConfig,
+  createVapiAssistant,
+  provisionVapiPhoneNumber,
+} from "@/lib/vapi";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -12,7 +16,11 @@ export async function POST(req: NextRequest) {
 
   const business = await prisma.business.findUnique({
     where: { userId: session.user.id },
-    include: { twilioNumber: true },
+    include: {
+      phoneNumber: true,
+      services: { where: { isActive: true } },
+      vapiConfig: true,
+    },
   });
 
   if (!business) {
@@ -20,25 +28,51 @@ export async function POST(req: NextRequest) {
   }
 
   // Return existing number if already provisioned
-  if (business.twilioNumber) {
+  if (business.phoneNumber) {
     return NextResponse.json({
-      phoneNumber: business.twilioNumber.phoneNumber,
+      phoneNumber: business.phoneNumber.number,
       alreadyProvisioned: true,
     });
   }
 
-  const { areaCode } = await req.json();
-
   try {
-    const result = await provisionPhoneNumber(areaCode || "415");
+    // Ensure we have a Vapi assistant first
+    let assistantId = business.vapiConfig?.assistantId;
+
+    if (!assistantId) {
+      const config = buildAssistantConfig(business);
+      const assistant = await createVapiAssistant(config);
+      assistantId = assistant.id;
+
+      await prisma.vapiConfig.upsert({
+        where: { businessId: business.id },
+        create: {
+          businessId: business.id,
+          assistantId,
+          systemPrompt: config.model.systemMessage,
+          greeting: config.firstMessage,
+        },
+        update: {
+          assistantId,
+          systemPrompt: config.model.systemMessage,
+          greeting: config.firstMessage,
+        },
+      });
+    }
+
+    // Provision phone number through Vapi (free)
+    const result = await provisionVapiPhoneNumber({
+      assistantId,
+      name: `${business.name} - RingPaw AI`,
+    });
 
     // Save to database
-    await prisma.twilioNumber.create({
+    await prisma.phoneNumber.create({
       data: {
         businessId: business.id,
-        phoneNumber: result.phoneNumber,
-        twilioSid: result.sid,
-        capabilities: result.capabilities,
+        number: result.phoneNumber,
+        vapiPhoneId: result.id,
+        provider: "VAPI",
       },
     });
 
@@ -50,12 +84,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       phoneNumber: result.phoneNumber,
-      sid: result.sid,
+      vapiPhoneId: result.id,
     });
   } catch (error) {
     console.error("Error provisioning number:", error);
     return NextResponse.json(
-      { error: "Failed to provision phone number. Check Twilio configuration." },
+      { error: "Failed to provision phone number. Check Vapi configuration." },
       { status: 500 }
     );
   }

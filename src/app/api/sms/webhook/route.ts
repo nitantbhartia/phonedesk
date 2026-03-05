@@ -29,19 +29,19 @@ export async function POST(req: NextRequest) {
   });
 
   // Find the business by RingPaw number
-  const twilioNumber = await prisma.twilioNumber.findFirst({
-    where: { phoneNumber: to },
+  const phoneRecord = await prisma.phoneNumber.findFirst({
+    where: { number: to },
     include: { business: true },
   });
 
-  if (!twilioNumber?.business) {
+  if (!phoneRecord?.business) {
     return new NextResponse(
       '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
       { headers: { "Content-Type": "text/xml" } }
     );
   }
 
-  const business = twilioNumber.business;
+  const business = phoneRecord.business;
 
   // Check if this is the owner texting (from their business phone)
   if (from === business.phone) {

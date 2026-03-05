@@ -14,7 +14,7 @@ export async function GET() {
     where: { userId: session.user.id },
     include: {
       services: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
-      twilioNumber: true,
+      phoneNumber: true,
       calendarConnections: { where: { isActive: true } },
       vapiConfig: true,
     },

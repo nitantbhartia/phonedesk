@@ -1,7 +1,12 @@
 import type { Business, Service } from "@prisma/client";
 
-const VAPI_API_KEY = process.env.VAPI_API_KEY;
 const VAPI_BASE_URL = "https://api.vapi.ai";
+
+function getVapiKey() {
+  const key = process.env.VAPI_API_KEY;
+  if (!key) throw new Error("Vapi API key not configured");
+  return key;
+}
 
 interface VapiAssistantConfig {
   name: string;
@@ -105,15 +110,67 @@ export function generateGreeting(business: Business): string {
   return `Hi! You've reached ${business.name}. ${business.ownerName} is with a client right now, but I can help you book an appointment. What's your name?`;
 }
 
+// --- Vapi Phone Number Provisioning (free with Vapi) ---
+
+export async function provisionVapiPhoneNumber(options: {
+  assistantId: string;
+  name?: string;
+}): Promise<{ id: string; phoneNumber: string }> {
+  const apiKey = getVapiKey();
+
+  // Vapi provisions phone numbers for free via their platform
+  const response = await fetch(`${VAPI_BASE_URL}/phone-number`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      provider: "vapi",
+      assistantId: options.assistantId,
+      name: options.name || "RingPaw AI Line",
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Vapi phone number provisioning error: ${error}`);
+  }
+
+  const data = await response.json();
+  return {
+    id: data.id,
+    phoneNumber: data.number || data.phoneNumber,
+  };
+}
+
+export async function deleteVapiPhoneNumber(
+  phoneNumberId: string
+): Promise<void> {
+  const apiKey = getVapiKey();
+
+  const response = await fetch(
+    `${VAPI_BASE_URL}/phone-number/${phoneNumberId}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${apiKey}` },
+    }
+  );
+
+  if (!response.ok) throw new Error("Failed to delete Vapi phone number");
+}
+
+// --- Vapi Assistant Management ---
+
 export async function createVapiAssistant(
   config: VapiAssistantConfig
 ): Promise<{ id: string }> {
-  if (!VAPI_API_KEY) throw new Error("Vapi API key not configured");
+  const apiKey = getVapiKey();
 
   const response = await fetch(`${VAPI_BASE_URL}/assistant`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${VAPI_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -138,12 +195,12 @@ export async function updateVapiAssistant(
   assistantId: string,
   updates: Partial<VapiAssistantConfig>
 ): Promise<void> {
-  if (!VAPI_API_KEY) throw new Error("Vapi API key not configured");
+  const apiKey = getVapiKey();
 
   const response = await fetch(`${VAPI_BASE_URL}/assistant/${assistantId}`, {
     method: "PATCH",
     headers: {
-      Authorization: `Bearer ${VAPI_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(updates),
