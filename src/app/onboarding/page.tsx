@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,6 @@ const STEPS = [
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -103,7 +102,11 @@ export default function OnboardingPage() {
     let cancelled = false;
 
     const resumeOnboarding = async () => {
-      const requestedStep = Number(searchParams.get("step") || "1");
+      const params =
+        typeof window === "undefined"
+          ? new URLSearchParams()
+          : new URLSearchParams(window.location.search);
+      const requestedStep = Number(params.get("step") || "1");
       const normalizedStep =
         Number.isFinite(requestedStep) && requestedStep >= 1
           ? Math.min(requestedStep, STEPS.length)
@@ -138,7 +141,7 @@ export default function OnboardingPage() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, status]);
+  }, [status]);
 
   if (status === "loading") {
     return (
