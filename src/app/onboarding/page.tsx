@@ -61,6 +61,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [provisionError, setProvisionError] = useState("");
 
   // Step 1: Business info
   const [businessName, setBusinessName] = useState("");
@@ -136,6 +137,7 @@ export default function OnboardingPage() {
 
         if (!cancelled) {
           setCalendarConnected(hasCalendarConnection);
+          setProvisionedNumber(data.business?.phoneNumber?.number || "");
           setStep(normalizedStep);
         }
       } catch {
@@ -209,6 +211,7 @@ export default function OnboardingPage() {
 
   async function provisionNumber() {
     setLoading(true);
+    setProvisionError("");
     try {
       const areaCode = city ? "619" : "415";
       const res = await fetch("/api/provision-number", {
@@ -217,12 +220,17 @@ export default function OnboardingPage() {
         body: JSON.stringify({ areaCode }),
       });
 
-      if (!res.ok) throw new Error("Failed to provision number");
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to provision number");
+      }
+
       setProvisionedNumber(data.phoneNumber);
     } catch (error) {
       console.error("Error provisioning number:", error);
-      setProvisionedNumber("(619) 555-0199");
+      setProvisionError(
+        error instanceof Error ? error.message : "Failed to provision number"
+      );
     } finally {
       setLoading(false);
     }
@@ -809,6 +817,12 @@ export default function OnboardingPage() {
               </div>
             </>
           )}
+
+          {provisionError ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {provisionError}
+            </div>
+          ) : null}
 
           <OnboardingFooter
             onBack={() => setStep(3)}

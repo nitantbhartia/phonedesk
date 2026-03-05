@@ -22,6 +22,34 @@ function cookie(name: string, maxAge?: number): CookieOption {
   };
 }
 
+async function ensureAppUser(params: {
+  id?: string | null;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+}) {
+  const { id, email, name, image } = params;
+
+  if (!email) {
+    return id ?? null;
+  }
+
+  const dbUser = await prisma.user.upsert({
+    where: { email },
+    create: {
+      email,
+      name: name ?? undefined,
+      image: image ?? undefined,
+    },
+    update: {
+      name: name ?? undefined,
+      image: image ?? undefined,
+    },
+  });
+
+  return dbUser.id;
+}
+
 export const authOptions: NextAuthOptions = {
   // No adapter — the PrismaAdapter crashes during the OAuth callback with
   // Prisma v6, producing error=Callback. We persist user/account data manually
@@ -57,19 +85,12 @@ export const authOptions: NextAuthOptions = {
       // On sign-in (user + account present), persist to DB and enrich the token
       if (account && user) {
         try {
-          const dbUser = await prisma.user.upsert({
-            where: { email: user.email! },
-            create: {
-              email: user.email,
-              name: user.name,
-              image: user.image,
-            },
-            update: {
-              name: user.name,
-              image: user.image,
-            },
+          const dbUserId = await ensureAppUser({
+            email: user.email,
+            name: user.name,
+            image: user.image,
           });
-          token.id = dbUser.id;
+          token.id = dbUserId ?? user.id;
 
           // Persist OAuth tokens so calendar APIs can use them later
           await prisma.account.upsert({
@@ -80,7 +101,7 @@ export const authOptions: NextAuthOptions = {
               },
             },
             create: {
-              userId: dbUser.id,
+              userId: token.id as string,
               type: account.type,
               provider: account.provider,
               providerAccountId: account.providerAccountId,
@@ -113,7 +134,17 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id: string }).id = token.id as string;
+        try {
+          const dbUserId = await ensureAppUser({
+            id: token.id as string | undefined,
+            email: session.user.email,
+            name: session.user.name,
+            image: session.user.image,
+          });
+          (session.user as { id: string }).id = dbUserId ?? (token.id as string);
+        } catch {
+          (session.user as { id: string }).id = token.id as string;
+        }
       }
       return session;
     },

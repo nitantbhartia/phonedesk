@@ -7,14 +7,59 @@ import {
   syncRetellAgent,
 } from "@/lib/retell";
 
-export async function POST() {
+async function resolveUserId(session: {
+  user?: {
+    id?: string | null;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+  };
+}) {
+  const email = session.user?.email;
+
+  if (!email) {
+    return session.user?.id ?? null;
+  }
+
+  const user = await prisma.user.upsert({
+    where: { email },
+    create: {
+      email,
+      name: session.user?.name ?? undefined,
+      image: session.user?.image ?? undefined,
+    },
+    update: {
+      name: session.user?.name ?? undefined,
+      image: session.user?.image ?? undefined,
+    },
+  });
+
+  return user.id;
+}
+
+function isProvisionedPhoneNumber(value: unknown): value is string {
+  return typeof value === "string" && /^\+\d{10,15}$/.test(value);
+}
+
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  const userId = session ? await resolveUserId(session) : null;
+
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const body = await req.json().catch(() => ({}));
+  const requestedAreaCode = Number(body.areaCode);
+  const areaCode =
+    Number.isInteger(requestedAreaCode) &&
+    requestedAreaCode >= 200 &&
+    requestedAreaCode <= 999
+      ? requestedAreaCode
+      : undefined;
+
   const business = await prisma.business.findUnique({
-    where: { userId: session.user.id },
+    where: { userId },
     include: {
       phoneNumber: true,
       services: { where: { isActive: true } },
@@ -51,9 +96,14 @@ export async function POST() {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const result = await provisionRetellPhoneNumber({
       agentId,
+      areaCode,
       nickname: `${business.name} - RingPaw AI`,
       smsWebhookUrl: `${appUrl}/api/sms/webhook`,
     });
+
+    if (!isProvisionedPhoneNumber(result?.phone_number)) {
+      throw new Error("Retell returned an invalid phone number");
+    }
 
     // Save to database
     await prisma.phoneNumber.create({
@@ -77,7 +127,12 @@ export async function POST() {
   } catch (error) {
     console.error("Error provisioning number:", error);
     return NextResponse.json(
-      { error: "Failed to provision phone number. Check Retell configuration." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to provision phone number. Check Retell configuration.",
+      },
       { status: 500 }
     );
   }
