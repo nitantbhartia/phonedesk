@@ -98,11 +98,20 @@ export default function OnboardingPage() {
   const [testCallDone, setTestCallDone] = useState(false);
 
   useEffect(() => {
-    // Redirect unauthenticated users (disabled during development preview)
-    // if (status === "unauthenticated") {
-    //   router.push("/");
-    // }
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
   }, [status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-paw-sky flex items-center justify-center">
+        <div className="animate-pulse text-paw-brown/50 font-medium">
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   async function saveBusinessProfile() {
     setLoading(true);
