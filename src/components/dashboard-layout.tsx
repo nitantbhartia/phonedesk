@@ -29,6 +29,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const userInitial = session?.user?.name?.[0] || session?.user?.email?.[0] || "U";
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -40,13 +41,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
           <span className="font-bold">RingPaw AI</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            aria-label="Sign out"
+          >
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">
+              {userInitial.toUpperCase()}
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+        </div>
       </div>
 
       <div className="flex">
@@ -124,7 +138,30 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 p-6 lg:p-8 min-h-screen">{children}</main>
+        <main className="flex-1 min-h-screen">
+          <div className="hidden lg:flex items-center justify-end gap-3 border-b bg-white px-8 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-sm font-bold text-primary">
+                {userInitial.toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium leading-none truncate max-w-48">
+                  {session?.user?.name || "User"}
+                </div>
+                <div className="text-xs text-muted-foreground truncate max-w-48">
+                  {session?.user?.email}
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              <LogOut className="w-4 h-4 mr-2" /> Sign Out
+            </Button>
+          </div>
+          <div className="p-6 lg:p-8">{children}</div>
+        </main>
       </div>
     </div>
   );

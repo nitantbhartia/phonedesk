@@ -170,8 +170,13 @@ export default function OnboardingPage() {
       const businessHours: Record<string, { open: string; close: string }> = {};
       for (const [day, h] of Object.entries(hours)) {
         if (h.enabled) {
-          const key = day === "Mon - Fri" ? "mon-fri" : day.toLowerCase();
-          businessHours[key] = { open: h.open, close: h.close };
+          if (day === "Mon - Fri") {
+            for (const weekday of ["mon", "tue", "wed", "thu", "fri"]) {
+              businessHours[weekday] = { open: h.open, close: h.close };
+            }
+          } else {
+            businessHours[day.toLowerCase()] = { open: h.open, close: h.close };
+          }
         }
       }
 

@@ -331,6 +331,24 @@ function parseBusinessTime(value: string) {
   };
 }
 
+function getHoursForDay(
+  hours: BusinessHoursMap,
+  dayKey: string
+): { open: string; close: string } | undefined {
+  if (hours[dayKey]) {
+    return hours[dayKey];
+  }
+
+  if (
+    ["mon", "tue", "wed", "thu", "fri"].includes(dayKey) &&
+    hours["mon-fri"]
+  ) {
+    return hours["mon-fri"];
+  }
+
+  return undefined;
+}
+
 function formatTimeInTimeZone(date: Date, timeZone: string) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -419,7 +437,7 @@ export async function getAvailableSlots(
   let closeTime = { hour: 17, minute: 0 };
 
   if (hours) {
-    const dayHours = hours[dayKey];
+    const dayHours = getHoursForDay(hours, dayKey);
     if (!dayHours?.open || !dayHours?.close) {
       return [];
     }
