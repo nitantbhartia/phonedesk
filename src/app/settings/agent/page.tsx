@@ -46,7 +46,7 @@ interface BusinessData {
     duration: number;
     isActive: boolean;
   }>;
-  vapiConfig: {
+  retellConfig: {
     greeting: string;
     voiceId: string;
     isActive: boolean;
@@ -83,7 +83,7 @@ export default function AgentSettingsPage() {
         const data = await res.json();
         if (data.business) {
           setBusiness(data.business);
-          setGreeting(data.business.vapiConfig?.greeting || "");
+          setGreeting(data.business.retellConfig?.greeting || "");
           setBookingMode(data.business.bookingMode);
           setIsActive(data.business.isActive);
           setServices(
@@ -120,7 +120,7 @@ export default function AgentSettingsPage() {
       });
 
       // Update agent config
-      await fetch("/api/vapi/configure", { method: "POST" });
+      await fetch("/api/retell/configure", { method: "POST" });
 
       // Update active status
       await fetch("/api/business/profile", {

@@ -2,19 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 
-export async function POST(req: NextRequest) {
-  // Parse Twilio webhook body (form-encoded)
-  const formData = await req.formData();
-  const from = formData.get("From") as string;
-  const to = formData.get("To") as string;
-  const body = formData.get("Body") as string;
-  const messageSid = formData.get("MessageSid") as string;
+// Retell inbound SMS webhook
+// Retell sends: { event: "chat_inbound", chat_inbound: { agent_id, from_number, to_number } }
+// For owner commands and customer keywords (CANCEL/CONFIRM), we handle them here.
 
-  if (!from || !to || !body) {
-    return new NextResponse(
-      '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
-      { headers: { "Content-Type": "text/xml" } }
-    );
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+
+  // Handle Retell inbound SMS webhook format
+  const chatInbound = body.chat_inbound;
+  if (!chatInbound) {
+    return NextResponse.json({ ok: true });
+  }
+
+  const from = chatInbound.from_number as string;
+  const to = chatInbound.to_number as string;
+  const messageBody = chatInbound.message || "";
+
+  if (!from || !to) {
+    return NextResponse.json({ ok: true });
   }
 
   // Log inbound SMS
@@ -23,8 +29,7 @@ export async function POST(req: NextRequest) {
       direction: "INBOUND",
       fromNumber: from,
       toNumber: to,
-      body,
-      twilioSid: messageSid,
+      body: messageBody,
     },
   });
 
@@ -35,10 +40,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (!phoneRecord?.business) {
-    return new NextResponse(
-      '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
-      { headers: { "Content-Type": "text/xml" } }
-    );
+    return NextResponse.json({ ok: true });
   }
 
   const business = phoneRecord.business;
@@ -47,19 +49,22 @@ export async function POST(req: NextRequest) {
   if (from === business.phone) {
     // Owner SMS command
     try {
-      const command = await parseOwnerCommand(body);
+      const command = await parseOwnerCommand(messageBody);
 
       // Log parsed intent
       await prisma.smsLog.updateMany({
-        where: { twilioSid: messageSid },
+        where: {
+          fromNumber: from,
+          toNumber: to,
+          body: messageBody,
+        },
         data: { intent: command.intent, businessId: business.id },
       });
 
       await executeCommand(business.id, command, from, to);
     } catch (error) {
       console.error("Error processing owner command:", error);
-      // Send error response to owner
-      const { sendSms } = await import("@/lib/twilio");
+      const { sendSms } = await import("@/lib/retell");
       await sendSms(
         from,
         "[RingPaw] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
@@ -67,11 +72,10 @@ export async function POST(req: NextRequest) {
       );
     }
   } else {
-    // Customer SMS - check for CANCEL keyword
-    const upperBody = body.trim().toUpperCase();
+    // Customer SMS - check for CANCEL/CONFIRM keyword
+    const upperBody = messageBody.trim().toUpperCase();
 
     if (upperBody === "CANCEL") {
-      // Find their upcoming appointment
       const appointment = await prisma.appointment.findFirst({
         where: {
           businessId: business.id,
@@ -88,7 +92,7 @@ export async function POST(req: NextRequest) {
           data: { status: "CANCELLED" },
         });
 
-        const { sendSms } = await import("@/lib/twilio");
+        const { sendSms } = await import("@/lib/retell");
         await sendSms(
           from,
           `Your appointment at ${business.name} has been cancelled. Call us to reschedule!`,
@@ -104,7 +108,7 @@ export async function POST(req: NextRequest) {
           );
         }
       } else {
-        const { sendSms } = await import("@/lib/twilio");
+        const { sendSms } = await import("@/lib/retell");
         await sendSms(
           from,
           `No upcoming appointment found. Call ${business.name} to make changes.`,
@@ -112,7 +116,6 @@ export async function POST(req: NextRequest) {
         );
       }
     } else if (upperBody === "CONFIRM") {
-      // Confirm soft-booked appointment
       const appointment = await prisma.appointment.findFirst({
         where: {
           businessId: business.id,
@@ -129,7 +132,7 @@ export async function POST(req: NextRequest) {
           data: { status: "CONFIRMED" },
         });
 
-        const { sendSms } = await import("@/lib/twilio");
+        const { sendSms } = await import("@/lib/retell");
         await sendSms(
           from,
           `Your appointment at ${business.name} is confirmed! See you soon.`,
@@ -139,9 +142,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Respond with empty TwiML
-  return new NextResponse(
-    '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
-    { headers: { "Content-Type": "text/xml" } }
-  );
+  return NextResponse.json({ ok: true });
 }

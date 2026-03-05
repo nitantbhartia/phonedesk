@@ -79,7 +79,7 @@ model Business {
   calendarConnections CalendarConnection[]
   calls           Call[]
   appointments    Appointment[]
-  vapiConfig      VapiConfig?
+  retellConfig    RetellConfig?
   plan            Plan     @default(STARTER)
 
   createdAt       DateTime @default(now())
@@ -102,14 +102,14 @@ model PhoneNumber {
   businessId    String        @unique
   business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   number        String        @unique
-  vapiPhoneId   String?       @unique // Vapi phone number resource ID
-  provider      PhoneProvider @default(VAPI)
+  retellPhoneNumber String?    @unique // Retell phone number (E.164 identifier)
+  provider      PhoneProvider @default(RETELL)
   isActive      Boolean       @default(true)
   createdAt     DateTime      @default(now())
 }
 
 enum PhoneProvider {
-  VAPI
+  RETELL
   TWILIO  // future: if owner brings own Twilio number
 }
 
@@ -150,11 +150,12 @@ enum CalendarProvider {
   CALCOM
 }
 
-model VapiConfig {
+model RetellConfig {
   id              String   @id @default(cuid())
   businessId      String   @unique
   business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  assistantId     String?  // Vapi assistant ID
+  agentId         String?  // Retell agent ID
+  llmId           String?  // Retell LLM (Response Engine) ID
   systemPrompt    String?  @db.Text
   voiceId         String?
   greeting        String?  @db.Text
@@ -168,7 +169,7 @@ model Call {
   id              String      @id @default(cuid())
   businessId      String
   business        Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  vapiCallId      String?     @unique
+  retellCallId    String?     @unique
   callerPhone     String?
   callerName      String?
   duration        Int?        // seconds
@@ -236,7 +237,7 @@ model SmsLog {
   fromNumber  String
   toNumber    String
   body        String    @db.Text
-  twilioSid   String?
+  messageSid  String?   // Retell chat ID or message identifier
   intent      String?   // parsed intent for owner commands
   businessId  String?
   createdAt   DateTime  @default(now())

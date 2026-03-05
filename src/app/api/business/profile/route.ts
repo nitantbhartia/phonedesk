@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buildAssistantConfig, createVapiAssistant } from "@/lib/vapi";
+import { buildAgentConfig, createRetellLLM, createRetellAgent } from "@/lib/retell";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export async function GET() {
       services: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
       phoneNumber: true,
       calendarConnections: { where: { isActive: true } },
-      vapiConfig: true,
+      retellConfig: true,
     },
   });
 
@@ -148,49 +148,63 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Create/update Vapi config
+  // Create/update Retell config
   const fullBusiness = await prisma.business.findUnique({
     where: { id: business.id },
     include: { services: { where: { isActive: true } } },
   });
 
   if (fullBusiness) {
-    const config = buildAssistantConfig(fullBusiness);
+    const config = buildAgentConfig(fullBusiness);
 
     try {
-      const existingConfig = await prisma.vapiConfig.findUnique({
+      const existingConfig = await prisma.retellConfig.findUnique({
         where: { businessId: business.id },
       });
 
       if (!existingConfig) {
-        // Create Vapi assistant
-        let assistantId: string | undefined;
+        // Create Retell LLM + Agent
+        let agentId: string | undefined;
+        let llmId: string | undefined;
         try {
-          const assistant = await createVapiAssistant(config);
-          assistantId = assistant.id;
+          const llm = await createRetellLLM({
+            generalPrompt: config.generalPrompt,
+            beginMessage: config.beginMessage,
+            tools: config.tools,
+          });
+          llmId = llm.llm_id;
+
+          const agent = await createRetellAgent({
+            llmId: llm.llm_id,
+            agentName: config.agentName,
+            voiceId: config.voiceId,
+            webhookUrl: config.webhookUrl,
+          });
+          agentId = agent.agent_id;
         } catch {
-          // Vapi not configured yet, that's fine
+          // Retell not configured yet, that's fine
         }
 
-        await prisma.vapiConfig.create({
+        await prisma.retellConfig.create({
           data: {
             businessId: business.id,
-            assistantId,
-            systemPrompt: config.model.systemMessage,
-            greeting: config.firstMessage,
+            agentId,
+            llmId,
+            systemPrompt: config.generalPrompt,
+            greeting: config.beginMessage,
           },
         });
       } else {
-        await prisma.vapiConfig.update({
+        await prisma.retellConfig.update({
           where: { businessId: business.id },
           data: {
-            systemPrompt: config.model.systemMessage,
-            greeting: config.firstMessage,
+            systemPrompt: config.generalPrompt,
+            greeting: config.beginMessage,
           },
         });
       }
     } catch (error) {
-      console.error("Error configuring Vapi:", error);
+      console.error("Error configuring Retell:", error);
     }
   }
 
