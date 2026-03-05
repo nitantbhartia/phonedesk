@@ -158,6 +158,8 @@ export default function LandingPage() {
           <PricingCard
             name="Starter"
             price={149}
+            isSigningIn={isSigningIn}
+            onStartTrial={handleStartTrial}
             features={[
               "Up to 100 calls/month",
               "1 calendar connection",
@@ -169,6 +171,8 @@ export default function LandingPage() {
             name="Pro"
             price={249}
             popular
+            isSigningIn={isSigningIn}
+            onStartTrial={handleStartTrial}
             features={[
               "Up to 300 calls/month",
               "3 calendar connections",
@@ -179,6 +183,8 @@ export default function LandingPage() {
           <PricingCard
             name="Business"
             price={399}
+            isSigningIn={isSigningIn}
+            onStartTrial={handleStartTrial}
             features={[
               "Unlimited calls",
               "5 calendar connections",
@@ -224,11 +230,15 @@ function PricingCard({
   price,
   features,
   popular,
+  isSigningIn,
+  onStartTrial,
 }: {
   name: string;
   price: number;
   features: string[];
   popular?: boolean;
+  isSigningIn: boolean;
+  onStartTrial: () => Promise<void>;
 }) {
   return (
     <div
@@ -255,7 +265,7 @@ function PricingCard({
       <Button
         className="w-full"
         variant={popular ? "default" : "outline"}
-        onClick={() => void handleStartTrial()}
+        onClick={() => void onStartTrial()}
         disabled={isSigningIn}
       >
         Get Started
