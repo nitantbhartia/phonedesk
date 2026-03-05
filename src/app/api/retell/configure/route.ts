@@ -3,11 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  buildAgentConfig,
-  createRetellLLM,
-  createRetellAgent,
-  updateRetellLLM,
-  updateRetellAgent,
+  syncRetellAgent,
 } from "@/lib/retell";
 
 export async function POST() {
@@ -28,59 +24,8 @@ export async function POST() {
     return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
-  const config = buildAgentConfig(business);
-
   try {
-    if (business.retellConfig?.agentId && business.retellConfig?.llmId) {
-      // Update existing LLM and agent
-      await updateRetellLLM(business.retellConfig.llmId, {
-        generalPrompt: config.generalPrompt,
-        beginMessage: config.beginMessage,
-        tools: config.tools,
-      });
-      await updateRetellAgent(business.retellConfig.agentId, {
-        agentName: config.agentName,
-        webhookUrl: config.webhookUrl,
-      });
-      await prisma.retellConfig.update({
-        where: { businessId: business.id },
-        data: {
-          systemPrompt: config.generalPrompt,
-          greeting: config.beginMessage,
-        },
-      });
-    } else {
-      // Create new LLM and agent
-      const llm = await createRetellLLM({
-        generalPrompt: config.generalPrompt,
-        beginMessage: config.beginMessage,
-        tools: config.tools,
-      });
-
-      const agent = await createRetellAgent({
-        llmId: llm.llm_id,
-        agentName: config.agentName,
-        voiceId: config.voiceId,
-        webhookUrl: config.webhookUrl,
-      });
-
-      await prisma.retellConfig.upsert({
-        where: { businessId: business.id },
-        create: {
-          businessId: business.id,
-          agentId: agent.agent_id,
-          llmId: llm.llm_id,
-          systemPrompt: config.generalPrompt,
-          greeting: config.beginMessage,
-        },
-        update: {
-          agentId: agent.agent_id,
-          llmId: llm.llm_id,
-          systemPrompt: config.generalPrompt,
-          greeting: config.beginMessage,
-        },
-      });
-    }
+    await syncRetellAgent(business);
 
     return NextResponse.json({ success: true });
   } catch (error) {

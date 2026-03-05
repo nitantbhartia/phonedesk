@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { bookAppointment } from "@/lib/calendar";
+import { bookAppointment, getAvailableSlots } from "@/lib/calendar";
 import {
   sendBookingNotificationToOwner,
   sendBookingConfirmationToCustomer,
@@ -39,6 +39,13 @@ export async function POST(req: NextRequest) {
     start_time: startTime,
   } = args || {};
 
+  if (!customerName || !startTime) {
+    return NextResponse.json({
+      result: "I still need the customer's name and appointment time before I can book this.",
+      booked: false,
+    });
+  }
+
   const service = business.services.find(
     (s) =>
       s.isActive &&
@@ -47,8 +54,33 @@ export async function POST(req: NextRequest) {
 
   const start = new Date(startTime);
   const end = new Date(start.getTime() + (service?.duration || 60) * 60000);
+  const timezone = business.timezone || "America/Los_Angeles";
+
+  if (Number.isNaN(start.getTime())) {
+    return NextResponse.json({
+      result: "That time didn't come through clearly. Could you repeat the appointment time?",
+      booked: false,
+    });
+  }
 
   try {
+    const availableSlots = await getAvailableSlots(
+      business.id,
+      start.toISOString().slice(0, 10),
+      service?.duration || 60
+    );
+    const matchingSlot = availableSlots.find(
+      (slot) => slot.start.getTime() === start.getTime()
+    );
+
+    if (!matchingSlot) {
+      return NextResponse.json({
+        result: "That slot is no longer available. Let me offer you another time.",
+        booked: false,
+        timezone,
+      });
+    }
+
     const appointment = await bookAppointment(business.id, {
       customerName,
       customerPhone: customerPhone || call?.from_number,
@@ -98,11 +130,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       result: `I've booked ${petName || "your pet"} for a ${service?.name || svcName || "grooming"} appointment on ${timeStr}. You'll receive a confirmation text shortly.`,
+      booked: true,
+      appointment_id: appointment.id,
+      timezone,
     });
   } catch (error) {
     console.error("Error booking appointment:", error);
     return NextResponse.json({
       result: "I wasn't able to complete the booking just now. Let me have the owner call you back to confirm.",
+      booked: false,
     });
   }
 }

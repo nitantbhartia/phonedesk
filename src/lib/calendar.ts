@@ -1,6 +1,14 @@
 import { google } from "googleapis";
 import { prisma } from "./prisma";
-import type { CalendarConnection, CalendarProvider } from "@prisma/client";
+import type {
+  AppointmentStatus,
+  BookingMode,
+  CalendarConnection,
+  PetSize,
+} from "@prisma/client";
+
+type BusinessHoursMap = Record<string, { open: string; close: string }>;
+type DateParts = { year: number; month: number; day: number };
 
 // --- Google Calendar ---
 
@@ -218,28 +226,143 @@ export interface TimeSlot {
   end: Date;
 }
 
-export async function getAvailableSlots(
+function getBusinessTimezone(timezone?: string | null) {
+  return timezone || "America/Los_Angeles";
+}
+
+function getTimeZoneOffsetMs(date: Date, timeZone: string) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  const parts = Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second)
+  );
+
+  return asUtc - date.getTime();
+}
+
+function zonedDateTimeToUtc(
+  dateParts: DateParts,
+  hour: number,
+  minute: number,
+  timeZone: string
+) {
+  const utcGuess = Date.UTC(
+    dateParts.year,
+    dateParts.month - 1,
+    dateParts.day,
+    hour,
+    minute,
+    0
+  );
+  const initialOffset = getTimeZoneOffsetMs(new Date(utcGuess), timeZone);
+  let adjusted = utcGuess - initialOffset;
+  const correctedOffset = getTimeZoneOffsetMs(new Date(adjusted), timeZone);
+
+  if (correctedOffset !== initialOffset) {
+    adjusted = utcGuess - correctedOffset;
+  }
+
+  return new Date(adjusted);
+}
+
+function getDatePartsInTimeZone(date: Date, timeZone: string): DateParts {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+  };
+}
+
+function getRequestedDateParts(dateInput: Date | string, timeZone: string): DateParts {
+  if (typeof dateInput === "string") {
+    const match = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      return {
+        year: Number(match[1]),
+        month: Number(match[2]),
+        day: Number(match[3]),
+      };
+    }
+  }
+
+  const parsedDate = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  return getDatePartsInTimeZone(parsedDate, timeZone);
+}
+
+function parseBusinessTime(value: string) {
+  const [hourString, minuteString = "0"] = value.split(":");
+  return {
+    hour: Number(hourString),
+    minute: Number(minuteString),
+  };
+}
+
+function formatTimeInTimeZone(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+async function getBusyIntervals(
   businessId: string,
-  date: Date,
-  durationMinutes: number = 60
+  dayStart: Date,
+  dayEnd: Date
 ): Promise<TimeSlot[]> {
-  const connections = await prisma.calendarConnection.findMany({
-    where: { businessId, isActive: true },
-  });
+  const [connections, existingAppointments] = await Promise.all([
+    prisma.calendarConnection.findMany({
+      where: { businessId, isActive: true },
+    }),
+    prisma.appointment.findMany({
+      where: {
+        businessId,
+        status: { in: ["CONFIRMED", "PENDING"] },
+        startTime: { lt: dayEnd },
+        endTime: { gt: dayStart },
+      },
+      select: { startTime: true, endTime: true },
+    }),
+  ]);
 
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
-  });
-
-  if (!business) throw new Error("Business not found");
-
-  const dayStart = new Date(date);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(date);
-  dayEnd.setHours(23, 59, 59, 999);
-
-  // Collect all busy times from all connected calendars
-  const busyTimes: TimeSlot[] = [];
+  const busyTimes: TimeSlot[] = existingAppointments.map((appointment) => ({
+    start: appointment.startTime,
+    end: appointment.endTime,
+  }));
 
   for (const conn of connections) {
     try {
@@ -254,36 +377,70 @@ export async function getAvailableSlots(
           }
         }
       }
-      // Add Calendly and Cal.com busy time fetching as needed
     } catch (error) {
-      console.error(
-        `Error fetching calendar ${conn.provider}:`,
-        error
-      );
+      console.error(`Error fetching calendar ${conn.provider}:`, error);
     }
   }
 
-  // Parse business hours for this day
-  const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-  const dayKey = dayNames[date.getDay()];
-  const hours = business.businessHours as Record<
-    string,
-    { open: string; close: string }
-  > | null;
+  return busyTimes;
+}
 
-  let openTime = 9;
-  let closeTime = 17;
-  if (hours && hours[dayKey]) {
-    openTime = parseInt(hours[dayKey].open.split(":")[0]);
-    closeTime = parseInt(hours[dayKey].close.split(":")[0]);
+export async function isSlotAvailable(
+  businessId: string,
+  startTime: Date,
+  endTime: Date
+) {
+  const busyIntervals = await getBusyIntervals(businessId, startTime, endTime);
+  return !busyIntervals.some(
+    (busy) => startTime < busy.end && endTime > busy.start
+  );
+}
+
+export async function getAvailableSlots(
+  businessId: string,
+  date: Date | string,
+  durationMinutes: number = 60
+): Promise<TimeSlot[]> {
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+  });
+
+  if (!business) throw new Error("Business not found");
+  const timezone = getBusinessTimezone(business.timezone);
+  const dateParts = getRequestedDateParts(date, timezone);
+  const dayStart = zonedDateTimeToUtc(dateParts, 0, 0, timezone);
+  const dayEnd = zonedDateTimeToUtc(dateParts, 23, 59, timezone);
+  const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const dayIndex = new Date(dayStart).getUTCDay();
+  const dayKey = dayNames[dayIndex];
+  const hours = business.businessHours as BusinessHoursMap | null;
+
+  let openTime = { hour: 9, minute: 0 };
+  let closeTime = { hour: 17, minute: 0 };
+
+  if (hours) {
+    const dayHours = hours[dayKey];
+    if (!dayHours?.open || !dayHours?.close) {
+      return [];
+    }
+    openTime = parseBusinessTime(dayHours.open);
+    closeTime = parseBusinessTime(dayHours.close);
   }
 
-  // Generate available slots
+  const slotStart = zonedDateTimeToUtc(
+    dateParts,
+    openTime.hour,
+    openTime.minute,
+    timezone
+  );
+  const slotEnd = zonedDateTimeToUtc(
+    dateParts,
+    closeTime.hour,
+    closeTime.minute,
+    timezone
+  );
+  const busyTimes = await getBusyIntervals(businessId, dayStart, dayEnd);
   const slots: TimeSlot[] = [];
-  const slotStart = new Date(date);
-  slotStart.setHours(openTime, 0, 0, 0);
-  const slotEnd = new Date(date);
-  slotEnd.setHours(closeTime, 0, 0, 0);
 
   let current = new Date(slotStart);
   while (current.getTime() + durationMinutes * 60000 <= slotEnd.getTime()) {
@@ -314,7 +471,7 @@ export async function bookAppointment(
     customerPhone?: string;
     petName?: string;
     petBreed?: string;
-    petSize?: "SMALL" | "MEDIUM" | "LARGE" | "XLARGE";
+    petSize?: PetSize;
     serviceName?: string;
     servicePrice?: number;
     startTime: Date;
@@ -322,59 +479,129 @@ export async function bookAppointment(
     notes?: string;
   }
 ) {
-  // Find primary calendar
-  const primaryCalendar = await prisma.calendarConnection.findFirst({
-    where: { businessId, isPrimary: true, isActive: true },
-  });
-
-  let calendarEventId: string | undefined;
-
-  // Create event on primary calendar
-  if (primaryCalendar?.provider === "GOOGLE") {
-    const event = await createGoogleCalendarEvent(primaryCalendar, {
-      summary: `🐾 ${details.petName || "Pet"} - ${details.serviceName || "Grooming"} (${details.customerName})`,
-      description: [
-        `Customer: ${details.customerName}`,
-        details.customerPhone ? `Phone: ${details.customerPhone}` : "",
-        details.petName ? `Pet: ${details.petName}` : "",
-        details.petBreed ? `Breed: ${details.petBreed}` : "",
-        details.petSize ? `Size: ${details.petSize}` : "",
-        details.notes ? `Notes: ${details.notes}` : "",
-        "",
-        "Booked via RingPaw AI",
-      ]
-        .filter(Boolean)
-        .join("\n"),
-      startTime: details.startTime,
-      endTime: details.endTime,
-    });
-    calendarEventId = event.id || undefined;
+  if (
+    !(details.startTime instanceof Date) ||
+    Number.isNaN(details.startTime.getTime()) ||
+    !(details.endTime instanceof Date) ||
+    Number.isNaN(details.endTime.getTime()) ||
+    details.endTime <= details.startTime
+  ) {
+    throw new Error("Invalid appointment time range");
   }
 
-  // Get business booking mode
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
+  const [business, primaryCalendar, matchedService] = await Promise.all([
+    prisma.business.findUnique({
+      where: { id: businessId },
+    }),
+    prisma.calendarConnection.findFirst({
+      where: { businessId, isPrimary: true, isActive: true },
+    }),
+    details.serviceName
+      ? prisma.service.findFirst({
+          where: {
+            businessId,
+            isActive: true,
+            name: {
+              contains: details.serviceName,
+              mode: "insensitive",
+            },
+          },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (!business) {
+    throw new Error("Business not found");
+  }
+
+  const isAvailable = await isSlotAvailable(
+    businessId,
+    details.startTime,
+    details.endTime
+  );
+
+  if (!isAvailable) {
+    throw new Error("Requested slot is no longer available");
+  }
+
+  const bookingMode: BookingMode =
+    matchedService?.bookingMode || business.bookingMode;
+
+  const appointment = await prisma.$transaction(async (tx) => {
+    const conflictingAppointment = await tx.appointment.findFirst({
+      where: {
+        businessId,
+        status: { in: ["CONFIRMED", "PENDING"] as AppointmentStatus[] },
+        startTime: { lt: details.endTime },
+        endTime: { gt: details.startTime },
+      },
+      select: { id: true },
+    });
+
+    if (conflictingAppointment) {
+      throw new Error("Requested slot was booked by another caller");
+    }
+
+    return tx.appointment.create({
+      data: {
+        businessId,
+        customerName: details.customerName,
+        customerPhone: details.customerPhone,
+        petName: details.petName,
+        petBreed: details.petBreed,
+        petSize: details.petSize,
+        serviceName: matchedService?.name || details.serviceName,
+        servicePrice: matchedService?.price || details.servicePrice,
+        startTime: details.startTime,
+        endTime: details.endTime,
+        status: bookingMode === "HARD" ? "CONFIRMED" : "PENDING",
+        bookingMode,
+        notes: details.notes,
+      },
+    });
   });
 
-  // Create appointment record
-  const appointment = await prisma.appointment.create({
-    data: {
-      businessId,
-      customerName: details.customerName,
-      customerPhone: details.customerPhone,
-      petName: details.petName,
-      petBreed: details.petBreed,
-      petSize: details.petSize,
-      serviceName: details.serviceName,
-      servicePrice: details.servicePrice,
-      startTime: details.startTime,
-      endTime: details.endTime,
-      status: business?.bookingMode === "HARD" ? "CONFIRMED" : "PENDING",
-      bookingMode: business?.bookingMode || "SOFT",
-      calendarEventId,
-      notes: details.notes,
-    },
-  });
+  if (primaryCalendar?.provider === "GOOGLE") {
+    try {
+      const event = await createGoogleCalendarEvent(primaryCalendar, {
+        summary: `${details.petName || "Pet"} - ${matchedService?.name || details.serviceName || "Grooming"} (${details.customerName})`,
+        description: [
+          `Customer: ${details.customerName}`,
+          details.customerPhone ? `Phone: ${details.customerPhone}` : "",
+          details.petName ? `Pet: ${details.petName}` : "",
+          details.petBreed ? `Breed: ${details.petBreed}` : "",
+          details.petSize ? `Size: ${details.petSize}` : "",
+          details.notes ? `Notes: ${details.notes}` : "",
+          "",
+          "Booked via RingPaw AI",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        startTime: details.startTime,
+        endTime: details.endTime,
+      });
+
+      return prisma.appointment.update({
+        where: { id: appointment.id },
+        data: {
+          calendarEventId: event.id || undefined,
+        },
+      });
+    } catch (error) {
+      console.error("Error creating Google Calendar event:", error);
+    }
+  }
 
   return appointment;
+}
+
+export function describeAvailableSlots(
+  slots: TimeSlot[],
+  timeZone: string,
+  maxSlots: number = 3
+) {
+  return slots
+    .slice(0, maxSlots)
+    .map((slot) => formatTimeInTimeZone(slot.start, timeZone))
+    .join(", or ");
 }

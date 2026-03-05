@@ -3,10 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  buildAgentConfig,
-  createRetellLLM,
-  createRetellAgent,
   provisionRetellPhoneNumber,
+  syncRetellAgent,
 } from "@/lib/retell";
 
 export async function POST() {
@@ -41,40 +39,8 @@ export async function POST() {
     let agentId = business.retellConfig?.agentId;
 
     if (!agentId) {
-      const config = buildAgentConfig(business);
-
-      // Create LLM (Response Engine)
-      const llm = await createRetellLLM({
-        generalPrompt: config.generalPrompt,
-        beginMessage: config.beginMessage,
-        tools: config.tools,
-      });
-
-      // Create Agent
-      const agent = await createRetellAgent({
-        llmId: llm.llm_id,
-        agentName: config.agentName,
-        voiceId: config.voiceId,
-        webhookUrl: config.webhookUrl,
-      });
-      agentId = agent.agent_id;
-
-      await prisma.retellConfig.upsert({
-        where: { businessId: business.id },
-        create: {
-          businessId: business.id,
-          agentId,
-          llmId: llm.llm_id,
-          systemPrompt: config.generalPrompt,
-          greeting: config.beginMessage,
-        },
-        update: {
-          agentId,
-          llmId: llm.llm_id,
-          systemPrompt: config.generalPrompt,
-          greeting: config.beginMessage,
-        },
-      });
+      const synced = await syncRetellAgent(business);
+      agentId = synced.agentId || undefined;
     }
 
     // Provision phone number through Retell

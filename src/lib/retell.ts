@@ -1,6 +1,8 @@
-import type { Business, Service } from "@prisma/client";
+import { prisma } from "./prisma";
+import type { Business, RetellConfig, Service } from "@prisma/client";
 
 const RETELL_BASE_URL = "https://api.retellai.com";
+const RETELL_MODEL = process.env.RETELL_MODEL || "gemini-2.5-flash";
 
 function getRetellApiKey() {
   const key = process.env.RETELL_API_KEY;
@@ -119,10 +121,12 @@ export async function createRetellLLM(config: {
   tools?: RetellTool[];
 }): Promise<{ llm_id: string }> {
   const body: Record<string, unknown> = {
-    model: "gpt-4o",
+    model: RETELL_MODEL,
+    start_speaker: "agent",
     general_prompt: config.generalPrompt,
     begin_message: config.beginMessage,
-    model_temperature: 0.3,
+    model_temperature: 0.2,
+    tool_call_strict_mode: true,
   };
 
   if (config.tools && config.tools.length > 0) {
@@ -149,6 +153,7 @@ export async function updateRetellLLM(
   if (updates.beginMessage !== undefined)
     body.begin_message = updates.beginMessage;
   if (updates.tools !== undefined) body.general_tools = updates.tools;
+  body.start_speaker = "agent";
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
     method: "PATCH",
@@ -376,4 +381,71 @@ export function buildAgentConfig(business: Business & { services: Service[] }) {
     webhookUrl: `${appUrl}/api/retell/webhook`,
     tools: buildAgentTools(appUrl),
   };
+}
+
+type SyncableBusiness = Business & {
+  services: Service[];
+  retellConfig?: RetellConfig | null;
+};
+
+export async function syncRetellAgent(business: SyncableBusiness) {
+  const config = buildAgentConfig(business);
+  const existingConfig = business.retellConfig;
+
+  if (existingConfig?.agentId && existingConfig.llmId) {
+    await updateRetellLLM(existingConfig.llmId, {
+      generalPrompt: config.generalPrompt,
+      beginMessage: config.beginMessage,
+      tools: config.tools,
+    });
+
+    await updateRetellAgent(existingConfig.agentId, {
+      agentName: config.agentName,
+      voiceId: config.voiceId,
+      webhookUrl: config.webhookUrl,
+    });
+
+    return prisma.retellConfig.update({
+      where: { businessId: business.id },
+      data: {
+        agentId: existingConfig.agentId,
+        llmId: existingConfig.llmId,
+        systemPrompt: config.generalPrompt,
+        voiceId: config.voiceId,
+        greeting: config.beginMessage,
+      },
+    });
+  }
+
+  const llm = await createRetellLLM({
+    generalPrompt: config.generalPrompt,
+    beginMessage: config.beginMessage,
+    tools: config.tools,
+  });
+
+  const agent = await createRetellAgent({
+    llmId: llm.llm_id,
+    agentName: config.agentName,
+    voiceId: config.voiceId,
+    webhookUrl: config.webhookUrl,
+  });
+
+  return prisma.retellConfig.upsert({
+    where: { businessId: business.id },
+    create: {
+      businessId: business.id,
+      agentId: agent.agent_id,
+      llmId: llm.llm_id,
+      systemPrompt: config.generalPrompt,
+      voiceId: config.voiceId,
+      greeting: config.beginMessage,
+    },
+    update: {
+      agentId: agent.agent_id,
+      llmId: llm.llm_id,
+      systemPrompt: config.generalPrompt,
+      voiceId: config.voiceId,
+      greeting: config.beginMessage,
+    },
+  });
 }

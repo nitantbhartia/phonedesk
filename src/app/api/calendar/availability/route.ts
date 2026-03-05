@@ -22,10 +22,12 @@ export async function GET(req: NextRequest) {
   const dateStr = url.searchParams.get("date");
   const duration = parseInt(url.searchParams.get("duration") || "60");
 
-  const date = dateStr ? new Date(dateStr) : new Date();
-
   try {
-    const slots = await getAvailableSlots(business.id, date, duration);
+    const slots = await getAvailableSlots(
+      business.id,
+      dateStr || new Date(),
+      duration
+    );
     return NextResponse.json({ slots });
   } catch (error) {
     console.error("Error fetching availability:", error);
