@@ -163,8 +163,8 @@ export function buildAssistantConfig(
   return {
     name: `${business.name} Receptionist`,
     model: {
-      provider: "openai",
-      model: "gpt-4o",
+      provider: "google",
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
       systemMessage: generateSystemPrompt(business),
     },
     voice: {

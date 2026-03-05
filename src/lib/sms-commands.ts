@@ -1,9 +1,13 @@
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { prisma } from "./prisma";
 import { sendSms } from "./twilio";
 
-function getOpenAI() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getGemini() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not set");
+  }
+  return new GoogleGenAI({ apiKey });
 }
 
 interface ParsedCommand {
@@ -27,26 +31,25 @@ Examples of owner SMS commands:
 export async function parseOwnerCommand(
   message: string
 ): Promise<ParsedCommand> {
-  const response = await getOpenAI().chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: `You are a command parser for a pet grooming business management system. Parse the owner's text message into a structured intent and entities. Return ONLY valid JSON.
+  const response = await getGemini().models.generateContent({
+    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    contents: `Parse the owner's SMS message into a structured intent and entities object.
 
 Possible intents: block_calendar, add_service, update_hours, pause_bookings, resume_bookings, show_schedule, cancel_appointment, show_prices, unknown
 
 ${COMMAND_EXAMPLES}
 
-Today's date is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.`,
-      },
-      { role: "user", content: message },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0,
+Today's date is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+Message: ${message}`,
+    config: {
+      temperature: 0,
+      responseMimeType: "application/json",
+      systemInstruction:
+        "You are a command parser for a pet grooming business management system. Return only valid JSON with keys: intent, entities.",
+    },
   });
 
-  const content = response.choices[0]?.message?.content;
+  const content = response.text;
   if (!content) return { intent: "unknown", entities: {} };
 
   try {
