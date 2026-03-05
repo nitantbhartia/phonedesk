@@ -1,22 +1,31 @@
 import { type NextAuthOptions, type CookieOption } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 
 const authSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
-const isSecure = process.env.NEXTAUTH_URL?.startsWith("https://") ?? process.env.NODE_ENV === "production";
+const isSecure =
+  process.env.NEXTAUTH_URL?.startsWith("https://") ??
+  process.env.NODE_ENV === "production";
 
 // Force non-prefixed cookie names. Railway's HTTPS proxy can drop __Secure-
 // prefixed cookies during the Google OAuth roundtrip, which causes error=Callback.
 function cookie(name: string, maxAge?: number): CookieOption {
   return {
     name,
-    options: { httpOnly: true, sameSite: "lax" as const, path: "/", secure: isSecure, ...(maxAge != null && { maxAge }) },
+    options: {
+      httpOnly: true,
+      sameSite: "lax" as const,
+      path: "/",
+      secure: isSecure,
+      ...(maxAge != null && { maxAge }),
+    },
   };
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // No adapter — the PrismaAdapter crashes during the OAuth callback with
+  // Prisma v6, producing error=Callback. We persist user/account data manually
+  // in the jwt callback instead, with proper error handling.
   secret: authSecret,
   providers: [
     GoogleProvider({
@@ -38,17 +47,65 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: cookie("next-auth.session-token"),
-    callbackUrl:  cookie("next-auth.callback-url"),
-    csrfToken:    cookie("next-auth.csrf-token"),
-    state:        cookie("next-auth.state", 900),
+    callbackUrl: cookie("next-auth.callback-url"),
+    csrfToken: cookie("next-auth.csrf-token"),
+    state: cookie("next-auth.state", 900),
     pkceCodeVerifier: cookie("next-auth.pkce.code_verifier", 900),
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      if (user) {
-        token.id = user.id;
-      }
-      if (account) {
+      // On sign-in (user + account present), persist to DB and enrich the token
+      if (account && user) {
+        try {
+          const dbUser = await prisma.user.upsert({
+            where: { email: user.email! },
+            create: {
+              email: user.email,
+              name: user.name,
+              image: user.image,
+            },
+            update: {
+              name: user.name,
+              image: user.image,
+            },
+          });
+          token.id = dbUser.id;
+
+          // Persist OAuth tokens so calendar APIs can use them later
+          await prisma.account.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+            create: {
+              userId: dbUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token as string | undefined,
+              refresh_token: account.refresh_token as string | undefined,
+              expires_at: account.expires_at as number | undefined,
+              token_type: account.token_type as string | undefined,
+              scope: account.scope as string | undefined,
+              id_token: account.id_token as string | undefined,
+            },
+            update: {
+              access_token: account.access_token as string | undefined,
+              refresh_token: account.refresh_token as string | undefined,
+              expires_at: account.expires_at as number | undefined,
+              token_type: account.token_type as string | undefined,
+              scope: account.scope as string | undefined,
+              id_token: account.id_token as string | undefined,
+            },
+          });
+        } catch (e) {
+          console.error("[auth] Failed to persist user/account:", e);
+          // Fall back to Google sub so the session still works
+          token.id = user.id;
+        }
+
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
       }
@@ -78,6 +135,5 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/",
-    newUser: "/onboarding",
   },
 };
