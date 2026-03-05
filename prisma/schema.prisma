@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Core models
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  business      Business?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Business {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  ownerName       String
+  email           String?
+  phone           String?
+  city            String?
+  state           String?
+  address         String?
+  timezone        String   @default("America/Los_Angeles")
+  businessHours   Json?    // { mon: { open: "09:00", close: "17:00" }, ... }
+  bookingMode     BookingMode @default(SOFT)
+  isActive        Boolean  @default(false)
+  onboardingStep  Int      @default(1)
+  onboardingComplete Boolean @default(false)
+
+  twilioNumber    TwilioNumber?
+  services        Service[]
+  calendarConnections CalendarConnection[]
+  calls           Call[]
+  appointments    Appointment[]
+  vapiConfig      VapiConfig?
+  plan            Plan     @default(STARTER)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum Plan {
+  STARTER
+  PRO
+  BUSINESS
+}
+
+enum BookingMode {
+  HARD
+  SOFT
+}
+
+model TwilioNumber {
+  id            String   @id @default(cuid())
+  businessId    String   @unique
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  phoneNumber   String   @unique
+  twilioSid     String   @unique
+  capabilities  Json?    // { voice: true, sms: true }
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Float
+  duration    Int      // in minutes
+  isActive    Boolean  @default(true)
+  bookingMode BookingMode? // override business default
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CalendarConnection {
+  id            String         @id @default(cuid())
+  businessId    String
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  provider      CalendarProvider
+  isPrimary     Boolean        @default(false)
+  accessToken   String?        @db.Text
+  refreshToken  String?        @db.Text
+  tokenExpiry   DateTime?
+  calendarId    String?        // e.g., Google Calendar ID
+  externalUrl   String?        // e.g., Calendly scheduling URL
+  metadata      Json?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum CalendarProvider {
+  GOOGLE
+  CALENDLY
+  CALCOM
+}
+
+model VapiConfig {
+  id              String   @id @default(cuid())
+  businessId      String   @unique
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  assistantId     String?  // Vapi assistant ID
+  systemPrompt    String?  @db.Text
+  voiceId         String?
+  greeting        String?  @db.Text
+  fallbackMessage String?  @db.Text
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Call {
+  id              String      @id @default(cuid())
+  businessId      String
+  business        Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  vapiCallId      String?     @unique
+  twilioCallSid   String?
+  callerPhone     String?
+  callerName      String?
+  duration        Int?        // seconds
+  transcript      String?     @db.Text
+  summary         String?     @db.Text
+  status          CallStatus  @default(IN_PROGRESS)
+  extractedData   Json?       // { customerName, dogName, breed, size, service, preferredTime }
+  appointmentId   String?
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  recordingUrl    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+enum CallStatus {
+  IN_PROGRESS
+  COMPLETED
+  MISSED
+  FAILED
+  NO_BOOKING
+}
+
+model Appointment {
+  id              String            @id @default(cuid())
+  businessId      String
+  business        Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerName    String
+  customerPhone   String?
+  petName         String?
+  petBreed        String?
+  petSize         PetSize?
+  serviceName     String?
+  servicePrice    Float?
+  startTime       DateTime
+  endTime         DateTime
+  status          AppointmentStatus @default(PENDING)
+  bookingMode     BookingMode       @default(SOFT)
+  calendarEventId String?           // external calendar event ID
+  confirmLink     String?
+  notes           String?           @db.Text
+  reminderSent    Boolean           @default(false)
+  calls           Call[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+enum PetSize {
+  SMALL
+  MEDIUM
+  LARGE
+  XLARGE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model SmsLog {
+  id          String    @id @default(cuid())
+  direction   SmsDirection
+  fromNumber  String
+  toNumber    String
+  body        String    @db.Text
+  twilioSid   String?
+  intent      String?   // parsed intent for owner commands
+  businessId  String?
+  createdAt   DateTime  @default(now())
+}
+
+enum SmsDirection {
+  INBOUND
+  OUTBOUND
+}
