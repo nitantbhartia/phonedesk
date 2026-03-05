@@ -43,6 +43,10 @@ export async function POST() {
       agentId = synced.agentId || undefined;
     }
 
+    if (!agentId) {
+      throw new Error("Retell agent could not be created");
+    }
+
     // Provision phone number through Retell
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const result = await provisionRetellPhoneNumber({
