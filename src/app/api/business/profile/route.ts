@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buildAgentConfig, createRetellLLM, createRetellAgent } from "@/lib/retell";
+import { syncRetellAgent } from "@/lib/retell";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -155,54 +155,8 @@ export async function POST(req: NextRequest) {
   });
 
   if (fullBusiness) {
-    const config = buildAgentConfig(fullBusiness);
-
     try {
-      const existingConfig = await prisma.retellConfig.findUnique({
-        where: { businessId: business.id },
-      });
-
-      if (!existingConfig) {
-        // Create Retell LLM + Agent
-        let agentId: string | undefined;
-        let llmId: string | undefined;
-        try {
-          const llm = await createRetellLLM({
-            generalPrompt: config.generalPrompt,
-            beginMessage: config.beginMessage,
-            tools: config.tools,
-          });
-          llmId = llm.llm_id;
-
-          const agent = await createRetellAgent({
-            llmId: llm.llm_id,
-            agentName: config.agentName,
-            voiceId: config.voiceId,
-            webhookUrl: config.webhookUrl,
-          });
-          agentId = agent.agent_id;
-        } catch {
-          // Retell not configured yet, that's fine
-        }
-
-        await prisma.retellConfig.create({
-          data: {
-            businessId: business.id,
-            agentId,
-            llmId,
-            systemPrompt: config.generalPrompt,
-            greeting: config.beginMessage,
-          },
-        });
-      } else {
-        await prisma.retellConfig.update({
-          where: { businessId: business.id },
-          data: {
-            systemPrompt: config.generalPrompt,
-            greeting: config.beginMessage,
-          },
-        });
-      }
+      await syncRetellAgent(fullBusiness);
     } catch (error) {
       console.error("Error configuring Retell:", error);
     }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAvailableSlots } from "@/lib/calendar";
+import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to check calendar availability for a given date.
@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
   }
 
   const business = phoneNum.business;
-  const requestedDate = date ? new Date(date) : new Date();
+  const requestedDate = date || new Date().toISOString().slice(0, 10);
+  const timezone = business.timezone || "America/Los_Angeles";
 
   // Find service duration
   const service = business.services.find(
@@ -46,23 +47,24 @@ export async function POST(req: NextRequest) {
 
     if (slots.length === 0) {
       return NextResponse.json({
-        result: `I don't have any openings on ${requestedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}. Would you like to try a different day?`,
+        result: "I don't have any openings on that day. Would you like to try a different day?",
+        available: false,
+        available_slots: [],
+        timezone,
       });
     }
 
-    // Offer first 2-3 slots
-    const offered = slots.slice(0, 3);
-    const slotDescriptions = offered
-      .map((s) =>
-        new Date(s.start).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        })
-      )
-      .join(", or ");
+    const offered = slots.slice(0, 3).map((slot) => ({
+      start_time: slot.start.toISOString(),
+      end_time: slot.end.toISOString(),
+    }));
+    const slotDescriptions = describeAvailableSlots(slots, timezone);
 
     return NextResponse.json({
       result: `I have openings at ${slotDescriptions}. Which time works best for you?`,
+      available: true,
+      available_slots: offered,
+      timezone,
     });
   } catch (error) {
     console.error("Error checking availability:", error);

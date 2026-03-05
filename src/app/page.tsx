@@ -1,28 +1,105 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 export default function LandingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-paw-sky">
+        <div className="animate-pulse text-paw-brown/60">Loading...</div>
+      </div>
+    }>
+      <LandingPageContent />
+    </Suspense>
+  );
+}
+
+function LandingPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [authError, setAuthError] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
 
   useEffect(() => {
-    if (session) {
-      router.push("/dashboard");
-    }
-  }, [session, router]);
+    if (!session) return;
 
-  if (status === "loading") {
+    let cancelled = false;
+
+    const resolvePostAuthRoute = async () => {
+      setIsResolvingRedirect(true);
+
+      const requestedCallback = searchParams.get("callbackUrl");
+      if (requestedCallback?.includes("/onboarding")) {
+        router.push("/onboarding");
+        setIsResolvingRedirect(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/business/profile");
+        if (!response.ok) {
+          throw new Error("Failed to load business profile");
+        }
+
+        const data = await response.json();
+        const onboardingComplete = Boolean(data.business?.onboardingComplete);
+
+        if (!cancelled) {
+          router.push(onboardingComplete ? "/dashboard" : "/onboarding");
+        }
+      } catch {
+        if (!cancelled) {
+          router.push("/onboarding");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsResolvingRedirect(false);
+        }
+      }
+    };
+
+    void resolvePostAuthRoute();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, router, searchParams]);
+
+  const handleStartTrial = async () => {
+    setAuthError("");
+    setIsSigningIn(true);
+    const callbackUrl =
+      typeof window === "undefined"
+        ? "/onboarding"
+        : `${window.location.origin}/onboarding`;
+
+    try {
+      const result = await signIn("google", {
+        callbackUrl,
+        redirect: true,
+      });
+
+      if (result?.error) {
+        setAuthError("Google sign-in is not configured correctly yet.");
+        setIsSigningIn(false);
+      }
+    } catch {
+      setAuthError("Google sign-in failed. Check your Railway auth variables.");
+      setIsSigningIn(false);
+    }
+  };
+
+  if (status === "loading" || isResolvingRedirect) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paw-sky">
         <div className="animate-pulse text-paw-brown/60">Loading...</div>
       </div>
     );
   }
-
-  const handleGetStarted = () => signIn("google", { callbackUrl: "/onboarding" });
 
   return (
     <div className="min-h-screen bg-paw-sky text-paw-brown selection:bg-paw-amber selection:text-paw-brown">
@@ -62,10 +139,11 @@ export default function LandingPage() {
           <a href="#pricing" className="hover:text-paw-brown transition-colors">Pricing</a>
         </div>
         <button
-          onClick={handleGetStarted}
-          className="hidden md:block px-6 py-3 bg-paw-brown text-paw-cream rounded-full font-semibold hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          onClick={() => void handleStartTrial()}
+          disabled={isSigningIn}
+          className="hidden md:block px-6 py-3 bg-paw-brown text-paw-cream rounded-full font-semibold hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
         >
-          Book Demo
+          {isSigningIn ? "Redirecting..." : "Book Demo"}
         </button>
       </nav>
 
@@ -96,10 +174,11 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button
-                onClick={handleGetStarted}
-                className="px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2"
+                onClick={() => void handleStartTrial()}
+                disabled={isSigningIn}
+                className="px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Start Free Trial
+                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
@@ -111,6 +190,10 @@ export default function LandingPage() {
                 See How It Works
               </a>
             </div>
+
+            {authError ? (
+              <p className="text-sm text-red-600">{authError}</p>
+            ) : null}
 
             <div className="pt-4 flex items-center gap-4 text-sm font-medium text-paw-brown/70">
               <div className="flex -space-x-3">
@@ -337,10 +420,11 @@ export default function LandingPage() {
               </div>
               <p className="text-sm text-gray-500 mb-8 h-10">Perfect for solo groomers getting started.</p>
               <button
-                onClick={handleGetStarted}
-                className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
+                onClick={() => void handleStartTrial()}
+                disabled={isSigningIn}
+                className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
               >
-                Start Free Trial
+                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
               </button>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
@@ -368,10 +452,11 @@ export default function LandingPage() {
               </div>
               <p className="text-sm text-white/70 mb-8 h-10">For busy shops with multiple groomers.</p>
               <button
-                onClick={handleGetStarted}
-                className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg"
+                onClick={() => void handleStartTrial()}
+                disabled={isSigningIn}
+                className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg disabled:opacity-50"
               >
-                Start Free Trial
+                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
               </button>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
@@ -402,10 +487,11 @@ export default function LandingPage() {
               </div>
               <p className="text-sm text-gray-500 mb-8 h-10">Multi-location franchises.</p>
               <button
-                onClick={handleGetStarted}
-                className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
+                onClick={() => void handleStartTrial()}
+                disabled={isSigningIn}
+                className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
               >
-                Contact Sales
+                {isSigningIn ? "Redirecting..." : "Contact Sales"}
               </button>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
