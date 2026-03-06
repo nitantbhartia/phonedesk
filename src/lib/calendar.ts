@@ -336,9 +336,14 @@ function getBusinessTimezone(timezone?: string | null) {
 }
 
 function getTimeZoneOffsetMs(date: Date, timeZone: string) {
+  // IMPORTANT: Use hourCycle "h23" (0-23) instead of hour12:false.
+  // hour12:false can format midnight as "24" (hour 24 of the previous day)
+  // which breaks Date.UTC() — it overflows to the next day and produces
+  // a wrong offset. This caused March 9 midnight PDT to be treated as
+  // Sunday (March 8) instead of Monday (March 9).
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone,
-    hour12: false,
+    hourCycle: "h23",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
