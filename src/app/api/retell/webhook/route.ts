@@ -6,7 +6,7 @@ import {
   sendMissedCallNotification,
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
-import { upsertCustomerMemoryFromCall, lookupCustomerContext, buildCustomerContextSummary } from "@/lib/customer-memory";
+import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
 import { refreshRetellLLMForCall } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
@@ -62,17 +62,16 @@ async function handleCallStarted(call: RetellCallPayload) {
       update: { status: "IN_PROGRESS", callerName: knownName },
     });
 
-    // Refresh date + inject customer context on the LLM config.
-    // update-call doesn't reliably support retell_llm_dynamic_variables, so
-    // we use update-retell-llm instead. Customer context is also fetched via
-    // the lookup_customer_context tool (always called first) as a reliable backup.
+    // Refresh date on the LLM. Customer context is not injected here to
+    // avoid a race condition when two calls arrive simultaneously for the
+    // same business (global LLM vars are shared across all calls). The
+    // lookup_customer_context tool fetches context per-call reliably.
     const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
     if (llmId) {
-      const contextSummary = buildCustomerContextSummary(customerContext);
       try {
-        await refreshRetellLLMForCall(llmId, contextSummary);
+        await refreshRetellLLMForCall(llmId);
       } catch (err) {
-        console.error("[webhook] Failed to refresh LLM context:", err);
+        console.error("[webhook] Failed to refresh LLM date:", err);
       }
     }
   }
