@@ -18,15 +18,13 @@ export async function POST(req: NextRequest) {
   let businessId = business_id;
 
   if (!businessId) {
-    // Try to find business from Retell call context (agent_id in args)
-    const agentId = body.retell_call_id
-      ? undefined
-      : body.call?.metadata?.business_id;
-    if (agentId) {
-      const config = await prisma.retellConfig.findFirst({
-        where: { agentId },
+    // Try to find business from Retell call context
+    const calledNumber = body.call?.to_number;
+    if (calledNumber) {
+      const phoneNum = await prisma.phoneNumber.findFirst({
+        where: { number: calledNumber },
       });
-      if (config) businessId = config.businessId;
+      if (phoneNum) businessId = phoneNum.businessId;
     }
   }
 

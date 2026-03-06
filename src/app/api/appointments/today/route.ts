@@ -17,10 +17,10 @@ export async function GET() {
     return NextResponse.json({ appointments: [] });
   }
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  const timezone = business.timezone || "America/Los_Angeles";
+  const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+  const todayStart = new Date(`${todayStr}T00:00:00`);
+  const todayEnd = new Date(`${todayStr}T23:59:59`);
 
   const appointments = await prisma.appointment.findMany({
     where: {

@@ -23,7 +23,7 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string, timezone?: string): string {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
@@ -31,6 +31,7 @@ export function formatDateTime(date: Date | string): string {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    ...(timezone ? { timeZone: timezone } : {}),
   }).format(new Date(date));
 }
 
