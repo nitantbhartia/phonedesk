@@ -171,25 +171,52 @@ export async function POST(req: NextRequest) {
       });
 
       if (waitlistEntry) {
-        await prisma.waitlistEntry.update({
-          where: { id: waitlistEntry.id },
-          data: { status: "BOOKED", bookedAt: new Date() },
-        });
+        // Create actual appointment from waitlist entry
+        const { bookAppointment, isSlotAvailable } = await import("@/lib/calendar");
+        const startTime = waitlistEntry.preferredDate;
+        const serviceDuration = 60; // default 1 hour
+        const endTime = new Date(startTime.getTime() + serviceDuration * 60000);
 
+        const slotOpen = await isSlotAvailable(business.id, startTime, endTime);
         const { sendSms } = await import("@/lib/retell");
-        await sendSms(
-          from,
-          `Great — you're booked! We'll see ${waitlistEntry.petName || "your pet"} at ${business.name} soon. Reply CANCEL if plans change.`,
-          to
-        );
 
-        // Notify owner
-        if (business.phone) {
+        if (!slotOpen) {
           await sendSms(
-            business.phone,
-            `[RingPaw] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${waitlistEntry.petName || "their pet"}.`,
+            from,
+            `Sorry, that slot was just taken. We'll let you know when the next opening comes up!`,
             to
           );
+        } else {
+          const appointment = await bookAppointment(business.id, {
+            customerName: waitlistEntry.customerName,
+            customerPhone: waitlistEntry.customerPhone,
+            petName: waitlistEntry.petName || undefined,
+            petBreed: waitlistEntry.petBreed || undefined,
+            petSize: waitlistEntry.petSize || undefined,
+            serviceName: waitlistEntry.serviceName || undefined,
+            startTime,
+            endTime,
+          });
+
+          await prisma.waitlistEntry.update({
+            where: { id: waitlistEntry.id },
+            data: { status: "BOOKED", bookedAt: new Date() },
+          });
+
+          await sendSms(
+            from,
+            `Great — you're booked! We'll see ${waitlistEntry.petName || "your pet"} at ${business.name} soon. Reply CANCEL if plans change.`,
+            to
+          );
+
+          // Notify owner
+          if (business.phone) {
+            await sendSms(
+              business.phone,
+              `[RingPaw] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${waitlistEntry.petName || "their pet"}.`,
+              to
+            );
+          }
         }
       }
     } else if (upperBody === "REBOOK") {
