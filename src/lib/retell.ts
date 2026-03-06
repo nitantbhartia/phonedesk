@@ -146,6 +146,7 @@ function formatBusinessHours(
     fri: "Friday",
     sat: "Saturday",
     sun: "Sunday",
+    "mon-fri": "Monday-Friday",
     monday: "Monday",
     tuesday: "Tuesday",
     wednesday: "Wednesday",

@@ -429,7 +429,21 @@ function getRequestedDateParts(dateInput: Date | string, timeZone: string): Date
 }
 
 function parseBusinessTime(value: string) {
-  const [hourString, minuteString = "0"] = value.split(":");
+  // Handle both 24-hour ("09:00") and 12-hour ("9:00 AM") formats
+  const trimmed = value.trim();
+  const is12Hour = /AM|PM/i.test(trimmed);
+
+  if (is12Hour) {
+    const [timePart, meridiem] = trimmed.split(/\s+/);
+    const [rawHour, rawMinute = "0"] = timePart.split(":");
+    let hour = Number(rawHour);
+    const minute = Number(rawMinute);
+    if (meridiem?.toUpperCase() === "PM" && hour !== 12) hour += 12;
+    if (meridiem?.toUpperCase() === "AM" && hour === 12) hour = 0;
+    return { hour, minute };
+  }
+
+  const [hourString, minuteString = "0"] = trimmed.split(":");
   return {
     hour: Number(hourString),
     minute: Number(minuteString),
