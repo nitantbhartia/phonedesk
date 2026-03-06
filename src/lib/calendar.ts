@@ -429,7 +429,21 @@ function getRequestedDateParts(dateInput: Date | string, timeZone: string): Date
 }
 
 function parseBusinessTime(value: string) {
-  const [hourString, minuteString = "0"] = value.split(":");
+  // Handle both 24-hour ("09:00") and 12-hour ("9:00 AM") formats
+  const trimmed = value.trim();
+  const is12Hour = /AM|PM/i.test(trimmed);
+
+  if (is12Hour) {
+    const [timePart, meridiem] = trimmed.split(/\s+/);
+    const [rawHour, rawMinute = "0"] = timePart.split(":");
+    let hour = Number(rawHour);
+    const minute = Number(rawMinute);
+    if (meridiem?.toUpperCase() === "PM" && hour !== 12) hour += 12;
+    if (meridiem?.toUpperCase() === "AM" && hour === 12) hour = 0;
+    return { hour, minute };
+  }
+
+  const [hourString, minuteString = "0"] = trimmed.split(":");
   return {
     hour: Number(hourString),
     minute: Number(minuteString),
@@ -542,6 +556,88 @@ async function getBusyIntervals(
   return busyTimes;
 }
 
+export interface ConflictEntry {
+  start: Date;
+  end: Date;
+  summary: string;
+  source: string; // "Google Calendar", "Square", "Acuity", "RingPaw"
+}
+
+export async function getConflicts(
+  businessId: string,
+  dayStart: Date,
+  dayEnd: Date
+): Promise<ConflictEntry[]> {
+  const [connections, existingAppointments] = await Promise.all([
+    prisma.calendarConnection.findMany({
+      where: { businessId, isActive: true },
+    }),
+    prisma.appointment.findMany({
+      where: {
+        businessId,
+        status: { in: ["CONFIRMED", "PENDING"] },
+        startTime: { lt: dayEnd },
+        endTime: { gt: dayStart },
+      },
+      select: { startTime: true, endTime: true, customerName: true, serviceName: true },
+    }),
+  ]);
+
+  const conflicts: ConflictEntry[] = existingAppointments.map((a) => ({
+    start: a.startTime,
+    end: a.endTime,
+    summary: [a.customerName, a.serviceName].filter(Boolean).join(" — ") || "Appointment",
+    source: "RingPaw",
+  }));
+
+  for (const conn of connections) {
+    try {
+      if (conn.provider === "GOOGLE") {
+        const events = await getGoogleCalendarEvents(conn, dayStart, dayEnd);
+        for (const event of events) {
+          if (event.start && event.end && event.status !== "cancelled") {
+            conflicts.push({
+              start: new Date(event.start),
+              end: new Date(event.end),
+              summary: event.summary || "Busy",
+              source: "Google Calendar",
+            });
+          }
+        }
+      } else if (conn.provider === "SQUARE") {
+        const bookings = await getSquareBookings(conn, dayStart, dayEnd);
+        for (const b of bookings) {
+          if (b.status !== "CANCELLED" && b.status !== "DECLINED") {
+            conflicts.push({
+              start: new Date(b.start),
+              end: new Date(b.end),
+              summary: "Square Booking",
+              source: "Square",
+            });
+          }
+        }
+      } else if (conn.provider === "ACUITY") {
+        const appointments = await getAcuityAppointments(conn, dayStart, dayEnd);
+        for (const a of appointments) {
+          if (a.status !== "cancelled") {
+            conflicts.push({
+              start: new Date(a.start),
+              end: new Date(a.end),
+              summary: "Acuity Appointment",
+              source: "Acuity",
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching calendar ${conn.provider}:`, error);
+    }
+  }
+
+  conflicts.sort((a, b) => a.start.getTime() - b.start.getTime());
+  return conflicts;
+}
+
 export async function isSlotAvailable(
   businessId: string,
   startTime: Date,
@@ -572,12 +668,15 @@ export async function getAvailableSlots(
   const dayKey = dayNames[dayIndex];
   const hours = business.businessHours as BusinessHoursMap | null;
 
+  console.log("[getAvailableSlots] date:", date, "dayKey:", dayKey, "businessHours:", JSON.stringify(hours), "timezone:", timezone);
+
   let openTime = { hour: 9, minute: 0 };
   let closeTime = { hour: 17, minute: 0 };
 
-  if (hours) {
+  if (hours && Object.keys(hours).length > 0) {
     const dayHours = getHoursForDay(hours, dayKey);
     if (!dayHours?.open || !dayHours?.close) {
+      console.log("[getAvailableSlots] No hours found for", dayKey, "— business is closed. Available keys:", Object.keys(hours));
       return [];
     }
     openTime = parseBusinessTime(dayHours.open);
@@ -606,6 +705,8 @@ export async function getAvailableSlots(
   const busyTimes = await getBusyIntervals(businessId, dayStart, dayEnd);
   const slots: TimeSlot[] = [];
   const now = new Date();
+
+  console.log("[getAvailableSlots] openTime:", openTime, "closeTime:", closeTime, "slotStart:", slotStart.toISOString(), "slotEnd:", slotEnd.toISOString(), "now:", now.toISOString(), "busyIntervals:", busyTimes.length);
 
   let current = new Date(slotStart);
   while (current.getTime() + durationMinutes * 60000 <= slotEnd.getTime()) {
