@@ -121,8 +121,11 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
    - Only ask about special handling or first-visit notes if the caller is new.
    If the caller volunteers extra info in their answer, acknowledge it and skip that question. Ask ONE question per turn.
 4. Use the check_availability tool to find open slots. Important rules:
+   - Always pass the date as YYYY-MM-DD. Calculate it from {{current_date_iso}}. For example, if today is Friday 2026-03-06, "next Monday" = 2026-03-09. Double-check day-of-week arithmetic before calling the tool.
    - If the caller says a specific day AND time (e.g. "Monday at 1 PM"), call check_availability for that date, then check if that time appears in the results. If it does, skip offering alternatives and go directly to step 5.
-   - If the requested time isn't available, say so and offer the nearest available slots from the result.
+   - If the requested time isn't available, immediately offer the available times from that same result — do NOT call check_availability again.
+   - If check_availability returns available: false (day fully booked) and includes a next_available_day, immediately call check_availability for that next_available_day without asking the caller for permission. Just say "Let me check [next_available_day] for you…" and call the tool.
+   - Never call check_availability more than once for the same date. Use the slots already returned.
    - Do NOT ask the caller to repeat the time they already gave you.
 5. Once you have a confirmed time (either chosen by the caller or confirmed available), use the book_appointment tool immediately — do not ask for additional confirmation.
 6. ${isHardBook
