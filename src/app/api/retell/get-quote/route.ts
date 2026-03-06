@@ -1,134 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isRetellAuthorized } from "@/lib/retell-auth";
 
-// Voice agent tool endpoint (no auth - called by Retell)
-// Input: { breed, size, service_name, business_id? }
 export async function POST(req: NextRequest) {
+  if (!isRetellAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const { args, call } = body;
-  // Support both Retell custom tool format (args) and direct API calls
-  const breed = args?.breed || body.breed;
-  const size = args?.size || body.size;
-  const service_name = args?.service_name || body.service_name;
-  const business_id = args?.business_id || body.business_id;
+  const serviceName = String(args?.service_name || "").trim();
 
-  if (!service_name) {
-    return NextResponse.json({
-      quote: "Which service are you interested in? We offer Full Groom, Bath & Brush, and Nail Trim.",
-    });
-  }
-
-  // Determine business - from explicit id or from call metadata
-  let businessId = business_id;
-
-  if (!businessId) {
-    // Try to find business from Retell call context
-    const calledNumber = call?.to_number || body.call?.to_number;
-    if (calledNumber) {
-      const phoneNum = await prisma.phoneNumber.findFirst({
+  const calledNumber = call?.to_number;
+  const phoneNum = calledNumber
+    ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },
-      });
-      if (phoneNum) businessId = phoneNum.businessId;
-    }
-  }
+        include: { business: { include: { services: true } } },
+      })
+    : null;
 
-  if (!businessId) {
-    // Fall back: find the first active business (single-tenant scenario)
-    const business = await prisma.business.findFirst({
-      where: { isActive: true },
-    });
-    if (business) businessId = business.id;
-  }
-
-  if (!businessId) {
-    return NextResponse.json(
-      { quote: "I'm sorry, I'm having a little trouble looking up pricing right now. Can I help you with scheduling instead?" },
-      { status: 200 }
-    );
-  }
-
-  // Find the service by name (case-insensitive)
-  const service = await prisma.service.findFirst({
-    where: {
-      businessId,
-      name: { contains: service_name, mode: "insensitive" },
-      isActive: true,
-    },
-  });
-
-  if (!service) {
+  if (!phoneNum?.business) {
     return NextResponse.json({
-      quote: `I don't see a service called "${service_name}" in our system. We offer Full Groom, Bath & Brush, and Nail Trim — would any of those work?`,
-      service_name,
-      breed: breed || null,
-      size: size || null,
-      notes: null,
+      result:
+        "I'm having trouble pulling up pricing right now. I can have the owner text you exact pricing right after this call.",
+      found: false,
     });
   }
 
-  // Look for pricing rules in order of specificity:
-  // 1. Exact match: breed + size + service
-  // 2. Breed-only match: breed + service (any size)
-  // 3. Size-only match: size + service (any breed)
-  // 4. Base service price
+  const activeServices = phoneNum.business.services.filter((s) => s.isActive);
+  const matchedService = serviceName
+    ? activeServices.find((service) =>
+        service.name.toLowerCase().includes(serviceName.toLowerCase())
+      )
+    : null;
 
-  const normalizedBreed = breed?.trim().toLowerCase() || null;
-  const normalizedSize = size?.trim().toUpperCase() || null;
-
-  let matchedRule = null;
-  let matchLevel = "base";
-
-  if (normalizedBreed && normalizedSize) {
-    // 1. Exact match: breed + size
-    matchedRule = await prisma.pricingRule.findFirst({
-      where: {
-        businessId,
-        serviceId: service.id,
-        breed: { equals: normalizedBreed, mode: "insensitive" },
-        size: normalizedSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
-        isActive: true,
-      },
+  if (!matchedService) {
+    const serviceList = activeServices
+      .slice(0, 4)
+      .map((service) => `${service.name} ($${service.price})`)
+      .join(", ");
+    return NextResponse.json({
+      result: serviceList
+        ? `I can quote ${serviceList}. Which service are you interested in?`
+        : "I don't have service pricing configured yet. The owner can text you exact pricing right away.",
+      found: false,
     });
-    if (matchedRule) matchLevel = "breed+size";
   }
-
-  if (!matchedRule && normalizedBreed) {
-    // 2. Breed-only match
-    matchedRule = await prisma.pricingRule.findFirst({
-      where: {
-        businessId,
-        serviceId: service.id,
-        breed: { equals: normalizedBreed, mode: "insensitive" },
-        size: null,
-        isActive: true,
-      },
-    });
-    if (matchedRule) matchLevel = "breed";
-  }
-
-  if (!matchedRule && normalizedSize) {
-    // 3. Size-only match
-    matchedRule = await prisma.pricingRule.findFirst({
-      where: {
-        businessId,
-        serviceId: service.id,
-        breed: null,
-        size: normalizedSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
-        isActive: true,
-      },
-    });
-    if (matchedRule) matchLevel = "size";
-  }
-
-  const finalPrice = matchedRule ? matchedRule.price : service.price;
-  const notes = matchedRule?.notes || null;
 
   return NextResponse.json({
-    quote: `$${finalPrice}`,
-    service_name: service.name,
-    breed: breed || null,
-    size: size || null,
-    notes,
-    match_level: matchLevel,
+    result: `${matchedService.name} is $${matchedService.price} and usually takes about ${matchedService.duration} minutes. Want me to check availability for that service?`,
+    found: true,
+    service_name: matchedService.name,
+    price: matchedService.price,
+    duration_minutes: matchedService.duration,
   });
 }
