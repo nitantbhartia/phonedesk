@@ -86,7 +86,7 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 - If a caller wants to cancel, say you'll pass the message to ${business.ownerName}
 - Keep the conversation efficient — aim for under 2 minutes
 - Do NOT discuss pricing unless the caller specifically asks
-- If asked about pricing, share the service prices listed above
+- When asked about pricing, use the get_quote tool to provide an accurate estimate based on breed and size. Only fall back to the general service prices if the tool is unavailable.
 - When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions`;
 }
 
@@ -377,6 +377,33 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           },
         },
         required: ["customer_name", "start_time"],
+      },
+    },
+    {
+      type: "custom",
+      name: "get_quote",
+      description:
+        "Get a price quote for a specific breed, size, and service combination. Call when customer asks about pricing.",
+      url: `${appUrl}/api/retell/get-quote`,
+      speak_during_execution: false,
+      parameters: {
+        type: "object",
+        properties: {
+          breed: {
+            type: "string",
+            description: "Dog breed",
+          },
+          size: {
+            type: "string",
+            description: "Dog size",
+            enum: ["SMALL", "MEDIUM", "LARGE", "XLARGE"],
+          },
+          service_name: {
+            type: "string",
+            description: "Service name",
+          },
+        },
+        required: ["service_name"],
       },
     },
     {

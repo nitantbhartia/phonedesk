@@ -167,6 +167,88 @@ export async function GET() {
     },
   });
 
+  // Lapsing clients: last completed appointment > rebookInterval (or 42 days) ago
+  // and no future appointment scheduled
+  const rebookingConfig = await prisma.rebookingConfig.findUnique({
+    where: { businessId: business.id },
+  });
+  const defaultInterval = rebookingConfig?.defaultInterval || 42;
+  const lapseThreshold = new Date(
+    now.getTime() - defaultInterval * 24 * 60 * 60 * 1000
+  );
+
+  // Find customers whose last completed appointment is older than the threshold
+  const completedAppointments = await prisma.appointment.findMany({
+    where: {
+      businessId: business.id,
+      status: "COMPLETED",
+      completedAt: { not: null, lte: lapseThreshold },
+      customerPhone: { not: null },
+    },
+    orderBy: { completedAt: "desc" },
+    select: {
+      customerName: true,
+      customerPhone: true,
+      petName: true,
+      completedAt: true,
+      rebookInterval: true,
+    },
+  });
+
+  // Group by customer phone, keep only the most recent completed appointment
+  const customerLastVisit = new Map<
+    string,
+    {
+      customerName: string;
+      customerPhone: string;
+      petName: string | null;
+      lastVisitDate: Date;
+      daysSinceVisit: number;
+    }
+  >();
+
+  for (const appt of completedAppointments) {
+    if (!appt.customerPhone) continue;
+    if (customerLastVisit.has(appt.customerPhone)) continue; // already have most recent
+
+    const interval = appt.rebookInterval || defaultInterval;
+    const daysSince = Math.floor(
+      (now.getTime() - appt.completedAt!.getTime()) / (24 * 60 * 60 * 1000)
+    );
+
+    if (daysSince < interval) continue; // not lapsed yet
+
+    customerLastVisit.set(appt.customerPhone, {
+      customerName: appt.customerName,
+      customerPhone: appt.customerPhone,
+      petName: appt.petName,
+      lastVisitDate: appt.completedAt!,
+      daysSinceVisit: daysSince,
+    });
+  }
+
+  // Filter out customers who have a future appointment scheduled
+  const lapsingCandidates = Array.from(customerLastVisit.values());
+  const lapsingClients: typeof lapsingCandidates = [];
+
+  for (const candidate of lapsingCandidates) {
+    const futureAppt = await prisma.appointment.findFirst({
+      where: {
+        businessId: business.id,
+        customerPhone: candidate.customerPhone,
+        status: { in: ["PENDING", "CONFIRMED"] },
+        startTime: { gte: now },
+      },
+    });
+
+    if (!futureAppt) {
+      lapsingClients.push(candidate);
+    }
+  }
+
+  // Sort by days since visit descending
+  lapsingClients.sort((a, b) => b.daysSinceVisit - a.daysSinceVisit);
+
   return NextResponse.json({
     stats: {
       totalAppointments,
@@ -181,5 +263,6 @@ export async function GET() {
     repeatOffenders: offenderDetails,
     recentNoShows,
     pendingConfirmation,
+    lapsingClients,
   });
 }

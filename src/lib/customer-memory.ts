@@ -174,11 +174,34 @@ export async function lookupCustomerContext(businessId: string, phone?: string |
     },
   });
 
+  // Fetch behavior logs for this customer's pets and the customer
+  let behaviorLogs: Awaited<ReturnType<typeof prisma.behaviorLog.findMany>> = [];
+
+  if (customer) {
+    const petIds = customer.pets.map((p) => p.id);
+    const orConditions: Record<string, unknown>[] = [
+      { customerId: customer.id },
+    ];
+    if (petIds.length > 0) {
+      orConditions.push({ petId: { in: petIds } });
+    }
+
+    behaviorLogs = await prisma.behaviorLog.findMany({
+      where: {
+        businessId,
+        OR: orConditions,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+  }
+
   return {
     found: Boolean(customer),
     normalizedPhone,
     customer,
     pets: customer?.pets || [],
+    behaviorLogs,
   };
 }
 
@@ -205,7 +228,7 @@ export function buildCustomerContextSummary(context: Awaited<ReturnType<typeof l
       })
     : "Unknown";
 
-  return [
+  const summary = [
     "Returning customer found.",
     `Customer name: ${context.customer.name}.`,
     `Phone: ${context.customer.phone}.`,
@@ -226,4 +249,34 @@ export function buildCustomerContextSummary(context: Awaited<ReturnType<typeof l
   ]
     .filter(Boolean)
     .join(" ");
+
+  // Add behavior log context if available
+  if (context.behaviorLogs && context.behaviorLogs.length > 0) {
+    const hasHighRisk = context.behaviorLogs.some(
+      (log) => log.severity === "HIGH_RISK"
+    );
+
+    const behaviorParts: string[] = [];
+
+    if (hasHighRisk) {
+      behaviorParts.push(
+        "WARNING: This pet has been flagged as high-risk."
+      );
+    }
+
+    const recentNotes = context.behaviorLogs
+      .slice(0, 5)
+      .map(
+        (log) =>
+          `[${log.severity}] ${log.petName}: ${log.note}${
+            log.tags.length > 0 ? ` (tags: ${log.tags.join(", ")})` : ""
+          }`
+      );
+
+    behaviorParts.push(`Behavior notes: ${recentNotes.join(" | ")}`);
+
+    return `${summary} ${behaviorParts.join(" ")}`;
+  }
+
+  return summary;
 }

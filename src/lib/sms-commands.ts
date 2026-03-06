@@ -26,6 +26,10 @@ Examples of owner SMS commands:
 - "Show today's schedule" → { "intent": "show_schedule", "entities": { "date": "today" } }
 - "Cancel Sarah's appt" → { "intent": "cancel_appointment", "entities": { "customerName": "Sarah" } }
 - "Price list" → { "intent": "show_prices", "entities": {} }
+- "Checked in Buddy" → { "intent": "check_in", "entities": { "petName": "Buddy" } }
+- "Start Buddy" → { "intent": "start_grooming", "entities": { "petName": "Buddy" } }
+- "Done Buddy" → { "intent": "finish_grooming", "entities": { "petName": "Buddy" } }
+- "Note Buddy: anxious today, needed muzzle for nails" → { "intent": "behavior_note", "entities": { "petName": "Buddy", "note": "anxious today, needed muzzle for nails" } }
 `;
 
 export async function parseOwnerCommand(
@@ -35,7 +39,7 @@ export async function parseOwnerCommand(
     model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
     contents: `Parse the owner's SMS message into a structured intent and entities object.
 
-Possible intents: block_calendar, add_service, update_hours, pause_bookings, resume_bookings, show_schedule, cancel_appointment, show_prices, unknown
+Possible intents: block_calendar, add_service, update_hours, pause_bookings, resume_bookings, show_schedule, cancel_appointment, show_prices, check_in, start_grooming, finish_grooming, behavior_note, unknown
 
 ${COMMAND_EXAMPLES}
 
@@ -216,9 +220,259 @@ export async function executeCommand(
       break;
     }
 
+    case "check_in": {
+      const petName = command.entities.petName;
+      if (!petName) {
+        responseMessage = "Please specify the pet name. Example: \"Checked in Buddy\"";
+        break;
+      }
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const checkInAppt = await prisma.appointment.findFirst({
+        where: {
+          businessId,
+          petName: { contains: petName, mode: "insensitive" },
+          startTime: { gte: todayStart, lte: todayEnd },
+          status: { in: ["CONFIRMED", "PENDING"] },
+        },
+        orderBy: { startTime: "asc" },
+      });
+
+      if (!checkInAppt) {
+        responseMessage = `No appointment found today for "${petName}".`;
+      } else {
+        await prisma.appointment.update({
+          where: { id: checkInAppt.id },
+          data: {
+            groomingStatus: "CHECKED_IN",
+            groomingStatusAt: new Date(),
+          },
+        });
+        // Notify customer
+        if (checkInAppt.customerPhone && business.phoneNumber?.number) {
+          await sendSms(
+            checkInAppt.customerPhone,
+            `${checkInAppt.petName || petName} is checked in at ${business.name}! We'll text you when they're ready.`,
+            business.phoneNumber.number
+          );
+        }
+        responseMessage = `${checkInAppt.petName || petName} is checked in. Customer has been notified.`;
+      }
+      break;
+    }
+
+    case "start_grooming": {
+      const petName = command.entities.petName;
+      if (!petName) {
+        responseMessage = "Please specify the pet name. Example: \"Start Buddy\"";
+        break;
+      }
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const startAppt = await prisma.appointment.findFirst({
+        where: {
+          businessId,
+          petName: { contains: petName, mode: "insensitive" },
+          startTime: { gte: todayStart, lte: todayEnd },
+          status: { in: ["CONFIRMED", "PENDING"] },
+        },
+        orderBy: { startTime: "asc" },
+      });
+
+      if (!startAppt) {
+        responseMessage = `No appointment found today for "${petName}".`;
+      } else {
+        await prisma.appointment.update({
+          where: { id: startAppt.id },
+          data: {
+            groomingStatus: "IN_PROGRESS",
+            groomingStatusAt: new Date(),
+          },
+        });
+        // Notify customer
+        if (startAppt.customerPhone && business.phoneNumber?.number) {
+          await sendSms(
+            startAppt.customerPhone,
+            `${startAppt.petName || petName} is in the chair! We'll text you when they're ready for pickup.`,
+            business.phoneNumber.number
+          );
+        }
+        responseMessage = `${startAppt.petName || petName} is now being groomed. Customer has been notified.`;
+      }
+      break;
+    }
+
+    case "behavior_note": {
+      const petName = command.entities.petName;
+      const noteText = command.entities.note;
+      if (!petName || !noteText) {
+        responseMessage = 'Please specify pet and note. Example: "Note Buddy: anxious today, needed muzzle"';
+        break;
+      }
+
+      // Auto-detect severity from keywords
+      const lowerNote = noteText.toLowerCase();
+      const severity = (lowerNote.includes("bite") || lowerNote.includes("aggressive") || lowerNote.includes("attack"))
+        ? "HIGH_RISK"
+        : (lowerNote.includes("anxious") || lowerNote.includes("muzzle") || lowerNote.includes("nervous") || lowerNote.includes("caution"))
+          ? "CAUTION"
+          : "NOTE";
+
+      // Auto-detect tags
+      const tags: string[] = [];
+      if (lowerNote.includes("muzzle")) tags.push("muzzle_required");
+      if (lowerNote.includes("anxious") || lowerNote.includes("anxiety")) tags.push("anxious");
+      if (lowerNote.includes("bite") || lowerNote.includes("biting")) tags.push("biting");
+      if (lowerNote.includes("aggressive")) tags.push("aggressive");
+      if (lowerNote.includes("nervous")) tags.push("nervous");
+      if (lowerNote.includes("pull") || lowerNote.includes("pulling")) tags.push("pulling");
+
+      await prisma.behaviorLog.create({
+        data: {
+          businessId,
+          petName,
+          severity,
+          note: noteText,
+          tags,
+        },
+      });
+
+      const severityLabel = severity === "HIGH_RISK" ? " (flagged HIGH RISK)" : severity === "CAUTION" ? " (flagged CAUTION)" : "";
+      responseMessage = `Behavior note logged for ${petName}${severityLabel}. This will appear in pre-appointment briefs.`;
+      break;
+    }
+
+    case "finish_grooming": {
+      const petName = command.entities.petName;
+      if (!petName) {
+        responseMessage = "Please specify the pet name. Example: \"Done Buddy\"";
+        break;
+      }
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const doneAppt = await prisma.appointment.findFirst({
+        where: {
+          businessId,
+          petName: { contains: petName, mode: "insensitive" },
+          startTime: { gte: todayStart, lte: todayEnd },
+          status: { in: ["CONFIRMED", "PENDING"] },
+        },
+        orderBy: { startTime: "asc" },
+      });
+
+      if (!doneAppt) {
+        responseMessage = `No appointment found today for "${petName}".`;
+      } else {
+        await prisma.appointment.update({
+          where: { id: doneAppt.id },
+          data: {
+            groomingStatus: "READY_FOR_PICKUP",
+            groomingStatusAt: new Date(),
+            pickupNotifiedAt: new Date(),
+          },
+        });
+        // Notify customer with pickup address
+        if (doneAppt.customerPhone && business.phoneNumber?.number) {
+          await sendSms(
+            doneAppt.customerPhone,
+            `${doneAppt.petName || petName} is all done and looking fabulous! Head to ${business.address || business.name} for pickup.`,
+            business.phoneNumber.number
+          );
+        }
+        responseMessage = `${doneAppt.petName || petName} is ready for pickup. Customer has been notified.`;
+      }
+      break;
+    }
+
+    case "behavior_note": {
+      const petName = command.entities.petName;
+      const noteText = command.entities.note;
+      if (!petName || !noteText) {
+        responseMessage =
+          'Please specify the pet and note. Example: "Note Buddy: anxious today, needed muzzle for nails"';
+        break;
+      }
+
+      // Try to find the pet and customer from today's appointments
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const noteAppt = await prisma.appointment.findFirst({
+        where: {
+          businessId,
+          petName: { contains: petName, mode: "insensitive" },
+          startTime: { gte: todayStart, lte: todayEnd },
+        },
+        orderBy: { startTime: "asc" },
+      });
+
+      // Try to find customer and pet records
+      let customerId: string | null = null;
+      let petId: string | null = null;
+
+      if (noteAppt?.customerPhone) {
+        const customer = await prisma.customer.findFirst({
+          where: { businessId, phone: noteAppt.customerPhone },
+          include: { pets: true },
+        });
+        if (customer) {
+          customerId = customer.id;
+          const petRecord = customer.pets.find(
+            (p) => p.name.toLowerCase() === petName.toLowerCase()
+          );
+          if (petRecord) petId = petRecord.id;
+        }
+      }
+
+      // Determine severity from note content
+      const lowerNote = noteText.toLowerCase();
+      let severity: "NOTE" | "CAUTION" | "HIGH_RISK" = "NOTE";
+      if (
+        lowerNote.includes("bite") ||
+        lowerNote.includes("aggressive") ||
+        lowerNote.includes("attack")
+      ) {
+        severity = "HIGH_RISK";
+      } else if (
+        lowerNote.includes("muzzle") ||
+        lowerNote.includes("anxious") ||
+        lowerNote.includes("nervous") ||
+        lowerNote.includes("snap")
+      ) {
+        severity = "CAUTION";
+      }
+
+      await prisma.behaviorLog.create({
+        data: {
+          businessId,
+          petName,
+          customerId,
+          petId,
+          appointmentId: noteAppt?.id || null,
+          severity,
+          note: noteText,
+          tags: [],
+        },
+      });
+
+      responseMessage = `Behavior note logged for ${petName} [${severity}]: "${noteText}"`;
+      break;
+    }
+
     default:
       responseMessage =
-        "I didn't understand that. Try:\n• 'Block [date]'\n• 'Add service: [name] $[price]'\n• 'Show schedule'\n• 'Pause bookings'\n• 'Price list'";
+        "I didn't understand that. Try:\n• 'Block [date]'\n• 'Add service: [name] $[price]'\n• 'Show schedule'\n• 'Pause bookings'\n• 'Price list'\n• 'Checked in [pet]'\n• 'Start [pet]'\n• 'Done [pet]'\n• 'Note [pet]: [behavior note]'";
   }
 
   // Send response back to owner
