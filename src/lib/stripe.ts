@@ -2,7 +2,8 @@ import Stripe from "stripe";
 import type { Plan } from "@prisma/client";
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-02-24.acacia",
+  // Use the SDK's pinned latest API version to avoid type mismatches.
+  apiVersion: undefined,
 });
 
 const PRICE_IDS: Record<Plan, string | undefined> = {
