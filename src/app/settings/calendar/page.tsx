@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { InfoIcon } from "@/components/ui/info-icon";
 
 interface CalendarConnection {
   id: string;
@@ -234,7 +235,10 @@ export default function CalendarSettingsPage() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
-                Primary Destination
+                <span className="inline-flex items-center gap-1.5">
+                  Primary Destination
+                  <InfoIcon text="Where confirmed appointments are written by default." />
+                </span>
               </label>
               <div className="relative">
                 <select className="w-full appearance-none bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 font-bold focus:outline-none focus:border-paw-amber transition-all">
@@ -259,7 +263,10 @@ export default function CalendarSettingsPage() {
 
             <div>
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
-                Conflict Checking
+                <span className="inline-flex items-center gap-1.5">
+                  Conflict Checking
+                  <InfoIcon text="Rules the AI uses to avoid double-booking." />
+                </span>
               </label>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl cursor-pointer hover:bg-paw-cream transition-colors border border-transparent hover:border-paw-brown/5">

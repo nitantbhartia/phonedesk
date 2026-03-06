@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { InfoIcon } from "@/components/ui/info-icon";
 
 interface PricingRule {
   id: string;
@@ -235,7 +236,12 @@ export default function PricingPage() {
             <h2 className="text-xl font-bold text-paw-brown mb-4">Add Pricing Rule</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">Service *</label>
+                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                  <span className="inline-flex items-center gap-1">
+                    Service *
+                    <InfoIcon text="Pick which base service this custom price rule applies to." />
+                  </span>
+                </label>
                 <select
                   value={form.serviceId}
                   onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
@@ -251,7 +257,12 @@ export default function PricingPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">Breed</label>
+                  <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                    <span className="inline-flex items-center gap-1">
+                      Breed
+                      <InfoIcon text="Optional: limit this rule to a specific breed." />
+                    </span>
+                  </label>
                   <input
                     type="text"
                     value={form.breed}
@@ -261,7 +272,12 @@ export default function PricingPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">Size</label>
+                  <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                    <span className="inline-flex items-center gap-1">
+                      Size
+                      <InfoIcon text="Optional: limit this rule to one dog size." />
+                    </span>
+                  </label>
                   <select
                     value={form.size}
                     onChange={(e) => setForm({ ...form, size: e.target.value })}
@@ -276,7 +292,12 @@ export default function PricingPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">Price *</label>
+                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                  <span className="inline-flex items-center gap-1">
+                    Price *
+                    <InfoIcon text="Final quoted price when this rule matches." />
+                  </span>
+                </label>
                 <input
                   type="number"
                   value={form.price}
@@ -286,7 +307,12 @@ export default function PricingPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">Notes</label>
+                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                  <span className="inline-flex items-center gap-1">
+                    Notes
+                    <InfoIcon text="Optional internal note for why this pricing override exists." />
+                  </span>
+                </label>
                 <input
                   type="text"
                   value={form.notes}
