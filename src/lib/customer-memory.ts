@@ -205,6 +205,30 @@ export async function lookupCustomerContext(businessId: string, phone?: string |
   };
 }
 
+/**
+ * Deduplicate pets whose names are essentially the same (case-insensitive,
+ * trailing e/ie/y variations like Rexi/Rexie/Rexy). Keeps the record with
+ * the most complete data (breed + size filled in).
+ */
+export function deduplicatePets<T extends { name: string; breed?: string | null; size?: string | null }>(pets: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const pet of pets) {
+    // Normalize: lowercase, strip trailing e/ie/y/ey variants
+    const key = pet.name.toLowerCase().replace(/(ie|ey|[eyi])$/i, "");
+    const existing = seen.get(key);
+    if (!existing) {
+      seen.set(key, pet);
+    } else {
+      // Keep whichever has more data filled in
+      const score = (p: T) => (p.breed ? 1 : 0) + (p.size ? 1 : 0);
+      if (score(pet) > score(existing)) {
+        seen.set(key, pet);
+      }
+    }
+  }
+  return Array.from(seen.values());
+}
+
 export function buildCustomerContextSummary(context: Awaited<ReturnType<typeof lookupCustomerContext>>) {
   if (!context.customer) {
     return "No prior customer record found for this caller. Treat them as a new customer and collect full booking details.";
@@ -212,7 +236,7 @@ export function buildCustomerContextSummary(context: Awaited<ReturnType<typeof l
 
   const petSummary =
     context.pets.length > 0
-      ? context.pets
+      ? deduplicatePets(context.pets)
           .map((pet) => {
             const details = [pet.name, pet.breed, pet.size].filter(Boolean).join(", ");
             return details || pet.name;

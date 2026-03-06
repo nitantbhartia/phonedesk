@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   buildCustomerContextSummary,
+  deduplicatePets,
   lookupCustomerContext,
 } from "@/lib/customer-memory";
 
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
     visit_count: context.customer?.visitCount || 0,
     last_service_name: context.customer?.lastServiceName || null,
     last_visit_at: context.customer?.lastVisitAt?.toISOString() || null,
-    pets: context.pets.map((pet) => ({
+    pets: deduplicatePets(context.pets).map((pet) => ({
       name: pet.name,
       breed: pet.breed,
       size: pet.size,
