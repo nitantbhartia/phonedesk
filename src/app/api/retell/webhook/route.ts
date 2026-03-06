@@ -62,15 +62,15 @@ async function handleCallStarted(call: RetellCallPayload) {
       update: { status: "IN_PROGRESS", callerName: knownName },
     });
 
-    // Inject customer context + refresh date on the LLM before responding.
-    // We await this so the agent has the context before generating any response.
-    const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
-    if (llmId) {
+    // Inject per-call customer context + date using update-call (not update-retell-llm).
+    // update-call is scoped to this specific call so concurrent calls don't overwrite
+    // each other's context. We await so the agent has context before first response.
+    if (call.call_id) {
       const contextSummary = buildCustomerContextSummary(customerContext);
       try {
-        await refreshRetellLLMForCall(llmId, contextSummary);
+        await refreshRetellLLMForCall(call.call_id, contextSummary);
       } catch (err) {
-        console.error("[webhook] Failed to refresh LLM for call:", err);
+        console.error("[webhook] Failed to inject call context:", err);
       }
     }
   }

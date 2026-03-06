@@ -268,12 +268,13 @@ export async function updateRetellLLM(
 }
 
 /**
- * Refresh dynamic variables on an existing Retell LLM at call start.
- * Sets the current date and optionally injects customer context so the
- * agent has caller info immediately without needing a tool call.
+ * Inject per-call dynamic variables (customer context + current date) into
+ * an active call using Retell's update-call endpoint. This is per-call and
+ * does not affect other concurrent calls — unlike update-retell-llm which
+ * is global and subject to race conditions.
  */
 export async function refreshRetellLLMForCall(
-  llmId: string,
+  callId: string,
   customerContext?: string | null
 ): Promise<void> {
   const now = new Date();
@@ -293,7 +294,7 @@ export async function refreshRetellLLMForCall(
     customer_context: customerContext || "No prior customer record found. Treat as a new customer.",
   };
 
-  await retellFetch(`/update-retell-llm/${llmId}`, {
+  await retellFetch(`/update-call/${callId}`, {
     method: "PATCH",
     body: JSON.stringify({
       retell_llm_dynamic_variables: vars,
