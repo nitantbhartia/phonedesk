@@ -127,36 +127,39 @@ export async function POST(req: NextRequest) {
     businessHours,
     bookingMode,
     services,
+    // Agent config fields (optional — sent from agent settings page)
+    agentActive,
+    voiceId,
+    personality,
+    greeting,
   } = body;
 
+  // Build update data — only include fields that were actually provided
+  // to avoid overwriting existing values with defaults
+  const updateData: Record<string, unknown> = {};
+  const createData: Record<string, unknown> = {
+    userId,
+    onboardingStep: 3,
+  };
+
+  if (name !== undefined) { updateData.name = name; createData.name = name; }
+  if (ownerName !== undefined) { updateData.ownerName = ownerName; createData.ownerName = ownerName; }
+  if (city !== undefined) { updateData.city = city; createData.city = city; }
+  if (state !== undefined) { updateData.state = state; createData.state = state; }
+  if (phone !== undefined) { updateData.phone = phone; createData.phone = phone; }
+  if (address !== undefined) { updateData.address = address; createData.address = address; }
+  if (timezone !== undefined) { updateData.timezone = timezone; createData.timezone = timezone; }
+  else { createData.timezone = "America/Los_Angeles"; }
+  if (businessHours !== undefined) { updateData.businessHours = businessHours; createData.businessHours = businessHours; }
+  if (bookingMode !== undefined) { updateData.bookingMode = bookingMode; createData.bookingMode = bookingMode; }
+  else { createData.bookingMode = "SOFT"; }
+
   // Upsert business
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const business = await prisma.business.upsert({
     where: { userId },
-    create: {
-      userId,
-      name,
-      ownerName,
-      city,
-      state,
-      phone,
-      address,
-      timezone: timezone || "America/Los_Angeles",
-      businessHours,
-      bookingMode: bookingMode || "SOFT",
-      onboardingStep: 3,
-    },
-    update: {
-      name,
-      ownerName,
-      city,
-      state,
-      phone,
-      address,
-      timezone: timezone || "America/Los_Angeles",
-      businessHours,
-      bookingMode: bookingMode || "SOFT",
-      onboardingStep: 3,
-    },
+    create: createData as any,
+    update: updateData,
   });
 
   // Upsert services
@@ -184,7 +187,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Create/update Retell config
+  // Update RetellConfig if agent config fields were provided
+  const hasRetellUpdates = agentActive !== undefined || voiceId !== undefined || personality !== undefined || greeting !== undefined;
+  if (hasRetellUpdates) {
+    const retellData: Record<string, unknown> = {};
+    if (agentActive !== undefined) retellData.isActive = Boolean(agentActive);
+    if (voiceId !== undefined) retellData.voiceId = String(voiceId);
+    if (personality !== undefined) retellData.personality = personality;
+    if (greeting !== undefined) retellData.greeting = String(greeting);
+    await prisma.retellConfig.updateMany({
+      where: { businessId: business.id },
+      data: retellData,
+    });
+  }
+
+  // Re-fetch with all relations for Retell sync
   const fullBusiness = await prisma.business.findUnique({
     where: { id: business.id },
     include: {
@@ -198,6 +215,10 @@ export async function POST(req: NextRequest) {
       await syncRetellAgent(fullBusiness);
     } catch (error) {
       console.error("Error configuring Retell:", error);
+      return NextResponse.json(
+        { business, error: "Settings saved but failed to sync to voice agent. Please try saving again." },
+        { status: 207 }
+      );
     }
   }
 

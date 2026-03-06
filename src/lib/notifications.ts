@@ -9,7 +9,14 @@ export async function sendBookingNotificationToOwner(
   business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!business.phone || !business.phoneNumber) return;
+  if (!business.phone) {
+    console.warn("[SMS] Skipping owner notification: business.phone is not set for business", business.id);
+    return;
+  }
+  if (!business.phoneNumber) {
+    console.warn("[SMS] Skipping owner notification: no provisioned phone number for business", business.id);
+    return;
+  }
 
   const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
@@ -34,7 +41,14 @@ export async function sendBookingConfirmationToCustomer(
   business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!appointment.customerPhone || !business.phoneNumber) return;
+  if (!appointment.customerPhone) {
+    console.warn("[SMS] Skipping customer confirmation: no customerPhone on appointment", appointment.id);
+    return;
+  }
+  if (!business.phoneNumber) {
+    console.warn("[SMS] Skipping customer confirmation: no provisioned phone number for business", business.id);
+    return;
+  }
 
   const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
@@ -62,7 +76,10 @@ export async function sendMissedCallNotification(
   callerPhone: string,
   callerName?: string
 ) {
-  if (!business.phoneNumber) return;
+  if (!business.phoneNumber) {
+    console.warn("[SMS] Skipping missed call notification: no provisioned phone number for business", business.id);
+    return;
+  }
 
   const fromNumber = business.phoneNumber.number;
 
