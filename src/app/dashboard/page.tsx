@@ -124,6 +124,7 @@ export default function DashboardPage() {
   const [recentCalls, setRecentCalls] = useState<RecentCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [agentLive, setAgentLive] = useState(true);
+  const [agentToggling, setAgentToggling] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -145,6 +146,9 @@ export default function DashboardPage() {
       if (statsRes.ok) {
         const data = await statsRes.json();
         if (data.stats) setStats(data.stats);
+        if (data.business?.retellConfig) {
+          setAgentLive(data.business.retellConfig.isActive ?? true);
+        }
       }
 
       if (callsRes.ok) {
@@ -155,6 +159,24 @@ export default function DashboardPage() {
       console.error("Error fetching dashboard data:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function toggleAgent(enabled: boolean) {
+    setAgentToggling(true);
+    const prev = agentLive;
+    setAgentLive(enabled);
+    try {
+      const res = await fetch("/api/business/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentActive: enabled }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setAgentLive(prev);
+    } finally {
+      setAgentToggling(false);
     }
   }
 
@@ -205,7 +227,8 @@ export default function DashboardPage() {
                   type="checkbox"
                   className="sr-only"
                   checked={agentLive}
-                  onChange={(e) => setAgentLive(e.target.checked)}
+                  disabled={agentToggling}
+                  onChange={(e) => toggleAgent(e.target.checked)}
                 />
                 <div
                   className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
@@ -349,17 +372,16 @@ export default function DashboardPage() {
           <p className="text-sm font-bold text-paw-amber uppercase tracking-wider mb-2">
             Next Appointment
           </p>
-          {recentCalls.find((c) => c.appointment) ? (
+          {(() => {
+            const nextAppt = recentCalls.find((c) => c.appointment)?.appointment;
+            return nextAppt ? (
             <>
               <p className="text-2xl font-bold text-white">
-                {recentCalls.find((c) => c.appointment)?.appointment?.petName ||
-                  "Upcoming"}
+                {nextAppt.petName || "Upcoming"}
               </p>
               <p className="text-sm text-white/70">
-                {recentCalls.find((c) => c.appointment)?.appointment?.startTime
-                  ? new Date(
-                      recentCalls.find((c) => c.appointment)!.appointment!.startTime
-                    ).toLocaleDateString("en-US", {
+                {nextAppt.startTime
+                  ? new Date(nextAppt.startTime).toLocaleDateString("en-US", {
                       weekday: "long",
                       hour: "numeric",
                       minute: "2-digit",
@@ -372,7 +394,8 @@ export default function DashboardPage() {
               <p className="text-2xl font-bold text-white">None scheduled</p>
               <p className="text-sm text-white/70">No upcoming appointments</p>
             </>
-          )}
+          );
+          })()}
           <button className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 transition-all rounded-xl text-xs font-bold text-white uppercase tracking-widest">
             View Details
           </button>

@@ -26,6 +26,8 @@ export default function PricingPage() {
   const [rules, setRules] = useState<PricingRule[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     serviceId: "",
@@ -72,7 +74,10 @@ export default function PricingPage() {
 
   async function addRule() {
     if (!form.serviceId || !form.price) return;
+    const price = parseFloat(form.price);
+    if (isNaN(price) || price < 0 || price > 9999) return;
 
+    setSaving(true);
     try {
       const res = await fetch("/api/pricing", {
         method: "POST",
@@ -81,7 +86,7 @@ export default function PricingPage() {
           serviceId: form.serviceId,
           breed: form.breed || null,
           size: form.size || null,
-          price: parseFloat(form.price),
+          price,
           notes: form.notes || null,
         }),
       });
@@ -92,15 +97,20 @@ export default function PricingPage() {
       }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setSaving(false);
     }
   }
 
   async function deleteRule(id: string) {
+    setDeleting(id);
     try {
       const res = await fetch(`/api/pricing?id=${id}`, { method: "DELETE" });
       if (res.ok) fetchData();
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -204,9 +214,10 @@ export default function PricingPage() {
                     <td className="px-6 py-3 text-right">
                       <button
                         onClick={() => deleteRule(rule.id)}
-                        className="text-red-500 font-bold text-xs hover:underline"
+                        disabled={deleting === rule.id}
+                        className="text-red-500 font-bold text-xs hover:underline disabled:opacity-50"
                       >
-                        Remove
+                        {deleting === rule.id ? "Removing..." : "Remove"}
                       </button>
                     </td>
                   </tr>
@@ -293,10 +304,10 @@ export default function PricingPage() {
                 </button>
                 <button
                   onClick={addRule}
-                  disabled={!form.serviceId || !form.price}
+                  disabled={!form.serviceId || !form.price || saving}
                   className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft hover:bg-opacity-90 transition-colors disabled:opacity-50"
                 >
-                  Add Rule
+                  {saving ? "Adding..." : "Add Rule"}
                 </button>
               </div>
             </div>

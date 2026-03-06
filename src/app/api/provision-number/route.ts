@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   deleteRetellPhoneNumber,
   provisionRetellPhoneNumber,
@@ -48,6 +49,12 @@ export async function POST(req: Request) {
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit: 3 provision attempts per 5 minutes per user
+  const { allowed } = rateLimit(`provision:${userId}`, { limit: 3, windowMs: 300_000 });
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many attempts. Please wait a few minutes." }, { status: 429 });
   }
 
   const body = await req.json().catch(() => ({}));
