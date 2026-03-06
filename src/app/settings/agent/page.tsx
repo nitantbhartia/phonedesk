@@ -146,14 +146,14 @@ export default function AgentSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">AI Agent Settings</h1>
           <p className="text-muted-foreground">
             Configure how your AI receptionist handles calls.
           </p>
         </div>
-        <Button onClick={saveSettings} disabled={saving}>
+        <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -162,7 +162,7 @@ export default function AgentSettingsPage() {
       {/* Agent Status */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="w-5 h-5" />
@@ -249,7 +249,7 @@ export default function AgentSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {services.map((service, i) => (
-            <div key={i} className="flex items-end gap-3">
+            <div key={i} className="flex flex-col sm:flex-row sm:items-end gap-3">
               <div className="flex-1 space-y-1">
                 <Label>Service</Label>
                 <Input
@@ -261,38 +261,41 @@ export default function AgentSettingsPage() {
                   }}
                 />
               </div>
-              <div className="w-24 space-y-1">
-                <Label>Price ($)</Label>
-                <Input
-                  type="number"
-                  value={service.price}
-                  onChange={(e) => {
-                    const updated = [...services];
-                    updated[i] = { ...service, price: e.target.value };
-                    setServices(updated);
-                  }}
-                />
+              <div className="flex items-end gap-3">
+                <div className="flex-1 sm:w-24 sm:flex-none space-y-1">
+                  <Label>Price ($)</Label>
+                  <Input
+                    type="number"
+                    value={service.price}
+                    onChange={(e) => {
+                      const updated = [...services];
+                      updated[i] = { ...service, price: e.target.value };
+                      setServices(updated);
+                    }}
+                  />
+                </div>
+                <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
+                  <Label>Duration (min)</Label>
+                  <Input
+                    type="number"
+                    value={service.duration}
+                    onChange={(e) => {
+                      const updated = [...services];
+                      updated[i] = { ...service, duration: e.target.value };
+                      setServices(updated);
+                    }}
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setServices(services.filter((_, j) => j !== i))}
+                  disabled={services.length <= 1}
+                  className="shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
-              <div className="w-28 space-y-1">
-                <Label>Duration (min)</Label>
-                <Input
-                  type="number"
-                  value={service.duration}
-                  onChange={(e) => {
-                    const updated = [...services];
-                    updated[i] = { ...service, duration: e.target.value };
-                    setServices(updated);
-                  }}
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setServices(services.filter((_, j) => j !== i))}
-                disabled={services.length <= 1}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
             </div>
           ))}
           <Button
@@ -331,8 +334,8 @@ export default function AgentSettingsPage() {
               { cmd: '"Cancel [name] appt"', desc: "Cancel and notify customer" },
               { cmd: '"Price list"', desc: "View current services & pricing" },
             ].map((item) => (
-              <div key={item.cmd} className="flex gap-4 py-2 border-b last:border-0">
-                <code className="text-primary font-medium min-w-[280px]">
+              <div key={item.cmd} className="flex flex-col sm:flex-row gap-1 sm:gap-4 py-2 border-b last:border-0">
+                <code className="text-primary font-medium sm:min-w-[280px]">
                   {item.cmd}
                 </code>
                 <span className="text-muted-foreground">{item.desc}</span>

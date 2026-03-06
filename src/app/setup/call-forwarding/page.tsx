@@ -137,7 +137,7 @@ export default function CallForwardingSetupPage() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-12">
-        <div className="grid lg:grid-cols-12 gap-12">
+        <div className="grid lg:grid-cols-12 gap-6 lg:gap-12">
           {/* Left Column - Instructions */}
           <div className="lg:col-span-7 space-y-8">
             <div>
@@ -154,7 +154,7 @@ export default function CallForwardingSetupPage() {
             <div className="inline-flex p-1 bg-white/50 backdrop-blur rounded-2xl border border-white">
               <button
                 onClick={() => setActiveTab("iphone")}
-                className={`px-8 py-3 rounded-xl font-bold transition-all ${
+                className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base ${
                   activeTab === "iphone"
                     ? "bg-paw-brown text-paw-cream"
                     : "text-paw-brown/60 hover:text-paw-brown"
@@ -177,7 +177,7 @@ export default function CallForwardingSetupPage() {
               </button>
               <button
                 onClick={() => setActiveTab("android")}
-                className={`px-8 py-3 rounded-xl font-bold transition-all ${
+                className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base ${
                   activeTab === "android"
                     ? "bg-paw-brown text-paw-cream"
                     : "text-paw-brown/60 hover:text-paw-brown"
@@ -204,18 +204,18 @@ export default function CallForwardingSetupPage() {
             {/* Step Cards */}
             <div className="space-y-4">
               {/* Step 1 - Dial Code */}
-              <div className="bg-white p-6 rounded-3xl shadow-card flex gap-6 items-start border-2 border-transparent hover:border-paw-orange/20 transition-all">
+              <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-card flex flex-col sm:flex-row gap-3 sm:gap-6 sm:items-start border-2 border-transparent hover:border-paw-orange/20 transition-all">
                 <div className="w-10 h-10 bg-paw-orange text-white rounded-full flex-shrink-0 flex items-center justify-center font-bold">
                   1
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-lg mb-1">Dial the Setup Code</h4>
                   <p className="text-paw-brown/70 mb-4">
                     Open your phone app and dial the following code to route
                     busy/unanswered calls to your AI receptionist.
                   </p>
                   <div className="flex items-center gap-3">
-                    <code className="bg-paw-cream px-6 py-4 rounded-2xl text-xl sm:text-2xl font-black text-paw-brown border-2 border-paw-brown/5 flex-1 text-center tracking-widest">
+                    <code className="bg-paw-cream px-3 sm:px-6 py-3 sm:py-4 rounded-2xl text-base sm:text-xl md:text-2xl font-black text-paw-brown border-2 border-paw-brown/5 flex-1 text-center tracking-widest break-all">
                       {dialCode}
                     </code>
                     <button
@@ -259,11 +259,11 @@ export default function CallForwardingSetupPage() {
               </div>
 
               {/* Step 2 - Settings Alternative */}
-              <div className="bg-white p-6 rounded-3xl shadow-card flex gap-6 items-start">
+              <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-card flex flex-col sm:flex-row gap-3 sm:gap-6 sm:items-start">
                 <div className="w-10 h-10 bg-paw-orange text-white rounded-full flex-shrink-0 flex items-center justify-center font-bold">
                   2
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-lg mb-1">
                     Configure Settings (Alternative)
                   </h4>
@@ -274,7 +274,7 @@ export default function CallForwardingSetupPage() {
                     </strong>{" "}
                     and enter the number provided above.
                   </p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {/* Phone mockup 1 */}
                     <div className="aspect-[9/12] bg-paw-sky/30 rounded-2xl overflow-hidden border border-paw-brown/5 relative">
                       <div className="absolute inset-x-0 top-0 h-6 bg-white/50 flex items-center px-2 justify-between">

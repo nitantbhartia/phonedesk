@@ -440,11 +440,11 @@ export default function DashboardPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest border-b border-gray-50 bg-paw-cream/30">
-                  <th className="px-8 py-4">Caller</th>
-                  <th className="px-8 py-4">Status</th>
-                  <th className="px-8 py-4">Outcome</th>
-                  <th className="px-8 py-4">Duration</th>
-                  <th className="px-8 py-4 text-right">Action</th>
+                  <th className="px-4 sm:px-8 py-4">Caller</th>
+                  <th className="px-4 sm:px-8 py-4 hidden sm:table-cell">Status</th>
+                  <th className="px-4 sm:px-8 py-4 hidden md:table-cell">Outcome</th>
+                  <th className="px-4 sm:px-8 py-4 hidden sm:table-cell">Duration</th>
+                  <th className="px-4 sm:px-8 py-4 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -470,31 +470,32 @@ export default function DashboardPage() {
                       key={call.id}
                       className="hover:bg-paw-sky/10 transition-colors"
                     >
-                      <td className="px-8 py-5">
+                      <td className="px-4 sm:px-8 py-4 sm:py-5">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center font-bold text-paw-brown`}
+                            className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center font-bold text-paw-brown shrink-0`}
                           >
                             {initials}
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-paw-brown">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-paw-brown truncate">
                               {call.callerName || "Unknown Caller"}
                             </p>
-                            <p className="text-xs text-paw-brown/50">
+                            <p className="text-xs text-paw-brown/50 truncate">
                               {call.callerPhone || "No number"}
                             </p>
+                            <div className="sm:hidden mt-1">{getStatusBadge(call)}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-5">{getStatusBadge(call)}</td>
-                      <td className="px-8 py-5">{getOutcome(call)}</td>
-                      <td className="px-8 py-5 text-sm text-paw-brown/60">
+                      <td className="px-4 sm:px-8 py-4 sm:py-5 hidden sm:table-cell">{getStatusBadge(call)}</td>
+                      <td className="px-4 sm:px-8 py-4 sm:py-5 hidden md:table-cell">{getOutcome(call)}</td>
+                      <td className="px-4 sm:px-8 py-4 sm:py-5 text-sm text-paw-brown/60 hidden sm:table-cell">
                         {call.duration
                           ? formatDuration(call.duration)
                           : "--"}
                       </td>
-                      <td className="px-8 py-5 text-right">
+                      <td className="px-4 sm:px-8 py-4 sm:py-5 text-right">
                         <Link
                           href={`/calls?id=${call.id}`}
                           className="inline-flex items-center gap-2 text-paw-brown font-bold text-sm hover:text-paw-orange transition-colors"

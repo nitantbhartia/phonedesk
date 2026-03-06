@@ -120,7 +120,7 @@ export default function CallLogPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         {filters.map((f) => (
           <button
             key={f.value}
@@ -174,22 +174,22 @@ export default function CallLogPage() {
           <table className="w-full text-left">
             <thead className="bg-paw-cream/50 border-b border-paw-brown/5">
               <tr>
-                <th className="px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                <th className="px-4 sm:px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
                   Caller &amp; Pet
                 </th>
-                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">
                   Service
                 </th>
-                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">
                   Status
                 </th>
-                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden md:table-cell">
                   Duration
                 </th>
-                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden md:table-cell">
                   Time
                 </th>
-                <th className="px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">
+                <th className="px-4 sm:px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">
                   Action
                 </th>
               </tr>
@@ -224,18 +224,18 @@ export default function CallLogPage() {
                     key={call.id}
                     className="hover:bg-paw-cream/30 transition-colors"
                   >
-                    <td className="px-8 py-6">
+                    <td className="px-4 sm:px-8 py-4 sm:py-6">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center font-bold ${textColor}`}
+                          className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center font-bold ${textColor} shrink-0`}
                         >
                           {initials}
                         </div>
-                        <div>
-                          <p className="font-bold text-paw-brown">
+                        <div className="min-w-0">
+                          <p className="font-bold text-paw-brown truncate">
                             {displayName}
                           </p>
-                          <p className="text-sm text-paw-brown/50">
+                          <p className="text-sm text-paw-brown/50 truncate">
                             {call.appointment?.petName
                               ? `${call.appointment.petName}`
                               : call.callerPhone
@@ -245,7 +245,7 @@ export default function CallLogPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-6">
+                    <td className="px-4 sm:px-6 py-4 sm:py-6 hidden sm:table-cell">
                       {call.appointment?.serviceName ? (
                         <span className="px-3 py-1 bg-paw-amber/20 text-paw-brown text-xs font-bold rounded-full">
                           {call.appointment.serviceName}
@@ -256,7 +256,7 @@ export default function CallLogPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-6">
+                    <td className="px-4 sm:px-6 py-4 sm:py-6 hidden sm:table-cell">
                       {call.appointment ? (
                         <div className="flex items-center gap-2 text-emerald-600">
                           <svg
@@ -315,15 +315,15 @@ export default function CallLogPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-6 text-sm font-medium text-paw-brown/70">
+                    <td className="px-4 sm:px-6 py-4 sm:py-6 text-sm font-medium text-paw-brown/70 hidden md:table-cell">
                       {call.duration != null
                         ? formatDuration(call.duration)
                         : "--"}
                     </td>
-                    <td className="px-6 py-6 text-sm font-medium text-paw-brown/70">
+                    <td className="px-4 sm:px-6 py-4 sm:py-6 text-sm font-medium text-paw-brown/70 hidden md:table-cell">
                       {formatDateTime(call.createdAt)}
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-4 sm:px-8 py-4 sm:py-6 text-right">
                       <button
                         onClick={() => setSelectedCall(call)}
                         className="text-paw-orange font-bold text-sm hover:underline"
@@ -404,7 +404,7 @@ export default function CallLogPage() {
 
               <div className="space-y-4">
                 {/* Call Info */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-paw-brown/50 font-bold uppercase">
                       Caller

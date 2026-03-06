@@ -156,7 +156,7 @@ export default function PricingPage() {
       {/* Base service prices */}
       <div className="bg-white rounded-3xl shadow-card border border-white p-6">
         <h2 className="font-bold text-paw-brown mb-4">Base Service Prices</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
           {services.map((service) => (
             <div key={service.id} className="bg-paw-cream/50 rounded-2xl p-4">
               <p className="font-bold text-paw-brown text-sm">{service.name}</p>
@@ -182,36 +182,36 @@ export default function PricingPage() {
         </div>
       ) : (
         Object.entries(rulesByService).map(([serviceName, serviceRules]) => (
-          <div key={serviceName} className="bg-white rounded-3xl shadow-card border border-white overflow-hidden">
+          <div key={serviceName} className="bg-white rounded-3xl shadow-card border border-white overflow-x-auto">
             <div className="px-6 py-4 bg-paw-cream/50 border-b border-paw-brown/5">
               <h3 className="font-bold text-paw-brown">{serviceName}</h3>
             </div>
             <table className="w-full text-left">
               <thead>
                 <tr className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
-                  <th className="px-6 py-3">Breed</th>
-                  <th className="px-6 py-3">Size</th>
-                  <th className="px-6 py-3">Price</th>
-                  <th className="px-6 py-3">Notes</th>
-                  <th className="px-6 py-3 text-right">Action</th>
+                  <th className="px-3 sm:px-6 py-3">Breed</th>
+                  <th className="px-3 sm:px-6 py-3">Size</th>
+                  <th className="px-3 sm:px-6 py-3">Price</th>
+                  <th className="px-3 sm:px-6 py-3 hidden sm:table-cell">Notes</th>
+                  <th className="px-3 sm:px-6 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paw-brown/5">
                 {serviceRules.map((rule) => (
                   <tr key={rule.id} className="hover:bg-paw-cream/30 transition-colors">
-                    <td className="px-6 py-3 text-sm font-medium text-paw-brown">
+                    <td className="px-3 sm:px-6 py-3 text-sm font-medium text-paw-brown">
                       {rule.breed || "Any breed"}
                     </td>
-                    <td className="px-6 py-3 text-sm text-paw-brown/70">
+                    <td className="px-3 sm:px-6 py-3 text-sm text-paw-brown/70">
                       {rule.size || "Any size"}
                     </td>
-                    <td className="px-6 py-3 text-sm font-bold text-paw-brown">
+                    <td className="px-3 sm:px-6 py-3 text-sm font-bold text-paw-brown">
                       {formatCurrency(rule.price)}
                     </td>
-                    <td className="px-6 py-3 text-sm text-paw-brown/50">
+                    <td className="px-3 sm:px-6 py-3 text-sm text-paw-brown/50 hidden sm:table-cell">
                       {rule.notes || "—"}
                     </td>
-                    <td className="px-6 py-3 text-right">
+                    <td className="px-3 sm:px-6 py-3 text-right">
                       <button
                         onClick={() => deleteRule(rule.id)}
                         disabled={deleting === rule.id}
@@ -231,7 +231,7 @@ export default function PricingPage() {
       {/* Add pricing rule form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-soft">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-soft">
             <h2 className="text-xl font-bold text-paw-brown mb-4">Add Pricing Rule</h2>
             <div className="space-y-4">
               <div>

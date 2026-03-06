@@ -76,7 +76,7 @@ export default function CalendarSettingsPage() {
   return (
     <div className="space-y-8">
       {/* Calendar Integration Section */}
-      <section className="bg-white rounded-4xl p-10 shadow-soft border border-white">
+      <section className="bg-white rounded-4xl p-6 sm:p-10 shadow-soft border border-white">
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-paw-brown">
             Calendar Integration
@@ -219,9 +219,9 @@ export default function CalendarSettingsPage() {
       </section>
 
       {/* Booking Logic + Conflict Checker */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Booking Logic */}
-        <section className="bg-white rounded-4xl p-10 shadow-soft border border-white h-full">
+        <section className="bg-white rounded-4xl p-6 sm:p-10 shadow-soft border border-white h-full">
           <h3 className="text-xl font-bold text-paw-brown mb-6">
             Booking Logic
           </h3>
@@ -285,7 +285,7 @@ export default function CalendarSettingsPage() {
         </section>
 
         {/* Conflict Checker */}
-        <section className="bg-paw-brown text-paw-cream rounded-4xl p-10 shadow-soft relative overflow-hidden h-full">
+        <section className="bg-paw-brown text-paw-cream rounded-4xl p-6 sm:p-10 shadow-soft relative overflow-hidden h-full">
           <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
 
           <div className="flex items-center justify-between mb-6">
@@ -369,11 +369,11 @@ export default function CalendarSettingsPage() {
       </div>
 
       {/* Save buttons */}
-      <div className="flex justify-end gap-4">
-        <button className="px-8 py-4 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all">
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4">
+        <button className="w-full sm:w-auto px-8 py-4 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all">
           Discard Changes
         </button>
-        <button className="px-10 py-4 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all">
+        <button className="w-full sm:w-auto px-10 py-4 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all">
           Save Settings
         </button>
       </div>
