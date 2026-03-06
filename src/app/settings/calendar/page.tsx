@@ -3,17 +3,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Calendar, CheckCircle, ExternalLink, Trash2, Plus } from "lucide-react";
 
 interface CalendarConnection {
   id: string;
@@ -25,10 +14,12 @@ interface CalendarConnection {
 }
 
 export default function CalendarSettingsPage() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [respectBusy, setRespectBusy] = useState(true);
+  const [bufferTime, setBufferTime] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -60,152 +51,332 @@ export default function CalendarSettingsPage() {
     window.location.href = `/api/calendar/connect?${params}`;
   }
 
-  const providerNames: Record<string, string> = {
-    GOOGLE: "Google Calendar",
-    CALENDLY: "Calendly",
-    CALCOM: "Cal.com",
-  };
+  function isConnected(provider: string) {
+    return connections.some(
+      (c) => c.provider === provider && c.isActive
+    );
+  }
 
-  const providerColors: Record<string, string> = {
-    GOOGLE: "bg-red-100 text-red-600",
-    CALENDLY: "bg-blue-100 text-blue-600",
-    CALCOM: "bg-gray-100 text-gray-600",
-  };
+  function getConnection(provider: string) {
+    return connections.find((c) => c.provider === provider);
+  }
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
-        <div className="h-48 bg-slate-200 rounded-lg animate-pulse" />
+        <div className="h-8 w-64 bg-white/50 rounded-2xl animate-pulse" />
+        <div className="h-64 bg-white/50 rounded-4xl animate-pulse" />
       </div>
     );
   }
 
+  const googleConn = getConnection("GOOGLE");
+  const userEmail = session?.user?.email || "";
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Calendar Settings</h1>
-        <p className="text-muted-foreground">
-          Connect calendars to check availability and book appointments.
-        </p>
-      </div>
+    <div className="space-y-8">
+      {/* Calendar Integration Section */}
+      <section className="bg-white rounded-4xl p-10 shadow-soft border border-white">
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold text-paw-brown">
+            Calendar Integration
+          </h1>
+          <p className="text-paw-brown/60 mt-2 font-medium">
+            Connect your booking tools so RingPaw can manage your availability
+            in real-time.
+          </p>
+        </div>
 
-      {/* Connected Calendars */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Connected Calendars</CardTitle>
-          <CardDescription>
-            The AI checks all connected calendars for conflicts before offering
-            time slots. New bookings go to the primary calendar.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {connections.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No calendars connected yet.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Google Calendar */}
+          <div
+            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
+              isConnected("GOOGLE")
+                ? "border-paw-amber"
+                : "border-transparent hover:border-paw-brown/10"
+            } transition-all`}
+          >
+            {isConnected("GOOGLE") && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                CONNECTED
+              </div>
+            )}
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
+              <svg width="32" height="32" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {connections.map((conn) => (
-                <div
-                  key={conn.id}
-                  className="flex items-center gap-4 p-4 border rounded-lg"
-                >
-                  <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${providerColors[conn.provider] || "bg-gray-100"}`}
+            <h3 className="font-bold text-lg mb-1">Google Calendar</h3>
+            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
+              {isConnected("GOOGLE")
+                ? googleConn?.calendarId || userEmail
+                : "Not connected"}
+            </p>
+            {isConnected("GOOGLE") ? (
+              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={() => connectCalendar("google")}
+                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+              >
+                Connect Account
+              </button>
+            )}
+          </div>
+
+          {/* Calendly */}
+          <div
+            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
+              isConnected("CALENDLY")
+                ? "border-paw-amber"
+                : "border-transparent hover:border-paw-brown/10"
+            } transition-all`}
+          >
+            {isConnected("CALENDLY") && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                CONNECTED
+              </div>
+            )}
+            <div className="w-14 h-14 bg-[#006BFF] rounded-2xl flex items-center justify-center shadow-sm mb-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                <path d="M22 6h-2.18c-.46-1.16-1.57-2-2.82-2H7c-1.65 0-3 1.35-3 3v10c0 1.65 1.35 3 3 3h10c1.25 0 2.36-.84 2.82-2H22v-2h-1.07c.04-.33.07-.66.07-1s-.03-.67-.07-1H22V10h-1.07c.04-.33.07-.66.07-1s-.03-.67-.07-1H22V6z" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg mb-1">Calendly</h3>
+            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
+              {isConnected("CALENDLY") ? "Connected" : "Not connected"}
+            </p>
+            {isConnected("CALENDLY") ? (
+              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={() => connectCalendar("calendly")}
+                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+              >
+                Connect Account
+              </button>
+            )}
+          </div>
+
+          {/* Cal.com */}
+          <div
+            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
+              isConnected("CALCOM")
+                ? "border-paw-amber"
+                : "border-transparent hover:border-paw-brown/10"
+            } transition-all`}
+          >
+            {isConnected("CALCOM") && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                CONNECTED
+              </div>
+            )}
+            <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center shadow-sm mb-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14.5V17h-2v-.5h-1v-5h4v5h-1zm-1-8.5c-.552 0-1-.448-1-1s.448-1 1-1 1 .448 1 1-.448 1-1 1z" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg mb-1">Cal.com</h3>
+            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
+              {isConnected("CALCOM") ? "Connected" : "Not connected"}
+            </p>
+            {isConnected("CALCOM") ? (
+              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={() => connectCalendar("calcom")}
+                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+              >
+                Connect Account
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Booking Logic + Conflict Checker */}
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Booking Logic */}
+        <section className="bg-white rounded-4xl p-10 shadow-soft border border-white h-full">
+          <h3 className="text-xl font-bold text-paw-brown mb-6">
+            Booking Logic
+          </h3>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
+                Primary Destination
+              </label>
+              <div className="relative">
+                <select className="w-full appearance-none bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 font-bold focus:outline-none focus:border-paw-amber transition-all">
+                  <option>Google Calendar: Appointments</option>
+                  <option>Google Calendar: Main Work</option>
+                  <option>Square Appointments Sync</option>
+                </select>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
                   >
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {providerNames[conn.provider] || conn.provider}
-                      </span>
-                      {conn.isPrimary && (
-                        <Badge variant="success">Primary</Badge>
-                      )}
-                      {conn.isActive ? (
-                        <Badge variant="outline">Connected</Badge>
-                      ) : (
-                        <Badge variant="destructive">Disconnected</Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {conn.calendarId || "Default calendar"}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={conn.isActive} />
-                  </div>
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Add Calendar */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Calendar</CardTitle>
-          <CardDescription>Connect up to 3 calendars.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3">
-            <button
-              onClick={() => connectCalendar("google")}
-              className="flex items-center gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors text-left"
-              disabled={connections.length >= 3}
-            >
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-red-600" />
+            <div>
+              <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
+                Conflict Checking
+              </label>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl cursor-pointer hover:bg-paw-cream transition-colors border border-transparent hover:border-paw-brown/5">
+                  <input
+                    type="checkbox"
+                    checked={respectBusy}
+                    onChange={(e) => setRespectBusy(e.target.checked)}
+                    className="w-5 h-5 rounded-md accent-paw-orange"
+                  />
+                  <span className="font-bold text-paw-brown/80">
+                    Respect &quot;Busy&quot; events on personal calendar
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl cursor-pointer hover:bg-paw-cream transition-colors border border-transparent hover:border-paw-brown/5">
+                  <input
+                    type="checkbox"
+                    checked={bufferTime}
+                    onChange={(e) => setBufferTime(e.target.checked)}
+                    className="w-5 h-5 rounded-md accent-paw-orange"
+                  />
+                  <span className="font-bold text-paw-brown/80">
+                    Block 15m buffer before &amp; after each dog
+                  </span>
+                </label>
               </div>
-              <div className="flex-1">
-                <div className="font-medium">Google Calendar</div>
-                <div className="text-sm text-muted-foreground">
-                  Read &amp; write via OAuth 2.0
-                </div>
-              </div>
-              <Plus className="w-5 h-5 text-muted-foreground" />
-            </button>
+            </div>
+          </div>
+        </section>
 
-            <button
-              onClick={() => connectCalendar("calendly")}
-              className="flex items-center gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors text-left"
-              disabled={connections.length >= 3}
-            >
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium">Calendly</div>
-                <div className="text-sm text-muted-foreground">
-                  Read &amp; write via OAuth
-                </div>
-              </div>
-              <Plus className="w-5 h-5 text-muted-foreground" />
-            </button>
+        {/* Conflict Checker */}
+        <section className="bg-paw-brown text-paw-cream rounded-4xl p-10 shadow-soft relative overflow-hidden h-full">
+          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
 
-            <button
-              onClick={() => connectCalendar("calcom")}
-              className="flex items-center gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors text-left"
-              disabled={connections.length >= 3}
-            >
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-gray-600" />
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-paw-amber">
+              Conflict Checker
+            </h3>
+            <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold tracking-widest text-paw-amber">
+              LIVE PREVIEW
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10">
+              <div className="w-12 text-center">
+                <p className="text-[10px] font-bold text-white/40">THU</p>
+                <p className="text-lg font-bold">21</p>
               </div>
-              <div className="flex-1">
-                <div className="font-medium">Cal.com</div>
-                <div className="text-sm text-muted-foreground">
-                  Read &amp; write via API key
+              <div className="flex-1 border-l border-white/20 pl-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold">
+                    09:00 AM — 10:30 AM
+                  </span>
+                  <span className="px-2 py-0.5 bg-paw-orange/20 text-paw-orange rounded text-[9px] font-bold">
+                    CONFLICT
+                  </span>
                 </div>
+                <p className="text-xs text-white/60">
+                  Found &quot;Personal: Dentist&quot; on Google Cal. Slot
+                  blocked for AI agent.
+                </p>
               </div>
-              <Plus className="w-5 h-5 text-muted-foreground" />
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10 opacity-60">
+              <div className="w-12 text-center">
+                <p className="text-[10px] font-bold text-white/40">THU</p>
+                <p className="text-lg font-bold">21</p>
+              </div>
+              <div className="flex-1 border-l border-white/20 pl-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold">
+                    11:00 AM — 12:00 PM
+                  </span>
+                  <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[9px] font-bold">
+                    AVAILABLE
+                  </span>
+                </div>
+                <p className="text-xs text-white/60">
+                  Open slot. RingPaw can book new clients here.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10">
+              <div className="w-12 text-center">
+                <p className="text-[10px] font-bold text-white/40">THU</p>
+                <p className="text-lg font-bold">21</p>
+              </div>
+              <div className="flex-1 border-l border-white/20 pl-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold">
+                    01:30 PM — 02:45 PM
+                  </span>
+                  <span className="px-2 py-0.5 bg-paw-orange/20 text-paw-orange rounded text-[9px] font-bold">
+                    CONFLICT
+                  </span>
+                </div>
+                <p className="text-xs text-white/60">
+                  Found &quot;Grooming: Max&quot; (Calendly). Slot blocked.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <button className="text-xs font-bold text-paw-amber border-b border-paw-amber/30 hover:border-paw-amber transition-all pb-1">
+              Refresh conflicts (Auto-syncs every 2m)
             </button>
           </div>
-        </CardContent>
-      </Card>
+        </section>
+      </div>
+
+      {/* Save buttons */}
+      <div className="flex justify-end gap-4">
+        <button className="px-8 py-4 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all">
+          Discard Changes
+        </button>
+        <button className="px-10 py-4 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all">
+          Save Settings
+        </button>
+      </div>
     </div>
   );
 }

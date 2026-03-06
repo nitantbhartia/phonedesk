@@ -4,30 +4,12 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Phone,
-  Calendar,
-  Clock,
-  MessageSquare,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
 import { formatPhoneNumber, formatDuration, formatDateTime } from "@/lib/utils";
 
 interface CallRecord {
@@ -46,6 +28,15 @@ interface CallRecord {
     startTime: string;
     status: string;
   } | null;
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export default function CallLogPage() {
@@ -90,150 +81,307 @@ export default function CallLogPage() {
     }
   }
 
-  const statusConfig: Record<string, { label: string; variant: "success" | "warning" | "destructive" | "outline" }> = {
-    COMPLETED: { label: "Completed", variant: "outline" },
-    NO_BOOKING: { label: "No Booking", variant: "warning" },
-    MISSED: { label: "Missed", variant: "destructive" },
-    FAILED: { label: "Failed", variant: "destructive" },
-    IN_PROGRESS: { label: "In Progress", variant: "outline" },
-  };
-
   const totalPages = Math.ceil(total / pageSize);
 
+  const filters = [
+    { value: "all", label: "All Calls" },
+    { value: "COMPLETED", label: "Confirmed" },
+    { value: "NO_BOOKING", label: "Soft Booking" },
+    { value: "MISSED", label: "Missed" },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Call Log</h1>
-        <p className="text-muted-foreground">
-          All calls handled by your AI receptionist.
-        </p>
+    <div>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold text-paw-brown">Call Log</h1>
+          <p className="text-paw-brown/60 font-medium mt-1">
+            Review and manage recent AI interactions
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button className="px-5 py-2.5 bg-white rounded-full font-bold text-sm shadow-sm border border-paw-brown/5 flex items-center gap-2 hover:bg-paw-cream transition-colors">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export
+          </button>
+        </div>
       </div>
 
-      <Tabs value={filter} onValueChange={(v) => { setFilter(v); setPage(0); }}>
-        <TabsList>
-          <TabsTrigger value="all">All Calls</TabsTrigger>
-          <TabsTrigger value="COMPLETED">Booked</TabsTrigger>
-          <TabsTrigger value="NO_BOOKING">No Booking</TabsTrigger>
-          <TabsTrigger value="MISSED">Missed</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Filter tabs */}
+      <div className="flex gap-2 mb-6">
+        {filters.map((f) => (
+          <button
+            key={f.value}
+            onClick={() => {
+              setFilter(f.value);
+              setPage(0);
+            }}
+            className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
+              filter === f.value
+                ? "bg-paw-brown text-white shadow-sm"
+                : "bg-white text-paw-brown/60 hover:bg-paw-cream border border-paw-brown/5"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-16 bg-slate-100 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          ) : calls.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Phone className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="font-medium">No calls found</p>
-              <p className="text-sm">
-                {filter !== "all"
-                  ? "Try a different filter."
-                  : "Calls will appear here once your AI starts answering."}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {calls.map((call) => (
-                <button
-                  key={call.id}
-                  onClick={() => setSelectedCall(call)}
-                  className="w-full flex items-center gap-4 p-4 rounded-lg border hover:bg-slate-50 transition-colors text-left"
-                >
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                      call.appointment
-                        ? "bg-green-100 text-green-600"
-                        : call.status === "NO_BOOKING"
-                          ? "bg-yellow-100 text-yellow-600"
-                          : "bg-red-100 text-red-600"
-                    }`}
+      {/* Table */}
+      <div className="bg-white rounded-4xl shadow-soft overflow-hidden border border-white">
+        {loading ? (
+          <div className="p-8 space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="h-16 bg-paw-cream/50 rounded-2xl animate-pulse"
+              />
+            ))}
+          </div>
+        ) : calls.length === 0 ? (
+          <div className="text-center py-20 text-paw-brown/50">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="mx-auto mb-4 opacity-50"
+            >
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            <p className="font-bold text-lg">No calls found</p>
+            <p className="text-sm mt-1">
+              {filter !== "all"
+                ? "Try a different filter."
+                : "Calls will appear here once your AI starts answering."}
+            </p>
+          </div>
+        ) : (
+          <table className="w-full text-left">
+            <thead className="bg-paw-cream/50 border-b border-paw-brown/5">
+              <tr>
+                <th className="px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                  Caller &amp; Pet
+                </th>
+                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                  Service
+                </th>
+                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                  Duration
+                </th>
+                <th className="px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                  Time
+                </th>
+                <th className="px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-paw-brown/5">
+              {calls.map((call) => {
+                const displayName =
+                  call.callerName || "Unknown Caller";
+                const initials =
+                  call.callerName
+                    ? getInitials(call.callerName)
+                    : "?";
+                const bgColors = [
+                  "bg-paw-sky",
+                  "bg-paw-orange/20",
+                  "bg-paw-amber/30",
+                  "bg-gray-100",
+                ];
+                const bgColor =
+                  call.callerName
+                    ? bgColors[
+                        displayName.charCodeAt(0) % bgColors.length
+                      ]
+                    : "bg-gray-100";
+                const textColor =
+                  call.callerName
+                    ? "text-paw-brown"
+                    : "text-gray-400";
+
+                return (
+                  <tr
+                    key={call.id}
+                    className="hover:bg-paw-cream/30 transition-colors"
                   >
-                    {call.appointment ? (
-                      <Calendar className="w-4 h-4" />
-                    ) : (
-                      <Phone className="w-4 h-4" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">
-                        {call.callerName || "Unknown Caller"}
-                      </span>
-                      {call.callerPhone && (
-                        <span className="text-xs text-muted-foreground">
-                          {formatPhoneNumber(call.callerPhone)}
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center font-bold ${textColor}`}
+                        >
+                          {initials}
+                        </div>
+                        <div>
+                          <p className="font-bold text-paw-brown">
+                            {displayName}
+                          </p>
+                          <p className="text-sm text-paw-brown/50">
+                            {call.appointment?.petName
+                              ? `${call.appointment.petName}`
+                              : call.callerPhone
+                                ? formatPhoneNumber(call.callerPhone)
+                                : "No details"}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-6">
+                      {call.appointment?.serviceName ? (
+                        <span className="px-3 py-1 bg-paw-amber/20 text-paw-brown text-xs font-bold rounded-full">
+                          {call.appointment.serviceName}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-paw-brown/40 italic">
+                          Inquiry Only
                         </span>
                       )}
+                    </td>
+                    <td className="px-6 py-6">
                       {call.appointment ? (
-                        <Badge variant="success">Booked</Badge>
+                        <div className="flex items-center gap-2 text-emerald-600">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <span className="text-sm font-bold">
+                            Confirmed
+                          </span>
+                        </div>
+                      ) : call.status === "COMPLETED" ? (
+                        <div className="flex items-center gap-2 text-paw-orange">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line
+                              x1="12"
+                              y1="16"
+                              x2="12.01"
+                              y2="16"
+                            />
+                          </svg>
+                          <span className="text-sm font-bold">
+                            Soft Booking
+                          </span>
+                        </div>
                       ) : (
-                        <Badge
-                          variant={
-                            statusConfig[call.status]?.variant || "outline"
-                          }
-                        >
-                          {statusConfig[call.status]?.label || call.status}
-                        </Badge>
+                        <div className="flex items-center gap-2 text-paw-brown/30">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                          <span className="text-sm font-bold">
+                            Missed
+                          </span>
+                        </div>
                       )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {call.summary ||
-                        (call.appointment
-                          ? `${call.appointment.petName} - ${call.appointment.serviceName} on ${formatDateTime(call.appointment.startTime)}`
-                          : "No summary")}
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <div className="text-xs text-muted-foreground">
+                    </td>
+                    <td className="px-6 py-6 text-sm font-medium text-paw-brown/70">
+                      {call.duration != null
+                        ? formatDuration(call.duration)
+                        : "--"}
+                    </td>
+                    <td className="px-6 py-6 text-sm font-medium text-paw-brown/70">
                       {formatDateTime(call.createdAt)}
-                    </div>
-                    {call.duration != null && (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end mt-0.5">
-                        <Clock className="w-3 h-3" />
-                        {formatDuration(call.duration)}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <button
+                        onClick={() => setSelectedCall(call)}
+                        className="text-paw-orange font-bold text-sm hover:underline"
+                      >
+                        View Transcript
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 mt-4 border-t">
-              <div className="text-sm text-muted-foreground">
-                {page * pageSize + 1}–{Math.min((page + 1) * pageSize, total)} of {total}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 0}
+        {/* Pagination */}
+        {!loading && total > 0 && (
+          <div className="px-8 py-5 bg-paw-cream/20 flex justify-between items-center border-t border-paw-brown/5">
+            <p className="text-sm font-medium text-paw-brown/50">
+              Showing {page * pageSize + 1}–
+              {Math.min((page + 1) * pageSize, total)} of {total} calls
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 0}
+                className="p-2 rounded-lg border border-paw-brown/10 hover:bg-white transition-colors disabled:opacity-30"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= totalPages - 1}
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page >= totalPages - 1}
+                className="p-2 rounded-lg border border-paw-brown/10 hover:bg-white transition-colors disabled:opacity-30"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
                 >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
 
       {/* Call Detail Dialog */}
       <Dialog
@@ -244,7 +392,7 @@ export default function CallLogPage() {
           {selectedCall && (
             <>
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-paw-brown">
                   Call from {selectedCall.callerName || "Unknown"}
                 </DialogTitle>
                 <DialogDescription>
@@ -258,47 +406,61 @@ export default function CallLogPage() {
                 {/* Call Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-muted-foreground">Caller</div>
-                    <div className="font-medium">
+                    <div className="text-xs text-paw-brown/50 font-bold uppercase">
+                      Caller
+                    </div>
+                    <div className="font-bold text-paw-brown">
                       {selectedCall.callerName || "Unknown"}
                     </div>
                     {selectedCall.callerPhone && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-paw-brown/50">
                         {formatPhoneNumber(selectedCall.callerPhone)}
                       </div>
                     )}
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Status</div>
-                    <Badge
-                      variant={
-                        selectedCall.appointment
-                          ? "success"
-                          : statusConfig[selectedCall.status]?.variant || "outline"
-                      }
-                    >
-                      {selectedCall.appointment
-                        ? "Booked"
-                        : statusConfig[selectedCall.status]?.label || selectedCall.status}
-                    </Badge>
+                    <div className="text-xs text-paw-brown/50 font-bold uppercase">
+                      Status
+                    </div>
+                    {selectedCall.appointment ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Confirmed
+                      </span>
+                    ) : (
+                      <span className="font-bold text-paw-brown/60">
+                        {selectedCall.status}
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Extracted Data */}
                 {selectedCall.extractedData && (
                   <div>
-                    <div className="text-sm font-medium mb-2">
+                    <div className="text-sm font-bold text-paw-brown mb-2">
                       Extracted Information
                     </div>
-                    <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
+                    <div className="bg-paw-cream rounded-2xl p-4 text-sm space-y-1">
                       {Object.entries(selectedCall.extractedData).map(
                         ([key, value]) =>
                           value && (
                             <div key={key} className="flex gap-2">
-                              <span className="text-muted-foreground capitalize">
+                              <span className="text-paw-brown/50 capitalize">
                                 {key.replace(/([A-Z])/g, " $1").trim()}:
                               </span>
-                              <span>{value}</span>
+                              <span className="font-medium text-paw-brown">
+                                {value}
+                              </span>
                             </div>
                           )
                       )}
@@ -309,18 +471,20 @@ export default function CallLogPage() {
                 {/* Appointment */}
                 {selectedCall.appointment && (
                   <div>
-                    <div className="text-sm font-medium mb-2">Appointment</div>
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
-                      <div>
-                        {selectedCall.appointment.petName} -{" "}
+                    <div className="text-sm font-bold text-paw-brown mb-2">
+                      Appointment
+                    </div>
+                    <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-sm">
+                      <div className="font-bold text-paw-brown">
+                        {selectedCall.appointment.petName} –{" "}
                         {selectedCall.appointment.serviceName}
                       </div>
-                      <div className="text-green-700">
+                      <div className="text-green-700 mt-1">
                         {formatDateTime(selectedCall.appointment.startTime)}
                       </div>
-                      <Badge variant="success" className="mt-2">
+                      <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
                         {selectedCall.appointment.status}
-                      </Badge>
+                      </span>
                     </div>
                   </div>
                 )}
@@ -328,8 +492,10 @@ export default function CallLogPage() {
                 {/* Summary */}
                 {selectedCall.summary && (
                   <div>
-                    <div className="text-sm font-medium mb-2">Summary</div>
-                    <p className="text-sm text-muted-foreground">
+                    <div className="text-sm font-bold text-paw-brown mb-2">
+                      Summary
+                    </div>
+                    <p className="text-sm text-paw-brown/60">
                       {selectedCall.summary}
                     </p>
                   </div>
@@ -338,11 +504,10 @@ export default function CallLogPage() {
                 {/* Transcript */}
                 {selectedCall.transcript && (
                   <div>
-                    <div className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4" />
+                    <div className="text-sm font-bold text-paw-brown mb-2">
                       Transcript
                     </div>
-                    <div className="bg-slate-50 rounded-lg p-4 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto">
+                    <div className="bg-paw-cream rounded-2xl p-4 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto text-paw-brown/70">
                       {selectedCall.transcript}
                     </div>
                   </div>
