@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (fullBusiness) {
-      await Promise.allSettled([
+      const smsResults = await Promise.allSettled([
         sendBookingNotificationToOwner(
           fullBusiness as Parameters<typeof sendBookingNotificationToOwner>[0],
           appointment
@@ -128,6 +128,13 @@ export async function POST(req: NextRequest) {
           appointment
         ),
       ]);
+      smsResults.forEach((result, i) => {
+        if (result.status === "rejected") {
+          console.error(`[SMS] Notification ${i === 0 ? "owner" : "customer"} failed:`, result.reason);
+        }
+      });
+    } else {
+      console.warn("[SMS] Could not fetch business with phoneNumber for notifications, businessId:", business.id);
     }
 
     // Auto-send intake form for new clients
