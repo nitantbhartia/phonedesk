@@ -81,6 +81,7 @@ model Business {
   appointments    Appointment[]
   customers       Customer[]
   retellConfig    RetellConfig?
+  waitlistEntries WaitlistEntry[]
   plan            Plan     @default(STARTER)
 
   createdAt       DateTime @default(now())
@@ -212,6 +213,9 @@ model Appointment {
   confirmLink     String?
   notes           String?           @db.Text
   reminderSent    Boolean           @default(false)
+  reminder48hSent Boolean           @default(false)
+  confirmedAt     DateTime?         // when the customer confirmed via SMS/link
+  noShowMarkedAt  DateTime?         // when marked as no-show
   calls           Call[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -282,4 +286,32 @@ model SmsLog {
 enum SmsDirection {
   INBOUND
   OUTBOUND
+}
+
+model WaitlistEntry {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerName  String
+  customerPhone String
+  petName       String?
+  petBreed      String?
+  petSize       PetSize?
+  serviceName   String?
+  preferredDate DateTime  // the date they want
+  preferredTime String?   // e.g., "morning", "afternoon", or "10:00"
+  notes         String?
+  status        WaitlistStatus @default(WAITING)
+  notifiedAt    DateTime?
+  bookedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED    // we texted them about an opening
+  BOOKED      // they took the slot
+  EXPIRED     // the date passed
+  DECLINED    // they said no
 }

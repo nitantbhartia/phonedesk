@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         where: {
           businessId: business.id,
           customerPhone: { in: [from, normalizedFrom || from] },
-          status: "PENDING",
+          status: { in: ["PENDING", "CONFIRMED"] },
           startTime: { gte: new Date() },
         },
         orderBy: { startTime: "asc" },
@@ -130,15 +130,61 @@ export async function POST(req: NextRequest) {
       if (appointment) {
         await prisma.appointment.update({
           where: { id: appointment.id },
-          data: { status: "CONFIRMED" },
+          data: {
+            status: "CONFIRMED",
+            confirmedAt: new Date(),
+          },
         });
 
         const { sendSms } = await import("@/lib/retell");
         await sendSms(
           from,
-          `Your appointment at ${business.name} is confirmed! See you soon.`,
+          `Your appointment at ${business.name} is confirmed! See you soon. 🐾`,
           to
         );
+
+        // Notify owner
+        if (business.phone) {
+          const { formatDateTime } = await import("@/lib/utils");
+          await sendSms(
+            business.phone,
+            `[RingPaw] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
+            to
+          );
+        }
+      }
+    } else if (upperBody === "BOOK") {
+      // Waitlist: customer wants the offered slot
+      const waitlistEntry = await prisma.waitlistEntry.findFirst({
+        where: {
+          businessId: business.id,
+          customerPhone: from,
+          status: "NOTIFIED",
+        },
+        orderBy: { notifiedAt: "desc" },
+      });
+
+      if (waitlistEntry) {
+        await prisma.waitlistEntry.update({
+          where: { id: waitlistEntry.id },
+          data: { status: "BOOKED", bookedAt: new Date() },
+        });
+
+        const { sendSms } = await import("@/lib/retell");
+        await sendSms(
+          from,
+          `Great — you're booked! We'll see ${waitlistEntry.petName || "your pet"} at ${business.name} soon. Reply CANCEL if plans change.`,
+          to
+        );
+
+        // Notify owner
+        if (business.phone) {
+          await sendSms(
+            business.phone,
+            `[RingPaw] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${waitlistEntry.petName || "their pet"}.`,
+            to
+          );
+        }
       }
     }
   }
