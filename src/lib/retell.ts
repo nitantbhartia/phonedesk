@@ -64,8 +64,9 @@ Your role is to answer calls when the owner is busy with a client, collect booki
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 
 ## Conversation Flow
-1. Greet the caller warmly
-2. Collect the following information:
+1. If caller phone context is available, call lookup_customer_context before asking for the caller's name.
+2. Greet the caller warmly. If returning-customer context exists, personalize the greeting and avoid asking for information already on file unless you need to confirm a change.
+3. Collect any missing information:
    - Customer's name
    - Dog's name
    - Dog's breed
@@ -74,9 +75,9 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
    - Any special handling needs or notes
    - Whether this is their first visit
    - Preferred day and time
-3. Check availability and offer 2-3 time slot options
-4. Confirm the booking details
-5. Let them know they'll receive a confirmation text
+4. Check availability and offer 2-3 time slot options
+5. Confirm the booking details
+6. Let them know they'll receive a confirmation text
 
 ## Important Rules
 - Be conversational, warm, and friendly — like a helpful human receptionist
@@ -85,7 +86,8 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 - If a caller wants to cancel, say you'll pass the message to ${business.ownerName}
 - Keep the conversation efficient — aim for under 2 minutes
 - Do NOT discuss pricing unless the caller specifically asks
-- If asked about pricing, share the service prices listed above`;
+- If asked about pricing, share the service prices listed above
+- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions`;
 }
 
 function formatBusinessHours(
@@ -288,6 +290,24 @@ interface RetellTool {
 
 export function buildAgentTools(appUrl: string): RetellTool[] {
   return [
+    {
+      type: "custom",
+      name: "lookup_customer_context",
+      description:
+        "Look up an existing customer by caller phone number before asking repeat callers for their details.",
+      url: `${appUrl}/api/retell/lookup-customer`,
+      speak_during_execution: false,
+      parameters: {
+        type: "object",
+        properties: {
+          caller_phone: {
+            type: "string",
+            description:
+              "The caller phone number in E.164 format. If omitted, the system will use the inbound caller number automatically.",
+          },
+        },
+      },
+    },
     {
       type: "custom",
       name: "check_availability",

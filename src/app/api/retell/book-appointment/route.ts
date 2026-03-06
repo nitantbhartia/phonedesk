@@ -5,6 +5,8 @@ import {
   sendBookingNotificationToOwner,
   sendBookingConfirmationToCustomer,
 } from "@/lib/notifications";
+import { normalizePhoneNumber } from "@/lib/phone";
+import { upsertCustomerMemory } from "@/lib/customer-memory";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -64,6 +66,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const normalizedCustomerPhone = normalizePhoneNumber(
+      customerPhone || call?.from_number
+    );
+
     const availableSlots = await getAvailableSlots(
       business.id,
       start.toISOString().slice(0, 10),
@@ -83,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     const appointment = await bookAppointment(business.id, {
       customerName,
-      customerPhone: customerPhone || call?.from_number,
+      customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
       petName,
       petBreed,
       petSize: petSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
@@ -91,6 +97,17 @@ export async function POST(req: NextRequest) {
       servicePrice: service?.price,
       startTime: start,
       endTime: end,
+    });
+
+    await upsertCustomerMemory({
+      businessId: business.id,
+      customerName,
+      customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
+      petName,
+      petBreed,
+      petSize: petSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
+      serviceName: service?.name || svcName,
+      appointmentStart: start,
     });
 
     // Link call to appointment
