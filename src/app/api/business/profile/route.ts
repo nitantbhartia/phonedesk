@@ -178,7 +178,10 @@ export async function POST(req: NextRequest) {
   // Create/update Retell config
   const fullBusiness = await prisma.business.findUnique({
     where: { id: business.id },
-    include: { services: { where: { isActive: true } } },
+    include: {
+      services: { where: { isActive: true } },
+      retellConfig: true,
+    },
   });
 
   if (fullBusiness) {

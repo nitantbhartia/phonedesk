@@ -6,14 +6,46 @@ import {
   syncRetellAgent,
 } from "@/lib/retell";
 
+async function resolveUserId(session: {
+  user?: {
+    id?: string | null;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+  };
+}) {
+  const email = session.user?.email;
+
+  if (!email) {
+    return session.user?.id ?? null;
+  }
+
+  const user = await prisma.user.upsert({
+    where: { email },
+    create: {
+      email,
+      name: session.user?.name ?? undefined,
+      image: session.user?.image ?? undefined,
+    },
+    update: {
+      name: session.user?.name ?? undefined,
+      image: session.user?.image ?? undefined,
+    },
+  });
+
+  return user.id;
+}
+
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  const userId = session ? await resolveUserId(session) : null;
+
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const business = await prisma.business.findUnique({
-    where: { userId: session.user.id },
+    where: { userId },
     include: {
       services: { where: { isActive: true } },
       retellConfig: true,
