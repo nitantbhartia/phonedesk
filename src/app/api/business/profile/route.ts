@@ -195,9 +195,15 @@ export async function POST(req: NextRequest) {
     if (voiceId !== undefined) retellData.voiceId = String(voiceId);
     if (personality !== undefined) retellData.personality = personality;
     if (greeting !== undefined) retellData.greeting = String(greeting);
-    await prisma.retellConfig.updateMany({
+
+    // Use upsert to ensure retellConfig exists (handles case where it was never created)
+    await prisma.retellConfig.upsert({
       where: { businessId: business.id },
-      data: retellData,
+      create: {
+        businessId: business.id,
+        ...retellData,
+      },
+      update: retellData,
     });
   }
 
@@ -210,19 +216,27 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  if (fullBusiness) {
-    try {
-      await syncRetellAgent(fullBusiness);
-    } catch (error) {
-      console.error("Error configuring Retell:", error);
-      return NextResponse.json(
-        { business, error: "Settings saved but failed to sync to voice agent. Please try saving again." },
-        { status: 207 }
-      );
-    }
+  if (!fullBusiness?.retellConfig) {
+    console.error("[Retell Sync] No retellConfig found for business", business.id);
+    return NextResponse.json(
+      { business, error: "No voice agent configured. Please complete onboarding to provision a phone number first." },
+      { status: 400 }
+    );
   }
 
-  return NextResponse.json({ business });
+  try {
+    console.log("[Retell Sync] Syncing agent for business", business.id, "bookingMode:", fullBusiness.bookingMode, "agentId:", fullBusiness.retellConfig.agentId, "llmId:", fullBusiness.retellConfig.llmId);
+    await syncRetellAgent(fullBusiness);
+    console.log("[Retell Sync] Success for business", business.id);
+  } catch (error) {
+    console.error("[Retell Sync] Failed for business", business.id, error);
+    return NextResponse.json(
+      { business, error: "Settings saved but failed to sync to voice agent: " + (error instanceof Error ? error.message : String(error)) },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({ business, synced: true });
 }
 
 export async function PATCH(req: NextRequest) {

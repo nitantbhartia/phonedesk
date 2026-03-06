@@ -280,6 +280,19 @@ export async function provisionRetellPhoneNumber(options: {
   });
 }
 
+export async function updateRetellPhoneNumber(
+  phoneNumber: string,
+  updates: { inboundAgentId?: string }
+): Promise<void> {
+  const body: Record<string, unknown> = {};
+  if (updates.inboundAgentId) body.inbound_agent_id = updates.inboundAgentId;
+
+  await retellFetch(`/update-phone-number/${encodeURIComponent(phoneNumber)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function deleteRetellPhoneNumber(
   phoneNumber: string
 ): Promise<void> {
@@ -501,31 +514,45 @@ export async function syncRetellAgent(business: SyncableBusiness) {
   const config = buildAgentConfig(business, business.retellConfig as { voiceId?: string | null; personality?: AgentPersonality | null; greeting?: string | null } | null);
   const existingConfig = business.retellConfig;
 
+  // Try to update existing LLM + agent on Retell
   if (existingConfig?.agentId && existingConfig.llmId) {
-    await updateRetellLLM(existingConfig.llmId, {
-      generalPrompt: config.generalPrompt,
-      beginMessage: config.beginMessage,
-      tools: config.tools,
-    });
+    try {
+      await updateRetellLLM(existingConfig.llmId, {
+        generalPrompt: config.generalPrompt,
+        beginMessage: config.beginMessage,
+        tools: config.tools,
+      });
 
-    await updateRetellAgent(existingConfig.agentId, {
-      agentName: config.agentName,
-      voiceId: config.voiceId,
-      webhookUrl: config.webhookUrl,
-    });
-
-    return prisma.retellConfig.update({
-      where: { businessId: business.id },
-      data: {
-        agentId: existingConfig.agentId,
-        llmId: existingConfig.llmId,
-        systemPrompt: config.generalPrompt,
+      await updateRetellAgent(existingConfig.agentId, {
+        agentName: config.agentName,
         voiceId: config.voiceId,
-        greeting: config.beginMessage,
-      },
-    });
+        webhookUrl: config.webhookUrl,
+      });
+
+      return prisma.retellConfig.update({
+        where: { businessId: business.id },
+        data: {
+          systemPrompt: config.generalPrompt,
+          voiceId: config.voiceId,
+          greeting: config.beginMessage,
+        },
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      // If the LLM or agent was deleted on Retell, fall through to recreate
+      if (errorMsg.includes("not found") || errorMsg.includes("404")) {
+        console.warn("[Retell Sync] Stored LLM/agent no longer exists on Retell, recreating...", {
+          llmId: existingConfig.llmId,
+          agentId: existingConfig.agentId,
+        });
+      } else {
+        // Non-404 errors should still propagate
+        throw error;
+      }
+    }
   }
 
+  // Create fresh LLM + agent (either first time or stale IDs)
   const llm = await createRetellLLM({
     generalPrompt: config.generalPrompt,
     beginMessage: config.beginMessage,
@@ -538,6 +565,24 @@ export async function syncRetellAgent(business: SyncableBusiness) {
     voiceId: config.voiceId,
     webhookUrl: config.webhookUrl,
   });
+
+  console.log("[Retell Sync] Created new LLM:", llm.llm_id, "agent:", agent.agent_id);
+
+  // Re-link the phone number to the new agent
+  const phoneNumber = await prisma.phoneNumber.findFirst({
+    where: { businessId: business.id },
+  });
+  if (phoneNumber) {
+    try {
+      await updateRetellPhoneNumber(phoneNumber.number, {
+        inboundAgentId: agent.agent_id,
+      });
+      console.log("[Retell Sync] Re-linked phone", phoneNumber.number, "to new agent", agent.agent_id);
+    } catch (phoneError) {
+      console.error("[Retell Sync] Failed to re-link phone number:", phoneError);
+      // Don't throw — the agent was created successfully, phone linking can be retried
+    }
+  }
 
   return prisma.retellConfig.upsert({
     where: { businessId: business.id },
