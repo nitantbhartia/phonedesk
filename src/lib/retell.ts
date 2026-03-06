@@ -235,6 +235,29 @@ export async function updateRetellLLM(
   });
 }
 
+/**
+ * Refresh the current_date dynamic variable on an existing Retell LLM.
+ * Called at the start of every inbound call so the AI always knows
+ * the real date, even if the LLM was last fully synced days ago.
+ */
+export async function refreshRetellLLMDate(llmId: string): Promise<void> {
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  await retellFetch(`/update-retell-llm/${llmId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      retell_llm_dynamic_variables: {
+        current_date: currentDate,
+      },
+    }),
+  });
+}
+
 // --- Retell Agent ---
 
 export async function createRetellAgent(config: {
