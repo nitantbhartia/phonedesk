@@ -60,7 +60,31 @@ export async function POST(req: NextRequest) {
     : null;
 
   const timezone = business.timezone || "America/Los_Angeles";
-  const start = parseLocalDatetime(startTime, timezone);
+
+  // Auto-correct past dates: the AI model sometimes hallucinates old years
+  // (e.g. 2024-05-21T09:00:00 instead of 2026-05-21T09:00:00).
+  let correctedStartTime = startTime;
+  if (correctedStartTime && !(/Z|[+-]\d{2}:\d{2}$/.test(correctedStartTime))) {
+    const dateMatch = correctedStartTime.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateMatch) {
+      const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+      const dateOnly = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+      if (dateOnly < todayStr) {
+        const [currentYear] = todayStr.split("-");
+        let correctedDate = `${currentYear}-${dateMatch[2]}-${dateMatch[3]}`;
+        if (correctedDate < todayStr) {
+          correctedDate = `${Number(currentYear) + 1}-${dateMatch[2]}-${dateMatch[3]}`;
+        }
+        correctedStartTime = correctedStartTime.replace(
+          `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`,
+          correctedDate
+        );
+        console.warn("[book-appointment] Auto-corrected past date:", startTime, "→", correctedStartTime);
+      }
+    }
+  }
+
+  const start = parseLocalDatetime(correctedStartTime, timezone);
   const end = new Date(start.getTime() + (service?.duration || 60) * 60000);
 
   if (Number.isNaN(start.getTime())) {

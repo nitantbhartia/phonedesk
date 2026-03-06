@@ -7,7 +7,7 @@ import {
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemoryFromCall, lookupCustomerContext, buildCustomerContextSummary } from "@/lib/customer-memory";
-import { refreshRetellLLMForCall } from "@/lib/retell";
+import { refreshRetellLLMForCall, generateReturningGreeting, generateDefaultGreeting } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
@@ -67,8 +67,13 @@ async function handleCallStarted(call: RetellCallPayload) {
     const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
     if (llmId) {
       const contextSummary = buildCustomerContextSummary(customerContext);
+      const businessName = (phoneNum.business as { name: string }).name;
+      const firstPetName = customerContext.pets?.[0]?.name || null;
+      const greeting = knownName
+        ? generateReturningGreeting(businessName, knownName, firstPetName)
+        : generateDefaultGreeting(businessName);
       try {
-        await refreshRetellLLMForCall(llmId, contextSummary);
+        await refreshRetellLLMForCall(llmId, contextSummary, greeting);
       } catch (err) {
         console.error("[webhook] Failed to refresh LLM for call:", err);
       }

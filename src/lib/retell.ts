@@ -175,7 +175,19 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  return `Hi, thanks for calling ${business.name}! One moment while I pull up your info.`;
+  // Uses dynamic variable so the webhook can personalize it per-caller
+  return `{{customer_greeting}}`;
+}
+
+export function generateDefaultGreeting(businessName: string): string {
+  return `Hi, thanks for calling ${businessName}! One moment while I pull up your info.`;
+}
+
+export function generateReturningGreeting(businessName: string, customerName: string, petName?: string | null): string {
+  if (petName) {
+    return `Hey ${customerName}! Thanks for calling ${businessName}. How's ${petName} doing?`;
+  }
+  return `Hey ${customerName}! Thanks for calling ${businessName}. How can I help you today?`;
 }
 
 // --- Retell LLM (Response Engine) ---
@@ -183,6 +195,7 @@ export function generateGreeting(business: Business): string {
 export async function createRetellLLM(config: {
   generalPrompt: string;
   beginMessage: string;
+  defaultGreeting: string;
   tools?: RetellTool[];
 }): Promise<{ llm_id: string }> {
   const now = new Date();
@@ -207,6 +220,7 @@ export async function createRetellLLM(config: {
       current_date: currentDate,
       current_date_iso: currentDateIso,
       customer_context: "No prior customer record found. Treat as a new customer.",
+      customer_greeting: config.defaultGreeting,
     },
   };
 
@@ -225,6 +239,7 @@ export async function updateRetellLLM(
   updates: {
     generalPrompt?: string;
     beginMessage?: string;
+    defaultGreeting?: string;
     tools?: RetellTool[];
   }
 ): Promise<void> {
@@ -250,6 +265,7 @@ export async function updateRetellLLM(
     current_date: currentDate,
     current_date_iso: currentDateIso,
     customer_context: "No prior customer record found. Treat as a new customer.",
+    customer_greeting: updates.defaultGreeting || "Hi, thanks for calling! One moment while I pull up your info.",
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
@@ -265,7 +281,8 @@ export async function updateRetellLLM(
  */
 export async function refreshRetellLLMForCall(
   llmId: string,
-  customerContext?: string | null
+  customerContext?: string | null,
+  greeting?: string | null
 ): Promise<void> {
   const now = new Date();
   const currentDate = now.toLocaleDateString("en-US", {
@@ -282,6 +299,7 @@ export async function refreshRetellLLMForCall(
     current_date: currentDate,
     current_date_iso: currentDateIso,
     customer_context: customerContext || "No prior customer record found. Treat as a new customer.",
+    customer_greeting: greeting || "Hi, thanks for calling! One moment while I pull up your info.",
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
@@ -448,7 +466,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "lookup_customer_context",
       description:
-        "ALWAYS call this tool FIRST at the start of every call. It checks if the caller is a returning customer and retrieves their name, pet info, and visit history. No parameters needed — the caller's phone number is provided automatically.",
+        "Refresh or look up customer info mid-call. Customer context is already loaded automatically at the start of every call — only use this tool if the caller says they are someone else, or you need to re-check their info after a correction.",
       url: `${appUrl}/api/retell/lookup-customer`,
       speak_during_execution: false,
       parameters: {
@@ -577,10 +595,13 @@ export function buildAgentConfig(
 ) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+  const defaultGreeting = generateDefaultGreeting(business.name);
+
   return {
     agentName: `${business.name} Receptionist`,
     generalPrompt: generateSystemPrompt(business, retellConfig?.personality),
     beginMessage: retellConfig?.greeting?.trim() || generateGreeting(business),
+    defaultGreeting,
     voiceId: retellConfig?.voiceId || "11labs-Adrian",
     webhookUrl: `${appUrl}/api/retell/webhook`,
     tools: buildAgentTools(appUrl),
@@ -602,6 +623,7 @@ export async function syncRetellAgent(business: SyncableBusiness) {
       await updateRetellLLM(existingConfig.llmId, {
         generalPrompt: config.generalPrompt,
         beginMessage: config.beginMessage,
+        defaultGreeting: config.defaultGreeting,
         tools: config.tools,
       });
 
@@ -638,6 +660,7 @@ export async function syncRetellAgent(business: SyncableBusiness) {
   const llm = await createRetellLLM({
     generalPrompt: config.generalPrompt,
     beginMessage: config.beginMessage,
+    defaultGreeting: config.defaultGreeting,
     tools: config.tools,
   });
 
