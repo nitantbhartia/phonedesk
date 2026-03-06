@@ -323,6 +323,23 @@ function LandingPageContent() {
         </div>
       </section>
 
+      {/* Live Demo Conversation */}
+      <section className="py-24 px-6 relative z-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Hear it in action</h2>
+            <h3 className="text-4xl font-extrabold text-paw-brown">
+              A real AI conversation
+            </h3>
+            <p className="text-paw-brown/70 mt-4 max-w-lg mx-auto">
+              This is what your callers actually experience. Natural, friendly, and gets straight to booking.
+            </p>
+          </div>
+
+          <DemoConversation />
+        </div>
+      </section>
+
       {/* Features */}
       <section id="features" className="py-24 px-6 bg-white relative overflow-hidden">
         <div className="absolute -left-20 top-20 w-96 h-96 bg-paw-sky rounded-full blur-3xl opacity-50" />
@@ -565,6 +582,177 @@ function LandingPageContent() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+const DEMO_MESSAGES = [
+  { role: "ai" as const, text: "Hi there! You've reached Happy Paws Grooming. Sarah's with a client right now, but I can help you book an appointment. What's your name?" },
+  { role: "caller" as const, text: "Hey! I'm Jessica. I need to get my dog groomed." },
+  { role: "ai" as const, text: "Nice to meet you, Jessica! What's your pup's name and breed?" },
+  { role: "caller" as const, text: "His name is Cooper, he's a Goldendoodle." },
+  { role: "ai" as const, text: "Oh I love Goldendoodles! What service are you looking for? We do full grooms, bath and brush, or just nail trims." },
+  { role: "caller" as const, text: "Full groom please. He's getting pretty shaggy." },
+  { role: "ai" as const, text: "Ha, totally get it! For a Goldendoodle full groom, that runs about $85 and takes around 2 hours. When works best for you?" },
+  { role: "caller" as const, text: "Do you have anything this Saturday morning?" },
+  { role: "ai" as const, text: "Let me check... I've got a 9 AM or 11 AM open this Saturday. Which works better?" },
+  { role: "caller" as const, text: "9 AM is perfect!" },
+  { role: "ai" as const, text: "Awesome! I've got Cooper the Goldendoodle booked for a full groom this Saturday at 9 AM. You'll get a confirmation text shortly. Is there anything else I can help with?" },
+  { role: "caller" as const, text: "Nope, that's it. Thanks!" },
+  { role: "ai" as const, text: "You're welcome, Jessica! Cooper's going to look amazing. See you Saturday!" },
+];
+
+function DemoConversation() {
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  useEffect(() => {
+    if (!isPlaying || visibleCount >= DEMO_MESSAGES.length) {
+      if (visibleCount >= DEMO_MESSAGES.length) setIsPlaying(false);
+      return;
+    }
+
+    const msg = DEMO_MESSAGES[visibleCount];
+    const delay = msg.role === "ai" ? 1800 : 1200;
+
+    const timer = setTimeout(() => {
+      setVisibleCount((c) => c + 1);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [isPlaying, visibleCount]);
+
+  useEffect(() => {
+    const el = document.getElementById("demo-chat-scroll");
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [visibleCount]);
+
+  function handlePlay() {
+    if (visibleCount >= DEMO_MESSAGES.length) {
+      setVisibleCount(0);
+    }
+    setHasStarted(true);
+    setIsPlaying(true);
+    if (visibleCount === 0) {
+      setVisibleCount(1);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-[2.5rem] shadow-soft border border-gray-100 overflow-hidden">
+      {/* Phone header */}
+      <div className="bg-paw-brown px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-paw-amber/20 rounded-full flex items-center justify-center">
+            <span className="text-lg">&#x1F43E;</span>
+          </div>
+          <div>
+            <p className="text-white font-bold text-sm">RingPaw AI</p>
+            <p className="text-white/60 text-xs">Happy Paws Grooming</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isPlaying && (
+            <span className="flex items-center gap-1.5 text-paw-amber text-xs font-bold">
+              <span className="w-2 h-2 rounded-full bg-paw-amber animate-pulse" />
+              LIVE
+            </span>
+          )}
+          <span className="text-white/40 text-xs">
+            {visibleCount > 0 ? `${Math.min(Math.ceil(visibleCount * 0.3), 2)}:${String(Math.round(visibleCount * 7) % 60).padStart(2, "0")}` : "0:00"}
+          </span>
+        </div>
+      </div>
+
+      {/* Chat area */}
+      <div
+        id="demo-chat-scroll"
+        className="px-4 sm:px-6 py-6 space-y-4 max-h-[420px] overflow-y-auto scroll-smooth"
+        style={{ minHeight: "320px" }}
+      >
+        {!hasStarted && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-20 h-20 bg-paw-sky rounded-full flex items-center justify-center mb-4">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3E2919" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </div>
+            <p className="text-paw-brown font-bold text-lg mb-1">Watch a sample call</p>
+            <p className="text-paw-brown/60 text-sm">See exactly how RingPaw handles a real booking call</p>
+          </div>
+        )}
+
+        {DEMO_MESSAGES.slice(0, visibleCount).map((msg, i) => (
+          <div
+            key={i}
+            className={`flex ${msg.role === "caller" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[80%] sm:max-w-[70%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                msg.role === "ai"
+                  ? "bg-paw-cream text-paw-brown rounded-bl-md"
+                  : "bg-paw-brown text-white rounded-br-md"
+              }`}
+            >
+              <p className={`text-[10px] font-bold uppercase mb-1 ${msg.role === "ai" ? "text-paw-orange" : "text-white/50"}`}>
+                {msg.role === "ai" ? "AI Receptionist" : "Caller"}
+              </p>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+
+        {isPlaying && visibleCount < DEMO_MESSAGES.length && (
+          <div className={`flex ${DEMO_MESSAGES[visibleCount].role === "caller" ? "justify-end" : "justify-start"}`}>
+            <div className={`px-4 py-3 rounded-2xl ${DEMO_MESSAGES[visibleCount].role === "ai" ? "bg-paw-cream rounded-bl-md" : "bg-paw-brown rounded-br-md"}`}>
+              <div className="flex gap-1">
+                <span className={`w-2 h-2 rounded-full animate-bounce ${DEMO_MESSAGES[visibleCount].role === "ai" ? "bg-paw-brown/30" : "bg-white/50"}`} style={{ animationDelay: "0ms" }} />
+                <span className={`w-2 h-2 rounded-full animate-bounce ${DEMO_MESSAGES[visibleCount].role === "ai" ? "bg-paw-brown/30" : "bg-white/50"}`} style={{ animationDelay: "150ms" }} />
+                <span className={`w-2 h-2 rounded-full animate-bounce ${DEMO_MESSAGES[visibleCount].role === "ai" ? "bg-paw-brown/30" : "bg-white/50"}`} style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+        <button
+          onClick={handlePlay}
+          className="px-6 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm hover:bg-paw-brown/90 transition-colors flex items-center gap-2"
+        >
+          {!hasStarted ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              Play Demo Call
+            </>
+          ) : visibleCount >= DEMO_MESSAGES.length ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+              Replay
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-paw-amber animate-pulse" />
+              Call in progress...
+            </>
+          )}
+        </button>
+
+        {visibleCount >= DEMO_MESSAGES.length && (
+          <div className="flex items-center gap-2 text-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span className="font-bold text-green-600">Booked in under 2 min</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
