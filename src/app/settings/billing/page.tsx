@@ -69,6 +69,9 @@ export default function BillingPage() {
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState("STARTER");
   const [minutesUsed, setMinutesUsed] = useState(0);
+  const [hasStripeCustomer, setHasStripeCustomer] = useState(false);
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [billingError, setBillingError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -86,6 +89,7 @@ export default function BillingPage() {
         const data = await res.json();
         if (data.business) {
           setCurrentPlan(data.business.plan || "STARTER");
+          setHasStripeCustomer(Boolean(data.business.stripeCustomerId));
         }
         if (data.stats) {
           setMinutesUsed(data.stats.totalCallMinutes || 0);
@@ -95,6 +99,46 @@ export default function BillingPage() {
       console.error("Error:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function startCheckout(planId: string) {
+    setBillingError("");
+    setProcessingPlan(planId);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to start checkout");
+      }
+      if (!data.url) {
+        throw new Error("Checkout URL missing");
+      }
+      window.location.href = data.url;
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : "Failed to start checkout");
+      setProcessingPlan(null);
+    }
+  }
+
+  async function openBillingPortal() {
+    setBillingError("");
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to open billing portal");
+      }
+      if (!data.url) {
+        throw new Error("Billing portal URL missing");
+      }
+      window.location.href = data.url;
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : "Failed to open billing portal");
     }
   }
 
@@ -211,16 +255,26 @@ export default function BillingPage() {
                 <Button
                   variant={plan.popular ? "default" : "outline"}
                   className="w-full"
+                  onClick={() => void startCheckout(plan.id)}
+                  disabled={processingPlan !== null}
                 >
-                  {PLANS.indexOf(plan) > PLANS.findIndex((p) => p.id === currentPlan)
-                    ? "Upgrade"
-                    : "Downgrade"}
+                  {processingPlan === plan.id
+                    ? "Redirecting..."
+                    : PLANS.indexOf(plan) > PLANS.findIndex((p) => p.id === currentPlan)
+                      ? "Upgrade"
+                      : "Downgrade"}
                 </Button>
               )}
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {billingError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {billingError}
+        </div>
+      ) : null}
 
       {/* Billing Info */}
       <Card>
@@ -233,13 +287,19 @@ export default function BillingPage() {
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium">No payment method on file</p>
-            <p className="text-sm mt-1">
-              Add a payment method to activate your subscription.
+            <p className="font-medium">
+              {hasStripeCustomer ? "Manage your payment details" : "No payment method on file"}
             </p>
-            <Button className="mt-4">
-              <Zap className="w-4 h-4 mr-2" /> Add Payment Method
-            </Button>
+            <p className="text-sm mt-1">
+              {hasStripeCustomer
+                ? "Open Stripe customer portal to update payment method, invoices, and subscription."
+                : "Choose a plan above to start Stripe checkout and add your payment method."}
+            </p>
+            {hasStripeCustomer ? (
+              <Button className="mt-4" onClick={() => void openBillingPortal()}>
+                <Zap className="w-4 h-4 mr-2" /> Open Billing Portal
+              </Button>
+            ) : null}
           </div>
         </CardContent>
       </Card>

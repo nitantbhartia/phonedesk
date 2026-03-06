@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { InfoIcon } from "@/components/ui/info-icon";
 import {
   Bot,
   Volume2,
@@ -296,7 +297,10 @@ export default function AgentSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
-            <Label>Conversation Tone</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              Conversation Tone
+              <InfoIcon text="Sets the overall vibe callers hear first." />
+            </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {TONE_OPTIONS.map((opt) => (
                 <button
@@ -320,7 +324,10 @@ export default function AgentSettingsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Conversation Style</Label>
+              <Label className="inline-flex items-center gap-1.5">
+                Conversation Style
+                <InfoIcon text="Controls whether replies are brief, natural, or detailed." />
+              </Label>
               <Select value={style} onValueChange={setStyle}>
                 <SelectTrigger>
                   <SelectValue />
@@ -336,7 +343,10 @@ export default function AgentSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Language Style</Label>
+              <Label className="inline-flex items-center gap-1.5">
+                Language Style
+                <InfoIcon text="Choose casual or formal wording for the AI voice." />
+              </Label>
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger>
                   <SelectValue />
@@ -352,7 +362,10 @@ export default function AgentSettingsPage() {
           <Separator />
 
           <div className="space-y-2">
-            <Label>Custom Instructions (optional)</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              Custom Instructions (optional)
+              <InfoIcon text="Business-specific rules that get injected into every call." />
+            </Label>
             <textarea
               className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={customInstructions}
@@ -432,7 +445,10 @@ export default function AgentSettingsPage() {
           {services.map((service, i) => (
             <div key={i} className="flex flex-col sm:flex-row sm:items-end gap-3">
               <div className="flex-1 space-y-1">
-                <Label>Service</Label>
+                <Label className="inline-flex items-center gap-1.5">
+                  Service
+                  <InfoIcon text="Name customers hear when asking what you offer." />
+                </Label>
                 <Input
                   value={service.name}
                   onChange={(e) => {
@@ -444,7 +460,10 @@ export default function AgentSettingsPage() {
               </div>
               <div className="flex items-end gap-3">
                 <div className="flex-1 sm:w-24 sm:flex-none space-y-1">
-                  <Label>Price ($)</Label>
+                  <Label className="inline-flex items-center gap-1.5">
+                    Price ($)
+                    <InfoIcon text="Used for quoting and estimate responses." />
+                  </Label>
                   <Input
                     type="number"
                     value={service.price}
@@ -456,7 +475,10 @@ export default function AgentSettingsPage() {
                   />
                 </div>
                 <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
-                  <Label>Duration (min)</Label>
+                  <Label className="inline-flex items-center gap-1.5">
+                    Duration (min)
+                    <InfoIcon text="Used to calculate available booking windows." />
+                  </Label>
                   <Input
                     type="number"
                     value={service.duration}

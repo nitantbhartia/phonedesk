@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { InfoIcon } from "@/components/ui/info-icon";
 
 const STEPS = [
   { number: 1, label: "Business Profile" },
@@ -152,17 +153,22 @@ export function OnboardingLabel({
   children,
   htmlFor,
   className = "",
+  info,
 }: {
   children: React.ReactNode;
   htmlFor?: string;
   className?: string;
+  info?: string;
 }) {
   return (
     <label
       htmlFor={htmlFor}
       className={`text-sm font-bold text-paw-brown/70 uppercase tracking-wider block ${className}`}
     >
-      {children}
+      <span className="inline-flex items-center gap-1.5">
+        <span>{children}</span>
+        {info ? <InfoIcon text={info} /> : null}
+      </span>
     </label>
   );
 }

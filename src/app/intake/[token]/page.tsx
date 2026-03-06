@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { InfoIcon } from "@/components/ui/info-icon";
 
 interface FormData {
   petName: string;
@@ -34,6 +35,27 @@ const initialFormData: FormData = {
   emergencyPhone: "",
   specialNotes: "",
 };
+
+function FieldLabel({
+  htmlFor,
+  className,
+  info,
+  children,
+}: {
+  htmlFor: string;
+  className: string;
+  info: string;
+  children: string;
+}) {
+  return (
+    <label htmlFor={htmlFor} className={className}>
+      <span className="inline-flex items-center gap-1.5">
+        <span>{children}</span>
+        <InfoIcon text={info} />
+      </span>
+    </label>
+  );
+}
 
 export default function IntakeFormPage() {
   const params = useParams();
@@ -220,9 +242,9 @@ export default function IntakeFormPage() {
               </h2>
 
               <div>
-                <label htmlFor="petName" className={labelClass}>
+                <FieldLabel htmlFor="petName" className={labelClass} info="Your pet's name as you'd like staff to use it.">
                   Pet Name *
-                </label>
+                </FieldLabel>
                 <input
                   id="petName"
                   name="petName"
@@ -237,9 +259,9 @@ export default function IntakeFormPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="petBreed" className={labelClass}>
+                  <FieldLabel htmlFor="petBreed" className={labelClass} info="Breed helps estimate grooming time and coat handling needs.">
                     Breed
-                  </label>
+                  </FieldLabel>
                   <input
                     id="petBreed"
                     name="petBreed"
@@ -251,9 +273,9 @@ export default function IntakeFormPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="petAge" className={labelClass}>
+                  <FieldLabel htmlFor="petAge" className={labelClass} info="Approximate age is okay and helps with handling considerations.">
                     Age
-                  </label>
+                  </FieldLabel>
                   <input
                     id="petAge"
                     name="petAge"
@@ -267,9 +289,9 @@ export default function IntakeFormPage() {
               </div>
 
               <div>
-                <label htmlFor="petWeight" className={labelClass}>
+                <FieldLabel htmlFor="petWeight" className={labelClass} info="Weight helps with sizing and appointment planning.">
                   Weight
-                </label>
+                </FieldLabel>
                 <input
                   id="petWeight"
                   name="petWeight"
@@ -282,9 +304,9 @@ export default function IntakeFormPage() {
               </div>
 
               <div>
-                <label htmlFor="vaccinated" className={labelClass}>
+                <FieldLabel htmlFor="vaccinated" className={labelClass} info="Lets us confirm health and safety requirements before visits.">
                   Up-to-date on vaccinations?
-                </label>
+                </FieldLabel>
                 <select
                   id="vaccinated"
                   name="vaccinated"
@@ -304,9 +326,9 @@ export default function IntakeFormPage() {
               <h2 className="font-bold text-paw-brown text-lg">Behavior</h2>
 
               <div>
-                <label htmlFor="temperament" className={labelClass}>
+                <FieldLabel htmlFor="temperament" className={labelClass} info="Helps groomers approach your pet in the safest, calmest way.">
                   Temperament
-                </label>
+                </FieldLabel>
                 <select
                   id="temperament"
                   name="temperament"
@@ -323,9 +345,9 @@ export default function IntakeFormPage() {
               </div>
 
               <div>
-                <label htmlFor="biteHistory" className={labelClass}>
+                <FieldLabel htmlFor="biteHistory" className={labelClass} info="Share known bite incidents so staff can prepare safely.">
                   Any bite history?
-                </label>
+                </FieldLabel>
                 <select
                   id="biteHistory"
                   name="biteHistory"
@@ -340,9 +362,9 @@ export default function IntakeFormPage() {
               </div>
 
               <div>
-                <label htmlFor="allergies" className={labelClass}>
+                <FieldLabel htmlFor="allergies" className={labelClass} info="List product, food, or medication allergies we should know.">
                   Allergies
-                </label>
+                </FieldLabel>
                 <input
                   id="allergies"
                   name="allergies"
@@ -362,9 +384,9 @@ export default function IntakeFormPage() {
               </h2>
 
               <div>
-                <label htmlFor="vetName" className={labelClass}>
+                <FieldLabel htmlFor="vetName" className={labelClass} info="Primary veterinarian contact for urgent care coordination.">
                   Vet Name
-                </label>
+                </FieldLabel>
                 <input
                   id="vetName"
                   name="vetName"
@@ -377,9 +399,9 @@ export default function IntakeFormPage() {
               </div>
 
               <div>
-                <label htmlFor="vetPhone" className={labelClass}>
+                <FieldLabel htmlFor="vetPhone" className={labelClass} info="Direct clinic number if we need to verify medical context.">
                   Vet Phone
-                </label>
+                </FieldLabel>
                 <input
                   id="vetPhone"
                   name="vetPhone"
@@ -399,9 +421,9 @@ export default function IntakeFormPage() {
               </h2>
 
               <div>
-                <label htmlFor="emergencyName" className={labelClass}>
+                <FieldLabel htmlFor="emergencyName" className={labelClass} info="Backup person we can contact if we cannot reach you.">
                   Contact Name
-                </label>
+                </FieldLabel>
                 <input
                   id="emergencyName"
                   name="emergencyName"
@@ -414,9 +436,9 @@ export default function IntakeFormPage() {
               </div>
 
               <div>
-                <label htmlFor="emergencyPhone" className={labelClass}>
+                <FieldLabel htmlFor="emergencyPhone" className={labelClass} info="Best phone number for your emergency contact.">
                   Contact Phone
-                </label>
+                </FieldLabel>
                 <input
                   id="emergencyPhone"
                   name="emergencyPhone"
@@ -431,9 +453,9 @@ export default function IntakeFormPage() {
 
             {/* Special Notes */}
             <div>
-              <label htmlFor="specialNotes" className={labelClass}>
+              <FieldLabel htmlFor="specialNotes" className={labelClass} info="Anything else that helps us make the visit safe and smooth.">
                 Special Notes
-              </label>
+              </FieldLabel>
               <textarea
                 id="specialNotes"
                 name="specialNotes"

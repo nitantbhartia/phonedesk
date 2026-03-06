@@ -89,6 +89,10 @@ model Business {
   reviewRequests  ReviewRequest[]
   googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
+  stripeCustomerId String? @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId    String?
+  stripeSubscriptionStatus String?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

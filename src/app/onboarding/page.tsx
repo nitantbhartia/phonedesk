@@ -403,7 +403,10 @@ export default function OnboardingPage() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <OnboardingLabel htmlFor="businessName">
+              <OnboardingLabel
+                htmlFor="businessName"
+                info="This is what callers hear when your AI receptionist answers."
+              >
                 Business Name
               </OnboardingLabel>
               <OnboardingInput
@@ -414,7 +417,12 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="space-y-2">
-              <OnboardingLabel htmlFor="ownerName">Owner Name</OnboardingLabel>
+              <OnboardingLabel
+                htmlFor="ownerName"
+                info="Used in greetings so callers know who they are reaching."
+              >
+                Owner Name
+              </OnboardingLabel>
               <OnboardingInput
                 id="ownerName"
                 placeholder="Your full name"
@@ -426,7 +434,12 @@ export default function OnboardingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <OnboardingLabel htmlFor="phone">Phone Number</OnboardingLabel>
+              <OnboardingLabel
+                htmlFor="phone"
+                info="Used to suggest a local area code when generating your AI phone line."
+              >
+                Phone Number
+              </OnboardingLabel>
               <OnboardingInput
                 id="phone"
                 placeholder="(619) 555-0100"
@@ -435,7 +448,12 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="space-y-2">
-              <OnboardingLabel htmlFor="address">Address</OnboardingLabel>
+              <OnboardingLabel
+                htmlFor="address"
+                info="Shared with callers when they ask where to find you."
+              >
+                Address
+              </OnboardingLabel>
               <OnboardingInput
                 id="address"
                 placeholder="123 Main St, San Diego, CA"
@@ -447,7 +465,12 @@ export default function OnboardingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <OnboardingLabel htmlFor="city">City</OnboardingLabel>
+              <OnboardingLabel
+                htmlFor="city"
+                info="Helps localize your business profile and availability context."
+              >
+                City
+              </OnboardingLabel>
               <OnboardingInput
                 id="city"
                 placeholder="San Diego"
@@ -456,7 +479,12 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="space-y-2">
-              <OnboardingLabel htmlFor="state">State</OnboardingLabel>
+              <OnboardingLabel
+                htmlFor="state"
+                info="Used for business location context and formatting."
+              >
+                State
+              </OnboardingLabel>
               <OnboardingInput
                 id="state"
                 placeholder="CA"
@@ -465,7 +493,9 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="space-y-2">
-              <OnboardingLabel>Timezone</OnboardingLabel>
+              <OnboardingLabel info="All booking slots and reminders use this timezone.">
+                Timezone
+              </OnboardingLabel>
               <OnboardingSelect
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
@@ -481,7 +511,9 @@ export default function OnboardingPage() {
 
           {/* Business Hours */}
           <div className="space-y-4">
-            <OnboardingLabel>Business Hours</OnboardingLabel>
+            <OnboardingLabel info="The AI only offers appointment times inside these hours.">
+              Business Hours
+            </OnboardingLabel>
             <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
               {Object.entries(hours).map(([day, h]) => (
                 <div
@@ -583,7 +615,9 @@ export default function OnboardingPage() {
       {step === 2 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel>Services &amp; Pricing</OnboardingLabel>
+            <OnboardingLabel info="Add each service so the AI can quote prices and durations accurately.">
+              Services &amp; Pricing
+            </OnboardingLabel>
             <div className="space-y-3">
               {services.map((service, i) => (
                 <div
@@ -667,7 +701,9 @@ export default function OnboardingPage() {
 
           {/* Booking Mode */}
           <div className="space-y-4">
-            <OnboardingLabel>Default Booking Mode</OnboardingLabel>
+            <OnboardingLabel info="Soft mode collects requests for approval. Hard mode books instantly.">
+              Default Booking Mode
+            </OnboardingLabel>
             <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5">
               <div className="flex items-center justify-between">
                 <div>
@@ -707,7 +743,9 @@ export default function OnboardingPage() {
       {step === 3 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel>Connect Your Booking System</OnboardingLabel>
+            <OnboardingLabel info="Connect at least one calendar so availability checks are real-time.">
+              Connect Your Booking System
+            </OnboardingLabel>
             <p className="text-sm text-paw-brown/50 -mt-2">
               Pick whichever tool you already use. RingPaw reads availability and writes bookings directly.
             </p>
@@ -934,7 +972,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-4">
-                <OnboardingLabel>
+                <OnboardingLabel info="Forward missed or busy calls to this number so AI can answer for you.">
                   Set up call forwarding on your phone
                 </OnboardingLabel>
                 <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
@@ -1092,7 +1130,9 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-3">
-            <OnboardingLabel>Setup Summary</OnboardingLabel>
+            <OnboardingLabel info="Review these settings before activating your AI receptionist.">
+              Setup Summary
+            </OnboardingLabel>
             {[
               {
                 label: businessName || "Business Profile",
