@@ -12,7 +12,7 @@ export async function sendBookingNotificationToOwner(
   if (!business.phone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
-  const time = formatDateTime(appointment.startTime);
+  const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
     `[RingPaw] New booking!`,
@@ -37,7 +37,7 @@ export async function sendBookingConfirmationToCustomer(
   if (!appointment.customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
-  const time = formatDateTime(appointment.startTime);
+  const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
     `Hi ${appointment.customerName}! Your appointment at ${business.name} is ${appointment.status === "CONFIRMED" ? "confirmed" : "tentatively booked"}.`,
@@ -82,7 +82,7 @@ export async function sendAppointmentReminder(
   if (!appointment.customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
-  const time = formatDateTime(appointment.startTime);
+  const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
     `Reminder: ${appointment.petName || "Your pet"}'s ${appointment.serviceName || "grooming"} appointment at ${business.name} is tomorrow!`,
@@ -110,7 +110,7 @@ export async function send48hReminder(
   if (!appointment.customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
-  const time = formatDateTime(appointment.startTime);
+  const time = formatDateTime(appointment.startTime, business.timezone);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const message = [
@@ -163,7 +163,7 @@ export async function sendNoResponseFollowUp(
   if (!appointment.customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
-  const time = formatDateTime(appointment.startTime);
+  const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
     `Hi ${appointment.customerName}, we haven't heard back about ${appointment.petName || "your pet"}'s appointment at ${business.name}:`,
@@ -185,7 +185,7 @@ export async function sendCancellationWithWaitlistNotification(
   if (!business.phone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
-  const time = formatDateTime(cancelledAppt.startTime);
+  const time = formatDateTime(cancelledAppt.startTime, business.timezone);
 
   const message = waitlistCustomerName
     ? [

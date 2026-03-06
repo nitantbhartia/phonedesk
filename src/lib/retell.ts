@@ -79,15 +79,18 @@ export function generateSystemPrompt(
   const languageStyle = languageMap[personality?.language || "casual"] || languageMap.casual;
   const customInstructions = personality?.customInstructions?.trim();
 
+  const isHardBook = business.bookingMode === "HARD";
+
   return `You are a ${tone} AI receptionist for ${business.name}, a pet grooming business. The owner is ${business.ownerName}.
 
-Your role is to answer calls when the owner is busy with a client, collect booking details, and help callers schedule appointments.
+Your role is to help callers schedule appointments. You are fully authorized to check availability and book appointments directly — do NOT tell callers you need to check with the owner or have them call back for booking-related requests.
 
 ## Business Information
 - Business: ${business.name}
 - Owner: ${business.ownerName}
 - Location: ${business.address || business.city || "Not specified"}
 - Hours: ${hours}
+- Booking mode: ${isHardBook ? "Direct booking (appointments are confirmed immediately)" : "Soft booking (appointments are tentatively held until confirmed by text)"}
 
 ## Services Offered
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
@@ -104,20 +107,24 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
    - Any special handling needs or notes
    - Whether this is their first visit
    - Preferred day and time
-4. Check availability and offer 2-3 time slot options
-5. Confirm the booking details
-6. Let them know they'll receive a confirmation text
+4. Use the check_availability tool to find open slots and offer 2-3 time options.
+5. Once the caller picks a time, use the book_appointment tool to finalize the booking immediately.
+6. Confirm the booking is made and let them know they'll receive a confirmation text.
 
 ## Important Rules
 - ${style}
 - ${languageStyle}
-- If the caller asks something you can't answer, say: "I'll have ${business.ownerName} call you back shortly about that."
+- You MUST use the book_appointment tool to book appointments. Never say you'll "pass it along" or "have someone call back" for booking requests — you can handle them directly.
+- If the caller asks something unrelated to booking that you can't answer, say: "I'll have ${business.ownerName} call you back shortly about that."
 - Always confirm spelling of names if unclear
 - If a caller wants to cancel, say you'll pass the message to ${business.ownerName}
 - Keep the conversation efficient — aim for under 2 minutes
 - Do NOT discuss pricing unless the caller specifically asks
 - When asked about pricing, use the get_quote tool to provide an accurate estimate based on breed and size. Only fall back to the general service prices if the tool is unavailable.
-- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions${customInstructions ? `\n\n## Additional Instructions from Business Owner\n${customInstructions}` : ""}`;
+- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions
+
+## SMS Notifications
+If a {{notification_message}} is provided, you are being used to deliver an SMS notification. Send the notification_message exactly as written — do not rephrase, add commentary, or start a conversation. Just deliver the message.${customInstructions ? `\n\n## Additional Instructions from Business Owner\n${customInstructions}` : ""}`;
 }
 
 function formatBusinessHours(
@@ -280,10 +287,8 @@ export async function deleteRetellPhoneNumber(
 
 // --- SMS Sending ---
 
-// Send an outbound SMS via Retell.
-// Retell requires either a dedicated SMS agent or their send-text endpoint.
-// We first try the lightweight v2 send-text API; if that isn't available we
-// fall back to create-sms-chat with dynamic variables.
+// Send an outbound SMS via Retell's create-sms-chat endpoint.
+// The notification_message dynamic variable instructs the agent to relay it verbatim.
 export async function sendSms(
   to: string,
   body: string,
@@ -297,37 +302,19 @@ export async function sendSms(
   let lastError: Error | undefined;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      await retellFetch("/v2/send-text", {
+      await retellFetch("/create-sms-chat", {
         method: "POST",
         body: JSON.stringify({
           from_number: from,
           to_number: to,
-          text: body,
+          retell_llm_dynamic_variables: {
+            notification_message: body,
+          },
         }),
       });
       return;
     } catch (error) {
-      // If the v2 endpoint doesn't exist, fall back to create-sms-chat
-      if (attempt === 0 && error instanceof Error && error.message.includes("404")) {
-        try {
-          await retellFetch("/create-sms-chat", {
-            method: "POST",
-            body: JSON.stringify({
-              from_number: from,
-              to_number: to,
-              retell_llm_dynamic_variables: {
-                notification_message: body,
-              },
-            }),
-          });
-          return;
-        } catch (fallbackError) {
-          lastError = fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError));
-        }
-      } else {
-        lastError = error instanceof Error ? error : new Error(String(error));
-      }
-
+      lastError = error instanceof Error ? error : new Error(String(error));
       if (attempt < retries) {
         await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
       }
