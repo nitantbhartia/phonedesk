@@ -442,7 +442,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           date: {
             type: "string",
             description:
-              "The date to check availability for, in YYYY-MM-DD format",
+              "The date to check availability for, in YYYY-MM-DD format. IMPORTANT: Use {{current_date}} as your reference for today. Calculate dates relative to today — never use dates from 2024 or any past year.",
           },
           service_name: {
             type: "string",

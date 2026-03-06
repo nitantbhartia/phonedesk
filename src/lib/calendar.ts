@@ -654,12 +654,15 @@ export async function getAvailableSlots(
   const dayKey = dayNames[dayIndex];
   const hours = business.businessHours as BusinessHoursMap | null;
 
+  console.log("[getAvailableSlots] date:", date, "dayKey:", dayKey, "businessHours:", JSON.stringify(hours), "timezone:", timezone);
+
   let openTime = { hour: 9, minute: 0 };
   let closeTime = { hour: 17, minute: 0 };
 
-  if (hours) {
+  if (hours && Object.keys(hours).length > 0) {
     const dayHours = getHoursForDay(hours, dayKey);
     if (!dayHours?.open || !dayHours?.close) {
+      console.log("[getAvailableSlots] No hours found for", dayKey, "— business is closed. Available keys:", Object.keys(hours));
       return [];
     }
     openTime = parseBusinessTime(dayHours.open);
@@ -688,6 +691,8 @@ export async function getAvailableSlots(
   const busyTimes = await getBusyIntervals(businessId, dayStart, dayEnd);
   const slots: TimeSlot[] = [];
   const now = new Date();
+
+  console.log("[getAvailableSlots] openTime:", openTime, "closeTime:", closeTime, "slotStart:", slotStart.toISOString(), "slotEnd:", slotEnd.toISOString(), "now:", now.toISOString(), "busyIntervals:", busyTimes.length);
 
   let current = new Date(slotStart);
   while (current.getTime() + durationMinutes * 60000 <= slotEnd.getTime()) {
