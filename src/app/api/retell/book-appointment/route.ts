@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { bookAppointment, isSlotAvailable } from "@/lib/calendar";
+import { bookAppointment, isSlotAvailable, parseLocalDatetime } from "@/lib/calendar";
 import {
   sendBookingNotificationToOwner,
   sendBookingConfirmationToCustomer,
@@ -59,9 +59,9 @@ export async function POST(req: NextRequest) {
       )
     : null;
 
-  const start = new Date(startTime);
-  const end = new Date(start.getTime() + (service?.duration || 60) * 60000);
   const timezone = business.timezone || "America/Los_Angeles";
+  const start = parseLocalDatetime(startTime, timezone);
+  const end = new Date(start.getTime() + (service?.duration || 60) * 60000);
 
   if (Number.isNaN(start.getTime())) {
     return NextResponse.json({
@@ -184,6 +184,7 @@ export async function POST(req: NextRequest) {
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
+      timeZone: timezone,
     });
 
     const isConfirmed = appointment.status === "CONFIRMED";

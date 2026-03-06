@@ -169,7 +169,7 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  return `Hi, thanks for calling ${business.name}. ${business.ownerName} is with a client right now, and I'm happy to help. May I get your name?`;
+  return `Hi, thanks for calling ${business.name}! One moment while I pull up your info.`;
 }
 
 // --- Retell LLM (Response Engine) ---

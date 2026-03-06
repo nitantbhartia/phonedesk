@@ -896,6 +896,40 @@ export async function bookAppointment(
   return appointment;
 }
 
+/**
+ * Parse a datetime string like "2026-03-10T09:00:00" as if it's in the given
+ * timezone and return a proper UTC Date. If the string already has a timezone
+ * offset or "Z", it is returned as-is via new Date().
+ */
+export function parseLocalDatetime(
+  datetime: string,
+  timeZone: string
+): Date {
+  // If the string already has timezone info, trust it
+  if (/Z|[+-]\d{2}:\d{2}$/.test(datetime)) {
+    return new Date(datetime);
+  }
+
+  const match = datetime.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/
+  );
+  if (!match) {
+    return new Date(datetime); // fallback
+  }
+
+  const dateParts: DateParts = {
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+  };
+  return zonedDateTimeToUtc(
+    dateParts,
+    Number(match[4]),
+    Number(match[5]),
+    timeZone
+  );
+}
+
 export function describeAvailableSlots(
   slots: TimeSlot[],
   timeZone: string,
