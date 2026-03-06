@@ -246,10 +246,21 @@ export async function POST(req: NextRequest) {
     }));
     const slotDescriptions = describeAvailableSlots(slots, timezone);
 
+    // Include explicit date name so the agent relays it accurately
+    const [ry2, rm2, rd2] = requestedDate.split("-").map(Number);
+    const requestedDateLabel = new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      timeZone: timezone,
+    }).format(new Date(ry2, rm2 - 1, rd2));
+
     return NextResponse.json({
-      result: `I have openings at ${slotDescriptions}. Which time works best for you?`,
+      result: `I have openings on ${requestedDateLabel} at ${slotDescriptions}. Which time works best for you?`,
       available: true,
       available_slots: offered,
+      requested_date: requestedDate,
+      requested_date_label: requestedDateLabel,
       timezone,
       current_date: todayStr,
     });

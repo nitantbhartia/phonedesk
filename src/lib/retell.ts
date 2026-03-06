@@ -95,9 +95,11 @@ Your role is to help callers schedule appointments. You are fully authorized to 
 
 CRITICAL DATE RULES:
 - Today is {{current_date_iso}}. The current year is derived from this date.
-- When passing a date to the check_availability tool, use {{current_date_iso}} as your anchor and calculate from it. For example, if today is 2026-03-06, "next Monday" is 2026-03-09 or later.
+- When passing a date to the check_availability or book_appointment tool, use {{current_date_iso}} as your anchor and calculate from it. For example, if today is 2026-03-06, "next Monday" is 2026-03-09 or later.
 - NEVER use dates from 2024 or 2025 or any past year. Always double-check the year before calling a tool.
 - When a caller says "today", "tomorrow", "next Monday", etc., calculate the correct YYYY-MM-DD date relative to {{current_date_iso}}.
+- NEVER make up or guess a date. Only mention dates that came from the check_availability tool response or that you calculated directly from {{current_date_iso}}.
+- If the tool returns slot times, relay those exact times to the caller — do not substitute different dates or times.
 
 ## Services Offered
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
@@ -106,10 +108,10 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 {{customer_context}}
 
 ## Conversation Flow
-1. Read the Caller Context above. It tells you if this is a returning or new customer.
-2. Greet the caller based on the context:
-   - **Returning customer:** Greet them by name warmly and reference their pet. For example: "Hey Nitant! Good to hear from you. How's Rexi doing?" Skip any info already on file.
-   - **New customer:** Introduce yourself naturally: "Thanks for calling! I can help you get an appointment set up. What's your name?" Then ask them to spell it.
+1. Read the Caller Context above FIRST. It tells you if this is a returning or new customer.
+2. In your FIRST response after the caller speaks, personalize based on context:
+   - **Returning customer:** Greet them by name warmly and reference their pet. For example: "Oh hey Nitant! Good to hear from you. How's Rexi doing?" Skip any info already on file. If the greeting already asked for their name, acknowledge you found them: "Oh wait, I've got you right here — hey Nitant!"
+   - **New customer:** If the greeting already asked for their name, just continue naturally. Otherwise introduce yourself: "I can help you get an appointment set up. What's your name?" Then ask them to spell it.
 3. Collect any missing info one question at a time. Use natural phrasing — not robotic form-filling:
    - "What's your pup's name?" (not "What is the dog's name?")
    - "What kind of dog is [name]?" (not "What is the breed?")
@@ -175,19 +177,11 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  // Uses dynamic variable so the webhook can personalize it per-caller
-  return `{{customer_greeting}}`;
-}
-
-export function generateDefaultGreeting(businessName: string): string {
-  return `Hi, thanks for calling ${businessName}! One moment while I pull up your info.`;
-}
-
-export function generateReturningGreeting(businessName: string, customerName: string, petName?: string | null): string {
-  if (petName) {
-    return `Hey ${customerName}! Thanks for calling ${businessName}. How's ${petName} doing?`;
-  }
-  return `Hey ${customerName}! Thanks for calling ${businessName}. How can I help you today?`;
+  // Keep begin_message short and neutral — personalization happens in the
+  // agent's first generated response via {{customer_context}} in the system
+  // prompt. The begin_message is spoken BEFORE our webhook can inject
+  // per-caller context, so it must work for both new and returning callers.
+  return `Thanks for calling ${business.name}! Give me one sec.`;
 }
 
 // --- Retell LLM (Response Engine) ---
@@ -195,7 +189,6 @@ export function generateReturningGreeting(businessName: string, customerName: st
 export async function createRetellLLM(config: {
   generalPrompt: string;
   beginMessage: string;
-  defaultGreeting: string;
   tools?: RetellTool[];
 }): Promise<{ llm_id: string }> {
   const now = new Date();
@@ -220,7 +213,6 @@ export async function createRetellLLM(config: {
       current_date: currentDate,
       current_date_iso: currentDateIso,
       customer_context: "No prior customer record found. Treat as a new customer.",
-      customer_greeting: config.defaultGreeting,
     },
   };
 
@@ -239,7 +231,6 @@ export async function updateRetellLLM(
   updates: {
     generalPrompt?: string;
     beginMessage?: string;
-    defaultGreeting?: string;
     tools?: RetellTool[];
   }
 ): Promise<void> {
@@ -265,7 +256,6 @@ export async function updateRetellLLM(
     current_date: currentDate,
     current_date_iso: currentDateIso,
     customer_context: "No prior customer record found. Treat as a new customer.",
-    customer_greeting: updates.defaultGreeting || "Hi, thanks for calling! One moment while I pull up your info.",
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
@@ -281,8 +271,7 @@ export async function updateRetellLLM(
  */
 export async function refreshRetellLLMForCall(
   llmId: string,
-  customerContext?: string | null,
-  greeting?: string | null
+  customerContext?: string | null
 ): Promise<void> {
   const now = new Date();
   const currentDate = now.toLocaleDateString("en-US", {
@@ -299,7 +288,6 @@ export async function refreshRetellLLMForCall(
     current_date: currentDate,
     current_date_iso: currentDateIso,
     customer_context: customerContext || "No prior customer record found. Treat as a new customer.",
-    customer_greeting: greeting || "Hi, thanks for calling! One moment while I pull up your info.",
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
@@ -595,13 +583,10 @@ export function buildAgentConfig(
 ) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const defaultGreeting = generateDefaultGreeting(business.name);
-
   return {
     agentName: `${business.name} Receptionist`,
     generalPrompt: generateSystemPrompt(business, retellConfig?.personality),
     beginMessage: retellConfig?.greeting?.trim() || generateGreeting(business),
-    defaultGreeting,
     voiceId: retellConfig?.voiceId || "11labs-Adrian",
     webhookUrl: `${appUrl}/api/retell/webhook`,
     tools: buildAgentTools(appUrl),
@@ -623,7 +608,6 @@ export async function syncRetellAgent(business: SyncableBusiness) {
       await updateRetellLLM(existingConfig.llmId, {
         generalPrompt: config.generalPrompt,
         beginMessage: config.beginMessage,
-        defaultGreeting: config.defaultGreeting,
         tools: config.tools,
       });
 
@@ -660,7 +644,6 @@ export async function syncRetellAgent(business: SyncableBusiness) {
   const llm = await createRetellLLM({
     generalPrompt: config.generalPrompt,
     beginMessage: config.beginMessage,
-    defaultGreeting: config.defaultGreeting,
     tools: config.tools,
   });
 
