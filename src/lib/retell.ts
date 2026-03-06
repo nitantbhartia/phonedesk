@@ -103,8 +103,8 @@ CRITICAL DATE RULES:
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 
 ## Conversation Flow
-1. If caller phone context is available, call lookup_customer_context before asking for the caller's name.
-2. Greet the caller warmly. If returning-customer context exists, personalize the greeting and avoid asking for information already on file unless you need to confirm a change.
+1. ALWAYS call lookup_customer_context FIRST, before saying anything else (the caller's phone number is automatically available). Do NOT skip this step.
+2. Greet the caller warmly. If lookup_customer_context returns a returning customer, personalize the greeting using their name and pet info, and skip asking for details already on file.
 3. Collect any missing information:
    - Customer's name
    - Dog's name
@@ -434,7 +434,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "lookup_customer_context",
       description:
-        "Look up an existing customer by caller phone number before asking repeat callers for their details.",
+        "ALWAYS call this tool FIRST at the start of every call. It checks if the caller is a returning customer and retrieves their name, pet info, and visit history. No parameters needed — the caller's phone number is provided automatically.",
       url: `${appUrl}/api/retell/lookup-customer`,
       speak_during_execution: false,
       parameters: {
