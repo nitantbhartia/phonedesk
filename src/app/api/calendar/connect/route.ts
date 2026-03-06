@@ -50,6 +50,38 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(authUrl);
     }
 
+    if (provider === "square") {
+      const squareBaseUrl = process.env.SQUARE_ENVIRONMENT === "production"
+        ? "https://connect.squareup.com"
+        : "https://connect.squareupsandbox.com";
+      const squareAuthUrl = new URL(`${squareBaseUrl}/oauth2/authorize`);
+      squareAuthUrl.searchParams.set("client_id", process.env.SQUARE_APP_ID || "");
+      squareAuthUrl.searchParams.set("scope", "APPOINTMENTS_READ APPOINTMENTS_WRITE APPOINTMENTS_ALL_READ APPOINTMENTS_ALL_WRITE MERCHANT_PROFILE_READ");
+      squareAuthUrl.searchParams.set("session", "false");
+      squareAuthUrl.searchParams.set(
+        "state",
+        JSON.stringify({ redirect, provider: "square" })
+      );
+      squareAuthUrl.searchParams.set(
+        "redirect_uri",
+        `${appUrl}/api/calendar/connect`
+      );
+      return NextResponse.redirect(squareAuthUrl.toString());
+    }
+
+    if (provider === "acuity") {
+      const acuityAuthUrl = new URL("https://acuityscheduling.com/oauth2/authorize");
+      acuityAuthUrl.searchParams.set("response_type", "code");
+      acuityAuthUrl.searchParams.set("client_id", process.env.ACUITY_CLIENT_ID || "");
+      acuityAuthUrl.searchParams.set("redirect_uri", `${appUrl}/api/calendar/connect`);
+      acuityAuthUrl.searchParams.set("scope", "api-v1");
+      acuityAuthUrl.searchParams.set(
+        "state",
+        JSON.stringify({ redirect, provider: "acuity" })
+      );
+      return NextResponse.redirect(acuityAuthUrl.toString());
+    }
+
     return NextResponse.json(
       { error: "Unsupported calendar provider" },
       { status: 400 }
@@ -143,6 +175,168 @@ export async function GET(req: NextRequest) {
         buildRedirectUrl(redirectPath, {
           error: "calendar_connect_failed",
         })
+      );
+    }
+  }
+
+  if (calendarProvider === "square") {
+    try {
+      const squareBaseUrl = process.env.SQUARE_ENVIRONMENT === "production"
+        ? "https://connect.squareup.com"
+        : "https://connect.squareupsandbox.com";
+
+      // Exchange code for access token
+      const tokenRes = await fetch(`${squareBaseUrl}/oauth2/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: process.env.SQUARE_APP_ID,
+          client_secret: process.env.SQUARE_APP_SECRET,
+          code,
+          grant_type: "authorization_code",
+          redirect_uri: `${appUrl}/api/calendar/connect`,
+        }),
+      });
+
+      if (!tokenRes.ok) throw new Error("Square token exchange failed");
+      const tokens = await tokenRes.json();
+
+      // Get merchant's primary location
+      const locRes = await fetch(`${squareBaseUrl}/v2/locations`, {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+          "Square-Version": "2024-10-17",
+        },
+      });
+      const locData = await locRes.json();
+      const primaryLocation = locData.locations?.[0];
+
+      const existing = await prisma.calendarConnection.findFirst({
+        where: { businessId: business.id, provider: "SQUARE" },
+      });
+
+      const connectionData = {
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token || null,
+        tokenExpiry: tokens.expires_at ? new Date(tokens.expires_at) : null,
+        calendarId: primaryLocation?.id || null,
+        metadata: {
+          locationId: primaryLocation?.id,
+          merchantId: tokens.merchant_id,
+          locationName: primaryLocation?.name,
+        },
+        isActive: true,
+      };
+
+      if (existing) {
+        await prisma.calendarConnection.update({
+          where: { id: existing.id },
+          data: connectionData,
+        });
+      } else {
+        const connectionCount = await prisma.calendarConnection.count({
+          where: { businessId: business.id, isActive: true },
+        });
+        await prisma.calendarConnection.create({
+          data: {
+            businessId: business.id,
+            provider: "SQUARE",
+            isPrimary: connectionCount === 0,
+            ...connectionData,
+          },
+        });
+      }
+
+      return NextResponse.redirect(buildRedirectUrl(redirectPath));
+    } catch (error) {
+      console.error("Square OAuth error:", error);
+      return NextResponse.redirect(
+        buildRedirectUrl(redirectPath, { error: "calendar_connect_failed" })
+      );
+    }
+  }
+
+  if (calendarProvider === "acuity") {
+    try {
+      // Exchange code for access token
+      const tokenRes = await fetch(
+        "https://acuityscheduling.com/oauth2/token",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            grant_type: "authorization_code",
+            code,
+            client_id: process.env.ACUITY_CLIENT_ID,
+            client_secret: process.env.ACUITY_CLIENT_SECRET,
+            redirect_uri: `${appUrl}/api/calendar/connect`,
+          }),
+        }
+      );
+
+      if (!tokenRes.ok) throw new Error("Acuity token exchange failed");
+      const tokens = await tokenRes.json();
+
+      // Get the user's account info
+      const meRes = await fetch("https://acuityscheduling.com/api/v1/me", {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+        },
+      });
+      const meData = meRes.ok ? await meRes.json() : {};
+
+      // Get appointment types to store default
+      const typesRes = await fetch(
+        "https://acuityscheduling.com/api/v1/appointment-types",
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+          },
+        }
+      );
+      const appointmentTypes = typesRes.ok ? await typesRes.json() : [];
+
+      const existing = await prisma.calendarConnection.findFirst({
+        where: { businessId: business.id, provider: "ACUITY" },
+      });
+
+      const connectionData = {
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token || null,
+        tokenExpiry: null as Date | null,
+        calendarId: String(meData.id || ""),
+        metadata: {
+          userId: meData.id,
+          email: meData.email,
+          appointmentTypeId: appointmentTypes[0]?.id || null,
+        },
+        isActive: true,
+      };
+
+      if (existing) {
+        await prisma.calendarConnection.update({
+          where: { id: existing.id },
+          data: connectionData,
+        });
+      } else {
+        const connectionCount = await prisma.calendarConnection.count({
+          where: { businessId: business.id, isActive: true },
+        });
+        await prisma.calendarConnection.create({
+          data: {
+            businessId: business.id,
+            provider: "ACUITY",
+            isPrimary: connectionCount === 0,
+            ...connectionData,
+          },
+        });
+      }
+
+      return NextResponse.redirect(buildRedirectUrl(redirectPath));
+    } catch (error) {
+      console.error("Acuity OAuth error:", error);
+      return NextResponse.redirect(
+        buildRedirectUrl(redirectPath, { error: "calendar_connect_failed" })
       );
     }
   }

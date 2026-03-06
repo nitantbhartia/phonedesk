@@ -109,9 +109,9 @@ const STEP_CONFIG = [
     proTip: "Adding duration estimates helps the AI schedule appointments without overlaps.",
   },
   {
-    title: "Connect your calendar",
-    subtitle: "RingPaw checks your calendar for availability and adds new bookings.",
-    proTip: "Connecting your calendar lets the AI instantly confirm appointment times without back-and-forth.",
+    title: "Connect your booking system",
+    subtitle: "Works with Google Calendar, Square Appointments, and Acuity Scheduling.",
+    proTip: "Square is the most popular choice for groomers \u2014 RingPaw syncs bookings and avoids double-booking.",
   },
   {
     title: "Set up call forwarding",
@@ -308,9 +308,9 @@ export default function OnboardingPage() {
     }
   }
 
-  async function connectGoogleCalendar() {
+  function connectProvider(provider: string) {
     const params = new URLSearchParams({
-      provider: "google",
+      provider,
       redirect: "/onboarding?step=4",
     });
     window.location.href = `/api/calendar/connect?${params}`;
@@ -706,10 +706,14 @@ export default function OnboardingPage() {
       {step === 3 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel>Connect a Calendar</OnboardingLabel>
+            <OnboardingLabel>Connect Your Booking System</OnboardingLabel>
+            <p className="text-sm text-paw-brown/50 -mt-2">
+              Pick whichever tool you already use. RingPaw reads availability and writes bookings directly.
+            </p>
             <div className="space-y-3">
+              {/* Google Calendar */}
               <button
-                onClick={connectGoogleCalendar}
+                onClick={() => connectProvider("google")}
                 className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group"
               >
                 <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center shrink-0">
@@ -766,52 +770,66 @@ export default function OnboardingPage() {
                 )}
               </button>
 
-              <button className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group">
-                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center shrink-0">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#2563EB"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                    <line x1="16" x2="16" y1="2" y2="6" />
-                    <line x1="8" x2="8" y1="2" y2="6" />
-                    <line x1="3" x2="21" y1="10" y2="10" />
+              {/* Square Appointments */}
+              <button
+                onClick={() => connectProvider("square")}
+                className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group"
+              >
+                <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center shrink-0">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                    <rect x="2" y="2" width="20" height="20" rx="4" />
+                    <path d="M7 10h4v4H7zM13 10h4v4h-4z" fill="#1a1a1a" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold text-paw-brown">Calendly</div>
+                  <div className="font-bold text-paw-brown">
+                    Square Appointments
+                  </div>
                   <div className="text-sm text-paw-brown/50">
-                    Read availability &amp; create invitees
+                    Sync bookings &amp; POS payments
                   </div>
                 </div>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m12 5 7 7-7 7" />
-                </svg>
+                {calendarConnected ? (
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#22C55E"
+                      strokeWidth="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                ) : (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                  >
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                )}
               </button>
 
-              <button className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group">
-                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center shrink-0">
+              {/* Acuity Scheduling */}
+              <button
+                onClick={() => connectProvider("acuity")}
+                className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group"
+              >
+                <div className="w-12 h-12 bg-[#316FA8] rounded-2xl flex items-center justify-center shrink-0">
                   <svg
                     width="24"
                     height="24"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#6B7280"
+                    stroke="white"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -820,26 +838,44 @@ export default function OnboardingPage() {
                     <line x1="16" x2="16" y1="2" y2="6" />
                     <line x1="8" x2="8" y1="2" y2="6" />
                     <line x1="3" x2="21" y1="10" y2="10" />
+                    <path d="m9 16 2 2 4-4" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold text-paw-brown">Cal.com</div>
+                  <div className="font-bold text-paw-brown">
+                    Acuity Scheduling
+                  </div>
                   <div className="text-sm text-paw-brown/50">
                     Read availability &amp; write bookings
                   </div>
                 </div>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m12 5 7 7-7 7" />
-                </svg>
+                {calendarConnected ? (
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#22C55E"
+                      strokeWidth="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                ) : (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                  >
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                )}
               </button>
             </div>
           </div>

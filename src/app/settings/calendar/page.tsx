@@ -142,52 +142,15 @@ export default function CalendarSettingsPage() {
             )}
           </div>
 
-          {/* Calendly */}
+          {/* Square Appointments */}
           <div
             className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
-              isConnected("CALENDLY")
+              isConnected("SQUARE")
                 ? "border-paw-amber"
                 : "border-transparent hover:border-paw-brown/10"
             } transition-all`}
           >
-            {isConnected("CALENDLY") && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                CONNECTED
-              </div>
-            )}
-            <div className="w-14 h-14 bg-[#006BFF] rounded-2xl flex items-center justify-center shadow-sm mb-4">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
-                <path d="M22 6h-2.18c-.46-1.16-1.57-2-2.82-2H7c-1.65 0-3 1.35-3 3v10c0 1.65 1.35 3 3 3h10c1.25 0 2.36-.84 2.82-2H22v-2h-1.07c.04-.33.07-.66.07-1s-.03-.67-.07-1H22V10h-1.07c.04-.33.07-.66.07-1s-.03-.67-.07-1H22V6z" />
-              </svg>
-            </div>
-            <h3 className="font-bold text-lg mb-1">Calendly</h3>
-            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
-              {isConnected("CALENDLY") ? "Connected" : "Not connected"}
-            </p>
-            {isConnected("CALENDLY") ? (
-              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
-                Disconnect
-              </button>
-            ) : (
-              <button
-                onClick={() => connectCalendar("calendly")}
-                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
-              >
-                Connect Account
-              </button>
-            )}
-          </div>
-
-          {/* Cal.com */}
-          <div
-            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
-              isConnected("CALCOM")
-                ? "border-paw-amber"
-                : "border-transparent hover:border-paw-brown/10"
-            } transition-all`}
-          >
-            {isConnected("CALCOM") && (
+            {isConnected("SQUARE") && (
               <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                 CONNECTED
@@ -195,20 +158,62 @@ export default function CalendarSettingsPage() {
             )}
             <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center shadow-sm mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
-                <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14.5V17h-2v-.5h-1v-5h4v5h-1zm-1-8.5c-.552 0-1-.448-1-1s.448-1 1-1 1 .448 1 1-.448 1-1 1z" />
+                <rect x="2" y="2" width="20" height="20" rx="4" />
+                <path d="M7 10h4v4H7zM13 10h4v4h-4z" fill="black" />
               </svg>
             </div>
-            <h3 className="font-bold text-lg mb-1">Cal.com</h3>
+            <h3 className="font-bold text-lg mb-1">Square Appointments</h3>
             <p className="text-xs text-paw-brown/50 mb-4 font-medium">
-              {isConnected("CALCOM") ? "Connected" : "Not connected"}
+              {isConnected("SQUARE") ? "Connected" : "Not connected"}
             </p>
-            {isConnected("CALCOM") ? (
+            {isConnected("SQUARE") ? (
               <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
                 Disconnect
               </button>
             ) : (
               <button
-                onClick={() => connectCalendar("calcom")}
+                onClick={() => connectCalendar("square")}
+                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+              >
+                Connect Account
+              </button>
+            )}
+          </div>
+
+          {/* Acuity Scheduling */}
+          <div
+            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
+              isConnected("ACUITY")
+                ? "border-paw-amber"
+                : "border-transparent hover:border-paw-brown/10"
+            } transition-all`}
+          >
+            {isConnected("ACUITY") && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                CONNECTED
+              </div>
+            )}
+            <div className="w-14 h-14 bg-[#316FA8] rounded-2xl flex items-center justify-center shadow-sm mb-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                <line x1="16" x2="16" y1="2" y2="6" />
+                <line x1="8" x2="8" y1="2" y2="6" />
+                <line x1="3" x2="21" y1="10" y2="10" />
+                <path d="m9 16 2 2 4-4" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg mb-1">Acuity Scheduling</h3>
+            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
+              {isConnected("ACUITY") ? "Connected" : "Not connected"}
+            </p>
+            {isConnected("ACUITY") ? (
+              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={() => connectCalendar("acuity")}
                 className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
               >
                 Connect Account
@@ -354,7 +359,7 @@ export default function CalendarSettingsPage() {
                   </span>
                 </div>
                 <p className="text-xs text-white/60">
-                  Found &quot;Grooming: Max&quot; (Calendly). Slot blocked.
+                  Found &quot;Grooming: Max&quot; (Square). Slot blocked.
                 </p>
               </div>
             </div>
