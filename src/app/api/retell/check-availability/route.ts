@@ -115,12 +115,20 @@ export async function POST(req: NextRequest) {
 
     console.log("[check-availability] found", slots.length, "slots for", requestedDate);
 
+    const todayStr = new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
     if (slots.length === 0) {
       return NextResponse.json({
         result: "I don't have any openings on that day. Would you like to try a different day?",
         available: false,
         available_slots: [],
         timezone,
+        current_date: todayStr,
       });
     }
 
@@ -135,6 +143,7 @@ export async function POST(req: NextRequest) {
       available: true,
       available_slots: offered,
       timezone,
+      current_date: todayStr,
     });
   } catch (error) {
     console.error("[check-availability] Error:", error);

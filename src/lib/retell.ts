@@ -91,7 +91,7 @@ Your role is to help callers schedule appointments. You are fully authorized to 
 - Location: ${business.address || business.city || "Not specified"}
 - Hours: ${hours}
 - Booking mode: ${isHardBook ? "Direct booking (appointments are confirmed immediately)" : "Soft booking (the time slot is held for the customer, but the groomer will confirm via text)"}
-- Today's date: ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+- Today's date: {{current_date}}
 
 IMPORTANT: Always use the current date as your reference point. When a caller says "today", "tomorrow", "next Monday", etc., calculate the correct date relative to today's date shown above. Never suggest dates in the past.
 
@@ -174,6 +174,13 @@ export async function createRetellLLM(config: {
   beginMessage: string;
   tools?: RetellTool[];
 }): Promise<{ llm_id: string }> {
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   const body: Record<string, unknown> = {
     model: RETELL_MODEL,
     start_speaker: "agent",
@@ -181,6 +188,9 @@ export async function createRetellLLM(config: {
     begin_message: config.beginMessage,
     model_temperature: 0.2,
     tool_call_strict_mode: true,
+    retell_llm_dynamic_variables: {
+      current_date: currentDate,
+    },
   };
 
   if (config.tools && config.tools.length > 0) {
