@@ -91,9 +91,13 @@ Your role is to help callers schedule appointments. You are fully authorized to 
 - Location: ${business.address || business.city || "Not specified"}
 - Hours: ${hours}
 - Booking mode: ${isHardBook ? "Direct booking (appointments are confirmed immediately)" : "Soft booking (the time slot is held for the customer, but the groomer will confirm via text)"}
-- Today's date: {{current_date}}
+- Today's date: {{current_date}} ({{current_date_iso}})
 
-IMPORTANT: Always use the current date as your reference point. When a caller says "today", "tomorrow", "next Monday", etc., calculate the correct date relative to today's date shown above. Never suggest dates in the past.
+CRITICAL DATE RULES:
+- Today is {{current_date_iso}}. The current year is derived from this date.
+- When passing a date to the check_availability tool, use {{current_date_iso}} as your anchor and calculate from it. For example, if today is 2026-03-06, "next Monday" is 2026-03-09 or later.
+- NEVER use dates from 2024 or 2025 or any past year. Always double-check the year before calling a tool.
+- When a caller says "today", "tomorrow", "next Monday", etc., calculate the correct YYYY-MM-DD date relative to {{current_date_iso}}.
 
 ## Services Offered
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
@@ -175,12 +179,16 @@ export async function createRetellLLM(config: {
   beginMessage: string;
   tools?: RetellTool[];
 }): Promise<{ llm_id: string }> {
-  const currentDate = new Date().toLocaleDateString("en-US", {
+  const now = new Date();
+  const currentDate = now.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+  const currentDateIso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+  }).format(now);
 
   const body: Record<string, unknown> = {
     model: RETELL_MODEL,
@@ -191,6 +199,7 @@ export async function createRetellLLM(config: {
     tool_call_strict_mode: true,
     retell_llm_dynamic_variables: {
       current_date: currentDate,
+      current_date_iso: currentDateIso,
     },
   };
 
@@ -212,12 +221,16 @@ export async function updateRetellLLM(
     tools?: RetellTool[];
   }
 ): Promise<void> {
-  const currentDate = new Date().toLocaleDateString("en-US", {
+  const now = new Date();
+  const currentDate = now.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+  const currentDateIso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+  }).format(now);
 
   const body: Record<string, unknown> = {};
   if (updates.generalPrompt !== undefined)
@@ -228,6 +241,7 @@ export async function updateRetellLLM(
   body.start_speaker = "agent";
   body.retell_llm_dynamic_variables = {
     current_date: currentDate,
+    current_date_iso: currentDateIso,
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
@@ -242,18 +256,23 @@ export async function updateRetellLLM(
  * the real date, even if the LLM was last fully synced days ago.
  */
 export async function refreshRetellLLMDate(llmId: string): Promise<void> {
-  const currentDate = new Date().toLocaleDateString("en-US", {
+  const now = new Date();
+  const currentDate = now.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+  const currentDateIso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+  }).format(now);
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
     method: "PATCH",
     body: JSON.stringify({
       retell_llm_dynamic_variables: {
         current_date: currentDate,
+        current_date_iso: currentDateIso,
       },
     }),
   });
@@ -443,7 +462,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           date: {
             type: "string",
             description:
-              "The date to check availability for, in YYYY-MM-DD format. IMPORTANT: Use {{current_date}} as your reference for today. Calculate dates relative to today — never use dates from 2024 or any past year.",
+              "The date to check availability for, in YYYY-MM-DD format. IMPORTANT: Today is {{current_date_iso}}. Use this exact value for 'today', or calculate relative to it. NEVER use a year before the year in {{current_date_iso}}.",
           },
           service_name: {
             type: "string",
