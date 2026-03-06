@@ -140,29 +140,25 @@ export async function POST(req: NextRequest) {
 
   const business = phoneNum.business;
   const timezone = business.timezone || "America/Los_Angeles";
-  const requestedDate = date
+  let requestedDate = date
     ? resolveDate(date, timezone)
     : new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
 
   console.log("[check-availability] resolved date:", requestedDate, "timezone:", timezone, "service:", serviceName);
 
-  // Safety net: reject dates in the past
+  // Auto-correct past dates: the AI model sometimes hallucinates old years
+  // (e.g. 2024-05-21 instead of 2026-05-21). Fix the year automatically.
   const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
   if (requestedDate < todayStr) {
-    const todayHuman = new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    console.warn("[check-availability] Rejected past date:", requestedDate, "today is:", todayStr);
-    return NextResponse.json({
-      result: `That date (${requestedDate}) is in the past. Today is ${todayHuman}. Could you let me know which upcoming day works for you?`,
-      available: false,
-      available_slots: [],
-      timezone,
-      current_date: todayHuman,
-    });
+    const [, mm, dd] = requestedDate.split("-");
+    const [currentYear] = todayStr.split("-");
+    let corrected = `${currentYear}-${mm}-${dd}`;
+    // If month/day is still in the past this year, use next year
+    if (corrected < todayStr) {
+      corrected = `${Number(currentYear) + 1}-${mm}-${dd}`;
+    }
+    console.warn("[check-availability] Auto-corrected past date:", requestedDate, "→", corrected);
+    requestedDate = corrected;
   }
 
   // Find service duration
