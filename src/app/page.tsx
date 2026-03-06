@@ -86,14 +86,14 @@ function LandingPageContent() {
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <svg
-          className="leaf-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber"
+          className="leaf-shape absolute top-[-10%] left-[-5%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] text-paw-amber"
           viewBox="0 0 200 200"
           fill="currentColor"
         >
           <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
         </svg>
         <svg
-          className="leaf-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-60"
+          className="leaf-shape absolute bottom-[-10%] right-[-5%] w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] text-white opacity-60"
           viewBox="0 0 200 200"
           fill="currentColor"
         >
@@ -102,7 +102,7 @@ function LandingPageContent() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-50 w-full px-6 py-6 flex justify-between items-center max-w-7xl mx-auto">
+      <nav className="relative z-50 w-full px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -121,14 +121,14 @@ function LandingPageContent() {
         <button
           onClick={() => void handleStartTrial()}
           disabled={isSigningIn}
-          className="hidden md:block px-6 py-3 bg-paw-brown text-paw-cream rounded-full font-semibold hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
+          className="px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
         >
-          {isSigningIn ? "Redirecting..." : "Book Demo"}
+          {isSigningIn ? "..." : "Start Free"}
         </button>
       </nav>
 
       {/* Hero */}
-      <header className="relative z-10 pt-12 pb-24 px-6">
+      <header className="relative z-10 pt-8 sm:pt-12 pb-16 sm:pb-24 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           {/* Left column */}
           <div className="space-y-8">
@@ -137,7 +137,7 @@ function LandingPageContent() {
               Now booking 24/7 automatically
             </div>
 
-            <h1 className="text-6xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
               Never Miss a <br />
               <span className="text-paw-orange relative inline-block">
                 Grooming
@@ -186,7 +186,7 @@ function LandingPageContent() {
           </div>
 
           {/* Right column - phone mockup */}
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <div className="absolute inset-0 bg-paw-amber/20 blur-3xl rounded-full transform translate-y-12" />
 
             <div className="relative bg-paw-cream rounded-[2.5rem] p-6 shadow-soft border-4 border-white">
@@ -222,7 +222,7 @@ function LandingPageContent() {
             </div>
 
             {/* Floating booking confirmation */}
-            <div className="absolute -bottom-8 -left-8 bg-white p-5 rounded-3xl shadow-soft flex items-center gap-4 animate-bounce" style={{ animationDuration: "3s" }}>
+            <div className="absolute -bottom-4 left-0 sm:-bottom-8 sm:-left-8 bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-soft flex items-center gap-3 sm:gap-4 animate-bounce max-w-[90%] sm:max-w-none" style={{ animationDuration: "3s" }}>
               <div className="w-12 h-12 rounded-full bg-paw-sky flex items-center justify-center text-paw-brown">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
@@ -423,7 +423,7 @@ function LandingPageContent() {
             </div>
 
             {/* Pro */}
-            <div className="bg-paw-brown text-paw-cream p-10 rounded-[2.5rem] shadow-xl relative transform scale-105 z-10">
+            <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10">
               <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">MOST POPULAR</div>
               <h3 className="text-xl font-bold text-paw-amber mb-2">Pro</h3>
               <div className="flex items-baseline gap-1 mb-6">

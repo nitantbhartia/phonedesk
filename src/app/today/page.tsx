@@ -183,21 +183,21 @@ export default function TodayPage() {
                   appt.groomingStatus === "PICKED_UP" ? "opacity-60" : ""
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-paw-amber/20 flex items-center justify-center font-bold text-paw-brown">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-paw-amber/20 flex items-center justify-center font-bold text-paw-brown shrink-0 text-sm">
                       {(appt.petName || appt.customerName)
                         .split(" ")
                         .map((w) => w[0])
                         .join("")
                         .slice(0, 2)}
                     </div>
-                    <div>
-                      <p className="font-bold text-paw-brown">
+                    <div className="min-w-0">
+                      <p className="font-bold text-paw-brown text-sm sm:text-base truncate">
                         {appt.petName || "Pet"}{" "}
                         <span className="text-paw-brown/40 font-normal">({appt.customerName})</span>
                       </p>
-                      <div className="flex items-center gap-3 mt-1">
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
                         {appt.serviceName && (
                           <span className="px-2.5 py-0.5 bg-paw-amber/20 text-paw-brown text-xs font-bold rounded-full">
                             {appt.serviceName}
@@ -206,21 +206,18 @@ export default function TodayPage() {
                         <span className="text-xs text-paw-brown/50">
                           {formatDateTime(appt.startTime)}
                         </span>
-                        {appt.petBreed && (
-                          <span className="text-xs text-paw-brown/40">{appt.petBreed}</span>
-                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 pl-[52px] sm:pl-0 shrink-0">
                     {getStatusBadge(appt.groomingStatus)}
 
                     {nextStatus && (
                       <button
                         onClick={() => updateStatus(appt.id, nextStatus)}
                         disabled={isUpdating}
-                        className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft hover:bg-opacity-90 transition-colors disabled:opacity-50"
+                        className="px-4 sm:px-5 py-2 sm:py-2.5 bg-paw-brown text-white rounded-full font-bold text-xs sm:text-sm shadow-soft hover:bg-opacity-90 transition-colors disabled:opacity-50 whitespace-nowrap"
                       >
                         {isUpdating ? "..." : getNextStatusLabel(appt.groomingStatus)}
                       </button>
@@ -228,7 +225,7 @@ export default function TodayPage() {
 
                     <button
                       onClick={() => logBehaviorNote(appt.id, appt.petName || "Pet")}
-                      className="p-2.5 bg-paw-cream rounded-xl hover:bg-paw-amber/20 transition-colors"
+                      className="p-2 sm:p-2.5 bg-paw-cream rounded-xl hover:bg-paw-amber/20 transition-colors shrink-0"
                       title="Add behavior note"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-paw-brown/60">

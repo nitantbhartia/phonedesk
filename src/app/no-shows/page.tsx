@@ -322,10 +322,10 @@ export default function NoShowProtectionPage() {
 
       {/* Tabbed Content */}
       <div>
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {[
-            { key: "pending" as const, label: "Awaiting Confirmation", count: pendingConfirmation.length },
-            { key: "noShows" as const, label: "Recent No-Shows", count: recentNoShows.length },
+            { key: "pending" as const, label: "Pending", count: pendingConfirmation.length },
+            { key: "noShows" as const, label: "No-Shows", count: recentNoShows.length },
             { key: "waitlist" as const, label: "Waitlist", count: waitlist.length },
           ].map((tab) => (
             <button
@@ -353,7 +353,7 @@ export default function NoShowProtectionPage() {
           ))}
         </div>
 
-        <div className="bg-white rounded-4xl shadow-soft overflow-hidden border border-white">
+        <div className="bg-white rounded-4xl shadow-soft overflow-x-auto border border-white">
           {/* Awaiting Confirmation Tab */}
           {activeTab === "pending" && (
             <>
@@ -369,32 +369,32 @@ export default function NoShowProtectionPage() {
                 <table className="w-full text-left">
                   <thead className="bg-paw-cream/50 border-b border-paw-brown/5">
                     <tr>
-                      <th className="px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Customer & Pet</th>
-                      <th className="px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Service</th>
-                      <th className="px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Appointment</th>
-                      <th className="px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Reminder Status</th>
-                      <th className="px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">Action</th>
+                      <th className="px-4 sm:px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Customer & Pet</th>
+                      <th className="px-4 sm:px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">Service</th>
+                      <th className="px-4 sm:px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Appointment</th>
+                      <th className="px-4 sm:px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden md:table-cell">Reminder Status</th>
+                      <th className="px-4 sm:px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-paw-brown/5">
                     {pendingConfirmation.map((appt) => (
                       <tr key={appt.id} className="hover:bg-paw-cream/30 transition-colors">
-                        <td className="px-8 py-5">
+                        <td className="px-4 sm:px-8 py-4 sm:py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center font-bold text-paw-brown text-sm">
+                            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center font-bold text-paw-brown text-sm shrink-0">
                               {appt.customerName
                                 .split(" ")
                                 .map((w) => w[0])
                                 .join("")
                                 .slice(0, 2)}
                             </div>
-                            <div>
-                              <p className="font-bold text-paw-brown text-sm">{appt.customerName}</p>
-                              <p className="text-xs text-paw-brown/50">{appt.petName || "No pet name"}</p>
+                            <div className="min-w-0">
+                              <p className="font-bold text-paw-brown text-sm truncate">{appt.customerName}</p>
+                              <p className="text-xs text-paw-brown/50 truncate">{appt.petName || "No pet name"}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 hidden sm:table-cell">
                           {appt.serviceName ? (
                             <span className="px-3 py-1 bg-paw-amber/20 text-paw-brown text-xs font-bold rounded-full">
                               {appt.serviceName}
@@ -403,10 +403,10 @@ export default function NoShowProtectionPage() {
                             <span className="text-xs text-paw-brown/40 italic">—</span>
                           )}
                         </td>
-                        <td className="px-6 py-5 text-sm font-medium text-paw-brown/70">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-sm font-medium text-paw-brown/70">
                           {formatDateTime(appt.startTime)}
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 hidden md:table-cell">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1.5">
                               <span className={`w-1.5 h-1.5 rounded-full ${appt.reminder48hSent ? "bg-emerald-500" : "bg-gray-300"}`} />
@@ -418,7 +418,7 @@ export default function NoShowProtectionPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-5 text-right">
+                        <td className="px-4 sm:px-8 py-4 sm:py-5 text-right">
                           <button
                             onClick={() => markNoShow(appt.id)}
                             className="text-red-500 font-bold text-xs hover:underline"
@@ -609,7 +609,7 @@ export default function NoShowProtectionPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                   Customer Name *
@@ -639,7 +639,7 @@ export default function NoShowProtectionPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                   Pet Name
@@ -669,7 +669,7 @@ export default function NoShowProtectionPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                   Preferred Date *

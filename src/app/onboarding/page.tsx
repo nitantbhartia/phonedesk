@@ -485,15 +485,31 @@ export default function OnboardingPage() {
               {Object.entries(hours).map(([day, h]) => (
                 <div
                   key={day}
-                  className="flex items-center justify-between py-1"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 py-2 sm:py-1"
                 >
-                  <span
-                    className={`font-bold w-24 ${
-                      h.enabled ? "text-paw-brown" : "text-paw-brown/40"
-                    }`}
-                  >
-                    {day}
-                  </span>
+                  <div className="flex items-center justify-between sm:justify-start">
+                    <span
+                      className={`font-bold w-24 ${
+                        h.enabled ? "text-paw-brown" : "text-paw-brown/40"
+                      }`}
+                    >
+                      {day}
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer sm:hidden">
+                      <input
+                        type="checkbox"
+                        checked={h.enabled}
+                        onChange={(e) =>
+                          setHours({
+                            ...hours,
+                            [day]: { ...h, enabled: e.target.checked },
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+                    </label>
+                  </div>
                   {h.enabled ? (
                     <div className="flex items-center gap-3">
                       <OnboardingSelect
@@ -533,7 +549,7 @@ export default function OnboardingPage() {
                       Closed
                     </span>
                   )}
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer hidden sm:inline-flex">
                     <input
                       type="checkbox"
                       checked={h.enabled}
@@ -571,47 +587,48 @@ export default function OnboardingPage() {
               {services.map((service, i) => (
                 <div
                   key={i}
-                  className="flex gap-3 items-center bg-white p-3 rounded-2xl border-2 border-paw-brown/5 shadow-sm"
+                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-white p-3 rounded-2xl border-2 border-paw-brown/5 shadow-sm"
                 >
                   <input
                     type="text"
                     placeholder="Service Name (e.g. Full Groom)"
                     value={service.name}
                     onChange={(e) => updateService(i, "name", e.target.value)}
-                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none"
+                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none min-w-0"
                   />
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-paw-brown/50 font-bold">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      placeholder="0.00"
-                      value={service.price}
-                      onChange={(e) => updateService(i, "price", e.target.value)}
-                      className="w-24 pl-7 pr-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown focus:outline-none"
-                    />
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="min"
-                      value={service.duration}
-                      onChange={(e) =>
-                        updateService(i, "duration", e.target.value)
-                      }
-                      className="w-20 px-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown text-center focus:outline-none"
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-paw-brown/40 text-xs font-bold">
-                      min
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeService(i)}
-                    disabled={services.length <= 1}
-                    className="p-2 text-paw-brown/30 hover:text-paw-orange transition-colors disabled:opacity-30"
-                  >
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1 sm:flex-none">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-paw-brown/50 font-bold">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={service.price}
+                        onChange={(e) => updateService(i, "price", e.target.value)}
+                        className="w-full sm:w-24 pl-7 pr-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown focus:outline-none"
+                      />
+                    </div>
+                    <div className="relative flex-1 sm:flex-none">
+                      <input
+                        type="number"
+                        placeholder="min"
+                        value={service.duration}
+                        onChange={(e) =>
+                          updateService(i, "duration", e.target.value)
+                        }
+                        className="w-full sm:w-20 px-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown text-center focus:outline-none"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-paw-brown/40 text-xs font-bold">
+                        min
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeService(i)}
+                      disabled={services.length <= 1}
+                      className="p-2 text-paw-brown/30 hover:text-paw-orange transition-colors disabled:opacity-30 shrink-0"
+                    >
                     <svg
                       width="20"
                       height="20"
@@ -621,8 +638,9 @@ export default function OnboardingPage() {
                       strokeWidth="2.5"
                     >
                       <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    </svg>
-                  </button>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
               <button
