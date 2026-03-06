@@ -93,6 +93,7 @@ export default function AgentSettingsPage() {
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ ok: boolean; message: string } | null>(null);
 
   // Form state
   const [greeting, setGreeting] = useState("");
@@ -154,6 +155,7 @@ export default function AgentSettingsPage() {
 
   async function saveSettings() {
     setSaving(true);
+    setSaveStatus(null);
     try {
       // Single API call to save everything and sync to Retell
       const res = await fetch("/api/business/profile", {
@@ -171,12 +173,17 @@ export default function AgentSettingsPage() {
           greeting,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("Save failed:", err);
+        setSaveStatus({ ok: false, message: data.error || "Failed to save settings" });
+      } else if (data.synced) {
+        setSaveStatus({ ok: true, message: "Settings saved and synced to voice agent" });
+      } else {
+        setSaveStatus({ ok: true, message: "Settings saved" });
       }
     } catch (error) {
       console.error("Error saving:", error);
+      setSaveStatus({ ok: false, message: "Network error — check your connection" });
     } finally {
       setSaving(false);
     }
@@ -205,6 +212,16 @@ export default function AgentSettingsPage() {
           {saving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
+
+      {saveStatus && (
+        <div className={`p-3 rounded-lg text-sm ${
+          saveStatus.ok
+            ? "bg-green-50 text-green-800 border border-green-200"
+            : "bg-red-50 text-red-800 border border-red-200"
+        }`}>
+          {saveStatus.message}
+        </div>
+      )}
 
       {/* Agent Status */}
       <Card>
