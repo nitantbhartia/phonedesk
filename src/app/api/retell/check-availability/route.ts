@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
   }
 
   const business = phoneNum.business;
-  const requestedDate = date || new Date().toISOString().slice(0, 10);
   const timezone = business.timezone || "America/Los_Angeles";
+  const requestedDate = date || new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
 
   // Find service duration
   const service = business.services.find(

@@ -442,6 +442,20 @@ function getHoursForDay(
     return hours[dayKey];
   }
 
+  // Support full day names saved by older versions of onboarding
+  const fullDayNames: Record<string, string> = {
+    sat: "saturday",
+    sun: "sunday",
+    mon: "monday",
+    tue: "tuesday",
+    wed: "wednesday",
+    thu: "thursday",
+    fri: "friday",
+  };
+  if (fullDayNames[dayKey] && hours[fullDayNames[dayKey]]) {
+    return hours[fullDayNames[dayKey]];
+  }
+
   if (
     ["mon", "tue", "wed", "thu", "fri"].includes(dayKey) &&
     hours["mon-fri"]

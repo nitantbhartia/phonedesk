@@ -131,6 +131,13 @@ function formatBusinessHours(
     fri: "Friday",
     sat: "Saturday",
     sun: "Sunday",
+    monday: "Monday",
+    tuesday: "Tuesday",
+    wednesday: "Wednesday",
+    thursday: "Thursday",
+    friday: "Friday",
+    saturday: "Saturday",
+    sunday: "Sunday",
   };
 
   return Object.entries(hours)
