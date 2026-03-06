@@ -66,7 +66,8 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 ## Conversation Flow
 1. If caller phone context is available, call lookup_customer_context before asking for the caller's name.
 2. Greet the caller warmly. If returning-customer context exists, personalize the greeting and avoid asking for information already on file unless you need to confirm a change.
-3. Collect any missing information:
+3. Ask exactly one question per turn, then stop and wait for the caller.
+4. Collect any missing information:
    - Customer's name
    - Dog's name
    - Dog's breed
@@ -75,19 +76,26 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
    - Any special handling needs or notes
    - Whether this is their first visit
    - Preferred day and time
-4. Check availability and offer 2-3 time slot options
-5. Confirm the booking details
-6. Let them know they'll receive a confirmation text
+5. After the caller gives a preferred date/time, call check_availability once using date, service_name, and preferred_time in the same tool call.
+6. If check_availability says requested_time_available=true, ask one confirmation question to book that exact slot.
+7. If requested_time_available=false and available=true, offer only the returned slots and ask which one they want.
+8. Do not run check_availability again for the same date unless the caller asks for a different day.
+9. When caller selects a returned slot, call book_appointment once using the exact start_time returned by check_availability (requested_slot.start_time or available_slots[*].start_time). Never invent or reformat timestamps yourself.
+10. Confirm the booking details and let them know they'll receive a confirmation text.
 
 ## Important Rules
 - Be conversational, warm, and friendly — like a helpful human receptionist
+- Ask only one question at a time. Never ask two questions in one turn.
 - If the caller asks something you can't answer, say: "I'll have ${business.ownerName} call you back shortly about that."
 - Always confirm spelling of names if unclear
 - If a caller wants to cancel, say you'll pass the message to ${business.ownerName}
 - Keep the conversation efficient — aim for under 2 minutes
 - Do NOT discuss pricing unless the caller specifically asks
 - If asked about pricing, share the service prices listed above
-- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions`;
+- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions
+- Do not repeat the same availability result or re-check the same day unless the caller changes day/time
+- Never claim a booking is confirmed until book_appointment returns success
+- In confirmations, include the explicit date and time (example: Tuesday, March 10 at 9:00 AM)`;
 }
 
 function formatBusinessHours(
@@ -314,20 +322,24 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       description:
         "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
       url: `${appUrl}/api/retell/check-availability`,
-      speak_during_execution: true,
-      execution_message_description: "Let me check our availability for you...",
+      speak_during_execution: false,
       parameters: {
         type: "object",
         properties: {
           date: {
             type: "string",
             description:
-              "The date to check availability for, in YYYY-MM-DD format",
+              "The date to check availability for. Prefer YYYY-MM-DD, but natural phrases like 'next Monday' are accepted.",
           },
           service_name: {
             type: "string",
             description:
               "The name of the service the customer is interested in",
+          },
+          preferred_time: {
+            type: "string",
+            description:
+              "The caller's requested time on that date (for example: '10 AM').",
           },
         },
         required: ["date"],
@@ -339,9 +351,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       description:
         "Book an appointment for the customer after collecting all required information.",
       url: `${appUrl}/api/retell/book-appointment`,
-      speak_during_execution: true,
-      execution_message_description:
-        "Let me book that appointment for you...",
+      speak_during_execution: false,
       parameters: {
         type: "object",
         properties: {
