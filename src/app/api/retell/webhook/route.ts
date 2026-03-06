@@ -6,7 +6,7 @@ import {
   sendMissedCallNotification,
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
-import { upsertCustomerMemoryFromCall } from "@/lib/customer-memory";
+import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
 import { refreshRetellLLMDate } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
@@ -43,15 +43,23 @@ async function handleCallStarted(call: RetellCallPayload) {
     : null;
 
   if (phoneNum) {
+    // Look up known customer by phone number to pre-fill callerName
+    const customerContext = await lookupCustomerContext(
+      phoneNum.businessId,
+      call.from_number
+    );
+    const knownName = customerContext.customer?.name || null;
+
     await prisma.call.upsert({
       where: { retellCallId: call.call_id || "" },
       create: {
         businessId: phoneNum.businessId,
         retellCallId: call.call_id,
         callerPhone: call.from_number,
+        callerName: knownName,
         status: "IN_PROGRESS",
       },
-      update: { status: "IN_PROGRESS" },
+      update: { status: "IN_PROGRESS", callerName: knownName },
     });
 
     // Refresh the current_date on the LLM so the AI always knows today's real date.
