@@ -4,6 +4,22 @@ import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 
 type BusinessHoursMap = Record<string, { open: string; close: string }>;
 
+function parseTimeString(value: string): { hour: number; minute: number } {
+  const trimmed = value.trim();
+  const is12Hour = /AM|PM/i.test(trimmed);
+  if (is12Hour) {
+    const [timePart, meridiem] = trimmed.split(/\s+/);
+    const [rawHour, rawMinute = "0"] = timePart.split(":");
+    let hour = Number(rawHour);
+    const minute = Number(rawMinute);
+    if (meridiem?.toUpperCase() === "PM" && hour !== 12) hour += 12;
+    if (meridiem?.toUpperCase() === "AM" && hour === 12) hour = 0;
+    return { hour, minute };
+  }
+  const [hourString, minuteString = "0"] = trimmed.split(":");
+  return { hour: Number(hourString), minute: Number(minuteString) };
+}
+
 function getHoursForDay(
   hours: BusinessHoursMap,
   dayKey: string
@@ -154,6 +170,7 @@ export async function POST(req: NextRequest) {
 
   const date = args?.date;
   const serviceName = args?.service_name;
+  const preferredTime = args?.preferred_time; // e.g., "2:00 PM", "14:00", "10 AM"
 
   console.log("[check-availability] args:", JSON.stringify(args), "from:", call?.from_number, "to:", call?.to_number);
 
@@ -271,7 +288,7 @@ export async function POST(req: NextRequest) {
 
       // Include next-day slots inline so the agent can offer them without another tool call
       if (nextAvailableDay && nextAvailableSlots.length > 0) {
-        const nextSlotDescriptions = describeAvailableSlots(nextAvailableSlots, timezone);
+        const nextSlotDescriptions = describeAvailableSlots(nextAvailableSlots, timezone, 5);
         message += ` The next available day is ${nextAvailableDay} with openings at ${nextSlotDescriptions}. Would any of those times work?`;
       } else if (nextAvailableDay) {
         message += ` The next available day is ${nextAvailableDay}. Would you like me to check that day?`;
@@ -295,11 +312,49 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const offered = slots.slice(0, 3).map((slot) => ({
+    // If the caller requested a specific time, sort slots by proximity to it
+    // and tell the agent whether that exact time is available
+    let slotsToOffer = slots;
+    let preferredAvailable = false;
+    let preferredTimeLabel = "";
+
+    if (preferredTime) {
+      const prefParsed = parseTimeString(preferredTime);
+      if (!isNaN(prefParsed.hour)) {
+        const prefMinutes = prefParsed.hour * 60 + prefParsed.minute;
+        preferredTimeLabel = preferredTime;
+
+        // Check if preferred time matches any slot (within 5 min)
+        preferredAvailable = slots.some((s) => {
+          const slotMinutes = s.start.getUTCHours() * 60 + s.start.getUTCMinutes();
+          // Convert to local for comparison
+          const slotLocal = new Date(s.start).toLocaleTimeString("en-US", {
+            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
+          });
+          const [sh, sm] = slotLocal.split(":").map(Number);
+          return Math.abs((sh * 60 + sm) - prefMinutes) < 5;
+        });
+
+        // Sort by proximity to preferred time
+        slotsToOffer = [...slots].sort((a, b) => {
+          const aLocal = new Date(a.start).toLocaleTimeString("en-US", {
+            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
+          });
+          const bLocal = new Date(b.start).toLocaleTimeString("en-US", {
+            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
+          });
+          const [ah, am] = aLocal.split(":").map(Number);
+          const [bh, bm] = bLocal.split(":").map(Number);
+          return Math.abs((ah * 60 + am) - prefMinutes) - Math.abs((bh * 60 + bm) - prefMinutes);
+        });
+      }
+    }
+
+    const offered = slotsToOffer.slice(0, 5).map((slot) => ({
       start_time: slot.start.toISOString(),
       end_time: slot.end.toISOString(),
     }));
-    const slotDescriptions = describeAvailableSlots(slots, timezone);
+    const slotDescriptions = describeAvailableSlots(slotsToOffer, timezone, 5);
 
     // Include explicit date name so the agent relays it accurately
     const [ry2, rm2, rd2] = requestedDate.split("-").map(Number);
@@ -310,10 +365,21 @@ export async function POST(req: NextRequest) {
       timeZone: timezone,
     }).format(new Date(ry2, rm2 - 1, rd2));
 
+    let resultMessage: string;
+    if (preferredTime && !preferredAvailable) {
+      resultMessage = `${preferredTimeLabel} isn't available on ${requestedDateLabel}. The closest openings are ${slotDescriptions}. Would any of those work?`;
+    } else if (preferredTime && preferredAvailable) {
+      resultMessage = `${preferredTimeLabel} on ${requestedDateLabel} is available! Should I book it?`;
+    } else {
+      resultMessage = `I have openings on ${requestedDateLabel} at ${slotDescriptions}. Which time works best for you?`;
+    }
+
     return NextResponse.json({
-      result: `I have openings on ${requestedDateLabel} at ${slotDescriptions}. Which time works best for you?`,
+      result: resultMessage,
       available: true,
+      preferred_time_available: preferredTime ? preferredAvailable : undefined,
       available_slots: offered,
+      total_slots_on_day: slots.length,
       checked_date: requestedDate,
       checked_date_label: requestedDateLabel,
       timezone,
