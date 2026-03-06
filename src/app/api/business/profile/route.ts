@@ -134,33 +134,52 @@ export async function POST(req: NextRequest) {
     greeting,
   } = body;
 
-  // Build update data — only include fields that were actually provided
-  // to avoid overwriting existing values with defaults
-  const updateData: Record<string, unknown> = {};
-  const createData: Record<string, unknown> = {
-    userId,
-    onboardingStep: 3,
-  };
-
-  if (name !== undefined) { updateData.name = name; createData.name = name; }
-  if (ownerName !== undefined) { updateData.ownerName = ownerName; createData.ownerName = ownerName; }
-  if (city !== undefined) { updateData.city = city; createData.city = city; }
-  if (state !== undefined) { updateData.state = state; createData.state = state; }
-  if (phone !== undefined) { updateData.phone = phone; createData.phone = phone; }
-  if (address !== undefined) { updateData.address = address; createData.address = address; }
-  if (timezone !== undefined) { updateData.timezone = timezone; createData.timezone = timezone; }
-  else { createData.timezone = "America/Los_Angeles"; }
-  if (businessHours !== undefined) { updateData.businessHours = businessHours; createData.businessHours = businessHours; }
-  if (bookingMode !== undefined) { updateData.bookingMode = bookingMode; createData.bookingMode = bookingMode; }
-  else { createData.bookingMode = "SOFT"; }
-
-  // Upsert business
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const business = await prisma.business.upsert({
+  const existing = await prisma.business.findUnique({
     where: { userId },
-    create: createData as any,
-    update: updateData,
+    select: { id: true },
   });
+
+  let business;
+  if (existing) {
+    business = await prisma.business.update({
+      where: { userId },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(ownerName !== undefined ? { ownerName } : {}),
+        ...(city !== undefined ? { city } : {}),
+        ...(state !== undefined ? { state } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+        ...(address !== undefined ? { address } : {}),
+        ...(timezone !== undefined ? { timezone } : {}),
+        ...(businessHours !== undefined ? { businessHours } : {}),
+        ...(bookingMode !== undefined ? { bookingMode } : {}),
+        onboardingStep: 3,
+      },
+    });
+  } else {
+    if (!name || !ownerName) {
+      return NextResponse.json(
+        { error: "name and ownerName are required when creating a business profile" },
+        { status: 400 }
+      );
+    }
+
+    business = await prisma.business.create({
+      data: {
+        userId,
+        name,
+        ownerName,
+        city,
+        state,
+        phone,
+        address,
+        timezone: timezone || "America/Los_Angeles",
+        businessHours,
+        bookingMode: bookingMode || "SOFT",
+        onboardingStep: 3,
+      },
+    });
+  }
 
   // Upsert services
   if (services && Array.isArray(services)) {
