@@ -54,6 +54,7 @@ const config: Config = {
           cream: '#FAF9F6',
           orange: '#F4A261',
           surface: '#FFFFFF',
+          green: '#4ADE80',
         },
       },
       borderRadius: {
