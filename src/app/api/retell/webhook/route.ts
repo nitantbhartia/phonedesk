@@ -5,6 +5,8 @@ import {
   sendBookingConfirmationToCustomer,
   sendMissedCallNotification,
 } from "@/lib/notifications";
+import { normalizePhoneNumber } from "@/lib/phone";
+import { upsertCustomerMemoryFromCall } from "@/lib/customer-memory";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
@@ -131,18 +133,55 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
 
   if (existingCall) {
     const extractedData = call.call_analysis?.custom_analysis_data || {};
-    const callerName =
-      (extractedData as Record<string, string>).customerName || null;
+    const extracted = extractedData as Record<string, string>;
+    const callerName = extracted.customerName || extracted.customer_name || null;
+    const summary =
+      (call.call_analysis as Record<string, string>)?.call_summary || null;
 
     await prisma.call.update({
       where: { retellCallId: call.call_id },
       data: {
-        summary:
-          (call.call_analysis as Record<string, string>)?.call_summary || null,
+        summary,
         callerName,
         extractedData: extractedData as object,
       },
     });
+
+    if (callerName) {
+      await upsertCustomerMemoryFromCall({
+        businessId: existingCall.businessId,
+        customerName: callerName,
+        customerPhone:
+          normalizePhoneNumber(call.from_number) || existingCall.callerPhone,
+        petName:
+          extracted.petName ||
+          extracted.pet_name ||
+          extracted.dogName ||
+          extracted.dog_name ||
+          null,
+        petBreed:
+          extracted.petBreed ||
+          extracted.pet_breed ||
+          extracted.dogBreed ||
+          extracted.dog_breed ||
+          null,
+        petSize:
+          (extracted.petSize ||
+            extracted.pet_size ||
+            extracted.dogSize ||
+            extracted.dog_size ||
+            null) as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE" | null,
+        serviceName: extracted.serviceName || extracted.service_name || null,
+        summary,
+        notes:
+          extracted.notes ||
+          extracted.specialNotes ||
+          extracted.special_handling_notes ||
+          null,
+        outcome: existingCall.appointmentId ? "BOOKED" : "NO_BOOKING",
+        contactedAt: new Date(),
+      });
+    }
   }
 
   return new NextResponse(null, { status: 204 });

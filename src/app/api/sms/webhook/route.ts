@@ -1,26 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
-
-function normalizePhoneNumber(value?: string | null) {
-  if (!value) return null;
-
-  const digits = value.replace(/\D/g, "");
-
-  if (digits.length === 10) {
-    return `+1${digits}`;
-  }
-
-  if (digits.length === 11 && digits.startsWith("1")) {
-    return `+${digits}`;
-  }
-
-  if (value.startsWith("+")) {
-    return value;
-  }
-
-  return digits ? `+${digits}` : null;
-}
+import { normalizePhoneNumber } from "@/lib/phone";
 
 // Retell inbound SMS webhook (set via inbound_sms_webhook_url on the phone number)
 // Retell sends: { agent_id, from_number, to_number }
