@@ -1,6 +1,5 @@
 import { prisma } from "./prisma";
 import type { Business, RetellConfig, Service } from "@prisma/client";
-import { buildRetellWebhookUrl } from "./retell-auth";
 
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "gemini-2.5-flash";
@@ -34,16 +33,8 @@ async function retellFetch(path: string, options: RequestInit = {}) {
 
 // --- System Prompt & Greeting ---
 
-export interface AgentPersonality {
-  tone?: string;       // "friendly" | "professional" | "bubbly" | "calm"
-  style?: string;      // "concise" | "conversational" | "detailed"
-  language?: string;   // "casual" | "formal"
-  customInstructions?: string;
-}
-
 export function generateSystemPrompt(
-  business: Business & { services: Service[] },
-  personality?: AgentPersonality | null
+  business: Business & { services: Service[] }
 ): string {
   const serviceList = business.services
     .filter((s) => s.isActive)
@@ -59,103 +50,52 @@ export function generateSystemPrompt(
       )
     : "Monday-Saturday 9am-5pm";
 
-  const toneMap: Record<string, string> = {
-    friendly: "friendly, warm, and approachable",
-    professional: "professional, polished, and courteous",
-    bubbly: "upbeat, enthusiastic, and energetic",
-    calm: "calm, soothing, and reassuring",
-  };
-  const styleMap: Record<string, string> = {
-    concise: "Keep responses brief and to the point.",
-    conversational: "Be conversational and natural, like chatting with a neighbor.",
-    detailed: "Be thorough and provide helpful details proactively.",
-  };
-  const languageMap: Record<string, string> = {
-    casual: "Use casual, everyday language. Contractions are great.",
-    formal: "Use polite, formal language. Avoid slang and contractions.",
-  };
+  return `You are a friendly, professional AI receptionist for ${business.name}, a pet grooming business. The owner is ${business.ownerName}.
 
-  const tone = toneMap[personality?.tone || "friendly"] || toneMap.friendly;
-  const style = styleMap[personality?.style || "conversational"] || styleMap.conversational;
-  const languageStyle = languageMap[personality?.language || "casual"] || languageMap.casual;
-  const customInstructions = personality?.customInstructions?.trim();
-
-  const isHardBook = business.bookingMode === "HARD";
-
-  return `You are a ${tone} AI receptionist for ${business.name}, a pet grooming business. The owner is ${business.ownerName}.
-
-Your role is to help callers schedule appointments. You are fully authorized to check availability and book appointments directly — do NOT tell callers you need to check with the owner or have them call back for booking-related requests.
+Your role is to answer calls when the owner is busy with a client, collect booking details, and help callers schedule appointments.
 
 ## Business Information
 - Business: ${business.name}
 - Owner: ${business.ownerName}
 - Location: ${business.address || business.city || "Not specified"}
 - Hours: ${hours}
-- Booking mode: ${isHardBook ? "Direct booking (appointments are confirmed immediately)" : "Soft booking (the time slot is held for the customer, but the groomer will confirm via text)"}
-- Today's date: {{current_date}} ({{current_date_iso}})
-
-CRITICAL DATE RULES:
-- Today is {{current_date_iso}}. The current year is derived from this date.
-- When passing a date to the check_availability or book_appointment tool, use {{current_date_iso}} as your anchor and calculate from it. For example, if today is a Friday, "next Monday" is two days later.
-- NEVER use dates from 2024 or 2025 or any past year. Always double-check the year before calling a tool.
-- When a caller says "today", "tomorrow", "next Monday", etc., calculate the correct YYYY-MM-DD date relative to {{current_date_iso}}.
-- NEVER make up or guess a date. Only mention dates that came from the check_availability tool response or that you calculated directly from {{current_date_iso}}.
-- If the tool returns slot times, relay those exact times to the caller — do not substitute different dates or times.
-- When booking, ALWAYS use the start_time value returned by check_availability. Do NOT recalculate the date yourself — copy the exact ISO string from available_slots.
 
 ## Services Offered
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 
 ## Conversation Flow
-1. The lookup_customer_context tool runs automatically at the start of every call. When it returns, READ THE RESULT CAREFULLY — it contains the caller's name, pet info, visit history, and everything you already know. Use this data to personalize the conversation and skip questions you already have answers for.
-2. In your FIRST response after the lookup completes, personalize based on what the tool returned:
-   - **Returning customer (tool returned customer data):** Greet them by name warmly and ask ONE question. Example: "Oh hey Nitant! Good to hear from you — what are we booking for Rexi today?" That's it — greeting plus one question. Do NOT also ask about scheduling, service type, or anything else in the same turn. Wait for their answer before asking the next thing.
-   - **New customer (tool returned no record found):** If the greeting already asked for their name, just continue naturally. Otherwise introduce yourself: "I can help you get an appointment set up. What's your name?" Then ask them to spell it.
-3. Collect any MISSING info one question at a time — skip anything the lookup already provided. Use natural phrasing — not robotic form-filling:
-   - "What's your pup's name?" (not "What is the dog's name?")
-   - "What kind of dog is [name]?" (not "What is the breed?")
-   - "And roughly what size — small, medium, large?" (skip if obvious from breed, e.g. Great Dane = large)
-   - "What are we looking to get done today?" (service)
-   - "Any day or time work best for you?" (scheduling preference)
-   - Only ask about special handling or first-visit notes if the caller is new.
-   If the caller volunteers extra info in their answer, acknowledge it and skip that question. Ask ONE question per turn.
-4. Use the check_availability tool to find open slots. Important rules:
-   - Always pass the date as YYYY-MM-DD. Calculate it from {{current_date_iso}}. Double-check day-of-week arithmetic before calling the tool (e.g. if today is a Friday, next Monday = 3 days later).
-   - When the caller asks for a specific day AND time (e.g. "Monday at 2 PM"), pass both the date AND the preferred_time parameter. The result will tell you if that exact time is available.
-   - If the requested time isn't available, the result already includes the closest alternatives. Read those directly to the caller — do NOT call check_availability again for the same date.
-   - If check_availability returns available: false (day fully booked), the result already includes the next available day WITH its open time slots. Read those times to the caller immediately — do NOT ask "would you like me to check another day?" and do NOT make another check_availability call.
-   - Never call check_availability more than once for the same date. Use the slots already returned.
-   - Do NOT ask the caller to repeat info they already gave you.
-5. Once you have a confirmed time (either chosen by the caller or confirmed available), use the book_appointment tool immediately — do not ask for additional confirmation.
-6. ${isHardBook
-    ? "Confirm the booking warmly: \"You're all set! You'll get a confirmation text shortly.\""
-    : "Let them know the time is held: \"I've got that time saved for you — the groomer will text you shortly to confirm.\""}
-
-## Conversational Style
-- ${style}
-- ${languageStyle}
-- Sound like a real person who works at a grooming shop — warm, relaxed, and genuinely interested in the caller's pet. Use phrases like "Aw, cute name!" or "Oh nice, we love doodles" when natural.
-- Vary your acknowledgements — don't repeat the same one. Mix it up: "Love it." "Sounds good." "Awesome." "Cool, got it." "Oh perfect."
-- STRICT RULE — exactly ONE question per turn. Never stack two or more questions in the same response. Wrong: "Which pup? And what day works?" Right: "Which pup are we booking for?" (wait for answer, then ask about the day next turn).
-- Always end your turn with that one question — never end on just a statement with no question.
-- CRITICAL PACING RULE: When you acknowledge something and then ask a question, connect them with a dash or comma — NEVER use a period between a statement and a question. The system may cut you off at sentence boundaries.
-  - WRONG: "Got it, large goldendoodle. What are we looking to get done for Rexi today?" (period creates a pause that cuts off the question)
-  - RIGHT: "Got it, large goldendoodle — what are we looking to get done for Rexi today?" (dash keeps it flowing as one utterance)
-  - RIGHT: "Awesome, another Full Groom for Rexi — any day or time work best?" (one flowing sentence)
-  - WRONG: "Awesome, so another Full Groom for Rexi. Any day or time you're hoping for?" (period will cause a cutoff)
-- IMPORTANT: When you call a tool like check_availability or book_appointment, do NOT narrate that you're about to check or look something up. The system automatically says a filler message while the tool runs. Just call the tool silently — your next spoken words should be the RESULT (e.g., "We've got openings at 9, 10, and 11 AM."). Never say "Let me check that for you" or "One moment while I look that up" before a tool call.
+1. If caller phone context is available, call lookup_customer_context before asking for the caller's name.
+2. Greet the caller warmly. If returning-customer context exists, personalize the greeting and avoid asking for information already on file unless you need to confirm a change.
+3. Ask exactly one question per turn, then stop and wait for the caller.
+4. Collect any missing information:
+   - Customer's name
+   - Dog's name
+   - Dog's breed
+   - Dog's size (Small, Medium, Large, or Extra Large)
+   - Service requested
+   - Any special handling needs or notes
+   - Whether this is their first visit
+   - Preferred day and time
+5. After the caller gives a preferred date/time, call check_availability once using date, service_name, and preferred_time in the same tool call.
+6. If check_availability says requested_time_available=true, ask one confirmation question to book that exact slot.
+7. If requested_time_available=false and available=true, offer only the returned slots and ask which one they want.
+8. Do not run check_availability again for the same date unless the caller asks for a different day.
+9. When caller selects a returned slot, call book_appointment once using the exact start_time returned by check_availability (requested_slot.start_time or available_slots[*].start_time). Never invent or reformat timestamps yourself.
+10. Confirm the booking details and let them know they'll receive a confirmation text.
 
 ## Important Rules
-- You MUST use the book_appointment tool to book appointments. Never say you'll "pass it along" or "have someone call back" — you handle bookings directly.
-- For new callers, ALWAYS ask them to spell their name: "And could you spell that for me?" Never assume the spelling.
-- If the caller asks something unrelated to booking: "I'll have ${business.ownerName} get back to you on that!"
-- If a caller wants to cancel, say you'll pass the message to ${business.ownerName}.
-- Do NOT bring up pricing unless asked. When asked, use the get_quote tool.
-- For returning customers, skip intake questions for info already on file. Jump straight to one question: "What are we booking today?"
-- NEVER ask for the caller's phone number. It's automatically captured from the call. If you need it for booking, use the number they called from.
-
-## SMS Notifications
-If a {{notification_message}} is provided, you are being used to deliver an SMS notification. Send the notification_message exactly as written — do not rephrase, add commentary, or start a conversation. Just deliver the message.${customInstructions ? `\n\n## Additional Instructions from Business Owner\n${customInstructions}` : ""}`;
+- Be conversational, warm, and friendly — like a helpful human receptionist
+- Ask only one question at a time. Never ask two questions in one turn.
+- If the caller asks something you can't answer, say: "I'll have ${business.ownerName} call you back shortly about that."
+- Always confirm spelling of names if unclear
+- If a caller wants to cancel, say you'll pass the message to ${business.ownerName}
+- Keep the conversation efficient — aim for under 2 minutes
+- Do NOT discuss pricing unless the caller specifically asks
+- If asked about pricing, share the service prices listed above
+- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions
+- Do not repeat the same availability result or re-check the same day unless the caller changes day/time
+- Never claim a booking is confirmed until book_appointment returns success
+- In confirmations, include the explicit date and time (example: Tuesday, March 10 at 9:00 AM)`;
 }
 
 function formatBusinessHours(
@@ -169,14 +109,6 @@ function formatBusinessHours(
     fri: "Friday",
     sat: "Saturday",
     sun: "Sunday",
-    "mon-fri": "Monday-Friday",
-    monday: "Monday",
-    tuesday: "Tuesday",
-    wednesday: "Wednesday",
-    thursday: "Thursday",
-    friday: "Friday",
-    saturday: "Saturday",
-    sunday: "Sunday",
   };
 
   return Object.entries(hours)
@@ -188,9 +120,7 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  // Keep begin_message short and neutral — personalization happens after the
-  // lookup_customer_context tool runs at the start of each call.
-  return `Thanks for calling ${business.name}! Give me one sec.`;
+  return `Hi! You've reached ${business.name}. ${business.ownerName} is with a client right now, but I can help you book an appointment. What's your name?`;
 }
 
 // --- Retell LLM (Response Engine) ---
@@ -200,17 +130,6 @@ export async function createRetellLLM(config: {
   beginMessage: string;
   tools?: RetellTool[];
 }): Promise<{ llm_id: string }> {
-  const now = new Date();
-  const currentDate = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const currentDateIso = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Los_Angeles",
-  }).format(now);
-
   const body: Record<string, unknown> = {
     model: RETELL_MODEL,
     start_speaker: "agent",
@@ -218,10 +137,6 @@ export async function createRetellLLM(config: {
     begin_message: config.beginMessage,
     model_temperature: 0.2,
     tool_call_strict_mode: true,
-    retell_llm_dynamic_variables: {
-      current_date: currentDate,
-      current_date_iso: currentDateIso,
-    },
   };
 
   if (config.tools && config.tools.length > 0) {
@@ -242,17 +157,6 @@ export async function updateRetellLLM(
     tools?: RetellTool[];
   }
 ): Promise<void> {
-  const now = new Date();
-  const currentDate = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const currentDateIso = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Los_Angeles",
-  }).format(now);
-
   const body: Record<string, unknown> = {};
   if (updates.generalPrompt !== undefined)
     body.general_prompt = updates.generalPrompt;
@@ -260,50 +164,10 @@ export async function updateRetellLLM(
     body.begin_message = updates.beginMessage;
   if (updates.tools !== undefined) body.general_tools = updates.tools;
   body.start_speaker = "agent";
-  body.retell_llm_dynamic_variables = {
-    current_date: currentDate,
-    current_date_iso: currentDateIso,
-  };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
     method: "PATCH",
     body: JSON.stringify(body),
-  });
-}
-
-/**
- * Refresh the date dynamic variables on the LLM at call start.
- * Only updates non-caller-specific variables (date) to avoid a race condition
- * where concurrent calls for the same business would overwrite each other's
- * customer context. Customer context is fetched per-call by the
- * lookup_customer_context tool, which the agent always calls first.
- */
-export async function refreshRetellLLMForCall(
-  llmId: string,
-  timezone: string = "America/Los_Angeles"
-): Promise<void> {
-  const now = new Date();
-  const currentDate = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: timezone,
-  });
-  const currentDateIso = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-  }).format(now);
-
-  const vars: Record<string, string> = {
-    current_date: currentDate,
-    current_date_iso: currentDateIso,
-  };
-
-  await retellFetch(`/update-retell-llm/${llmId}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      retell_llm_dynamic_variables: vars,
-    }),
   });
 }
 
@@ -377,24 +241,38 @@ export async function provisionRetellPhoneNumber(options: {
   });
 }
 
-export async function updateRetellPhoneNumber(
-  phoneNumber: string,
-  updates: { inboundAgentId?: string }
-): Promise<void> {
-  const body: Record<string, unknown> = {};
-  if (updates.inboundAgentId) body.inbound_agent_id = updates.inboundAgentId;
-
-  await retellFetch(`/update-phone-number/${encodeURIComponent(phoneNumber)}`, {
-    method: "PATCH",
-    body: JSON.stringify(body),
-  });
-}
-
 export async function deleteRetellPhoneNumber(
   phoneNumber: string
 ): Promise<void> {
   await retellFetch(`/delete-phone-number/${encodeURIComponent(phoneNumber)}`, {
     method: "DELETE",
+  });
+}
+
+// --- SMS Sending ---
+
+// Retell's outbound SMS uses the create-sms-chat endpoint which starts
+// an AI-driven SMS conversation. For simple notification messages, we
+// pass the message as a dynamic variable and configure the notification
+// agent's begin_message to "{{notification_message}}".
+export async function sendSms(
+  to: string,
+  body: string,
+  from?: string
+): Promise<void> {
+  if (!from) {
+    throw new Error("From number is required for Retell SMS");
+  }
+
+  await retellFetch("/create-sms-chat", {
+    method: "POST",
+    body: JSON.stringify({
+      from_number: from,
+      to_number: to,
+      retell_llm_dynamic_variables: {
+        notification_message: body,
+      },
+    }),
   });
 }
 
@@ -424,11 +302,9 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "lookup_customer_context",
       description:
-        "ALWAYS call this tool FIRST at the start of every call before saying anything else. It checks if the caller is a returning customer and retrieves their name, pet info, and visit history. IMPORTANT: When this tool returns data, you MUST use it. If a customer name, pet name, breed, or size is returned, do NOT ask for that information again — greet them by name, reference their pet, and skip straight to scheduling. No parameters needed — the caller's phone number is provided automatically.",
-      url: buildRetellWebhookUrl(appUrl, "/api/retell/lookup-customer"),
-      speak_during_execution: true,
-      speak_after_execution: true,
-      execution_message_description: "Give me one second while I pull up your info...",
+        "Look up an existing customer by caller phone number before asking repeat callers for their details.",
+      url: `${appUrl}/api/retell/lookup-customer`,
+      speak_during_execution: false,
       parameters: {
         type: "object",
         properties: {
@@ -445,17 +321,15 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       name: "check_availability",
       description:
         "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
-      url: buildRetellWebhookUrl(appUrl, "/api/retell/check-availability"),
-      speak_during_execution: true,
-      speak_after_execution: true,
-      execution_message_description: "Let me check our availability for you...",
+      url: `${appUrl}/api/retell/check-availability`,
+      speak_during_execution: false,
       parameters: {
         type: "object",
         properties: {
           date: {
             type: "string",
             description:
-              "The date to check availability for. Can be YYYY-MM-DD, a day name like 'Monday', or natural language like 'next Tuesday'. Today is {{current_date_iso}}.",
+              "The date to check availability for. Prefer YYYY-MM-DD, but natural phrases like 'next Monday' are accepted.",
           },
           service_name: {
             type: "string",
@@ -465,7 +339,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           preferred_time: {
             type: "string",
             description:
-              "The specific time the customer requested, e.g. '2:00 PM' or '10 AM'. When provided, the result will indicate if that exact time is available and show the closest alternatives if not.",
+              "The caller's requested time on that date (for example: '10 AM').",
           },
         },
         required: ["date"],
@@ -475,12 +349,9 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "book_appointment",
       description:
-        "Book an appointment for the customer after collecting all required information. IMPORTANT: For the start_time parameter, copy the exact start_time value from the check_availability tool's available_slots array — do NOT calculate or re-derive the date yourself. This ensures the date and time are accurate.",
-      url: buildRetellWebhookUrl(appUrl, "/api/retell/book-appointment"),
-      speak_during_execution: true,
-      speak_after_execution: true,
-      execution_message_description:
-        "Let me get that booked for you...",
+        "Book an appointment for the customer after collecting all required information.",
+      url: `${appUrl}/api/retell/book-appointment`,
+      speak_during_execution: false,
       parameters: {
         type: "object",
         properties: {
@@ -519,33 +390,6 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       },
     },
     {
-      type: "custom",
-      name: "get_quote",
-      description:
-        "Get a price quote for a specific breed, size, and service combination. Call when customer asks about pricing.",
-      url: buildRetellWebhookUrl(appUrl, "/api/retell/get-quote"),
-      speak_during_execution: false,
-      parameters: {
-        type: "object",
-        properties: {
-          breed: {
-            type: "string",
-            description: "Dog breed",
-          },
-          size: {
-            type: "string",
-            description: "Dog size",
-            enum: ["SMALL", "MEDIUM", "LARGE", "XLARGE"],
-          },
-          service_name: {
-            type: "string",
-            description: "Service name",
-          },
-        },
-        required: ["service_name"],
-      },
-    },
-    {
       type: "end_call",
       name: "end_call",
       description:
@@ -556,18 +400,15 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
 
 // --- Build Full Config ---
 
-export function buildAgentConfig(
-  business: Business & { services: Service[] },
-  retellConfig?: { voiceId?: string | null; personality?: AgentPersonality | null; greeting?: string | null } | null
-) {
+export function buildAgentConfig(business: Business & { services: Service[] }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   return {
     agentName: `${business.name} Receptionist`,
-    generalPrompt: generateSystemPrompt(business, retellConfig?.personality),
-    beginMessage: retellConfig?.greeting?.trim() || generateGreeting(business),
-    voiceId: retellConfig?.voiceId || "11labs-Adrian",
-    webhookUrl: buildRetellWebhookUrl(appUrl, "/api/retell/webhook"),
+    generalPrompt: generateSystemPrompt(business),
+    beginMessage: generateGreeting(business),
+    voiceId: "11labs-Adrian",
+    webhookUrl: `${appUrl}/api/retell/webhook`,
     tools: buildAgentTools(appUrl),
   };
 }
@@ -578,48 +419,34 @@ type SyncableBusiness = Business & {
 };
 
 export async function syncRetellAgent(business: SyncableBusiness) {
-  const config = buildAgentConfig(business, business.retellConfig as { voiceId?: string | null; personality?: AgentPersonality | null; greeting?: string | null } | null);
+  const config = buildAgentConfig(business);
   const existingConfig = business.retellConfig;
 
-  // Try to update existing LLM + agent on Retell
   if (existingConfig?.agentId && existingConfig.llmId) {
-    try {
-      await updateRetellLLM(existingConfig.llmId, {
-        generalPrompt: config.generalPrompt,
-        beginMessage: config.beginMessage,
-        tools: config.tools,
-      });
+    await updateRetellLLM(existingConfig.llmId, {
+      generalPrompt: config.generalPrompt,
+      beginMessage: config.beginMessage,
+      tools: config.tools,
+    });
 
-      await updateRetellAgent(existingConfig.agentId, {
-        agentName: config.agentName,
+    await updateRetellAgent(existingConfig.agentId, {
+      agentName: config.agentName,
+      voiceId: config.voiceId,
+      webhookUrl: config.webhookUrl,
+    });
+
+    return prisma.retellConfig.update({
+      where: { businessId: business.id },
+      data: {
+        agentId: existingConfig.agentId,
+        llmId: existingConfig.llmId,
+        systemPrompt: config.generalPrompt,
         voiceId: config.voiceId,
-        webhookUrl: config.webhookUrl,
-      });
-
-      return prisma.retellConfig.update({
-        where: { businessId: business.id },
-        data: {
-          systemPrompt: config.generalPrompt,
-          voiceId: config.voiceId,
-          greeting: config.beginMessage,
-        },
-      });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      // If the LLM or agent was deleted on Retell, fall through to recreate
-      if (errorMsg.includes("not found") || errorMsg.includes("404")) {
-        console.warn("[Retell Sync] Stored LLM/agent no longer exists on Retell, recreating...", {
-          llmId: existingConfig.llmId,
-          agentId: existingConfig.agentId,
-        });
-      } else {
-        // Non-404 errors should still propagate
-        throw error;
-      }
-    }
+        greeting: config.beginMessage,
+      },
+    });
   }
 
-  // Create fresh LLM + agent (either first time or stale IDs)
   const llm = await createRetellLLM({
     generalPrompt: config.generalPrompt,
     beginMessage: config.beginMessage,
@@ -632,24 +459,6 @@ export async function syncRetellAgent(business: SyncableBusiness) {
     voiceId: config.voiceId,
     webhookUrl: config.webhookUrl,
   });
-
-  console.log("[Retell Sync] Created new LLM:", llm.llm_id, "agent:", agent.agent_id);
-
-  // Re-link the phone number to the new agent
-  const phoneNumber = await prisma.phoneNumber.findFirst({
-    where: { businessId: business.id },
-  });
-  if (phoneNumber) {
-    try {
-      await updateRetellPhoneNumber(phoneNumber.number, {
-        inboundAgentId: agent.agent_id,
-      });
-      console.log("[Retell Sync] Re-linked phone", phoneNumber.number, "to new agent", agent.agent_id);
-    } catch (phoneError) {
-      console.error("[Retell Sync] Failed to re-link phone number:", phoneError);
-      // Don't throw — the agent was created successfully, phone linking can be retried
-    }
-  }
 
   return prisma.retellConfig.upsert({
     where: { businessId: business.id },
