@@ -153,7 +153,9 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
   if (existingCall) {
     const extractedData = call.call_analysis?.custom_analysis_data || {};
     const extracted = extractedData as Record<string, string>;
-    const callerName = extracted.customerName || extracted.customer_name || null;
+    const extractedName = extracted.customerName || extracted.customer_name || null;
+    // Prefer AI-extracted name, fall back to the name we pre-filled at call_started
+    const callerName = extractedName || existingCall.callerName || null;
     const summary =
       (call.call_analysis as Record<string, string>)?.call_summary || null;
 
