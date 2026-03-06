@@ -100,3 +100,102 @@ export async function sendAppointmentReminder(
     data: { reminderSent: true },
   });
 }
+
+// --- No-Show Protection: 48h Reminder ---
+
+export async function send48hReminder(
+  business: BusinessWithPhone,
+  appointment: Appointment
+) {
+  if (!appointment.customerPhone || !business.phoneNumber) return;
+
+  const fromNumber = business.phoneNumber.number;
+  const time = formatDateTime(appointment.startTime);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  const message = [
+    `Hi ${appointment.customerName}! Quick reminder — ${appointment.petName || "your pet"}'s ${appointment.serviceName || "grooming"} at ${business.name} is coming up:`,
+    time,
+    "",
+    `Reply CONFIRM to keep your spot, or CANCEL if you need to reschedule.`,
+    "",
+    `We appreciate the heads up! 🐾`,
+  ].join("\n");
+
+  await sendSms(appointment.customerPhone, message, fromNumber);
+
+  await prisma.appointment.update({
+    where: { id: appointment.id },
+    data: { reminder48hSent: true },
+  });
+}
+
+// --- No-Show Protection: Waitlist fill notification ---
+
+export async function sendWaitlistOpeningNotification(
+  business: BusinessWithPhone,
+  entry: { customerPhone: string; customerName: string; petName?: string | null; serviceName?: string | null },
+  openingTime: string
+) {
+  if (!entry.customerPhone || !business.phoneNumber) return;
+
+  const fromNumber = business.phoneNumber.number;
+
+  const message = [
+    `Great news, ${entry.customerName}! A spot just opened up at ${business.name}:`,
+    openingTime,
+    entry.petName ? `For ${entry.petName}` : "",
+    "",
+    `Reply BOOK to grab this slot, or we'll offer it to the next person on the list.`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  await sendSms(entry.customerPhone, message, fromNumber);
+}
+
+// --- No-Show Protection: No-response follow-up call ---
+
+export async function sendNoResponseFollowUp(
+  business: BusinessWithPhone,
+  appointment: Appointment
+) {
+  if (!appointment.customerPhone || !business.phoneNumber) return;
+
+  const fromNumber = business.phoneNumber.number;
+  const time = formatDateTime(appointment.startTime);
+
+  const message = [
+    `Hi ${appointment.customerName}, we haven't heard back about ${appointment.petName || "your pet"}'s appointment at ${business.name}:`,
+    time,
+    "",
+    `Please reply CONFIRM or CANCEL so we can plan accordingly. If we don't hear back, we may need to release the slot. Thank you!`,
+  ].join("\n");
+
+  await sendSms(appointment.customerPhone, message, fromNumber);
+}
+
+// --- No-Show: Notify owner of cancellation + waitlist fill ---
+
+export async function sendCancellationWithWaitlistNotification(
+  business: BusinessWithPhone,
+  cancelledAppt: Appointment,
+  waitlistCustomerName?: string
+) {
+  if (!business.phone || !business.phoneNumber) return;
+
+  const fromNumber = business.phoneNumber.number;
+  const time = formatDateTime(cancelledAppt.startTime);
+
+  const message = waitlistCustomerName
+    ? [
+        `[RingPaw] ${cancelledAppt.customerName} cancelled their ${time} slot.`,
+        `Waitlist auto-fill: contacting ${waitlistCustomerName} to fill the opening.`,
+      ].join("\n")
+    : [
+        `[RingPaw] ${cancelledAppt.customerName} cancelled their ${time} slot.`,
+        `No one on the waitlist for this time.`,
+      ].join("\n");
+
+  await sendSms(business.phone, message, fromNumber);
+}
