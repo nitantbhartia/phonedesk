@@ -69,8 +69,8 @@ function buildHoursState(savedHours?: SavedBusinessHours | null) {
     savedHours?.wed ||
     savedHours?.thu ||
     savedHours?.fri;
-  const saturdayHours = savedHours?.sat;
-  const sundayHours = savedHours?.sun;
+  const saturdayHours = savedHours?.sat || savedHours?.saturday;
+  const sundayHours = savedHours?.sun || savedHours?.sunday;
 
   return {
     "Mon - Fri": weekdayHours
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
         );
 
         if (!cancelled) {
-          if (business) {
+          if (business?.onboardingComplete) {
             router.push("/dashboard");
             return;
           }
@@ -274,7 +274,8 @@ export default function OnboardingPage() {
               };
             }
           } else {
-            businessHours[day.toLowerCase()] = {
+            const shortKey = day === "Saturday" ? "sat" : day === "Sunday" ? "sun" : day.toLowerCase();
+            businessHours[shortKey] = {
               open: toTwentyFourHour(h.open),
               close: toTwentyFourHour(h.close),
             };
