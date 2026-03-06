@@ -4,7 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import {
+  createRetellAgent,
+  createRetellLLM,
   deleteRetellPhoneNumber,
+  generateGreeting,
+  generateSystemPrompt,
   provisionRetellPhoneNumber,
   syncRetellAgent,
 } from "@/lib/retell";
@@ -92,8 +96,51 @@ export async function POST(req: Request) {
     let agentId = business.retellConfig?.agentId;
 
     if (!agentId) {
-      const synced = await syncRetellAgent(business);
-      agentId = synced.agentId || undefined;
+      try {
+        const synced = await syncRetellAgent(business);
+        agentId = synced.agentId || undefined;
+      } catch (syncError) {
+        // Fallback path: create a minimal Retell agent so phone provisioning
+        // is not blocked by optional tool/provider configuration issues.
+        console.error(
+          "Retell sync failed during provisioning; trying minimal agent fallback:",
+          syncError
+        );
+
+        const llm = await createRetellLLM({
+          generalPrompt: generateSystemPrompt(business),
+          beginMessage: generateGreeting(business),
+        });
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const agent = await createRetellAgent({
+          llmId: llm.llm_id,
+          agentName: `${business.name} Receptionist`,
+          voiceId: business.retellConfig?.voiceId || "11labs-Adrian",
+          webhookUrl: `${appUrl}/api/retell/webhook`,
+        });
+
+        const saved = await prisma.retellConfig.upsert({
+          where: { businessId: business.id },
+          create: {
+            businessId: business.id,
+            agentId: agent.agent_id,
+            llmId: llm.llm_id,
+            systemPrompt: generateSystemPrompt(business),
+            voiceId: business.retellConfig?.voiceId || "11labs-Adrian",
+            greeting: generateGreeting(business),
+          },
+          update: {
+            agentId: agent.agent_id,
+            llmId: llm.llm_id,
+            systemPrompt: generateSystemPrompt(business),
+            voiceId: business.retellConfig?.voiceId || "11labs-Adrian",
+            greeting: generateGreeting(business),
+          },
+        });
+
+        agentId = saved.agentId || undefined;
+      }
     }
 
     if (!agentId) {
