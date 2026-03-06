@@ -62,14 +62,16 @@ async function handleCallStarted(call: RetellCallPayload) {
       update: { status: "IN_PROGRESS", callerName: knownName },
     });
 
-    // Refresh date + inject customer context so the agent has caller info immediately.
-    // Runs fire-and-forget so it doesn't block the webhook response.
+    // Inject customer context + refresh date on the LLM before responding.
+    // We await this so the agent has the context before generating any response.
     const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
     if (llmId) {
       const contextSummary = buildCustomerContextSummary(customerContext);
-      refreshRetellLLMForCall(llmId, contextSummary).catch((err) =>
-        console.error("[webhook] Failed to refresh LLM for call:", err)
-      );
+      try {
+        await refreshRetellLLMForCall(llmId, contextSummary);
+      } catch (err) {
+        console.error("[webhook] Failed to refresh LLM for call:", err);
+      }
     }
   }
 
