@@ -14,6 +14,85 @@ interface CalendarConnection {
   createdAt: string;
 }
 
+type SavedBusinessHours = Record<string, { open: string; close: string }>;
+
+type HoursState = Record<
+  string,
+  { open: string; close: string; enabled: boolean }
+>;
+
+const TIME_OPTIONS = [
+  "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM",
+  "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
+  "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM",
+];
+
+const DEFAULT_HOURS: HoursState = {
+  "Mon - Fri": { open: "9:00 AM", close: "5:00 PM", enabled: true },
+  Saturday: { open: "10:00 AM", close: "2:00 PM", enabled: false },
+  Sunday: { open: "9:00 AM", close: "5:00 PM", enabled: false },
+};
+
+function toTwentyFourHour(value: string) {
+  if (!value.includes("AM") && !value.includes("PM")) return value;
+  const [time, meridiem] = value.split(" ");
+  const [rawHour, minute] = time.split(":");
+  let hour = Number(rawHour);
+  if (meridiem === "AM") {
+    if (hour === 12) hour = 0;
+  } else if (meridiem === "PM" && hour !== 12) {
+    hour += 12;
+  }
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
+}
+
+function toTwelveHour(value: string) {
+  if (value.includes("AM") || value.includes("PM")) return value;
+  const [rawHour, minute] = value.split(":");
+  const hour = Number(rawHour);
+  const meridiem = hour >= 12 ? "PM" : "AM";
+  const twelveHour = hour % 12 || 12;
+  return `${twelveHour}:${minute} ${meridiem}`;
+}
+
+function buildHoursState(savedHours?: SavedBusinessHours | null): HoursState {
+  if (!savedHours) return { ...DEFAULT_HOURS };
+
+  const weekdayHours =
+    savedHours["mon-fri"] || savedHours.mon || savedHours.tue ||
+    savedHours.wed || savedHours.thu || savedHours.fri;
+  const saturdayHours = savedHours.sat || savedHours.saturday;
+  const sundayHours = savedHours.sun || savedHours.sunday;
+
+  return {
+    "Mon - Fri": weekdayHours
+      ? { open: toTwelveHour(weekdayHours.open), close: toTwelveHour(weekdayHours.close), enabled: true }
+      : { ...DEFAULT_HOURS["Mon - Fri"], enabled: false },
+    Saturday: saturdayHours
+      ? { open: toTwelveHour(saturdayHours.open), close: toTwelveHour(saturdayHours.close), enabled: true }
+      : { ...DEFAULT_HOURS.Saturday },
+    Sunday: sundayHours
+      ? { open: toTwelveHour(sundayHours.open), close: toTwelveHour(sundayHours.close), enabled: true }
+      : { ...DEFAULT_HOURS.Sunday },
+  };
+}
+
+function serializeHours(hours: HoursState): SavedBusinessHours {
+  const result: SavedBusinessHours = {};
+  for (const [day, h] of Object.entries(hours)) {
+    if (!h.enabled) continue;
+    if (day === "Mon - Fri") {
+      for (const weekday of ["mon", "tue", "wed", "thu", "fri"]) {
+        result[weekday] = { open: toTwentyFourHour(h.open), close: toTwentyFourHour(h.close) };
+      }
+    } else {
+      const shortKey = day === "Saturday" ? "sat" : day === "Sunday" ? "sun" : day.toLowerCase();
+      result[shortKey] = { open: toTwentyFourHour(h.open), close: toTwentyFourHour(h.close) };
+    }
+  }
+  return result;
+}
+
 export default function CalendarSettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -22,26 +101,59 @@ export default function CalendarSettingsPage() {
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [respectBusy, setRespectBusy] = useState(true);
   const [bufferTime, setBufferTime] = useState(true);
+  const [hours, setHours] = useState<HoursState>({ ...DEFAULT_HOURS });
+  const [savedHoursJson, setSavedHoursJson] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const hoursDirty = JSON.stringify(serializeHours(hours)) !== savedHoursJson;
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
       return;
     }
-    if (status === "authenticated") fetchConnections();
+    if (status === "authenticated") fetchData();
   }, [status, router]);
 
-  async function fetchConnections() {
+  async function fetchData() {
     try {
       const res = await fetch("/api/business/profile");
       if (res.ok) {
         const data = await res.json();
         setConnections(data.business?.calendarConnections || []);
+        const bh = data.business?.businessHours as SavedBusinessHours | undefined;
+        const built = buildHoursState(bh);
+        setHours(built);
+        setSavedHoursJson(JSON.stringify(serializeHours(built)));
       }
     } catch (error) {
-      console.error("Error fetching calendars:", error);
+      console.error("Error fetching calendar settings:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveHours() {
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      const businessHours = serializeHours(hours);
+      const res = await fetch("/api/business/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessHours }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save");
+      }
+      setSavedHoursJson(JSON.stringify(businessHours));
+      setSaveMessage({ type: "success", text: "Hours saved & synced to voice agent" });
+    } catch (error) {
+      setSaveMessage({ type: "error", text: error instanceof Error ? error.message : "Failed to save hours" });
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -51,7 +163,7 @@ export default function CalendarSettingsPage() {
       const res = await fetch(`/api/calendar/connect?provider=${provider}`, {
         method: "DELETE",
       });
-      if (res.ok) await fetchConnections();
+      if (res.ok) await fetchData();
     } catch (error) {
       console.error("Error disconnecting calendar:", error);
     } finally {
@@ -150,7 +262,7 @@ export default function CalendarSettingsPage() {
                 disabled={disconnecting === "GOOGLE"}
                 className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
               >
-                {disconnecting === "GOOGLE" ? "Disconnecting…" : "Disconnect"}
+                {disconnecting === "GOOGLE" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
@@ -192,7 +304,7 @@ export default function CalendarSettingsPage() {
                 disabled={disconnecting === "SQUARE"}
                 className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
               >
-                {disconnecting === "SQUARE" ? "Disconnecting…" : "Disconnect"}
+                {disconnecting === "SQUARE" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
@@ -237,7 +349,7 @@ export default function CalendarSettingsPage() {
                 disabled={disconnecting === "ACUITY"}
                 className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
               >
-                {disconnecting === "ACUITY" ? "Disconnecting…" : "Disconnect"}
+                {disconnecting === "ACUITY" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
@@ -259,6 +371,138 @@ export default function CalendarSettingsPage() {
             your grooming software too — preventing double-bookings
             automatically.
           </p>
+        </div>
+      </section>
+
+      {/* Business Hours Section */}
+      <section className="bg-white rounded-4xl p-6 sm:p-10 shadow-soft border border-white">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-paw-brown">
+            <span className="inline-flex items-center gap-2">
+              Business Hours
+              <InfoIcon text="The AI only offers appointment times inside these hours." />
+            </span>
+          </h2>
+          <p className="text-paw-brown/60 mt-1 text-sm font-medium">
+            Set the hours your AI agent can book appointments.
+          </p>
+        </div>
+
+        <div className="bg-paw-cream rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
+          {Object.entries(hours).map(([day, h]) => (
+            <div
+              key={day}
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 py-2 sm:py-1"
+            >
+              <div className="flex items-center justify-between sm:justify-start">
+                <span
+                  className={`font-bold w-24 ${
+                    h.enabled ? "text-paw-brown" : "text-paw-brown/40"
+                  }`}
+                >
+                  {day}
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer sm:hidden">
+                  <input
+                    type="checkbox"
+                    checked={h.enabled}
+                    onChange={(e) =>
+                      setHours({
+                        ...hours,
+                        [day]: { ...h, enabled: e.target.checked },
+                      })
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+                </label>
+              </div>
+              {h.enabled ? (
+                <div className="flex items-center gap-3">
+                  <select
+                    value={h.open}
+                    onChange={(e) =>
+                      setHours({
+                        ...hours,
+                        [day]: { ...h, open: e.target.value },
+                      })
+                    }
+                    className="appearance-none bg-white border-2 border-paw-brown/5 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-paw-amber transition-all"
+                  >
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  <span className="text-paw-brown/30 font-bold">to</span>
+                  <select
+                    value={h.close}
+                    onChange={(e) =>
+                      setHours({
+                        ...hours,
+                        [day]: { ...h, close: e.target.value },
+                      })
+                    }
+                    className="appearance-none bg-white border-2 border-paw-brown/5 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-paw-amber transition-all"
+                  >
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <span className="text-sm font-bold text-paw-brown/40">
+                  Closed
+                </span>
+              )}
+              <label className="relative inline-flex items-center cursor-pointer hidden sm:inline-flex">
+                <input
+                  type="checkbox"
+                  checked={h.enabled}
+                  onChange={(e) =>
+                    setHours({
+                      ...hours,
+                      [day]: { ...h, enabled: e.target.checked },
+                    })
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+              </label>
+            </div>
+          ))}
+        </div>
+
+        {saveMessage && (
+          <div
+            className={`mt-4 p-3 rounded-2xl text-sm font-bold ${
+              saveMessage.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+          >
+            {saveMessage.text}
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end gap-3">
+          {hoursDirty && (
+            <button
+              onClick={() => {
+                fetchData();
+                setSaveMessage(null);
+              }}
+              className="px-6 py-3 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all text-sm"
+            >
+              Discard
+            </button>
+          )}
+          <button
+            onClick={saveHours}
+            disabled={saving || !hoursDirty}
+            className="px-8 py-3 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-soft"
+          >
+            {saving ? "Saving\u2026" : "Save Hours"}
+          </button>
         </div>
       </section>
 
@@ -416,16 +660,6 @@ export default function CalendarSettingsPage() {
             </button>
           </div>
         </section>
-      </div>
-
-      {/* Save buttons */}
-      <div className="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4">
-        <button className="w-full sm:w-auto px-8 py-4 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all">
-          Discard Changes
-        </button>
-        <button className="w-full sm:w-auto px-10 py-4 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all">
-          Save Settings
-        </button>
       </div>
     </div>
   );
