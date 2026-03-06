@@ -582,6 +582,13 @@ export async function getAvailableSlots(
     }
     openTime = parseBusinessTime(dayHours.open);
     closeTime = parseBusinessTime(dayHours.close);
+    // Guard against non-numeric values like "closed" that pass truthiness checks
+    if (
+      isNaN(openTime.hour) || isNaN(openTime.minute) ||
+      isNaN(closeTime.hour) || isNaN(closeTime.minute)
+    ) {
+      return [];
+    }
   }
 
   const slotStart = zonedDateTimeToUtc(
