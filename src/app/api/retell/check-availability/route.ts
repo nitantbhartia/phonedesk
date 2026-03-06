@@ -185,6 +185,7 @@ export async function POST(req: NextRequest) {
       year: "numeric",
       month: "long",
       day: "numeric",
+      timeZone: timezone,
     });
 
     if (slots.length === 0) {
