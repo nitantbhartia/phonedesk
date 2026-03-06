@@ -108,7 +108,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       .then((data) => {
         if (data?.business) {
           const plan = data.business.plan || "STARTER";
-          const limits: Record<string, number> = { STARTER: 100, PRO: 500, BUSINESS: 2000 };
+          const limits: Record<string, number> = { STARTER: 50, PRO: 200, BUSINESS: 500 };
           setUsage({
             minutesUsed: data.stats?.totalCallMinutes ?? 0,
             minutesLimit: limits[plan] ?? 500,

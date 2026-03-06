@@ -19,47 +19,47 @@ const PLANS = [
   {
     id: "STARTER",
     name: "Starter",
-    price: 149,
-    calls: 100,
+    price: 49,
+    minutes: 50,
     calendars: 1,
     smsCommands: "Basic",
     features: [
-      "Up to 100 calls/month",
+      "50 minutes/month",
       "1 calendar connection",
-      "Basic SMS commands (block/resume)",
+      "Basic SMS commands",
       "Call transcripts",
       "SMS notifications",
     ],
   },
   {
     id: "PRO",
-    name: "Pro",
-    price: 249,
-    calls: 300,
+    name: "Growth",
+    price: 149,
+    minutes: 200,
     calendars: 3,
     smsCommands: "Full",
     popular: true,
     features: [
-      "Up to 300 calls/month",
+      "200 minutes/month",
       "3 calendar connections",
       "Full SMS command set",
-      "Priority support",
+      "Custom voice & personality",
       "Call analytics",
     ],
   },
   {
     id: "BUSINESS",
-    name: "Business",
-    price: 399,
-    calls: -1,
+    name: "Pro",
+    price: 299,
+    minutes: 500,
     calendars: 5,
     smsCommands: "Full + API",
     features: [
-      "Unlimited calls",
+      "500 minutes/month",
       "5 calendar connections",
-      "Full SMS + API access",
+      "Priority support",
       "Multi-location support",
-      "White-label options",
+      "Custom AI instructions",
     ],
   },
 ];
@@ -68,7 +68,7 @@ export default function BillingPage() {
   const { status } = useSession();
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState("STARTER");
-  const [callsUsed, setCallsUsed] = useState(0);
+  const [minutesUsed, setMinutesUsed] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function BillingPage() {
           setCurrentPlan(data.business.plan || "STARTER");
         }
         if (data.stats) {
-          setCallsUsed(data.stats.callsThisMonth || 0);
+          setMinutesUsed(data.stats.totalCallMinutes || 0);
         }
       }
     } catch (error) {
@@ -99,9 +99,12 @@ export default function BillingPage() {
   }
 
   const activePlan = PLANS.find((p) => p.id === currentPlan) || PLANS[0];
-  const callLimit = activePlan.calls;
+  const minuteLimit = activePlan.minutes;
   const usagePercent =
-    callLimit > 0 ? Math.min((callsUsed / callLimit) * 100, 100) : 0;
+    minuteLimit > 0 ? Math.min((minutesUsed / minuteLimit) * 100, 100) : 0;
+  const isAtLimit = usagePercent >= 100;
+  const isNearLimit = usagePercent >= 80;
+  const nextPlan = PLANS[PLANS.findIndex((p) => p.id === currentPlan) + 1];
 
   if (loading) {
     return (
@@ -129,26 +132,37 @@ export default function BillingPage() {
                 ${activePlan.price}/month
               </CardDescription>
             </div>
-            <Badge variant={usagePercent > 80 ? "warning" : "success"}>
-              {callsUsed} / {callLimit > 0 ? callLimit : "Unlimited"} calls
+            <Badge variant={isAtLimit ? "destructive" : isNearLimit ? "warning" : "success"}>
+              {Math.round(minutesUsed)} / {minuteLimit} min
             </Badge>
           </div>
         </CardHeader>
         <CardContent>
-          {callLimit > 0 && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Monthly call usage</span>
-                <span>{Math.round(usagePercent)}%</span>
-              </div>
-              <Progress value={usagePercent} className="h-2" />
-              {usagePercent > 80 && (
-                <p className="text-sm text-amber-600">
-                  Approaching your call limit. Overage is $0.10/call.
-                </p>
-              )}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Monthly minutes used</span>
+              <span>{Math.round(usagePercent)}%</span>
             </div>
-          )}
+            <Progress value={usagePercent} className="h-2" />
+            {isAtLimit && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                <p className="text-sm font-medium text-red-800">
+                  You&apos;ve used all your minutes for this month.
+                </p>
+                <p className="text-sm text-red-700 mt-1">
+                  New calls will go to voicemail until your plan resets.
+                  {nextPlan && (
+                    <> Upgrade to <strong>{nextPlan.name}</strong> for {nextPlan.minutes} min/month.</>
+                  )}
+                </p>
+              </div>
+            )}
+            {isNearLimit && !isAtLimit && nextPlan && (
+              <p className="text-sm text-amber-600">
+                Running low on minutes. Upgrade to {nextPlan.name} for {nextPlan.minutes} min/month.
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

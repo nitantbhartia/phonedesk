@@ -388,14 +388,14 @@ function LandingPageContent() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-paw-brown">Simple Pricing</h2>
-            <p className="text-paw-brown/70 mt-4">Pays for itself with just 2 saved appointments.</p>
+            <p className="text-paw-brown/70 mt-4">Pays for itself with just one saved appointment. No surprise bills, ever.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 items-center">
             {/* Starter */}
             <div className="bg-white p-8 rounded-[2rem] shadow-card border border-gray-100">
               <h3 className="text-xl font-bold text-paw-brown mb-2">Starter</h3>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-extrabold">$149</span>
+                <span className="text-4xl font-extrabold">$49</span>
                 <span className="text-gray-500">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8 h-10">Perfect for solo groomers getting started.</p>
@@ -409,28 +409,28 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  100 Minutes / Month
+                  50 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Basic Calendar Sync
+                  1 Calendar Connection
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Email Notifications
+                  SMS Notifications
                 </li>
               </ul>
             </div>
 
-            {/* Pro */}
+            {/* Growth */}
             <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10">
               <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">MOST POPULAR</div>
-              <h3 className="text-xl font-bold text-paw-amber mb-2">Pro</h3>
+              <h3 className="text-xl font-bold text-paw-amber mb-2">Growth</h3>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-5xl font-extrabold text-white">$249</span>
+                <span className="text-5xl font-extrabold text-white">$149</span>
                 <span className="text-white/50">/mo</span>
               </div>
-              <p className="text-sm text-white/70 mb-8 h-10">For busy shops with multiple groomers.</p>
+              <p className="text-sm text-white/70 mb-8 h-10">For busy shops ready to grow.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -441,7 +441,7 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  500 Minutes / Month
+                  200 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -449,34 +449,34 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Custom Voice Personality
+                  Custom Voice & Personality
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Deposit Collection
+                  Call Analytics
                 </li>
               </ul>
             </div>
 
-            {/* Business */}
+            {/* Pro */}
             <div className="bg-white p-8 rounded-[2rem] shadow-card border border-gray-100">
-              <h3 className="text-xl font-bold text-paw-brown mb-2">Business</h3>
+              <h3 className="text-xl font-bold text-paw-brown mb-2">Pro</h3>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-extrabold">$399</span>
+                <span className="text-4xl font-extrabold">$299</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Multi-location franchises.</p>
+              <p className="text-sm text-gray-500 mb-8 h-10">High-volume shops & multi-location.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
                 className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Contact Sales"}
+                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
               </button>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Unlimited Minutes
+                  500 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
