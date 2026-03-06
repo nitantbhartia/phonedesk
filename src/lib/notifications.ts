@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { sendSms } from "./retell";
+import { sendSms } from "./sms";
 import { formatDateTime } from "./utils";
 import type { Appointment, Business, PhoneNumber } from "@prisma/client";
 

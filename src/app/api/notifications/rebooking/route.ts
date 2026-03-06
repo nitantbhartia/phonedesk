@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendSms } from "@/lib/retell";
+import { sendSms } from "@/lib/sms";
 
 // Cron endpoint: Send rebooking reminders
 export async function POST(req: NextRequest) {

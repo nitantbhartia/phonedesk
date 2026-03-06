@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "./prisma";
-import { sendSms } from "./retell";
+import { sendSms } from "./sms";
 
 function getGemini() {
   const apiKey = process.env.GEMINI_API_KEY;
