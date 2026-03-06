@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   {
@@ -90,10 +90,34 @@ const navItems = [
   },
 ];
 
+interface UsageStats {
+  minutesUsed: number;
+  minutesLimit: number;
+  plan: string;
+}
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [usage, setUsage] = useState<UsageStats | null>(null);
+
+  useEffect(() => {
+    fetch("/api/business/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.business) {
+          const plan = data.business.plan || "STARTER";
+          const limits: Record<string, number> = { STARTER: 100, PRO: 500, BUSINESS: 2000 };
+          setUsage({
+            minutesUsed: data.stats?.totalCallMinutes ?? 0,
+            minutesLimit: limits[plan] ?? 500,
+            plan,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-paw-sky flex">
@@ -179,10 +203,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {/* Plan usage card */}
         <div className="bg-paw-brown rounded-3xl p-6 text-paw-cream relative overflow-hidden">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-paw-orange/20 rounded-full blur-xl" />
-          <p className="text-xs font-bold text-paw-amber uppercase tracking-wider mb-2">Pro Plan</p>
-          <p className="text-sm font-medium opacity-80 mb-4">412 / 500 minutes used this month.</p>
+          <p className="text-xs font-bold text-paw-amber uppercase tracking-wider mb-2">
+            {usage?.plan?.replace("_", " ") || "Pro"} Plan
+          </p>
+          <p className="text-sm font-medium opacity-80 mb-4">
+            {usage ? `${usage.minutesUsed} / ${usage.minutesLimit}` : "— / —"} minutes used this month.
+          </p>
           <div className="w-full bg-white/10 h-2 rounded-full mb-6">
-            <div className="bg-paw-amber h-full rounded-full" style={{ width: "82%" }} />
+            <div
+              className="bg-paw-amber h-full rounded-full transition-all"
+              style={{ width: usage ? `${Math.min(100, (usage.minutesUsed / usage.minutesLimit) * 100)}%` : "0%" }}
+            />
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

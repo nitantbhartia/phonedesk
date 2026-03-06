@@ -56,6 +56,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (typeof price !== "number" || price < 0 || price > 9999) {
+    return NextResponse.json(
+      { error: "Price must be between $0 and $9,999" },
+      { status: 400 }
+    );
+  }
+
+  if (breed && (typeof breed !== "string" || breed.length > 100)) {
+    return NextResponse.json(
+      { error: "Breed must be 100 characters or less" },
+      { status: 400 }
+    );
+  }
+
   // Verify the service belongs to this business
   const service = await prisma.service.findFirst({
     where: { id: serviceId, businessId: business.id },
@@ -94,7 +108,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ pricingRule });
+  return NextResponse.json({ ok: true, pricingRule });
 }
 
 // DELETE: Delete a pricing rule by id

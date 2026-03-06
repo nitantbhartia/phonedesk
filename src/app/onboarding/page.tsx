@@ -320,7 +320,11 @@ export default function OnboardingPage() {
     setLoading(true);
     setProvisionError("");
     try {
-      const areaCode = city ? "619" : "415";
+      // Derive area code from the user's phone number
+      const phoneDigits = phone.replace(/\D/g, "");
+      const areaCode = phoneDigits.length >= 10
+        ? phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3)
+        : "415";
       const res = await fetch("/api/provision-number", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

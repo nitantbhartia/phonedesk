@@ -2,23 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 import { normalizePhoneNumber } from "@/lib/phone";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Retell inbound SMS webhook (set via inbound_sms_webhook_url on the phone number)
-// Retell sends: { agent_id, from_number, to_number }
-// We respond with optional overrides: { chat_inbound: { override_agent_id, dynamic_variables, metadata } }
-// Note: Retell's inbound SMS webhook notifies us that an SMS arrived. The actual
-// message content is handled by the Retell chat agent. For owner commands and
-// customer keywords (CANCEL/CONFIRM), we use dynamic_variables to pass context.
+// Retell sends: { agent_id, from_number, to_number, message }
+// For standard inbound texts the message field is present at root level.
+// We handle known keywords (CANCEL, CONFIRM, STATUS, REBOOK, BOOK) directly
+// and pass everything else through to Retell's chat agent.
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  // Retell inbound SMS webhook sends from_number and to_number at root level
+  // Retell inbound SMS webhook sends fields at root level or nested
   const from = (body.from_number || body.chat_inbound?.from_number) as string;
   const to = (body.to_number || body.chat_inbound?.to_number) as string;
-  const messageBody = body.message || body.chat_inbound?.message || "";
+  const messageBody = (body.message || body.text || body.chat_inbound?.message || "") as string;
 
   if (!from || !to) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // Rate limit: 20 messages per minute per sender
+  const { allowed } = rateLimit(`sms:${from}`, { limit: 20, windowMs: 60_000 });
+  if (!allowed) {
     return NextResponse.json({ ok: true });
   }
 
@@ -263,6 +269,19 @@ export async function POST(req: NextRequest) {
           to
         );
       }
+    } else if (messageBody.trim()) {
+      // Unrecognized message — send a helpful reply with available commands
+      const { sendSms } = await import("@/lib/retell");
+      await sendSms(
+        from,
+        `Thanks for texting ${business.name}! Here's what I can help with:\n\n` +
+        `STATUS - Check on your pet\n` +
+        `CONFIRM - Confirm an appointment\n` +
+        `CANCEL - Cancel an appointment\n` +
+        `REBOOK - Schedule your next visit\n\n` +
+        `Or call us at ${business.phone || to} to speak with someone!`,
+        to
+      );
     }
   }
 

@@ -55,7 +55,7 @@ export async function GET() {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [callsThisWeek, callsThisMonth, bookingsConfirmed, bookingsMissed, avgDuration] =
+  const [callsThisWeek, callsThisMonth, bookingsConfirmed, bookingsMissed, avgDuration, totalDuration] =
     await Promise.all([
       prisma.call.count({
         where: { businessId: business.id, createdAt: { gte: weekAgo } },
@@ -66,7 +66,7 @@ export async function GET() {
       prisma.appointment.count({
         where: {
           businessId: business.id,
-          status: { in: ["CONFIRMED", "PENDING"] },
+          status: { in: ["CONFIRMED", "COMPLETED"] },
           createdAt: { gte: monthAgo },
         },
       }),
@@ -81,13 +81,19 @@ export async function GET() {
         where: { businessId: business.id, duration: { not: null } },
         _avg: { duration: true },
       }),
+      prisma.call.aggregate({
+        where: { businessId: business.id, duration: { not: null }, createdAt: { gte: monthAgo } },
+        _sum: { duration: true },
+      }),
     ]);
 
-  // Estimate revenue protected
+  // Estimate revenue protected (only confirmed/completed bookings)
   const avgServicePrice =
     business.services.length > 0
       ? business.services.reduce((sum, s) => sum + s.price, 0) / business.services.length
       : 65;
+
+  const totalCallMinutes = Math.round((totalDuration._sum.duration || 0) / 60);
 
   const stats = {
     callsThisWeek,
@@ -96,6 +102,7 @@ export async function GET() {
     bookingsMissed,
     revenueProtected: Math.round(bookingsConfirmed * avgServicePrice),
     avgCallDuration: Math.round(avgDuration._avg.duration || 0),
+    totalCallMinutes,
   };
 
   return NextResponse.json({ business, stats });
@@ -160,15 +167,17 @@ export async function POST(req: NextRequest) {
       data: { isActive: false },
     });
 
-    // Create new services
+    // Create new services (with validation)
     for (const svc of services) {
       if (svc.name?.trim()) {
+        const price = parseFloat(svc.price) || 0;
+        const duration = parseInt(svc.duration) || 60;
         await prisma.service.create({
           data: {
             businessId: business.id,
-            name: svc.name.trim(),
-            price: parseFloat(svc.price) || 0,
-            duration: parseInt(svc.duration) || 60,
+            name: svc.name.trim().slice(0, 100),
+            price: Math.max(0, Math.min(price, 9999)),
+            duration: Math.max(5, Math.min(duration, 480)),
           },
         });
       }
@@ -201,9 +210,36 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.json();
 
+  // Handle agent toggle separately
+  if (body.agentActive !== undefined) {
+    const business = await prisma.business.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (business) {
+      await prisma.retellConfig.updateMany({
+        where: { businessId: business.id },
+        data: { isActive: Boolean(body.agentActive) },
+      });
+    }
+    delete body.agentActive;
+    if (Object.keys(body).length === 0) {
+      return NextResponse.json({ ok: true });
+    }
+  }
+
+  // Only allow safe fields to be updated
+  const allowedFields = ["name", "ownerName", "city", "state", "phone", "address",
+    "timezone", "businessHours", "bookingMode", "isActive", "onboardingComplete",
+    "onboardingStep", "googleReviewUrl"];
+  const safeData: Record<string, unknown> = {};
+  for (const key of allowedFields) {
+    if (key in body) safeData[key] = body[key];
+  }
+
   const business = await prisma.business.update({
     where: { userId },
-    data: body,
+    data: safeData,
   });
 
   return NextResponse.json({ business });

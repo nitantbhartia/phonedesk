@@ -243,29 +243,61 @@ export async function deleteRetellPhoneNumber(
 
 // --- SMS Sending ---
 
-// Retell's outbound SMS uses the create-sms-chat endpoint which starts
-// an AI-driven SMS conversation. For simple notification messages, we
-// pass the message as a dynamic variable and configure the notification
-// agent's begin_message to "{{notification_message}}".
+// Send an outbound SMS via Retell.
+// Retell requires either a dedicated SMS agent or their send-text endpoint.
+// We first try the lightweight v2 send-text API; if that isn't available we
+// fall back to create-sms-chat with dynamic variables.
 export async function sendSms(
   to: string,
   body: string,
-  from?: string
+  from?: string,
+  { retries = 2 }: { retries?: number } = {}
 ): Promise<void> {
   if (!from) {
     throw new Error("From number is required for Retell SMS");
   }
 
-  await retellFetch("/create-sms-chat", {
-    method: "POST",
-    body: JSON.stringify({
-      from_number: from,
-      to_number: to,
-      retell_llm_dynamic_variables: {
-        notification_message: body,
-      },
-    }),
-  });
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await retellFetch("/v2/send-text", {
+        method: "POST",
+        body: JSON.stringify({
+          from_number: from,
+          to_number: to,
+          text: body,
+        }),
+      });
+      return;
+    } catch (error) {
+      // If the v2 endpoint doesn't exist, fall back to create-sms-chat
+      if (attempt === 0 && error instanceof Error && error.message.includes("404")) {
+        try {
+          await retellFetch("/create-sms-chat", {
+            method: "POST",
+            body: JSON.stringify({
+              from_number: from,
+              to_number: to,
+              retell_llm_dynamic_variables: {
+                notification_message: body,
+              },
+            }),
+          });
+          return;
+        } catch (fallbackError) {
+          lastError = fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError));
+        }
+      } else {
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+      }
+    }
+  }
+
+  throw lastError ?? new Error("Failed to send SMS");
 }
 
 // --- Tool Definitions for Voice Agent ---
