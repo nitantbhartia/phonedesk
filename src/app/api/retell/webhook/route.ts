@@ -6,8 +6,8 @@ import {
   sendMissedCallNotification,
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
-import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
-import { refreshRetellLLMDate } from "@/lib/retell";
+import { upsertCustomerMemoryFromCall, lookupCustomerContext, buildCustomerContextSummary } from "@/lib/customer-memory";
+import { refreshRetellLLMForCall } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
@@ -62,12 +62,13 @@ async function handleCallStarted(call: RetellCallPayload) {
       update: { status: "IN_PROGRESS", callerName: knownName },
     });
 
-    // Refresh the current_date on the LLM so the AI always knows today's real date.
-    // This runs fire-and-forget so it doesn't block the webhook response.
+    // Refresh date + inject customer context so the agent has caller info immediately.
+    // Runs fire-and-forget so it doesn't block the webhook response.
     const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
     if (llmId) {
-      refreshRetellLLMDate(llmId).catch((err) =>
-        console.error("[webhook] Failed to refresh LLM date:", err)
+      const contextSummary = buildCustomerContextSummary(customerContext);
+      refreshRetellLLMForCall(llmId, contextSummary).catch((err) =>
+        console.error("[webhook] Failed to refresh LLM for call:", err)
       );
     }
   }

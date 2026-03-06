@@ -102,9 +102,12 @@ CRITICAL DATE RULES:
 ## Services Offered
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 
+## Caller Context (auto-populated)
+{{customer_context}}
+
 ## Conversation Flow
-1. ALWAYS call lookup_customer_context FIRST, before saying anything else (the caller's phone number is automatically available). Do NOT skip this step.
-2. Greet the caller based on the lookup result:
+1. Read the Caller Context above. It tells you if this is a returning or new customer.
+2. Greet the caller based on the context:
    - **Returning customer:** Greet them by name warmly and reference their pet. For example: "Hey Nitant! Good to hear from you. How's Rexi doing?" Skip any info already on file.
    - **New customer:** Introduce yourself naturally: "Thanks for calling! I can help you get an appointment set up. What's your name?" Then ask them to spell it.
 3. Collect any missing info one question at a time. Use natural phrasing — not robotic form-filling:
@@ -203,6 +206,7 @@ export async function createRetellLLM(config: {
     retell_llm_dynamic_variables: {
       current_date: currentDate,
       current_date_iso: currentDateIso,
+      customer_context: "No prior customer record found. Treat as a new customer.",
     },
   };
 
@@ -245,6 +249,7 @@ export async function updateRetellLLM(
   body.retell_llm_dynamic_variables = {
     current_date: currentDate,
     current_date_iso: currentDateIso,
+    customer_context: "No prior customer record found. Treat as a new customer.",
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
@@ -254,11 +259,14 @@ export async function updateRetellLLM(
 }
 
 /**
- * Refresh the current_date dynamic variable on an existing Retell LLM.
- * Called at the start of every inbound call so the AI always knows
- * the real date, even if the LLM was last fully synced days ago.
+ * Refresh dynamic variables on an existing Retell LLM at call start.
+ * Sets the current date and optionally injects customer context so the
+ * agent has caller info immediately without needing a tool call.
  */
-export async function refreshRetellLLMDate(llmId: string): Promise<void> {
+export async function refreshRetellLLMForCall(
+  llmId: string,
+  customerContext?: string | null
+): Promise<void> {
   const now = new Date();
   const currentDate = now.toLocaleDateString("en-US", {
     weekday: "long",
@@ -270,13 +278,16 @@ export async function refreshRetellLLMDate(llmId: string): Promise<void> {
     timeZone: "America/Los_Angeles",
   }).format(now);
 
+  const vars: Record<string, string> = {
+    current_date: currentDate,
+    current_date_iso: currentDateIso,
+    customer_context: customerContext || "No prior customer record found. Treat as a new customer.",
+  };
+
   await retellFetch(`/update-retell-llm/${llmId}`, {
     method: "PATCH",
     body: JSON.stringify({
-      retell_llm_dynamic_variables: {
-        current_date: currentDate,
-        current_date_iso: currentDateIso,
-      },
+      retell_llm_dynamic_variables: vars,
     }),
   });
 }
