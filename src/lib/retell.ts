@@ -145,6 +145,7 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 - If a caller wants to cancel, say you'll pass the message to ${business.ownerName}.
 - Do NOT bring up pricing unless asked. When asked, use the get_quote tool.
 - For returning customers, skip intake questions for info already on file. Jump straight to "What are we booking today?" or "Same service as last time?"
+- NEVER ask for the caller's phone number. It's automatically captured from the call. If you need it for booking, use the number they called from.
 
 ## SMS Notifications
 If a {{notification_message}} is provided, you are being used to deliver an SMS notification. Send the notification_message exactly as written — do not rephrase, add commentary, or start a conversation. Just deliver the message.${customInstructions ? `\n\n## Additional Instructions from Business Owner\n${customInstructions}` : ""}`;
@@ -268,13 +269,14 @@ export async function updateRetellLLM(
 }
 
 /**
- * Inject per-call dynamic variables (customer context + current date) into
- * an active call using Retell's update-call endpoint. This is per-call and
- * does not affect other concurrent calls — unlike update-retell-llm which
- * is global and subject to race conditions.
+ * Refresh dynamic variables on the LLM at call start.
+ * Sets the current date and customer context so the agent has accurate info.
+ * Uses update-retell-llm (global) since update-call doesn't reliably support
+ * retell_llm_dynamic_variables. The lookup_customer_context tool is always
+ * called first by the agent as a reliable per-call backup.
  */
 export async function refreshRetellLLMForCall(
-  callId: string,
+  llmId: string,
   customerContext?: string | null
 ): Promise<void> {
   const now = new Date();
@@ -294,7 +296,7 @@ export async function refreshRetellLLMForCall(
     customer_context: customerContext || "No prior customer record found. Treat as a new customer.",
   };
 
-  await retellFetch(`/update-call/${callId}`, {
+  await retellFetch(`/update-retell-llm/${llmId}`, {
     method: "PATCH",
     body: JSON.stringify({
       retell_llm_dynamic_variables: vars,
@@ -458,9 +460,10 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "lookup_customer_context",
       description:
-        "Refresh or look up customer info mid-call. Customer context is already loaded automatically at the start of every call — only use this tool if the caller says they are someone else, or you need to re-check their info after a correction.",
+        "ALWAYS call this tool FIRST at the start of every call before saying anything else. It checks if the caller is a returning customer and retrieves their name, pet info, and visit history so you can greet them personally. No parameters needed — the caller's phone number is provided automatically.",
       url: `${appUrl}/api/retell/lookup-customer`,
-      speak_during_execution: false,
+      speak_during_execution: true,
+      execution_message_description: "Give me one second while I pull up your info...",
       parameters: {
         type: "object",
         properties: {
