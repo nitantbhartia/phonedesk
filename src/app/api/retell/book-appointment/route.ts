@@ -182,9 +182,15 @@ export async function POST(req: NextRequest) {
       minute: "2-digit",
     });
 
+    const isConfirmed = appointment.status === "CONFIRMED";
+    const resultMessage = isConfirmed
+      ? `I've booked ${petName || "your pet"} for a ${service?.name || svcName || "grooming"} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
+      : `I've got ${timeStr} held for ${petName || "your pet"}'s ${service?.name || svcName || "grooming"} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
+
     return NextResponse.json({
-      result: `I've booked ${petName || "your pet"} for a ${service?.name || svcName || "grooming"} appointment on ${timeStr}. You'll receive a confirmation text shortly.`,
+      result: resultMessage,
       booked: true,
+      confirmed: isConfirmed,
       appointment_id: appointment.id,
       timezone,
     });
