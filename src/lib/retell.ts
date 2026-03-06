@@ -33,8 +33,16 @@ async function retellFetch(path: string, options: RequestInit = {}) {
 
 // --- System Prompt & Greeting ---
 
+export interface AgentPersonality {
+  tone?: string;       // "friendly" | "professional" | "bubbly" | "calm"
+  style?: string;      // "concise" | "conversational" | "detailed"
+  language?: string;   // "casual" | "formal"
+  customInstructions?: string;
+}
+
 export function generateSystemPrompt(
-  business: Business & { services: Service[] }
+  business: Business & { services: Service[] },
+  personality?: AgentPersonality | null
 ): string {
   const serviceList = business.services
     .filter((s) => s.isActive)
@@ -50,7 +58,28 @@ export function generateSystemPrompt(
       )
     : "Monday-Saturday 9am-5pm";
 
-  return `You are a friendly, professional AI receptionist for ${business.name}, a pet grooming business. The owner is ${business.ownerName}.
+  const toneMap: Record<string, string> = {
+    friendly: "friendly, warm, and approachable",
+    professional: "professional, polished, and courteous",
+    bubbly: "upbeat, enthusiastic, and energetic",
+    calm: "calm, soothing, and reassuring",
+  };
+  const styleMap: Record<string, string> = {
+    concise: "Keep responses brief and to the point.",
+    conversational: "Be conversational and natural, like chatting with a neighbor.",
+    detailed: "Be thorough and provide helpful details proactively.",
+  };
+  const languageMap: Record<string, string> = {
+    casual: "Use casual, everyday language. Contractions are great.",
+    formal: "Use polite, formal language. Avoid slang and contractions.",
+  };
+
+  const tone = toneMap[personality?.tone || "friendly"] || toneMap.friendly;
+  const style = styleMap[personality?.style || "conversational"] || styleMap.conversational;
+  const languageStyle = languageMap[personality?.language || "casual"] || languageMap.casual;
+  const customInstructions = personality?.customInstructions?.trim();
+
+  return `You are a ${tone} AI receptionist for ${business.name}, a pet grooming business. The owner is ${business.ownerName}.
 
 Your role is to answer calls when the owner is busy with a client, collect booking details, and help callers schedule appointments.
 
@@ -80,14 +109,15 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 6. Let them know they'll receive a confirmation text
 
 ## Important Rules
-- Be conversational, warm, and friendly — like a helpful human receptionist
+- ${style}
+- ${languageStyle}
 - If the caller asks something you can't answer, say: "I'll have ${business.ownerName} call you back shortly about that."
 - Always confirm spelling of names if unclear
 - If a caller wants to cancel, say you'll pass the message to ${business.ownerName}
 - Keep the conversation efficient — aim for under 2 minutes
 - Do NOT discuss pricing unless the caller specifically asks
 - When asked about pricing, use the get_quote tool to provide an accurate estimate based on breed and size. Only fall back to the general service prices if the tool is unavailable.
-- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions`;
+- When lookup_customer_context returns a returning customer, acknowledge them naturally and skip repeated intake questions${customInstructions ? `\n\n## Additional Instructions from Business Owner\n${customInstructions}` : ""}`;
 }
 
 function formatBusinessHours(
@@ -449,14 +479,17 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
 
 // --- Build Full Config ---
 
-export function buildAgentConfig(business: Business & { services: Service[] }) {
+export function buildAgentConfig(
+  business: Business & { services: Service[] },
+  retellConfig?: { voiceId?: string | null; personality?: AgentPersonality | null } | null
+) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   return {
     agentName: `${business.name} Receptionist`,
-    generalPrompt: generateSystemPrompt(business),
+    generalPrompt: generateSystemPrompt(business, retellConfig?.personality),
     beginMessage: generateGreeting(business),
-    voiceId: "11labs-Adrian",
+    voiceId: retellConfig?.voiceId || "11labs-Adrian",
     webhookUrl: `${appUrl}/api/retell/webhook`,
     tools: buildAgentTools(appUrl),
   };
@@ -468,7 +501,7 @@ type SyncableBusiness = Business & {
 };
 
 export async function syncRetellAgent(business: SyncableBusiness) {
-  const config = buildAgentConfig(business);
+  const config = buildAgentConfig(business, business.retellConfig as { voiceId?: string | null; personality?: AgentPersonality | null } | null);
   const existingConfig = business.retellConfig;
 
   if (existingConfig?.agentId && existingConfig.llmId) {

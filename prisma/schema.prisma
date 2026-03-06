@@ -169,6 +169,7 @@ model RetellConfig {
   voiceId         String?
   greeting        String?  @db.Text
   fallbackMessage String?  @db.Text
+  personality     Json?    // { tone, style, language, customInstructions }
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
