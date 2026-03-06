@@ -214,7 +214,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
 
   // Handle retell config updates (agentActive, voiceId, personality)
-  const hasRetellUpdates = body.agentActive !== undefined || body.voiceId !== undefined || body.personality !== undefined;
+  const hasRetellUpdates = body.agentActive !== undefined || body.voiceId !== undefined || body.personality !== undefined || body.greeting !== undefined;
   if (hasRetellUpdates) {
     const business = await prisma.business.findUnique({
       where: { userId },
@@ -225,6 +225,7 @@ export async function PATCH(req: NextRequest) {
       if (body.agentActive !== undefined) retellData.isActive = Boolean(body.agentActive);
       if (body.voiceId !== undefined) retellData.voiceId = String(body.voiceId);
       if (body.personality !== undefined) retellData.personality = body.personality;
+      if (body.greeting !== undefined) retellData.greeting = String(body.greeting);
       await prisma.retellConfig.updateMany({
         where: { businessId: business.id },
         data: retellData,
@@ -233,6 +234,7 @@ export async function PATCH(req: NextRequest) {
     delete body.agentActive;
     delete body.voiceId;
     delete body.personality;
+    delete body.greeting;
     if (Object.keys(body).length === 0) {
       return NextResponse.json({ ok: true });
     }

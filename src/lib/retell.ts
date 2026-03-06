@@ -478,14 +478,14 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
 
 export function buildAgentConfig(
   business: Business & { services: Service[] },
-  retellConfig?: { voiceId?: string | null; personality?: AgentPersonality | null } | null
+  retellConfig?: { voiceId?: string | null; personality?: AgentPersonality | null; greeting?: string | null } | null
 ) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   return {
     agentName: `${business.name} Receptionist`,
     generalPrompt: generateSystemPrompt(business, retellConfig?.personality),
-    beginMessage: generateGreeting(business),
+    beginMessage: retellConfig?.greeting?.trim() || generateGreeting(business),
     voiceId: retellConfig?.voiceId || "11labs-Adrian",
     webhookUrl: `${appUrl}/api/retell/webhook`,
     tools: buildAgentTools(appUrl),
@@ -498,7 +498,7 @@ type SyncableBusiness = Business & {
 };
 
 export async function syncRetellAgent(business: SyncableBusiness) {
-  const config = buildAgentConfig(business, business.retellConfig as { voiceId?: string | null; personality?: AgentPersonality | null } | null);
+  const config = buildAgentConfig(business, business.retellConfig as { voiceId?: string | null; personality?: AgentPersonality | null; greeting?: string | null } | null);
   const existingConfig = business.retellConfig;
 
   if (existingConfig?.agentId && existingConfig.llmId) {

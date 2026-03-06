@@ -155,6 +155,20 @@ export default function AgentSettingsPage() {
   async function saveSettings() {
     setSaving(true);
     try {
+      // Save voice, personality, and greeting to RetellConfig FIRST
+      // so the sync in the next step picks up the new values.
+      await fetch("/api/business/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentActive: isActive,
+          voiceId,
+          personality: { tone, style, language, customInstructions },
+          greeting,
+        }),
+      });
+
+      // Save business profile + services, which also triggers a Retell sync
       await fetch("/api/business/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,20 +179,6 @@ export default function AgentSettingsPage() {
           services: services.filter((s) => s.name.trim()),
         }),
       });
-
-      // Save voice and personality to RetellConfig
-      await fetch("/api/business/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          isActive,
-          voiceId,
-          personality: { tone, style, language, customInstructions },
-        }),
-      });
-
-      // Re-sync agent with Retell (applies voice + updated prompt)
-      await fetch("/api/retell/configure", { method: "POST" });
     } catch (error) {
       console.error("Error saving:", error);
     } finally {
