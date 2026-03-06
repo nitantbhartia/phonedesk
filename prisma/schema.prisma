@@ -79,6 +79,7 @@ model Business {
   calendarConnections CalendarConnection[]
   calls           Call[]
   appointments    Appointment[]
+  customers       Customer[]
   retellConfig    RetellConfig?
   waitlistEntries WaitlistEntry[]
   plan            Plan     @default(STARTER)
@@ -218,6 +219,41 @@ model Appointment {
   calls           Call[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  phone           String
+  name            String
+  visitCount      Int      @default(0)
+  vipFlag         Boolean  @default(false)
+  notes           String?  @db.Text
+  lastServiceName String?
+  lastVisitAt     DateTime?
+  lastContactAt   DateTime?
+  lastCallSummary String?  @db.Text
+  lastOutcome     String?
+  pets            Pet[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([businessId, phone])
+}
+
+model Pet {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name        String
+  breed       String?
+  size        PetSize?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([customerId, name])
 }
 
 enum PetSize {

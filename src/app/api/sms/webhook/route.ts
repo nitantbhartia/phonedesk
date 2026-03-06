@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
+import { normalizePhoneNumber } from "@/lib/phone";
 
 // Retell inbound SMS webhook (set via inbound_sms_webhook_url on the phone number)
 // Retell sends: { agent_id, from_number, to_number }
@@ -42,9 +43,11 @@ export async function POST(req: NextRequest) {
   }
 
   const business = phoneRecord.business;
+  const normalizedFrom = normalizePhoneNumber(from);
+  const normalizedBusinessPhone = normalizePhoneNumber(business.phone);
 
   // Check if this is the owner texting (from their business phone)
-  if (from === business.phone) {
+  if (normalizedFrom && normalizedBusinessPhone && normalizedFrom === normalizedBusinessPhone) {
     // Owner SMS command
     try {
       const command = await parseOwnerCommand(messageBody);
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
       const appointment = await prisma.appointment.findFirst({
         where: {
           businessId: business.id,
-          customerPhone: from,
+          customerPhone: { in: [from, normalizedFrom || from] },
           status: { in: ["CONFIRMED", "PENDING"] },
           startTime: { gte: new Date() },
         },
@@ -98,9 +101,9 @@ export async function POST(req: NextRequest) {
         );
 
         // Notify owner
-        if (business.phone) {
+        if (normalizedBusinessPhone) {
           await sendSms(
-            business.phone,
+            normalizedBusinessPhone,
             `[RingPaw] ${appointment.customerName} cancelled their ${appointment.serviceName || "grooming"} appointment.`,
             to
           );
@@ -117,7 +120,7 @@ export async function POST(req: NextRequest) {
       const appointment = await prisma.appointment.findFirst({
         where: {
           businessId: business.id,
-          customerPhone: from,
+          customerPhone: { in: [from, normalizedFrom || from] },
           status: { in: ["PENDING", "CONFIRMED"] },
           startTime: { gte: new Date() },
         },
