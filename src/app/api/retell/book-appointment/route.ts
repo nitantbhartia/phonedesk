@@ -61,14 +61,16 @@ export async function POST(req: NextRequest) {
 
   const timezone = business.timezone || "America/Los_Angeles";
 
-  // Auto-correct past dates: the AI model sometimes hallucinates old years
-  // (e.g. 2024-05-21T09:00:00 instead of 2026-05-21T09:00:00).
+  // Auto-correct bad dates: the AI model sometimes hallucinates wrong years/months
+  // (e.g. 2024-05-21T09:00:00 instead of 2026-03-13T09:00:00).
   let correctedStartTime = startTime;
   if (correctedStartTime && !(/Z|[+-]\d{2}:\d{2}$/.test(correctedStartTime))) {
     const dateMatch = correctedStartTime.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (dateMatch) {
       const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
       const dateOnly = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+
+      // Fix past dates by correcting the year
       if (dateOnly < todayStr) {
         const [currentYear] = todayStr.split("-");
         let correctedDate = `${currentYear}-${dateMatch[2]}-${dateMatch[3]}`;
@@ -80,6 +82,27 @@ export async function POST(req: NextRequest) {
           correctedDate
         );
         console.warn("[book-appointment] Auto-corrected past date:", startTime, "→", correctedStartTime);
+      }
+
+      // Fix future dates that are unreasonably far out (>60 days).
+      // The agent likely hallucinated the wrong month — preserve the day-of-week
+      // and time but find the nearest matching weekday from today.
+      const correctedDateOnly = correctedStartTime.slice(0, 10);
+      const todayDate = new Date(todayStr + "T12:00:00Z");
+      const targetDate = new Date(correctedDateOnly + "T12:00:00Z");
+      const daysDiff = Math.round((targetDate.getTime() - todayDate.getTime()) / 86400000);
+      if (daysDiff > 60) {
+        // Find the next occurrence of the same weekday within the next 14 days
+        const targetDow = targetDate.getUTCDay();
+        for (let i = 0; i <= 14; i++) {
+          const candidate = new Date(todayDate.getTime() + i * 86400000);
+          if (candidate.getUTCDay() === targetDow) {
+            const fixedDate = candidate.toISOString().slice(0, 10);
+            correctedStartTime = correctedStartTime.replace(correctedDateOnly, fixedDate);
+            console.warn("[book-appointment] Auto-corrected far-future date:", startTime, "→", correctedStartTime, `(was ${daysDiff} days out)`);
+            break;
+          }
+        }
       }
     }
   }
