@@ -225,9 +225,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (nextAvailableDay) {
-        message += ` The next available day is ${nextAvailableDay}. Would you like me to check that day?`;
-      } else {
-        message += ` Would you like to try a different day?`;
+        message += ` The next available day is ${nextAvailableDay}.`;
       }
 
       return NextResponse.json({
