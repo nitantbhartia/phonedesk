@@ -62,17 +62,28 @@ export async function sendMissedCallNotification(
   callerPhone: string,
   callerName?: string
 ) {
-  if (!business.phone || !business.phoneNumber) return;
+  if (!business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
 
-  const message = [
-    `[RingPaw] Missed call - no booking made.`,
-    `Caller: ${callerName || "Unknown"} (${callerPhone})`,
-    `They may call back or you can reach out.`,
-  ].join("\n");
+  // Notify owner
+  if (business.phone) {
+    const ownerMessage = [
+      `[RingPaw] Missed call - no booking made.`,
+      `Caller: ${callerName || "Unknown"} (${callerPhone})`,
+      `They may call back or you can reach out.`,
+    ].join("\n");
+    await sendSms(business.phone, ownerMessage, fromNumber);
+  }
 
-  await sendSms(business.phone, message, fromNumber);
+  // Auto-reply to caller
+  if (callerPhone && callerPhone !== "Unknown") {
+    const callerMessage = [
+      `Hi${callerName ? ` ${callerName}` : ""}! Sorry we missed your call to ${business.name}.`,
+      `Reply BOOK to schedule an appointment, or call us back anytime. We'd love to help! 🐾`,
+    ].join(" ");
+    await sendSms(callerPhone, callerMessage, fromNumber);
+  }
 }
 
 export async function sendAppointmentReminder(

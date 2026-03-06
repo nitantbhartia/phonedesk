@@ -47,6 +47,8 @@ export default function CallLogPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
 
   const pageSize = 20;
@@ -57,7 +59,7 @@ export default function CallLogPage() {
       return;
     }
     if (authStatus === "authenticated") fetchCalls();
-  }, [authStatus, router, page, filter]);
+  }, [authStatus, router, page, filter, search]);
 
   async function fetchCalls() {
     setLoading(true);
@@ -67,6 +69,7 @@ export default function CallLogPage() {
         offset: (page * pageSize).toString(),
       });
       if (filter !== "all") params.set("status", filter);
+      if (search) params.set("search", search);
 
       const res = await fetch(`/api/calls?${params}`);
       if (res.ok) {
@@ -118,6 +121,53 @@ export default function CallLogPage() {
           </button>
         </div>
       </div>
+
+      {/* Search bar */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSearch(searchInput);
+          setPage(0);
+        }}
+        className="flex gap-2 mb-6"
+      >
+        <div className="relative flex-1 max-w-md">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-paw-brown/30 pointer-events-none"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name, phone, or transcript…"
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full border border-paw-brown/10 text-sm font-medium focus:outline-none focus:border-paw-amber transition-all"
+          />
+        </div>
+        <button
+          type="submit"
+          className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm hover:bg-opacity-90 transition-colors"
+        >
+          Search
+        </button>
+        {search && (
+          <button
+            type="button"
+            onClick={() => { setSearch(""); setSearchInput(""); setPage(0); }}
+            className="px-4 py-2.5 bg-white rounded-full font-bold text-sm border border-paw-brown/10 hover:bg-paw-cream transition-colors text-paw-brown/60"
+          >
+            Clear
+          </button>
+        )}
+      </form>
 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2 mb-6">

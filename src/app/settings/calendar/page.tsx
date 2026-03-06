@@ -18,6 +18,7 @@ export default function CalendarSettingsPage() {
   const router = useRouter();
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [respectBusy, setRespectBusy] = useState(true);
   const [bufferTime, setBufferTime] = useState(true);
 
@@ -40,6 +41,20 @@ export default function CalendarSettingsPage() {
       console.error("Error fetching calendars:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function disconnectCalendar(provider: string) {
+    setDisconnecting(provider);
+    try {
+      const res = await fetch(`/api/calendar/connect?provider=${provider}`, {
+        method: "DELETE",
+      });
+      if (res.ok) await fetchConnections();
+    } catch (error) {
+      console.error("Error disconnecting calendar:", error);
+    } finally {
+      setDisconnecting(null);
     }
   }
 
@@ -129,8 +144,12 @@ export default function CalendarSettingsPage() {
                 : "Not connected"}
             </p>
             {isConnected("GOOGLE") ? (
-              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
-                Disconnect
+              <button
+                onClick={() => disconnectCalendar("GOOGLE")}
+                disabled={disconnecting === "GOOGLE"}
+                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+              >
+                {disconnecting === "GOOGLE" ? "Disconnecting…" : "Disconnect"}
               </button>
             ) : (
               <button
@@ -167,8 +186,12 @@ export default function CalendarSettingsPage() {
               {isConnected("SQUARE") ? "Connected" : "Not connected"}
             </p>
             {isConnected("SQUARE") ? (
-              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
-                Disconnect
+              <button
+                onClick={() => disconnectCalendar("SQUARE")}
+                disabled={disconnecting === "SQUARE"}
+                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+              >
+                {disconnecting === "SQUARE" ? "Disconnecting…" : "Disconnect"}
               </button>
             ) : (
               <button
@@ -208,8 +231,12 @@ export default function CalendarSettingsPage() {
               {isConnected("ACUITY") ? "Connected" : "Not connected"}
             </p>
             {isConnected("ACUITY") ? (
-              <button className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">
-                Disconnect
+              <button
+                onClick={() => disconnectCalendar("ACUITY")}
+                disabled={disconnecting === "ACUITY"}
+                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+              >
+                {disconnecting === "ACUITY" ? "Disconnecting…" : "Disconnect"}
               </button>
             ) : (
               <button

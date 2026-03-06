@@ -345,3 +345,34 @@ export async function GET(req: NextRequest) {
     buildRedirectUrl(redirectPath)
   );
 }
+
+// DELETE: Disconnect a calendar provider
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const provider = req.nextUrl.searchParams.get("provider")?.toUpperCase();
+  if (!provider) {
+    return NextResponse.json({ error: "Missing provider" }, { status: 400 });
+  }
+
+  const business = await prisma.business.findUnique({
+    where: { userId: session.user.id },
+  });
+
+  if (!business) {
+    return NextResponse.json({ error: "No business" }, { status: 404 });
+  }
+
+  await prisma.calendarConnection.updateMany({
+    where: {
+      businessId: business.id,
+      provider: provider as "GOOGLE" | "SQUARE" | "ACUITY",
+    },
+    data: { isActive: false, accessToken: null, refreshToken: null },
+  });
+
+  return NextResponse.json({ success: true });
+}
