@@ -111,111 +111,214 @@ export async function deleteGoogleCalendarEvent(
   });
 }
 
-// --- Calendly ---
+// --- Square Appointments ---
 
-export async function getCalendlyAvailability(
+export async function getSquareBookings(
   connection: CalendarConnection,
   startTime: Date,
   endTime: Date
 ) {
-  if (!connection.accessToken) throw new Error("Calendly not connected");
+  if (!connection.accessToken) throw new Error("Square not connected");
 
+  const locationId = (connection.metadata as { locationId?: string })?.locationId;
+  if (!locationId) throw new Error("Square location not configured");
+
+  // Search bookings in the given date range
   const response = await fetch(
-    `https://api.calendly.com/user_availability_schedules`,
+    `https://connect.squareup.com/v2/bookings?location_id=${locationId}&start_at_min=${startTime.toISOString()}&start_at_max=${endTime.toISOString()}`,
     {
       headers: {
         Authorization: `Bearer ${connection.accessToken}`,
         "Content-Type": "application/json",
+        "Square-Version": "2024-10-17",
       },
     }
   );
 
-  if (!response.ok) throw new Error("Failed to fetch Calendly availability");
-  return response.json();
+  if (!response.ok) throw new Error("Failed to fetch Square bookings");
+  const data = await response.json();
+  return (data.bookings || []).map((b: { id: string; start_at: string; appointment_segments?: { duration_minutes: number }[]; status: string }) => ({
+    id: b.id,
+    start: b.start_at,
+    end: new Date(
+      new Date(b.start_at).getTime() +
+        (b.appointment_segments?.[0]?.duration_minutes || 60) * 60000
+    ).toISOString(),
+    status: b.status,
+  }));
 }
 
-export async function createCalendlyBooking(
+export async function createSquareBooking(
   connection: CalendarConnection,
   details: {
-    eventTypeUri: string;
     startTime: Date;
-    inviteeName: string;
-    inviteeEmail?: string;
+    customerName: string;
+    customerPhone?: string;
+    serviceName?: string;
+    durationMinutes?: number;
   }
 ) {
-  const response = await fetch(`https://api.calendly.com/scheduled_events`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${connection.accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      event_type: details.eventTypeUri,
-      start_time: details.startTime.toISOString(),
-      invitees: [
-        {
-          name: details.inviteeName,
-          email: details.inviteeEmail,
-        },
-      ],
-    }),
-  });
+  if (!connection.accessToken) throw new Error("Square not connected");
 
-  if (!response.ok) throw new Error("Failed to create Calendly booking");
-  return response.json();
-}
-
-// --- Cal.com ---
-
-export async function getCalcomAvailability(
-  connection: CalendarConnection,
-  startTime: Date,
-  endTime: Date
-) {
-  const apiKey = connection.accessToken || process.env.CALCOM_API_KEY;
-  if (!apiKey) throw new Error("Cal.com not configured");
-
-  const params = new URLSearchParams({
-    dateFrom: startTime.toISOString(),
-    dateTo: endTime.toISOString(),
-  });
+  const locationId = (connection.metadata as { locationId?: string })?.locationId;
+  if (!locationId) throw new Error("Square location not configured");
 
   const response = await fetch(
-    `https://api.cal.com/v1/availability?${params}&apiKey=${apiKey}`
-  );
-
-  if (!response.ok) throw new Error("Failed to fetch Cal.com availability");
-  return response.json();
-}
-
-export async function createCalcomBooking(
-  connection: CalendarConnection,
-  details: {
-    eventTypeId: number;
-    startTime: Date;
-    name: string;
-    email?: string;
-  }
-) {
-  const apiKey = connection.accessToken || process.env.CALCOM_API_KEY;
-
-  const response = await fetch(
-    `https://api.cal.com/v1/bookings?apiKey=${apiKey}`,
+    "https://connect.squareup.com/v2/bookings",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${connection.accessToken}`,
+        "Content-Type": "application/json",
+        "Square-Version": "2024-10-17",
+      },
       body: JSON.stringify({
-        eventTypeId: details.eventTypeId,
-        start: details.startTime.toISOString(),
-        responses: {
-          name: details.name,
-          email: details.email || "noreply@ringpaw.ai",
+        idempotency_key: `ringpaw-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        booking: {
+          location_id: locationId,
+          start_at: details.startTime.toISOString(),
+          appointment_segments: [
+            {
+              duration_minutes: details.durationMinutes || 60,
+              service_variation_id: "any", // Let Square pick default service
+            },
+          ],
+          customer_note: `${details.customerName}${details.serviceName ? ` - ${details.serviceName}` : ""} (Booked via RingPaw AI)`,
         },
       }),
     }
   );
 
-  if (!response.ok) throw new Error("Failed to create Cal.com booking");
+  if (!response.ok) throw new Error("Failed to create Square booking");
+  return response.json();
+}
+
+export async function deleteSquareBooking(
+  connection: CalendarConnection,
+  bookingId: string
+) {
+  if (!connection.accessToken) throw new Error("Square not connected");
+
+  const response = await fetch(
+    `https://connect.squareup.com/v2/bookings/${bookingId}/cancel`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${connection.accessToken}`,
+        "Content-Type": "application/json",
+        "Square-Version": "2024-10-17",
+      },
+      body: JSON.stringify({}),
+    }
+  );
+
+  if (!response.ok) throw new Error("Failed to cancel Square booking");
+  return response.json();
+}
+
+// --- Acuity Scheduling ---
+
+function getAcuityAuthHeader(connection: CalendarConnection) {
+  // Acuity uses userId:apiKey basic auth or OAuth bearer token
+  const meta = connection.metadata as { userId?: string } | null;
+  if (meta?.userId && connection.accessToken) {
+    return `Basic ${Buffer.from(`${meta.userId}:${connection.accessToken}`).toString("base64")}`;
+  }
+  if (connection.accessToken) {
+    return `Bearer ${connection.accessToken}`;
+  }
+  throw new Error("Acuity not connected");
+}
+
+export async function getAcuityAppointments(
+  connection: CalendarConnection,
+  startTime: Date,
+  endTime: Date
+) {
+  const authHeader = getAcuityAuthHeader(connection);
+
+  const params = new URLSearchParams({
+    minDate: startTime.toISOString(),
+    maxDate: endTime.toISOString(),
+  });
+
+  const response = await fetch(
+    `https://acuityscheduling.com/api/v1/appointments?${params}`,
+    {
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) throw new Error("Failed to fetch Acuity appointments");
+  const data = await response.json();
+  return (data as { id: number; datetime: string; endTime: string; canceled: boolean }[]).map((a) => ({
+    id: String(a.id),
+    start: a.datetime,
+    end: a.endTime,
+    status: a.canceled ? "cancelled" : "confirmed",
+  }));
+}
+
+export async function createAcuityAppointment(
+  connection: CalendarConnection,
+  details: {
+    startTime: Date;
+    appointmentTypeId: number;
+    customerName: string;
+    customerEmail?: string;
+    customerPhone?: string;
+  }
+) {
+  const authHeader = getAcuityAuthHeader(connection);
+
+  const [firstName, ...lastParts] = details.customerName.split(" ");
+  const lastName = lastParts.join(" ") || firstName;
+
+  const response = await fetch(
+    "https://acuityscheduling.com/api/v1/appointments",
+    {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        datetime: details.startTime.toISOString(),
+        appointmentTypeID: details.appointmentTypeId,
+        firstName,
+        lastName,
+        email: details.customerEmail || "",
+        phone: details.customerPhone || "",
+        notes: "Booked via RingPaw AI",
+      }),
+    }
+  );
+
+  if (!response.ok) throw new Error("Failed to create Acuity appointment");
+  return response.json();
+}
+
+export async function cancelAcuityAppointment(
+  connection: CalendarConnection,
+  appointmentId: string
+) {
+  const authHeader = getAcuityAuthHeader(connection);
+
+  const response = await fetch(
+    `https://acuityscheduling.com/api/v1/appointments/${appointmentId}/cancel`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) throw new Error("Failed to cancel Acuity appointment");
   return response.json();
 }
 
@@ -391,6 +494,26 @@ async function getBusyIntervals(
             busyTimes.push({
               start: new Date(event.start),
               end: new Date(event.end),
+            });
+          }
+        }
+      } else if (conn.provider === "SQUARE") {
+        const bookings = await getSquareBookings(conn, dayStart, dayEnd);
+        for (const b of bookings) {
+          if (b.status !== "CANCELLED" && b.status !== "DECLINED") {
+            busyTimes.push({
+              start: new Date(b.start),
+              end: new Date(b.end),
+            });
+          }
+        }
+      } else if (conn.provider === "ACUITY") {
+        const appointments = await getAcuityAppointments(conn, dayStart, dayEnd);
+        for (const a of appointments) {
+          if (a.status !== "cancelled") {
+            busyTimes.push({
+              start: new Date(a.start),
+              end: new Date(a.end),
             });
           }
         }
@@ -579,34 +702,63 @@ export async function bookAppointment(
     });
   });
 
-  if (primaryCalendar?.provider === "GOOGLE") {
-    try {
-      const event = await createGoogleCalendarEvent(primaryCalendar, {
-        summary: `${details.petName || "Pet"} - ${matchedService?.name || details.serviceName || "Grooming"} (${details.customerName})`,
-        description: [
-          `Customer: ${details.customerName}`,
-          details.customerPhone ? `Phone: ${details.customerPhone}` : "",
-          details.petName ? `Pet: ${details.petName}` : "",
-          details.petBreed ? `Breed: ${details.petBreed}` : "",
-          details.petSize ? `Size: ${details.petSize}` : "",
-          details.notes ? `Notes: ${details.notes}` : "",
-          "",
-          "Booked via RingPaw AI",
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        startTime: details.startTime,
-        endTime: details.endTime,
-      });
+  if (primaryCalendar) {
+    const eventSummary = `${details.petName || "Pet"} - ${matchedService?.name || details.serviceName || "Grooming"} (${details.customerName})`;
+    const eventDescription = [
+      `Customer: ${details.customerName}`,
+      details.customerPhone ? `Phone: ${details.customerPhone}` : "",
+      details.petName ? `Pet: ${details.petName}` : "",
+      details.petBreed ? `Breed: ${details.petBreed}` : "",
+      details.petSize ? `Size: ${details.petSize}` : "",
+      details.notes ? `Notes: ${details.notes}` : "",
+      "",
+      "Booked via RingPaw AI",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-      return prisma.appointment.update({
-        where: { id: appointment.id },
-        data: {
-          calendarEventId: event.id || undefined,
-        },
-      });
+    try {
+      let externalEventId: string | undefined;
+
+      if (primaryCalendar.provider === "GOOGLE") {
+        const event = await createGoogleCalendarEvent(primaryCalendar, {
+          summary: eventSummary,
+          description: eventDescription,
+          startTime: details.startTime,
+          endTime: details.endTime,
+        });
+        externalEventId = event.id || undefined;
+      } else if (primaryCalendar.provider === "SQUARE") {
+        const durationMs = details.endTime.getTime() - details.startTime.getTime();
+        const booking = await createSquareBooking(primaryCalendar, {
+          startTime: details.startTime,
+          customerName: details.customerName,
+          customerPhone: details.customerPhone,
+          serviceName: matchedService?.name || details.serviceName,
+          durationMinutes: Math.round(durationMs / 60000),
+        });
+        externalEventId = booking.booking?.id;
+      } else if (primaryCalendar.provider === "ACUITY") {
+        // Use first appointment type from metadata, or default
+        const meta = primaryCalendar.metadata as { appointmentTypeId?: number } | null;
+        const appt = await createAcuityAppointment(primaryCalendar, {
+          startTime: details.startTime,
+          appointmentTypeId: meta?.appointmentTypeId || 0,
+          customerName: details.customerName,
+          customerEmail: undefined,
+          customerPhone: details.customerPhone,
+        });
+        externalEventId = String(appt.id);
+      }
+
+      if (externalEventId) {
+        return prisma.appointment.update({
+          where: { id: appointment.id },
+          data: { calendarEventId: externalEventId },
+        });
+      }
     } catch (error) {
-      console.error("Error creating Google Calendar event:", error);
+      console.error(`Error creating ${primaryCalendar.provider} event:`, error);
     }
   }
 

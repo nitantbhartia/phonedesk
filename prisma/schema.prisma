@@ -155,8 +155,8 @@ model CalendarConnection {
 
 enum CalendarProvider {
   GOOGLE
-  CALENDLY
-  CALCOM
+  SQUARE
+  ACUITY
 }
 
 model RetellConfig {
