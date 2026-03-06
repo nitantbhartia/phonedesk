@@ -2,6 +2,54 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 
+type BusinessHoursMap = Record<string, { open: string; close: string }>;
+
+function getHoursForDay(
+  hours: BusinessHoursMap,
+  dayKey: string
+): { open: string; close: string } | undefined {
+  if (hours[dayKey]) return hours[dayKey];
+
+  const fullDayNames: Record<string, string> = {
+    sat: "saturday", sun: "sunday", mon: "monday", tue: "tuesday",
+    wed: "wednesday", thu: "thursday", fri: "friday",
+  };
+  if (fullDayNames[dayKey] && hours[fullDayNames[dayKey]]) {
+    return hours[fullDayNames[dayKey]];
+  }
+
+  if (["mon", "tue", "wed", "thu", "fri"].includes(dayKey) && hours["mon-fri"]) {
+    return hours["mon-fri"];
+  }
+
+  return undefined;
+}
+
+function isBusinessOpenOnDate(
+  dateStr: string,
+  hours: BusinessHoursMap | null
+): boolean {
+  if (!hours || Object.keys(hours).length === 0) return true; // default open
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const dayKey = dayNames[new Date(y, m - 1, d).getDay()];
+  const dayHours = getHoursForDay(hours, dayKey);
+  return !!(dayHours?.open && dayHours?.close);
+}
+
+function formatBusinessHoursForAgent(hours: BusinessHoursMap): string {
+  const dayLabels: Record<string, string> = {
+    "mon-fri": "Mon–Fri", mon: "Mon", tue: "Tue", wed: "Wed",
+    thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+    monday: "Mon", tuesday: "Tue", wednesday: "Wed",
+    thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun",
+  };
+  return Object.entries(hours)
+    .filter(([, v]) => v?.open && v?.close)
+    .map(([day, { open, close }]) => `${dayLabels[day] || day}: ${open}–${close}`)
+    .join(", ");
+}
+
 // Resolve natural language or partial date strings to YYYY-MM-DD
 function resolveDate(input: string, timezone: string): string {
   const today = new Date();
@@ -144,12 +192,54 @@ export async function POST(req: NextRequest) {
     });
 
     if (slots.length === 0) {
+      const businessHours = business.businessHours as BusinessHoursMap | null;
+      const isClosed = !isBusinessOpenOnDate(requestedDate, businessHours);
+
+      // Look ahead up to 7 days to find the next day with openings
+      let nextAvailableDay: string | null = null;
+      const [ry, rm, rd] = requestedDate.split("-").map(Number);
+      for (let i = 1; i <= 7; i++) {
+        const probe = new Date(ry, rm - 1, rd + i);
+        const probeStr = probe.toISOString().slice(0, 10);
+        if (!isBusinessOpenOnDate(probeStr, businessHours)) continue;
+        const probeSlots = await getAvailableSlots(business.id, probeStr, duration);
+        if (probeSlots.length > 0) {
+          nextAvailableDay = new Intl.DateTimeFormat("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            timeZone: timezone,
+          }).format(probe);
+          break;
+        }
+      }
+
+      const requestedDayName = new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        timeZone: timezone,
+      }).format(new Date(ry, rm - 1, rd));
+
+      let message: string;
+      if (isClosed) {
+        const hoursStr = businessHours ? formatBusinessHoursForAgent(businessHours) : "";
+        message = `We're closed on ${requestedDayName}s.${hoursStr ? ` Our hours are ${hoursStr}.` : ""}`;
+      } else {
+        message = `We're fully booked on ${requestedDayName}.`;
+      }
+
+      if (nextAvailableDay) {
+        message += ` The next available day is ${nextAvailableDay}. Would you like me to check that day?`;
+      } else {
+        message += ` Would you like to try a different day?`;
+      }
+
       return NextResponse.json({
-        result: "I don't have any openings on that day. Would you like to try a different day?",
+        result: message,
         available: false,
         available_slots: [],
         timezone,
         current_date: todayStr,
+        next_available_day: nextAvailableDay,
       });
     }
 
