@@ -17,11 +17,85 @@ interface ServiceEntry {
   duration: string;
 }
 
+type SavedBusinessHours = Record<string, { open: string; close: string }>;
+
 const TIME_OPTIONS = [
   "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM",
   "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
   "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM",
 ];
+
+const DEFAULT_HOURS = {
+  "Mon - Fri": { open: "9:00 AM", close: "5:00 PM", enabled: true },
+  Saturday: { open: "10:00 AM", close: "2:00 PM", enabled: true },
+  Sunday: { open: "9:00 AM", close: "5:00 PM", enabled: false },
+} as const;
+
+function toTwentyFourHour(value: string) {
+  if (!value.includes("AM") && !value.includes("PM")) {
+    return value;
+  }
+
+  const [time, meridiem] = value.split(" ");
+  const [rawHour, minute] = time.split(":");
+  let hour = Number(rawHour);
+
+  if (meridiem === "AM") {
+    if (hour === 12) hour = 0;
+  } else if (meridiem === "PM" && hour !== 12) {
+    hour += 12;
+  }
+
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
+}
+
+function toTwelveHour(value: string) {
+  if (value.includes("AM") || value.includes("PM")) {
+    return value;
+  }
+
+  const [rawHour, minute] = value.split(":");
+  const hour = Number(rawHour);
+  const meridiem = hour >= 12 ? "PM" : "AM";
+  const twelveHour = hour % 12 || 12;
+  return `${twelveHour}:${minute} ${meridiem}`;
+}
+
+function buildHoursState(savedHours?: SavedBusinessHours | null) {
+  const weekdayHours =
+    savedHours?.["mon-fri"] ||
+    savedHours?.mon ||
+    savedHours?.tue ||
+    savedHours?.wed ||
+    savedHours?.thu ||
+    savedHours?.fri;
+  const saturdayHours = savedHours?.sat;
+  const sundayHours = savedHours?.sun;
+
+  return {
+    "Mon - Fri": weekdayHours
+      ? {
+          open: toTwelveHour(weekdayHours.open),
+          close: toTwelveHour(weekdayHours.close),
+          enabled: true,
+        }
+      : { ...DEFAULT_HOURS["Mon - Fri"] },
+    Saturday: saturdayHours
+      ? {
+          open: toTwelveHour(saturdayHours.open),
+          close: toTwelveHour(saturdayHours.close),
+          enabled: true,
+        }
+      : { ...DEFAULT_HOURS.Saturday, enabled: false },
+    Sunday: sundayHours
+      ? {
+          open: toTwelveHour(sundayHours.open),
+          close: toTwelveHour(sundayHours.close),
+          enabled: true,
+        }
+      : { ...DEFAULT_HOURS.Sunday },
+  };
+}
 
 const STEP_CONFIG = [
   {
@@ -61,6 +135,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [provisionError, setProvisionError] = useState("");
 
   // Step 1: Business info
   const [businessName, setBusinessName] = useState("");
@@ -74,11 +149,7 @@ export default function OnboardingPage() {
   // Business hours
   const [hours, setHours] = useState<
     Record<string, { open: string; close: string; enabled: boolean }>
-  >({
-    "Mon - Fri": { open: "9:00 AM", close: "5:00 PM", enabled: true },
-    Saturday: { open: "10:00 AM", close: "2:00 PM", enabled: true },
-    Sunday: { open: "9:00 AM", close: "5:00 PM", enabled: false },
-  });
+  >(buildHoursState());
 
   // Step 2: Services
   const [services, setServices] = useState<ServiceEntry[]>([
@@ -128,14 +199,41 @@ export default function OnboardingPage() {
         }
 
         const data = await response.json();
+        const business = data.business;
         const hasCalendarConnection = Boolean(
-          data.business?.calendarConnections?.some(
+          business?.calendarConnections?.some(
             (connection: { isActive?: boolean }) => connection.isActive
           )
         );
 
         if (!cancelled) {
+          if (business) {
+            router.push("/dashboard");
+            return;
+          }
+
+          setBusinessName(business?.name || "");
+          setOwnerName(business?.ownerName || "");
+          setCity(business?.city || "");
+          setState(business?.state || "");
+          setPhone(business?.phone || "");
+          setAddress(business?.address || "");
+          setTimezone(business?.timezone || "America/Los_Angeles");
+          setBookingMode(business?.bookingMode || "SOFT");
+          setHours(buildHoursState(business?.businessHours as SavedBusinessHours | undefined));
+          if (business?.services?.length) {
+            setServices(
+              business.services.map(
+                (service: { name: string; price: number; duration: number }) => ({
+                  name: service.name,
+                  price: service.price.toString(),
+                  duration: service.duration.toString(),
+                })
+              )
+            );
+          }
           setCalendarConnected(hasCalendarConnection);
+          setProvisionedNumber(business?.phoneNumber?.number || "");
           setStep(normalizedStep);
         }
       } catch {
@@ -168,8 +266,19 @@ export default function OnboardingPage() {
       const businessHours: Record<string, { open: string; close: string }> = {};
       for (const [day, h] of Object.entries(hours)) {
         if (h.enabled) {
-          const key = day === "Mon - Fri" ? "mon-fri" : day.toLowerCase();
-          businessHours[key] = { open: h.open, close: h.close };
+          if (day === "Mon - Fri") {
+            for (const weekday of ["mon", "tue", "wed", "thu", "fri"]) {
+              businessHours[weekday] = {
+                open: toTwentyFourHour(h.open),
+                close: toTwentyFourHour(h.close),
+              };
+            }
+          } else {
+            businessHours[day.toLowerCase()] = {
+              open: toTwentyFourHour(h.open),
+              close: toTwentyFourHour(h.close),
+            };
+          }
         }
       }
 
@@ -209,6 +318,7 @@ export default function OnboardingPage() {
 
   async function provisionNumber() {
     setLoading(true);
+    setProvisionError("");
     try {
       const areaCode = city ? "619" : "415";
       const res = await fetch("/api/provision-number", {
@@ -217,12 +327,17 @@ export default function OnboardingPage() {
         body: JSON.stringify({ areaCode }),
       });
 
-      if (!res.ok) throw new Error("Failed to provision number");
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to provision number");
+      }
+
       setProvisionedNumber(data.phoneNumber);
     } catch (error) {
       console.error("Error provisioning number:", error);
-      setProvisionedNumber("(619) 555-0199");
+      setProvisionError(
+        error instanceof Error ? error.message : "Failed to provision number"
+      );
     } finally {
       setLoading(false);
     }
@@ -809,6 +924,12 @@ export default function OnboardingPage() {
               </div>
             </>
           )}
+
+          {provisionError ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {provisionError}
+            </div>
+          ) : null}
 
           <OnboardingFooter
             onBack={() => setStep(3)}

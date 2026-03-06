@@ -4,11 +4,13 @@ import { google } from "googleapis";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  `${process.env.NEXT_PUBLIC_APP_URL}/api/calendar/connect`
-);
+function getBaseAppUrl(req: NextRequest) {
+  return (
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    req.nextUrl.origin
+  );
+}
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -16,7 +18,12 @@ export async function GET(req: NextRequest) {
   const provider = url.searchParams.get("provider");
   const redirect = url.searchParams.get("redirect") || "/settings/calendar";
   const stateParam = url.searchParams.get("state");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const appUrl = getBaseAppUrl(req);
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    `${appUrl}/api/calendar/connect`
+  );
 
   const buildRedirectUrl = (path: string, params?: Record<string, string>) => {
     const target = new URL(path, appUrl);

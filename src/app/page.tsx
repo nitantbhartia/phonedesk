@@ -32,13 +32,6 @@ function LandingPageContent() {
     const resolvePostAuthRoute = async () => {
       setIsResolvingRedirect(true);
 
-      const requestedCallback = searchParams.get("callbackUrl");
-      if (requestedCallback?.includes("/onboarding")) {
-        router.push("/onboarding");
-        setIsResolvingRedirect(false);
-        return;
-      }
-
       try {
         const response = await fetch("/api/business/profile");
         if (!response.ok) {
@@ -46,10 +39,10 @@ function LandingPageContent() {
         }
 
         const data = await response.json();
-        const onboardingComplete = Boolean(data.business?.onboardingComplete);
+        const hasBusiness = Boolean(data.business);
 
         if (!cancelled) {
-          router.push(onboardingComplete ? "/dashboard" : "/onboarding");
+          router.push(hasBusiness ? "/dashboard" : "/onboarding");
         }
       } catch {
         if (!cancelled) {
@@ -72,8 +65,9 @@ function LandingPageContent() {
   const handleStartTrial = () => {
     setAuthError("");
     setIsSigningIn(true);
-    // Use relative path so NextAuth's redirect callback always matches baseUrl
-    signIn("google", { callbackUrl: "/onboarding" }).catch(() => {
+    // Land back on the root page so post-auth routing can decide whether this
+    // user should resume onboarding or go straight to the dashboard.
+    signIn("google", { callbackUrl: "/" }).catch(() => {
       setAuthError("Google sign-in failed. Check your auth configuration.");
       setIsSigningIn(false);
     });
