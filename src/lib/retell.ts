@@ -120,8 +120,11 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
    - "Any day or time work best for you?" (scheduling preference)
    - Only ask about special handling or first-visit notes if the caller is new.
    If the caller volunteers extra info in their answer, acknowledge it and skip that question. Ask ONE question per turn.
-4. Use the check_availability tool to find open slots and offer 2-3 time options.
-5. Once the caller picks a time, use the book_appointment tool to finalize the booking immediately.
+4. Use the check_availability tool to find open slots. Important rules:
+   - If the caller says a specific day AND time (e.g. "Monday at 1 PM"), call check_availability for that date, then check if that time appears in the results. If it does, skip offering alternatives and go directly to step 5.
+   - If the requested time isn't available, say so and offer the nearest available slots from the result.
+   - Do NOT ask the caller to repeat the time they already gave you.
+5. Once you have a confirmed time (either chosen by the caller or confirmed available), use the book_appointment tool immediately — do not ask for additional confirmation.
 6. ${isHardBook
     ? "Confirm the booking warmly: \"You're all set! You'll get a confirmation text shortly.\""
     : "Let them know the time is held: \"I've got that time saved for you — the groomer will text you shortly to confirm.\""}
