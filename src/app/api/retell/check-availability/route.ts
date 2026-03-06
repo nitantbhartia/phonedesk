@@ -100,10 +100,31 @@ function resolveDate(input: string, timezone: string): string {
     return input.trim();
   }
 
-  // Try native Date parsing as last resort (e.g., "March 10", "3/10/2026")
+  // YYYY-MM-DDTHH:MM:SS (with optional time) — strip the time part
+  const isoDateMatch = input.trim().match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
+  if (isoDateMatch) {
+    return isoDateMatch[1];
+  }
+
+  // "Monday, March 9" / "March 9" / "March 9, 2026" — month-name formats
+  // new Date() parses these as midnight UTC, so use UTC components to avoid
+  // a day-shift when the business timezone is behind UTC (e.g. US timezones).
   const parsed = new Date(input);
   if (!isNaN(parsed.getTime())) {
-    return fmt(parsed);
+    const y = parsed.getUTCFullYear();
+    const m = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(parsed.getUTCDate()).padStart(2, "0");
+    // If no year was in the input, the parsed year may be wrong — correct it.
+    const result = `${y}-${m}-${d}`;
+    const todayForYear = fmt(today);
+    const currentYear = todayForYear.slice(0, 4);
+    if (result < todayForYear) {
+      const corrected = `${currentYear}-${m}-${d}`;
+      return corrected < todayForYear
+        ? `${Number(currentYear) + 1}-${m}-${d}`
+        : corrected;
+    }
+    return result;
   }
 
   // Give up — return today
