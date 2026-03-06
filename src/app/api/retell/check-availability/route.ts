@@ -4,6 +4,22 @@ import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 
 type BusinessHoursMap = Record<string, { open: string; close: string }>;
 
+function parseTimeString(value: string): { hour: number; minute: number } {
+  const trimmed = value.trim();
+  const is12Hour = /AM|PM/i.test(trimmed);
+  if (is12Hour) {
+    const [timePart, meridiem] = trimmed.split(/\s+/);
+    const [rawHour, rawMinute = "0"] = timePart.split(":");
+    let hour = Number(rawHour);
+    const minute = Number(rawMinute);
+    if (meridiem?.toUpperCase() === "PM" && hour !== 12) hour += 12;
+    if (meridiem?.toUpperCase() === "AM" && hour === 12) hour = 0;
+    return { hour, minute };
+  }
+  const [hourString, minuteString = "0"] = trimmed.split(":");
+  return { hour: Number(hourString), minute: Number(minuteString) };
+}
+
 function getHoursForDay(
   hours: BusinessHoursMap,
   dayKey: string
@@ -50,21 +66,33 @@ function formatBusinessHoursForAgent(hours: BusinessHoursMap): string {
     .join(", ");
 }
 
-// Resolve natural language or partial date strings to YYYY-MM-DD
+/**
+ * Parse a date string from the AI model into YYYY-MM-DD in the business timezone.
+ *
+ * All date math happens in the business timezone to avoid off-by-one errors
+ * when the server is UTC and the business is in a US timezone.
+ */
 function resolveDate(input: string, timezone: string): string {
-  const today = new Date();
-  const fmt = (d: Date) =>
-    new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
+  const now = new Date();
+
+  // Get today's date/day-of-week in the BUSINESS timezone (not server timezone)
+  const bizDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(now);
+  const [bizYear, bizMonth, bizDay] = bizDateStr.split("-").map(Number);
+  const bizDow = new Date(Date.UTC(bizYear, bizMonth - 1, bizDay, 12)).getUTCDay();
+
+  // Helper: given year/month/day, return YYYY-MM-DD (handles month overflow)
+  const ymd = (y: number, m: number, d: number) => {
+    const dt = new Date(Date.UTC(y, m - 1, d, 12));
+    return dt.toISOString().slice(0, 10);
+  };
 
   const lower = input.trim().toLowerCase();
 
   if (lower === "today" || lower === "now") {
-    return fmt(today);
+    return bizDateStr;
   }
   if (lower === "tomorrow") {
-    const d = new Date(today);
-    d.setDate(d.getDate() + 1);
-    return fmt(d);
+    return ymd(bizYear, bizMonth, bizDay + 1);
   }
 
   // "next monday", "this friday", etc.
@@ -75,61 +103,63 @@ function resolveDate(input: string, timezone: string): string {
   if (nextMatch) {
     const targetDay = dayNames.indexOf(nextMatch[1]);
     if (targetDay !== -1) {
-      const d = new Date(today);
-      const currentDay = d.getDay();
-      let daysAhead = targetDay - currentDay;
+      let daysAhead = targetDay - bizDow;
       if (daysAhead <= 0) daysAhead += 7;
-      d.setDate(d.getDate() + daysAhead);
-      return fmt(d);
+      return ymd(bizYear, bizMonth, bizDay + daysAhead);
     }
   }
 
   // Bare day name: "monday", "friday"
   const bareDay = dayNames.indexOf(lower);
   if (bareDay !== -1) {
-    const d = new Date(today);
-    const currentDay = d.getDay();
-    let daysAhead = bareDay - currentDay;
+    let daysAhead = bareDay - bizDow;
     if (daysAhead <= 0) daysAhead += 7;
-    d.setDate(d.getDate() + daysAhead);
-    return fmt(d);
+    return ymd(bizYear, bizMonth, bizDay + daysAhead);
   }
 
-  // Already YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(input.trim())) {
-    return input.trim();
+  // Already YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS — strip any time part
+  const isoMatch = input.trim().match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
+  if (isoMatch) {
+    return isoMatch[1];
   }
 
-  // YYYY-MM-DDTHH:MM:SS (with optional time) — strip the time part
-  const isoDateMatch = input.trim().match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
-  if (isoDateMatch) {
-    return isoDateMatch[1];
-  }
+  // Strip leading day-name prefix that AI models often add
+  // e.g., "Monday, March 9" → "March 9", "Tuesday March 10, 2026" → "March 10, 2026"
+  const stripped = input.trim().replace(/^(?:mon|tue|wed|thu|fri|sat|sun)\w*[,]?\s+/i, "");
 
-  // "Monday, March 9" / "March 9" / "March 9, 2026" — month-name formats
-  // new Date() parses these as midnight UTC, so use UTC components to avoid
-  // a day-shift when the business timezone is behind UTC (e.g. US timezones).
-  const parsed = new Date(input);
-  if (!isNaN(parsed.getTime())) {
-    const y = parsed.getUTCFullYear();
-    const m = String(parsed.getUTCMonth() + 1).padStart(2, "0");
-    const d = String(parsed.getUTCDate()).padStart(2, "0");
-    // If no year was in the input, the parsed year may be wrong — correct it.
-    const result = `${y}-${m}-${d}`;
-    const todayForYear = fmt(today);
-    const currentYear = todayForYear.slice(0, 4);
-    if (result < todayForYear) {
-      const corrected = `${currentYear}-${m}-${d}`;
-      return corrected < todayForYear
-        ? `${Number(currentYear) + 1}-${m}-${d}`
-        : corrected;
+  // Try parsing (handles "March 9, 2026", "3/10/2026", etc.)
+  // Use UTC components to avoid timezone day-shift
+  const tryParse = (s: string): string | null => {
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return null;
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    let result = `${y}-${m}-${day}`;
+    // Fix wrong year from year-less strings (e.g., "March 9" → 2001)
+    if (result < bizDateStr) {
+      result = `${bizYear}-${m}-${day}`;
+      if (result < bizDateStr) {
+        result = `${bizYear + 1}-${m}-${day}`;
+      }
     }
     return result;
-  }
+  };
+
+  const fromStripped = tryParse(stripped);
+  if (fromStripped) return fromStripped;
+
+  // Try appending current year for year-less strings like "March 9"
+  const fromWithYear = tryParse(`${stripped}, ${bizYear}`);
+  if (fromWithYear) return fromWithYear;
+
+  // Try the original input in case stripping removed something needed
+  const fromOriginal = tryParse(input);
+  if (fromOriginal) return fromOriginal;
 
   // Give up — return today
   console.warn(`[check-availability] Could not parse date "${input}", defaulting to today`);
-  return fmt(today);
+  return bizDateStr;
 }
 
 // Retell custom tool endpoint: called by the voice agent during a call
@@ -140,6 +170,7 @@ export async function POST(req: NextRequest) {
 
   const date = args?.date;
   const serviceName = args?.service_name;
+  const preferredTime = args?.preferred_time; // e.g., "2:00 PM", "14:00", "10 AM"
 
   console.log("[check-availability] args:", JSON.stringify(args), "from:", call?.from_number, "to:", call?.to_number);
 
@@ -213,8 +244,10 @@ export async function POST(req: NextRequest) {
       const businessHours = business.businessHours as BusinessHoursMap | null;
       const isClosed = !isBusinessOpenOnDate(requestedDate, businessHours);
 
-      // Look ahead up to 7 days to find the next day with openings
+      // Look ahead up to 7 days to find the next day with openings,
+      // including its actual slots so the agent can offer them immediately
       let nextAvailableDay: string | null = null;
+      let nextAvailableSlots: Awaited<ReturnType<typeof getAvailableSlots>> = [];
       const [ry, rm, rd] = requestedDate.split("-").map(Number);
       for (let i = 1; i <= 7; i++) {
         const probe = new Date(ry, rm - 1, rd + i);
@@ -228,12 +261,20 @@ export async function POST(req: NextRequest) {
             day: "numeric",
             timeZone: timezone,
           }).format(probe);
+          nextAvailableSlots = probeSlots;
           break;
         }
       }
 
       const requestedDayName = new Intl.DateTimeFormat("en-US", {
         weekday: "long",
+        timeZone: timezone,
+      }).format(new Date(ry, rm - 1, rd));
+
+      const checkedDateLabel = new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
         timeZone: timezone,
       }).format(new Date(ry, rm - 1, rd));
 
@@ -245,25 +286,75 @@ export async function POST(req: NextRequest) {
         message = `We're fully booked on ${requestedDayName}.`;
       }
 
-      if (nextAvailableDay) {
-        message += ` The next available day is ${nextAvailableDay}.`;
+      // Include next-day slots inline so the agent can offer them without another tool call
+      if (nextAvailableDay && nextAvailableSlots.length > 0) {
+        const nextSlotDescriptions = describeAvailableSlots(nextAvailableSlots, timezone, 5);
+        message += ` The next available day is ${nextAvailableDay} with openings at ${nextSlotDescriptions}. Would any of those times work?`;
+      } else if (nextAvailableDay) {
+        message += ` The next available day is ${nextAvailableDay}. Would you like me to check that day?`;
+      } else {
+        message += ` Would you like to try a different day?`;
       }
 
       return NextResponse.json({
         result: message,
         available: false,
         available_slots: [],
+        checked_date: requestedDate,
+        checked_date_label: checkedDateLabel,
         timezone,
         current_date: todayStr,
         next_available_day: nextAvailableDay,
+        next_available_slots: nextAvailableSlots.slice(0, 3).map((slot) => ({
+          start_time: slot.start.toISOString(),
+          end_time: slot.end.toISOString(),
+        })),
       });
     }
 
-    const offered = slots.slice(0, 3).map((slot) => ({
+    // If the caller requested a specific time, sort slots by proximity to it
+    // and tell the agent whether that exact time is available
+    let slotsToOffer = slots;
+    let preferredAvailable = false;
+    let preferredTimeLabel = "";
+
+    if (preferredTime) {
+      const prefParsed = parseTimeString(preferredTime);
+      if (!isNaN(prefParsed.hour)) {
+        const prefMinutes = prefParsed.hour * 60 + prefParsed.minute;
+        preferredTimeLabel = preferredTime;
+
+        // Check if preferred time matches any slot (within 5 min)
+        preferredAvailable = slots.some((s) => {
+          const slotMinutes = s.start.getUTCHours() * 60 + s.start.getUTCMinutes();
+          // Convert to local for comparison
+          const slotLocal = new Date(s.start).toLocaleTimeString("en-US", {
+            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
+          });
+          const [sh, sm] = slotLocal.split(":").map(Number);
+          return Math.abs((sh * 60 + sm) - prefMinutes) < 5;
+        });
+
+        // Sort by proximity to preferred time
+        slotsToOffer = [...slots].sort((a, b) => {
+          const aLocal = new Date(a.start).toLocaleTimeString("en-US", {
+            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
+          });
+          const bLocal = new Date(b.start).toLocaleTimeString("en-US", {
+            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
+          });
+          const [ah, am] = aLocal.split(":").map(Number);
+          const [bh, bm] = bLocal.split(":").map(Number);
+          return Math.abs((ah * 60 + am) - prefMinutes) - Math.abs((bh * 60 + bm) - prefMinutes);
+        });
+      }
+    }
+
+    const offered = slotsToOffer.slice(0, 5).map((slot) => ({
       start_time: slot.start.toISOString(),
       end_time: slot.end.toISOString(),
     }));
-    const slotDescriptions = describeAvailableSlots(slots, timezone);
+    const slotDescriptions = describeAvailableSlots(slotsToOffer, timezone, 5);
 
     // Include explicit date name so the agent relays it accurately
     const [ry2, rm2, rd2] = requestedDate.split("-").map(Number);
@@ -274,12 +365,23 @@ export async function POST(req: NextRequest) {
       timeZone: timezone,
     }).format(new Date(ry2, rm2 - 1, rd2));
 
+    let resultMessage: string;
+    if (preferredTime && !preferredAvailable) {
+      resultMessage = `${preferredTimeLabel} isn't available on ${requestedDateLabel}. The closest openings are ${slotDescriptions}. Would any of those work?`;
+    } else if (preferredTime && preferredAvailable) {
+      resultMessage = `${preferredTimeLabel} on ${requestedDateLabel} is available! Should I book it?`;
+    } else {
+      resultMessage = `I have openings on ${requestedDateLabel} at ${slotDescriptions}. Which time works best for you?`;
+    }
+
     return NextResponse.json({
-      result: `I have openings on ${requestedDateLabel} at ${slotDescriptions}. Which time works best for you?`,
+      result: resultMessage,
       available: true,
+      preferred_time_available: preferredTime ? preferredAvailable : undefined,
       available_slots: offered,
-      requested_date: requestedDate,
-      requested_date_label: requestedDateLabel,
+      total_slots_on_day: slots.length,
+      checked_date: requestedDate,
+      checked_date_label: requestedDateLabel,
       timezone,
       current_date: todayStr,
     });
