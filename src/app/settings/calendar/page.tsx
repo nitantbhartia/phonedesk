@@ -221,6 +221,17 @@ export default function CalendarSettingsPage() {
             )}
           </div>
         </div>
+
+        <div className="mt-6 p-4 bg-paw-amber/10 rounded-2xl border border-paw-amber/20 flex gap-3">
+          <span className="text-lg shrink-0">💡</span>
+          <p className="text-sm text-paw-brown/80 font-medium">
+            <strong>Using Gingr, MoeGo, or other grooming software?</strong>{" "}
+            Connect the same Google Calendar that your booking software syncs
+            with. When RingPaw books an appointment, it&apos;ll show as busy in
+            your grooming software too — preventing double-bookings
+            automatically.
+          </p>
+        </div>
       </section>
 
       {/* Booking Logic + Conflict Checker */}
