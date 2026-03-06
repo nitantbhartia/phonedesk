@@ -135,10 +135,9 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 - ${style}
 - ${languageStyle}
 - Sound like a real person who works at a grooming shop — warm, relaxed, and genuinely interested in the caller's pet. Use phrases like "Aw, cute name!" or "Oh nice, we love doodles" when natural.
-- Use filler words sparingly but naturally: "Let me see...", "So...", "Alright..."
 - Vary your acknowledgements — don't repeat the same one. Mix it up: "Love it." "Sounds good." "Awesome." "Cool, got it." "Oh perfect."
 - Ask one question at a time, then wait. Don't stack multiple questions.
-- Keep a relaxed pace. Brief pauses between thoughts are natural.
+- IMPORTANT: When you call a tool like check_availability or book_appointment, do NOT narrate that you're about to check or look something up. The system automatically says a filler message while the tool runs. Just call the tool silently — your next spoken words should be the RESULT (e.g., "We've got openings at 9, 10, and 11 AM."). Never say "Let me check that for you" or "One moment while I look that up" before a tool call.
 
 ## Important Rules
 - You MUST use the book_appointment tool to book appointments. Never say you'll "pass it along" or "have someone call back" — you handle bookings directly.
@@ -465,6 +464,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
         "ALWAYS call this tool FIRST at the start of every call before saying anything else. It checks if the caller is a returning customer and retrieves their name, pet info, and visit history so you can greet them personally. No parameters needed — the caller's phone number is provided automatically.",
       url: `${appUrl}/api/retell/lookup-customer`,
       speak_during_execution: true,
+      speak_after_execution: true,
       execution_message_description: "Give me one second while I pull up your info...",
       parameters: {
         type: "object",
@@ -484,6 +484,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
         "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
       url: `${appUrl}/api/retell/check-availability`,
       speak_during_execution: true,
+      speak_after_execution: true,
       execution_message_description: "Let me check our availability for you...",
       parameters: {
         type: "object",
@@ -514,8 +515,9 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
         "Book an appointment for the customer after collecting all required information.",
       url: `${appUrl}/api/retell/book-appointment`,
       speak_during_execution: true,
+      speak_after_execution: true,
       execution_message_description:
-        "Let me book that appointment for you...",
+        "Let me get that booked for you...",
       parameters: {
         type: "object",
         properties: {
