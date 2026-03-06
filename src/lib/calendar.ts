@@ -57,13 +57,15 @@ export async function getGoogleCalendarEvents(
     orderBy: "startTime",
   });
 
-  return (response.data.items || []).map((event) => ({
-    id: event.id,
-    summary: event.summary,
-    start: event.start?.dateTime || event.start?.date,
-    end: event.end?.dateTime || event.end?.date,
-    status: event.status,
-  }));
+  return (response.data.items || [])
+    .filter((event) => event.start?.dateTime && event.end?.dateTime)
+    .map((event) => ({
+      id: event.id,
+      summary: event.summary,
+      start: event.start!.dateTime!,
+      end: event.end!.dateTime!,
+      status: event.status,
+    }));
 }
 
 export async function createGoogleCalendarEvent(

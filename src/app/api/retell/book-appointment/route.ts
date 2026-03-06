@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { bookAppointment, getAvailableSlots } from "@/lib/calendar";
+import { bookAppointment, isSlotAvailable } from "@/lib/calendar";
 import {
   sendBookingNotificationToOwner,
   sendBookingConfirmationToCustomer,
@@ -71,16 +71,8 @@ export async function POST(req: NextRequest) {
       customerPhone || call?.from_number
     );
 
-    const availableSlots = await getAvailableSlots(
-      business.id,
-      start.toISOString().slice(0, 10),
-      service?.duration || 60
-    );
-    const matchingSlot = availableSlots.find(
-      (slot) => slot.start.getTime() === start.getTime()
-    );
-
-    if (!matchingSlot) {
+    const slotOpen = await isSlotAvailable(business.id, start, end);
+    if (!slotOpen) {
       return NextResponse.json({
         result: "That slot is no longer available. Let me offer you another time.",
         booked: false,
