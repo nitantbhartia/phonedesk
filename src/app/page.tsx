@@ -138,18 +138,18 @@ function LandingPageContent() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
-              Never Miss a <br />
+              Busy Grooming <br />
               <span className="text-paw-orange relative inline-block">
-                Grooming
+                Dogs?
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-paw-amber/50" viewBox="0 0 100 10" preserveAspectRatio="none">
                   <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                 </svg>
               </span>{" "}
-              Call Again.
+              We Answer <br />the Phone.
             </h1>
 
             <p className="text-xl text-paw-brown/80 leading-relaxed max-w-lg">
-              Your new AI receptionist answers missed calls, books appointments, and chats with pet parents while you focus on the pups.
+              When you can&apos;t pick up, RingPaw does. Your callers get a real conversation, a confirmed booking, and a confirmation text. You get a notification. Nobody gets sent to voicemail.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -158,31 +158,23 @@ function LandingPageContent() {
                 disabled={isSigningIn}
                 className="px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
+                {isSigningIn ? "Redirecting..." : "Try Free for 14 Days \u2014 No Setup Fees"}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
               </button>
               <a
-                href="#how-it-works"
-                className="px-8 py-4 bg-paw-cream text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-white transition-all shadow-sm flex items-center justify-center"
+                href="#demo"
+                className="px-8 py-4 bg-paw-cream text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-white transition-all shadow-sm flex items-center justify-center gap-2"
               >
-                See How It Works
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-paw-orange"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                Hear a Real Call
               </a>
             </div>
 
             {authError ? (
               <p className="text-sm text-red-600">{authError}</p>
             ) : null}
-
-            <div className="pt-4 flex items-center gap-4 text-sm font-medium text-paw-brown/70">
-              <div className="flex -space-x-3">
-                <img src="https://i.pravatar.cc/100?img=1" alt="User" className="w-10 h-10 rounded-full border-2 border-paw-sky" />
-                <img src="https://i.pravatar.cc/100?img=5" alt="User" className="w-10 h-10 rounded-full border-2 border-paw-sky" />
-                <img src="https://i.pravatar.cc/100?img=9" alt="User" className="w-10 h-10 rounded-full border-2 border-paw-sky" />
-              </div>
-              <p>Trusted by 500+ Groomers</p>
-            </div>
           </div>
 
           {/* Right column - phone mockup */}
@@ -241,16 +233,54 @@ function LandingPageContent() {
       <section className="py-12 bg-paw-cream/50 border-y border-white/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start">
-            <div className="text-4xl font-extrabold text-paw-orange">12k+</div>
-            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Missed Calls<br />Answered</div>
+            <div className="text-4xl font-extrabold text-paw-orange">5 min</div>
+            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average<br />Setup Time</div>
           </div>
           <div className="flex items-center gap-4 justify-center md:justify-start">
-            <div className="text-4xl font-extrabold text-paw-brown">$4M+</div>
-            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Revenue<br />Protected</div>
+            <div className="text-4xl font-extrabold text-paw-brown">8</div>
+            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Avg Bookings<br />Recovered / Week</div>
           </div>
           <div className="flex items-center gap-4 justify-center md:justify-start">
-            <div className="text-4xl font-extrabold text-paw-amber">850</div>
-            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Grooming Shops<br />Trust RingPaw</div>
+            <div className="text-4xl font-extrabold text-paw-amber">$85</div>
+            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average Groom<br />Value in the US</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ROI Section */}
+      <section className="py-20 px-6 relative z-10">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-paw-brown rounded-[2.5rem] p-10 sm:p-14 text-center relative overflow-hidden">
+            <div className="absolute -right-20 -top-20 w-64 h-64 bg-paw-amber/10 rounded-full blur-3xl" />
+            <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-paw-orange/10 rounded-full blur-3xl" />
+            <div className="relative z-10">
+              <h2 className="text-sm font-bold tracking-widest text-paw-amber uppercase mb-4">The Real Cost of Missed Calls</h2>
+              <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-6">
+                Here&apos;s what missed calls are actually costing you.
+              </h3>
+              <div className="text-white/80 text-lg leading-relaxed space-y-4 max-w-xl mx-auto text-left">
+                <p>
+                  The average groomer misses <strong className="text-white">5&ndash;8 calls a day</strong> while working on a client. At $85 per groom, that&apos;s <strong className="text-paw-amber">$425&ndash;$680 every single day</strong> walking out the door.
+                </p>
+                <p>
+                  Most of those callers don&apos;t leave voicemails. They just call the next groomer.
+                </p>
+                <p className="text-paw-amber font-bold">
+                  RingPaw costs $49/month. It pays for itself the first time it answers a call.
+                </p>
+              </div>
+              <div className="mt-8">
+                <a
+                  href="#how-it-works"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg"
+                >
+                  See How It Works
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -278,7 +308,7 @@ function LandingPageContent() {
               <div className="px-6 pb-8">
                 <div className="w-8 h-8 rounded-full bg-paw-orange text-white flex items-center justify-center font-bold mb-4">1</div>
                 <h4 className="text-xl font-bold mb-2">Missed Call</h4>
-                <p className="text-paw-brown/70 leading-relaxed">You&apos;re busy bathing a Golden Retriever. The phone rings, but you can&apos;t pick up.</p>
+                <p className="text-paw-brown/70 leading-relaxed">You&apos;re mid-groom. Phone rings. You can&apos;t stop. That used to mean a lost booking.</p>
               </div>
             </div>
 
@@ -297,7 +327,7 @@ function LandingPageContent() {
               <div className="px-6 pb-8">
                 <div className="w-8 h-8 rounded-full bg-paw-orange text-white flex items-center justify-center font-bold mb-4">2</div>
                 <h4 className="text-xl font-bold mb-2">AI Answers Instantly</h4>
-                <p className="text-paw-brown/70 leading-relaxed">RingPaw picks up immediately. It sounds human, friendly, and knows your schedule.</p>
+                <p className="text-paw-brown/70 leading-relaxed">RingPaw answers in seconds. Warm, natural conversation. Asks for their dog&apos;s name, breed, and what service they need.</p>
               </div>
             </div>
 
@@ -316,7 +346,7 @@ function LandingPageContent() {
               <div className="px-6 pb-8">
                 <div className="w-8 h-8 rounded-full bg-paw-orange text-white flex items-center justify-center font-bold mb-4">3</div>
                 <h4 className="text-xl font-bold mb-2">Booked &amp; Texted</h4>
-                <p className="text-paw-brown/70 leading-relaxed">The appointment is added to your calendar, and the owner gets a confirmation text.</p>
+                <p className="text-paw-brown/70 leading-relaxed">Appointment lands in your calendar. Customer gets a confirmation text. You get a summary SMS. Done before you finished the blowout.</p>
               </div>
             </div>
           </div>
@@ -324,7 +354,7 @@ function LandingPageContent() {
       </section>
 
       {/* Listen to a Call */}
-      <section className="py-24 px-6 relative z-10">
+      <section id="demo-player" className="py-24 px-6 relative z-10">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Hear it in action</h2>
@@ -357,7 +387,7 @@ function LandingPageContent() {
                   </svg>
                 </div>
                 <h3 className="text-2xl font-bold">Smart Calendar Sync</h3>
-                <p className="text-paw-brown/70">RingPaw integrates directly with Google Calendar, Square, and DaySmart. No double bookings, ever.</p>
+                <p className="text-paw-brown/70">No double bookings, ever. RingPaw checks your real-time availability before offering a slot &mdash; works with Google Calendar, Square Appointments, and Acuity.</p>
               </div>
               <div className="w-full md:w-48 h-48 bg-white rounded-3xl shadow-inner-light p-4 rotate-3 group-hover:rotate-0 transition-transform duration-300">
                 <div className="w-full h-full border border-gray-100 rounded-2xl p-2 flex flex-col gap-2">
@@ -383,7 +413,7 @@ function LandingPageContent() {
                   </svg>
                 </div>
                 <h3 className="text-2xl font-bold">SMS Control Center</h3>
-                <p className="text-white/70">Take over the conversation anytime. Read transcripts and reply via text message instantly.</p>
+                <p className="text-white/70">Run your whole schedule over text. Block a day, pause bookings, or add a new service just by texting. No app login. No dashboard. Just text RingPaw like you&apos;d text an employee. &quot;Block tomorrow&quot; &rarr; Done.</p>
               </div>
               <div className="w-full md:w-48 h-48 bg-paw-surface/10 rounded-3xl shadow-inner-light p-4 -rotate-3 group-hover:rotate-0 transition-transform duration-300 backdrop-blur-sm border border-white/10">
                 <div className="space-y-3 pt-4">
@@ -415,7 +445,7 @@ function LandingPageContent() {
                 <span className="text-4xl font-extrabold">$49</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Perfect for solo groomers getting started.</p>
+              <p className="text-sm text-gray-500 mb-8 h-10">Solo groomer? This covers everything you need. Answers calls, books appointments, texts confirmations.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -447,7 +477,7 @@ function LandingPageContent() {
                 <span className="text-5xl font-extrabold text-white">$149</span>
                 <span className="text-white/50">/mo</span>
               </div>
-              <p className="text-sm text-white/70 mb-8 h-10">For busy shops ready to grow.</p>
+              <p className="text-sm text-white/70 mb-8 h-10">For shops that can&apos;t afford to miss a single call. Full SMS control, custom voice, and analytics to track recovered revenue.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -482,7 +512,7 @@ function LandingPageContent() {
                 <span className="text-4xl font-extrabold">$299</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">High-volume shops & multi-location.</p>
+              <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. Priority support and everything in Growth, scaled up.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -512,25 +542,40 @@ function LandingPageContent() {
       {/* Testimonials */}
       <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-paw-brown mb-12 text-center">Loved by Groomers</h2>
+          <h2 className="text-3xl font-bold text-paw-brown mb-12 text-center">What Groomers Are Saying</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-paw-cream p-8 rounded-[2rem] flex items-start gap-6 shadow-sm">
-              <img src="https://i.pravatar.cc/150?img=5" alt="Sarah" className="w-16 h-16 rounded-full object-cover border-4 border-white" />
-              <div>
-                <h4 className="text-xl font-bold text-paw-brown">Sarah Jenkins</h4>
-                <p className="text-xs font-bold text-paw-orange uppercase mb-3">Happy Paws Spa</p>
-                <p className="text-paw-brown/80 italic">&quot;I used to miss 5 calls a day while drying dogs. RingPaw paid for itself in the first week. It sounds so real my clients don&apos;t even know it&apos;s AI.&quot;</p>
+            <div className="bg-paw-cream p-8 rounded-[2rem] shadow-sm">
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#F5C163" stroke="#F5C163" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                ))}
+              </div>
+              <p className="text-paw-brown/80 italic text-lg leading-relaxed mb-6">&quot;I used to lose 4&ndash;5 bookings a week just from calls I couldn&apos;t answer. RingPaw got me 9 new appointments in the first week. It paid for three months upfront.&quot;</p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-paw-brown/10 rounded-full flex items-center justify-center text-paw-brown font-bold text-lg">?</div>
+                <div>
+                  <p className="font-bold text-paw-brown">[Your beta client&apos;s name]</p>
+                  <p className="text-xs font-bold text-paw-orange uppercase">[Salon name], [City]</p>
+                </div>
               </div>
             </div>
-            <div className="bg-paw-cream p-8 rounded-[2rem] flex items-start gap-6 shadow-sm">
-              <img src="https://i.pravatar.cc/150?img=11" alt="Mike" className="w-16 h-16 rounded-full object-cover border-4 border-white" />
-              <div>
-                <h4 className="text-xl font-bold text-paw-brown">Mike Ross</h4>
-                <p className="text-xs font-bold text-paw-orange uppercase mb-3">The Groom Room</p>
-                <p className="text-paw-brown/80 italic">&quot;The calendar integration is seamless. I just check my phone and see new bookings pop up. Best investment I&apos;ve made.&quot;</p>
+            <div className="bg-paw-cream p-8 rounded-[2rem] shadow-sm">
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#F5C163" stroke="#F5C163" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                ))}
+              </div>
+              <p className="text-paw-brown/80 italic text-lg leading-relaxed mb-6">&quot;Setup took me less than 10 minutes. I forwarded my calls, tested it once, and it just worked. My clients can&apos;t tell it&apos;s not me answering.&quot;</p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-paw-brown/10 rounded-full flex items-center justify-center text-paw-brown font-bold text-lg">?</div>
+                <div>
+                  <p className="font-bold text-paw-brown">[Second beta client]</p>
+                  <p className="text-xs font-bold text-paw-orange uppercase">[Salon name], [City]</p>
+                </div>
               </div>
             </div>
           </div>
+          <p className="text-center text-sm text-paw-brown/40 mt-6 font-medium">These are placeholder quotes. Replace with real beta client testimonials as soon as you have them.</p>
         </div>
       </section>
 
@@ -545,7 +590,43 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Not at all. We use advanced voice synthesis that includes natural pauses and friendly intonation. Most callers believe they are speaking to a human receptionist.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">No. RingPaw uses a natural, conversational voice trained specifically for phone calls. Most callers don&apos;t realize they&apos;re not talking to a person &mdash; and that&apos;s exactly the point.</p>
+          </details>
+          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+            <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
+              Will it actually book into my calendar?
+              <span className="group-open:rotate-180 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </span>
+            </summary>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes. RingPaw connects directly to your calendar and checks real availability before offering any time slots. No double bookings, no manual entry on your end.</p>
+          </details>
+          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+            <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
+              What if it doesn&apos;t understand something?
+              <span className="group-open:rotate-180 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </span>
+            </summary>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">If a caller asks something RingPaw can&apos;t handle, it says &quot;Let me have [your name] call you right back&quot; and sends you an instant SMS alert. Nothing falls through the cracks.</p>
+          </details>
+          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+            <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
+              What calendars does it work with?
+              <span className="group-open:rotate-180 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </span>
+            </summary>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Google Calendar, Square Appointments, and Acuity Scheduling in V1. More integrations coming soon.</p>
+          </details>
+          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+            <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
+              Can I change my hours or block a day?
+              <span className="group-open:rotate-180 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </span>
+            </summary>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Just text RingPaw. &quot;Block tomorrow&quot; or &quot;Closed Saturday&quot; &mdash; it updates instantly. No dashboard needed.</p>
           </details>
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -554,8 +635,63 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">It takes about 10 minutes. Just forward your missed calls to the number we provide, and connect your calendar.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">About 5 minutes. Connect your calendar, forward your missed calls to the number we provide, and you&apos;re live. No technical skills required.</p>
           </details>
+          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+            <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
+              Is there a contract?
+              <span className="group-open:rotate-180 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </span>
+            </summary>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">No contracts, no setup fees. Cancel anytime. Most groomers stay because it pays for itself within the first week.</p>
+          </details>
+        </div>
+      </section>
+
+      {/* Hear It For Yourself */}
+      <section id="demo" className="py-20 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="bg-paw-sky rounded-[2.5rem] p-10 sm:p-14 relative overflow-hidden">
+            <div className="absolute -right-16 -bottom-16 w-48 h-48 bg-paw-amber/20 rounded-full blur-3xl" />
+            <div className="relative z-10">
+              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-soft">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3E2919" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+              </div>
+              <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Hear It For Yourself</h2>
+              <h3 className="text-3xl sm:text-4xl font-extrabold text-paw-brown leading-tight mb-4">
+                Call our demo line right now
+              </h3>
+              <p className="text-paw-brown/70 text-lg mb-8 max-w-md mx-auto">
+                Hear exactly what your customers will hear. Try booking an appointment, asking about pricing, or just say hi.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a
+                  href="tel:+1XXXXXXXXXX"
+                  className="px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center gap-3"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  Call Demo Line
+                </a>
+                <a
+                  href="#listen"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById("demo-player")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="px-8 py-4 bg-white text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-paw-cream transition-all flex items-center gap-2"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-paw-orange"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                  Play 60-Second Demo
+                </a>
+              </div>
+              <p className="text-xs text-paw-brown/40 mt-6 font-medium">Point a spare Twilio number at your Retell agent to make this live.</p>
+            </div>
+          </div>
         </div>
       </section>
 
