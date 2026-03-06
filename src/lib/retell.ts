@@ -464,6 +464,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
         "ALWAYS call this tool FIRST at the start of every call before saying anything else. It checks if the caller is a returning customer and retrieves their name, pet info, and visit history so you can greet them personally. No parameters needed — the caller's phone number is provided automatically.",
       url: `${appUrl}/api/retell/lookup-customer`,
       speak_during_execution: true,
+      speak_after_execution: true,
       execution_message_description: "Give me one second while I pull up your info...",
       parameters: {
         type: "object",
@@ -483,6 +484,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
         "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
       url: `${appUrl}/api/retell/check-availability`,
       speak_during_execution: true,
+      speak_after_execution: true,
       execution_message_description: "Let me check our availability for you...",
       parameters: {
         type: "object",
@@ -513,8 +515,9 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
         "Book an appointment for the customer after collecting all required information.",
       url: `${appUrl}/api/retell/book-appointment`,
       speak_during_execution: true,
+      speak_after_execution: true,
       execution_message_description:
-        "Let me book that appointment for you...",
+        "Let me get that booked for you...",
       parameters: {
         type: "object",
         properties: {
