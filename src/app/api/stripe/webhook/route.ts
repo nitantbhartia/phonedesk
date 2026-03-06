@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
-import { getPlanForStripePriceId, stripe } from "@/lib/stripe";
+import { getPlanForStripePriceId, getStripeClient } from "@/lib/stripe";
 
 function getWebhookSecret() {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -12,6 +12,7 @@ function getWebhookSecret() {
 }
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripeClient();
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
     return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });

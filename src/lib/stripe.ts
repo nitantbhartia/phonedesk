@@ -1,10 +1,23 @@
 import Stripe from "stripe";
 import type { Plan } from "@prisma/client";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  // Use the SDK's pinned latest API version to avoid type mismatches.
-  apiVersion: undefined,
-});
+let stripeClient: Stripe | null = null;
+
+export function getStripeClient(): Stripe {
+  if (stripeClient) return stripeClient;
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("Missing STRIPE_SECRET_KEY");
+  }
+
+  stripeClient = new Stripe(secretKey, {
+    // Use the SDK's pinned latest API version to avoid type mismatches.
+    apiVersion: undefined,
+  });
+
+  return stripeClient;
+}
 
 const PRICE_IDS: Record<Plan, string | undefined> = {
   STARTER: process.env.STRIPE_STARTER_PRICE_ID,

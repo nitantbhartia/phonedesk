@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import type { Plan } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getAppUrl, getStripePriceIdForPlan, stripe } from "@/lib/stripe";
+import { getAppUrl, getStripeClient, getStripePriceIdForPlan } from "@/lib/stripe";
 
 async function resolveUserId(session: {
   user?: { id?: string | null; email?: string | null; name?: string | null; image?: string | null };
@@ -28,6 +28,7 @@ async function resolveUserId(session: {
 
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripeClient();
     const session = await getServerSession(authOptions);
     const userId = session ? await resolveUserId(session) : null;
     if (!userId) {
