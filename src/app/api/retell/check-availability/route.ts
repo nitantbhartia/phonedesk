@@ -98,6 +98,25 @@ export async function POST(req: NextRequest) {
 
   console.log("[check-availability] resolved date:", requestedDate, "timezone:", timezone, "service:", serviceName);
 
+  // Safety net: reject dates in the past
+  const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+  if (requestedDate < todayStr) {
+    const todayHuman = new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    console.warn("[check-availability] Rejected past date:", requestedDate, "today is:", todayStr);
+    return NextResponse.json({
+      result: `That date (${requestedDate}) is in the past. Today is ${todayHuman}. Could you let me know which upcoming day works for you?`,
+      available: false,
+      available_slots: [],
+      timezone,
+      current_date: todayHuman,
+    });
+  }
+
   // Find service duration
   const service = serviceName
     ? business.services.find(
