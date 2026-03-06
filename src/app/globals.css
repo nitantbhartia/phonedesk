@@ -80,3 +80,20 @@
   border-color: #F4A261;
   box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.1);
 }
+
+/* Dashboard sidebar active link */
+.sidebar-link.active {
+  background-color: white;
+  color: #3E2919;
+  box-shadow: 0 4px 12px rgba(62, 41, 25, 0.05);
+}
+
+/* Status pulse animation */
+.status-pulse {
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
