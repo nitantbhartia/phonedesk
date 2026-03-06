@@ -211,6 +211,13 @@ export async function updateRetellLLM(
     tools?: RetellTool[];
   }
 ): Promise<void> {
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   const body: Record<string, unknown> = {};
   if (updates.generalPrompt !== undefined)
     body.general_prompt = updates.generalPrompt;
@@ -218,6 +225,9 @@ export async function updateRetellLLM(
     body.begin_message = updates.beginMessage;
   if (updates.tools !== undefined) body.general_tools = updates.tools;
   body.start_speaker = "agent";
+  body.retell_llm_dynamic_variables = {
+    current_date: currentDate,
+  };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
     method: "PATCH",

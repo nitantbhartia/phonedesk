@@ -99,11 +99,13 @@ export async function POST(req: NextRequest) {
   console.log("[check-availability] resolved date:", requestedDate, "timezone:", timezone, "service:", serviceName);
 
   // Find service duration
-  const service = business.services.find(
-    (s) =>
-      s.isActive &&
-      s.name.toLowerCase().includes((serviceName || "").toLowerCase())
-  );
+  const service = serviceName
+    ? business.services.find(
+        (s) =>
+          s.isActive &&
+          s.name.toLowerCase().includes(serviceName.toLowerCase())
+      )
+    : null;
   const duration = service?.duration || 60;
 
   try {
