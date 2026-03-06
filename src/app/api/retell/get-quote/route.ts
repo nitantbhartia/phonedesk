@@ -5,13 +5,17 @@ import { prisma } from "@/lib/prisma";
 // Input: { breed, size, service_name, business_id? }
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { breed, size, service_name, business_id } = body;
+  const { args, call } = body;
+  // Support both Retell custom tool format (args) and direct API calls
+  const breed = args?.breed || body.breed;
+  const size = args?.size || body.size;
+  const service_name = args?.service_name || body.service_name;
+  const business_id = args?.business_id || body.business_id;
 
   if (!service_name) {
-    return NextResponse.json(
-      { error: "service_name is required" },
-      { status: 400 }
-    );
+    return NextResponse.json({
+      quote: "Which service are you interested in? We offer Full Groom, Bath & Brush, and Nail Trim.",
+    });
   }
 
   // Determine business - from explicit id or from call metadata
@@ -19,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   if (!businessId) {
     // Try to find business from Retell call context
-    const calledNumber = body.call?.to_number;
+    const calledNumber = call?.to_number || body.call?.to_number;
     if (calledNumber) {
       const phoneNum = await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },

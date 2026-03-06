@@ -51,11 +51,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const service = business.services.find(
-    (s) =>
-      s.isActive &&
-      s.name.toLowerCase().includes((svcName || "").toLowerCase())
-  );
+  const service = svcName
+    ? business.services.find(
+        (s) =>
+          s.isActive &&
+          s.name.toLowerCase().includes(svcName.toLowerCase())
+      )
+    : null;
 
   const start = new Date(startTime);
   const end = new Date(start.getTime() + (service?.duration || 60) * 60000);
