@@ -63,6 +63,14 @@ Message: ${message}`,
   }
 }
 
+function getTodayBoundsInTimezone(timezone: string): { start: Date; end: Date } {
+  const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+  return {
+    start: new Date(`${todayStr}T00:00:00`),
+    end: new Date(`${todayStr}T23:59:59`),
+  };
+}
+
 export async function executeCommand(
   businessId: string,
   command: ParsedCommand,
@@ -261,33 +269,54 @@ export async function executeCommand(
     }
 
     case "show_schedule": {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const timezone = business.timezone || "America/Los_Angeles";
+      const dateStr = command.entities.date || "today";
+
+      // Resolve date relative to business timezone
+      let targetDate: string;
+      if (dateStr === "today") {
+        targetDate = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+      } else if (dateStr === "tomorrow") {
+        const tom = new Date();
+        tom.setDate(tom.getDate() + 1);
+        targetDate = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(tom);
+      } else {
+        // Try parsing as a date
+        const parsed = new Date(dateStr);
+        targetDate = isNaN(parsed.getTime())
+          ? new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date())
+          : new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(parsed);
+      }
+
+      // Build day boundaries in business timezone
+      const dayStart = new Date(`${targetDate}T00:00:00`);
+      const dayEnd = new Date(`${targetDate}T23:59:59`);
 
       const appointments = await prisma.appointment.findMany({
         where: {
           businessId,
-          startTime: { gte: today, lt: tomorrow },
+          startTime: { gte: dayStart, lt: dayEnd },
           status: { in: ["CONFIRMED", "PENDING"] },
         },
         orderBy: { startTime: "asc" },
       });
 
+      const dateLabel = dateStr === "today" ? "Today" : dateStr === "tomorrow" ? "Tomorrow" : targetDate;
+
       if (appointments.length === 0) {
-        responseMessage = "No appointments scheduled for today.";
+        responseMessage = `No appointments scheduled for ${dateLabel.toLowerCase()}.`;
       } else {
         const list = appointments
           .map((a) => {
             const time = new Date(a.startTime).toLocaleTimeString("en-US", {
               hour: "numeric",
               minute: "2-digit",
+              timeZone: timezone,
             });
             return `${time} - ${a.petName || "Pet"} (${a.customerName}) - ${a.serviceName || "Grooming"}`;
           })
           .join("\n");
-        responseMessage = `Today's schedule:\n${list}`;
+        responseMessage = `${dateLabel}'s schedule:\n${list}`;
       }
       break;
     }
@@ -354,10 +383,7 @@ export async function executeCommand(
         responseMessage = "Please specify the pet name. Example: \"Checked in Buddy\"";
         break;
       }
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
+      const { start: todayStart, end: todayEnd } = getTodayBoundsInTimezone(business.timezone || "America/Los_Angeles");
 
       const checkInAppt = await prisma.appointment.findFirst({
         where: {
@@ -398,10 +424,7 @@ export async function executeCommand(
         responseMessage = "Please specify the pet name. Example: \"Start Buddy\"";
         break;
       }
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
+      const { start: todayStart, end: todayEnd } = getTodayBoundsInTimezone(business.timezone || "America/Los_Angeles");
 
       const startAppt = await prisma.appointment.findFirst({
         where: {
@@ -462,10 +485,7 @@ export async function executeCommand(
       if (lowerNote.includes("pull") || lowerNote.includes("pulling")) tags.push("pulling");
 
       // Try to link to today's appointment and customer/pet records
-      const noteStart = new Date();
-      noteStart.setHours(0, 0, 0, 0);
-      const noteEnd = new Date();
-      noteEnd.setHours(23, 59, 59, 999);
+      const { start: noteStart, end: noteEnd } = getTodayBoundsInTimezone(business.timezone || "America/Los_Angeles");
 
       const noteAppt = await prisma.appointment.findFirst({
         where: {
@@ -517,10 +537,7 @@ export async function executeCommand(
         responseMessage = "Please specify the pet name. Example: \"Done Buddy\"";
         break;
       }
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
+      const { start: todayStart, end: todayEnd } = getTodayBoundsInTimezone(business.timezone || "America/Los_Angeles");
 
       const doneAppt = await prisma.appointment.findFirst({
         where: {
