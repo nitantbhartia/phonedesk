@@ -149,7 +149,7 @@ function LandingPageContent() {
             </h1>
 
             <p className="text-xl text-paw-brown/80 leading-relaxed max-w-lg">
-              When you can&apos;t pick up, RingPaw does. Your callers get a real conversation, a confirmed booking, and a confirmation text. You get a notification. Nobody gets sent to voicemail.
+              When you can&apos;t answer the phone, RingPaw does. It talks to customers, books appointments, and texts confirmations automatically.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
