@@ -542,6 +542,88 @@ async function getBusyIntervals(
   return busyTimes;
 }
 
+export interface ConflictEntry {
+  start: Date;
+  end: Date;
+  summary: string;
+  source: string; // "Google Calendar", "Square", "Acuity", "RingPaw"
+}
+
+export async function getConflicts(
+  businessId: string,
+  dayStart: Date,
+  dayEnd: Date
+): Promise<ConflictEntry[]> {
+  const [connections, existingAppointments] = await Promise.all([
+    prisma.calendarConnection.findMany({
+      where: { businessId, isActive: true },
+    }),
+    prisma.appointment.findMany({
+      where: {
+        businessId,
+        status: { in: ["CONFIRMED", "PENDING"] },
+        startTime: { lt: dayEnd },
+        endTime: { gt: dayStart },
+      },
+      select: { startTime: true, endTime: true, customerName: true, serviceName: true },
+    }),
+  ]);
+
+  const conflicts: ConflictEntry[] = existingAppointments.map((a) => ({
+    start: a.startTime,
+    end: a.endTime,
+    summary: [a.customerName, a.serviceName].filter(Boolean).join(" — ") || "Appointment",
+    source: "RingPaw",
+  }));
+
+  for (const conn of connections) {
+    try {
+      if (conn.provider === "GOOGLE") {
+        const events = await getGoogleCalendarEvents(conn, dayStart, dayEnd);
+        for (const event of events) {
+          if (event.start && event.end && event.status !== "cancelled") {
+            conflicts.push({
+              start: new Date(event.start),
+              end: new Date(event.end),
+              summary: event.summary || "Busy",
+              source: "Google Calendar",
+            });
+          }
+        }
+      } else if (conn.provider === "SQUARE") {
+        const bookings = await getSquareBookings(conn, dayStart, dayEnd);
+        for (const b of bookings) {
+          if (b.status !== "CANCELLED" && b.status !== "DECLINED") {
+            conflicts.push({
+              start: new Date(b.start),
+              end: new Date(b.end),
+              summary: "Square Booking",
+              source: "Square",
+            });
+          }
+        }
+      } else if (conn.provider === "ACUITY") {
+        const appointments = await getAcuityAppointments(conn, dayStart, dayEnd);
+        for (const a of appointments) {
+          if (a.status !== "cancelled") {
+            conflicts.push({
+              start: new Date(a.start),
+              end: new Date(a.end),
+              summary: "Acuity Appointment",
+              source: "Acuity",
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching calendar ${conn.provider}:`, error);
+    }
+  }
+
+  conflicts.sort((a, b) => a.start.getTime() - b.start.getTime());
+  return conflicts;
+}
+
 export async function isSlotAvailable(
   businessId: string,
   startTime: Date,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { InfoIcon } from "@/components/ui/info-icon";
@@ -20,6 +20,15 @@ type HoursState = Record<
   string,
   { open: string; close: string; enabled: boolean }
 >;
+
+interface Conflict {
+  start: string;
+  end: string;
+  summary: string;
+  source: string;
+}
+
+const DAY_ABBREVS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 const TIME_OPTIONS = [
   "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM",
@@ -105,16 +114,44 @@ export default function CalendarSettingsPage() {
   const [savedHoursJson, setSavedHoursJson] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [conflicts, setConflicts] = useState<Conflict[]>([]);
+  const [conflictsLoading, setConflictsLoading] = useState(false);
+  const [conflictsTz, setConflictsTz] = useState("America/Los_Angeles");
+  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const hoursDirty = JSON.stringify(serializeHours(hours)) !== savedHoursJson;
+
+  const fetchConflicts = useCallback(async () => {
+    setConflictsLoading(true);
+    try {
+      const res = await fetch("/api/calendar/conflicts?days=3");
+      if (res.ok) {
+        const data = await res.json();
+        setConflicts(data.conflicts || []);
+        if (data.timezone) setConflictsTz(data.timezone);
+      }
+    } catch (error) {
+      console.error("Error fetching conflicts:", error);
+    } finally {
+      setConflictsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
       return;
     }
-    if (status === "authenticated") fetchData();
-  }, [status, router]);
+    if (status === "authenticated") {
+      fetchData();
+      fetchConflicts();
+      // Auto-refresh conflicts every 2 minutes
+      refreshTimerRef.current = setInterval(fetchConflicts, 2 * 60 * 1000);
+    }
+    return () => {
+      if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
+    };
+  }, [status, router, fetchConflicts]);
 
   async function fetchData() {
     try {
@@ -587,76 +624,81 @@ export default function CalendarSettingsPage() {
               Conflict Checker
             </h3>
             <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold tracking-widest text-paw-amber">
-              LIVE PREVIEW
+              LIVE
             </span>
           </div>
 
           <div className="space-y-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10">
-              <div className="w-12 text-center">
-                <p className="text-[10px] font-bold text-white/40">THU</p>
-                <p className="text-lg font-bold">21</p>
+            {conflictsLoading && conflicts.length === 0 ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white/10 rounded-2xl p-4 h-20 animate-pulse" />
+                ))}
               </div>
-              <div className="flex-1 border-l border-white/20 pl-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold">
-                    09:00 AM — 10:30 AM
-                  </span>
-                  <span className="px-2 py-0.5 bg-paw-orange/20 text-paw-orange rounded text-[9px] font-bold">
-                    CONFLICT
-                  </span>
-                </div>
-                <p className="text-xs text-white/60">
-                  Found &quot;Personal: Dentist&quot; on Google Cal. Slot
-                  blocked for AI agent.
+            ) : conflicts.length === 0 ? (
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-center">
+                <p className="text-sm font-bold text-green-400 mb-1">All clear</p>
+                <p className="text-xs text-white/50">
+                  {connections.length === 0
+                    ? "Connect a calendar to see conflicts"
+                    : "No conflicts found in the next 3 days"}
                 </p>
               </div>
-            </div>
+            ) : (
+              conflicts.slice(0, 6).map((c, i) => {
+                const startDate = new Date(c.start);
+                const endDate = new Date(c.end);
+                const dayAbbr = DAY_ABBREVS[startDate.getDay()];
+                const dayNum = new Intl.DateTimeFormat("en-US", {
+                  day: "numeric",
+                  timeZone: conflictsTz,
+                }).format(startDate);
+                const startTime = new Intl.DateTimeFormat("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  timeZone: conflictsTz,
+                }).format(startDate);
+                const endTime = new Intl.DateTimeFormat("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  timeZone: conflictsTz,
+                }).format(endDate);
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10 opacity-60">
-              <div className="w-12 text-center">
-                <p className="text-[10px] font-bold text-white/40">THU</p>
-                <p className="text-lg font-bold">21</p>
-              </div>
-              <div className="flex-1 border-l border-white/20 pl-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold">
-                    11:00 AM — 12:00 PM
-                  </span>
-                  <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[9px] font-bold">
-                    AVAILABLE
-                  </span>
-                </div>
-                <p className="text-xs text-white/60">
-                  Open slot. RingPaw can book new clients here.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10">
-              <div className="w-12 text-center">
-                <p className="text-[10px] font-bold text-white/40">THU</p>
-                <p className="text-lg font-bold">21</p>
-              </div>
-              <div className="flex-1 border-l border-white/20 pl-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold">
-                    01:30 PM — 02:45 PM
-                  </span>
-                  <span className="px-2 py-0.5 bg-paw-orange/20 text-paw-orange rounded text-[9px] font-bold">
-                    CONFLICT
-                  </span>
-                </div>
-                <p className="text-xs text-white/60">
-                  Found &quot;Grooming: Max&quot; (Square). Slot blocked.
-                </p>
-              </div>
-            </div>
+                return (
+                  <div
+                    key={i}
+                    className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10"
+                  >
+                    <div className="w-12 text-center shrink-0">
+                      <p className="text-[10px] font-bold text-white/40">{dayAbbr}</p>
+                      <p className="text-lg font-bold">{dayNum}</p>
+                    </div>
+                    <div className="flex-1 border-l border-white/20 pl-4 space-y-2 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold truncate">
+                          {startTime} — {endTime}
+                        </span>
+                        <span className="px-2 py-0.5 bg-paw-orange/20 text-paw-orange rounded text-[9px] font-bold shrink-0">
+                          BLOCKED
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/60 truncate">
+                        {c.summary} ({c.source})
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div className="mt-6 flex justify-center">
-            <button className="text-xs font-bold text-paw-amber border-b border-paw-amber/30 hover:border-paw-amber transition-all pb-1">
-              Refresh conflicts (Auto-syncs every 2m)
+            <button
+              onClick={fetchConflicts}
+              disabled={conflictsLoading}
+              className="text-xs font-bold text-paw-amber border-b border-paw-amber/30 hover:border-paw-amber transition-all pb-1 disabled:opacity-50"
+            >
+              {conflictsLoading ? "Refreshing\u2026" : "Refresh conflicts (Auto-syncs every 2m)"}
             </button>
           </div>
         </section>
