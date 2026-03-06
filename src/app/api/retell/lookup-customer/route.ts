@@ -30,6 +30,13 @@ export async function POST(req: NextRequest) {
     args?.caller_phone || call?.from_number
   );
 
+  const todayStr = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return NextResponse.json({
     result: buildCustomerContextSummary(context),
     found: context.found,
@@ -43,5 +50,6 @@ export async function POST(req: NextRequest) {
       size: pet.size,
       notes: pet.notes,
     })),
+    current_date: todayStr,
   });
 }

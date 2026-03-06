@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { args, call } = body;
 
+  console.log("[book-appointment] args:", JSON.stringify(args), "from:", call?.from_number, "to:", call?.to_number);
+
   // Identify business from the called number
   const calledNumber = call?.to_number;
   const phoneNum = calledNumber
