@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   if (!phoneNum?.business) {
     return NextResponse.json({
-      result: "I apologize, but I'm having trouble accessing the system right now. Let me take your information and have someone call you back.",
+      result: "I apologize, but I'm having trouble accessing the booking system right now. Can you hold on a moment while I try again?",
     });
   }
 
@@ -182,16 +182,22 @@ export async function POST(req: NextRequest) {
       minute: "2-digit",
     });
 
+    const isConfirmed = appointment.status === "CONFIRMED";
+    const resultMessage = isConfirmed
+      ? `I've booked ${petName || "your pet"} for a ${service?.name || svcName || "grooming"} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
+      : `I've got ${timeStr} held for ${petName || "your pet"}'s ${service?.name || svcName || "grooming"} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
+
     return NextResponse.json({
-      result: `I've booked ${petName || "your pet"} for a ${service?.name || svcName || "grooming"} appointment on ${timeStr}. You'll receive a confirmation text shortly.`,
+      result: resultMessage,
       booked: true,
+      confirmed: isConfirmed,
       appointment_id: appointment.id,
       timezone,
     });
   } catch (error) {
     console.error("Error booking appointment:", error);
     return NextResponse.json({
-      result: "I wasn't able to complete the booking just now. Let me have the owner call you back to confirm.",
+      result: "I wasn't able to complete the booking just now. Can we try that again? Let me re-check the time slot.",
       booked: false,
     });
   }

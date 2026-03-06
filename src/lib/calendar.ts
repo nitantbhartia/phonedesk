@@ -598,12 +598,19 @@ export async function getAvailableSlots(
   );
   const busyTimes = await getBusyIntervals(businessId, dayStart, dayEnd);
   const slots: TimeSlot[] = [];
+  const now = new Date();
 
   let current = new Date(slotStart);
   while (current.getTime() + durationMinutes * 60000 <= slotEnd.getTime()) {
     const candidateEnd = new Date(
       current.getTime() + durationMinutes * 60000
     );
+
+    // Skip slots that are in the past
+    if (current <= now) {
+      current = new Date(current.getTime() + 30 * 60000);
+      continue;
+    }
 
     // Check if this slot conflicts with any busy time
     const hasConflict = busyTimes.some(
