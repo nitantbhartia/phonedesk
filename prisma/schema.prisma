@@ -82,6 +82,12 @@ model Business {
   customers       Customer[]
   retellConfig    RetellConfig?
   waitlistEntries WaitlistEntry[]
+  intakeForms     IntakeForm[]
+  pricingRules    PricingRule[]
+  rebookingConfig RebookingConfig?
+  behaviorLogs    BehaviorLog[]
+  reviewRequests  ReviewRequest[]
+  googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
 
   createdAt       DateTime @default(now())
@@ -116,17 +122,18 @@ enum PhoneProvider {
 }
 
 model Service {
-  id          String   @id @default(cuid())
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name        String
-  description String?
-  price       Float
-  duration    Int      // in minutes
-  isActive    Boolean  @default(true)
-  bookingMode BookingMode? // override business default
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  price        Float
+  duration     Int      // in minutes
+  isActive     Boolean  @default(true)
+  bookingMode  BookingMode? // override business default
+  pricingRules PricingRule[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model CalendarConnection {
@@ -216,6 +223,13 @@ model Appointment {
   reminder48hSent Boolean           @default(false)
   confirmedAt     DateTime?         // when the customer confirmed via SMS/link
   noShowMarkedAt  DateTime?         // when marked as no-show
+  groomingStatus  GroomingStatus?   // Feature 2: live appointment status
+  groomingStatusAt DateTime?        // when status was last updated
+  pickupNotifiedAt DateTime?        // when pickup SMS was sent
+  completedAt     DateTime?         // when grooming was completed
+  rebookSent      Boolean          @default(false) // Feature 5: rebooking reminder sent
+  rebookInterval  Int?             // days until next groom (breed-specific)
+  reviewRequested Boolean          @default(false) // Feature 7: review request sent
   calls           Call[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -235,7 +249,9 @@ model Customer {
   lastContactAt   DateTime?
   lastCallSummary String?  @db.Text
   lastOutcome     String?
+  noShowCount     Int      @default(0)
   pets            Pet[]
+  behaviorLogs    BehaviorLog[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -243,15 +259,16 @@ model Customer {
 }
 
 model Pet {
-  id          String   @id @default(cuid())
-  customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  name        String
-  breed       String?
-  size        PetSize?
-  notes       String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name          String
+  breed         String?
+  size          PetSize?
+  notes         String?  @db.Text
+  behaviorLogs  BehaviorLog[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([customerId, name])
 }
@@ -314,4 +331,107 @@ enum WaitlistStatus {
   BOOKED      // they took the slot
   EXPIRED     // the date passed
   DECLINED    // they said no
+}
+
+// Feature 2: Appointment Status ("Is My Dog Ready?")
+enum GroomingStatus {
+  CHECKED_IN
+  IN_PROGRESS
+  READY_FOR_PICKUP
+  PICKED_UP
+}
+
+// Feature 3: New Client Intake Form
+model IntakeForm {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointmentId   String?  @unique
+  customerPhone   String
+  customerName    String
+  petName         String?
+  petBreed        String?
+  petAge          String?
+  petWeight       String?
+  vaccinated      Boolean?
+  vetName         String?
+  vetPhone        String?
+  temperament     String?  // e.g. "friendly", "anxious", "aggressive"
+  biteHistory     Boolean?
+  allergies       String?
+  emergencyName   String?
+  emergencyPhone  String?
+  specialNotes    String?  @db.Text
+  photoUrl        String?
+  completed       Boolean  @default(false)
+  token           String   @unique @default(cuid()) // for public access link
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Feature 4: Breed × Service Pricing Matrix
+model PricingRule {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  breed       String?   // null = default price for this service
+  size        PetSize?  // null = any size
+  price       Float
+  notes       String?   // e.g. "add $30 for dematting"
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([businessId, serviceId, breed, size])
+}
+
+// Feature 5: Rebooking Engine
+model RebookingConfig {
+  id              String   @id @default(cuid())
+  businessId      String   @unique
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  enabled         Boolean  @default(true)
+  defaultInterval Int      @default(42) // days between grooms (6 weeks)
+  reminderDaysBefore Int   @default(7)  // send reminder X days before due
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Feature 6: Incident / Behavioral Logging
+model BehaviorLog {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  petId         String?
+  pet           Pet?     @relation(fields: [petId], references: [id], onDelete: SetNull)
+  appointmentId String?
+  petName       String
+  severity      BehaviorSeverity @default(NOTE)
+  note          String   @db.Text
+  tags          String[] // e.g. ["muzzle_required", "anxious", "biting"]
+  createdAt     DateTime @default(now())
+}
+
+enum BehaviorSeverity {
+  NOTE        // general observation
+  CAUTION     // needs extra care
+  HIGH_RISK   // requires owner discussion before booking
+}
+
+// Feature 7: Google Review Automation
+model ReviewRequest {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerPhone String
+  customerName  String
+  petName       String?
+  appointmentId String?
+  sentAt        DateTime @default(now())
+  clicked       Boolean  @default(false)
+  clickedAt     DateTime?
 }

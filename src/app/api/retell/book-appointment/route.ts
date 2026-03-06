@@ -7,6 +7,7 @@ import {
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemory } from "@/lib/customer-memory";
+import { sendSms } from "@/lib/retell";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -135,6 +136,43 @@ export async function POST(req: NextRequest) {
           appointment
         ),
       ]);
+    }
+
+    // Auto-send intake form for new clients
+    const custPhone = normalizedCustomerPhone || customerPhone || call?.from_number;
+    if (custPhone) {
+      try {
+        const existingCustomer = await prisma.customer.findUnique({
+          where: {
+            businessId_phone: {
+              businessId: business.id,
+              phone: custPhone,
+            },
+          },
+        });
+
+        if (!existingCustomer || existingCustomer.visitCount === 0) {
+          const intakeForm = await prisma.intakeForm.create({
+            data: {
+              businessId: business.id,
+              customerPhone: custPhone,
+              customerName: customerName,
+              appointmentId: appointment.id,
+            },
+          });
+
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const intakeLink = `${appUrl}/intake/${intakeForm.token}`;
+          const intakeMessage = `Hi ${customerName}! Please fill out this quick form before your visit to ${business.name}: ${intakeLink}`;
+
+          if (fullBusiness?.phoneNumber?.number) {
+            await sendSms(custPhone, intakeMessage, fullBusiness.phoneNumber.number);
+          }
+        }
+      } catch (intakeError) {
+        console.error("Failed to auto-send intake form:", intakeError);
+        // Non-blocking: don't fail the booking if intake fails
+      }
     }
 
     const timeStr = start.toLocaleString("en-US", {
