@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: phoneRecord.business.timezone || "America/Los_Angeles",
   });
 
   return NextResponse.json({
