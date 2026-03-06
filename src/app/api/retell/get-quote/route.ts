@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   if (!businessId) {
     return NextResponse.json(
-      { quote: "I'm sorry, I can't look up pricing right now. Let me have the owner call you back with a quote." },
+      { quote: "I'm sorry, I'm having a little trouble looking up pricing right now. Can I help you with scheduling instead?" },
       { status: 200 }
     );
   }
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
   if (!service) {
     return NextResponse.json({
-      quote: `I don't see a service called "${service_name}" in our system. Let me check with the owner and get back to you.`,
+      quote: `I don't see a service called "${service_name}" in our system. We offer Full Groom, Bath & Brush, and Nail Trim — would any of those work?`,
       service_name,
       breed: breed || null,
       size: size || null,

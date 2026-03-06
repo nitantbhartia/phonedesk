@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   if (!phoneNum?.business) {
     return NextResponse.json({
-      result: "I apologize, but I'm having trouble accessing the system right now. Let me take your information and have someone call you back.",
+      result: "I apologize, but I'm having trouble accessing the booking system right now. Can you hold on a moment while I try again?",
     });
   }
 
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error booking appointment:", error);
     return NextResponse.json({
-      result: "I wasn't able to complete the booking just now. Let me have the owner call you back to confirm.",
+      result: "I wasn't able to complete the booking just now. Can we try that again? Let me re-check the time slot.",
       booked: false,
     });
   }

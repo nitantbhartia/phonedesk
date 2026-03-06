@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   if (!phoneNum?.business) {
     return NextResponse.json({
-      result: "I apologize, but I'm having trouble accessing the system right now. Let me take your information and have someone call you back.",
+      result: "I apologize, but I'm having trouble accessing the scheduling system right now. Can you hold on a moment while I try again?",
     });
   }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error checking availability:", error);
     return NextResponse.json({
-      result: "Let me check with the owner on availability. What day and time would work best for you?",
+      result: "I'm having a little trouble pulling up the schedule right now. What day and time were you thinking? I'll try again.",
     });
   }
 }
