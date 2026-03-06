@@ -5,8 +5,13 @@ import {
   deduplicatePets,
   lookupCustomerContext,
 } from "@/lib/customer-memory";
+import { isRetellAuthorized } from "@/lib/retell-auth";
 
 export async function POST(req: NextRequest) {
+  if (!isRetellAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const { args, call } = body;
 

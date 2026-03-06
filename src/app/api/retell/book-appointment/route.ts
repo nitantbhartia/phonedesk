@@ -8,10 +8,15 @@ import {
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemory } from "@/lib/customer-memory";
 import { sendSms } from "@/lib/retell";
+import { isRetellAuthorized } from "@/lib/retell-auth";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
 export async function POST(req: NextRequest) {
+  if (!isRetellAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const { args, call } = body;
 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { rateLimit } from "@/lib/rate-limit";
+import { isRetellAuthorized } from "@/lib/retell-auth";
 
 // Retell inbound SMS webhook (set via inbound_sms_webhook_url on the phone number)
 // Retell sends: { agent_id, from_number, to_number, message }
@@ -11,6 +12,10 @@ import { rateLimit } from "@/lib/rate-limit";
 // and pass everything else through to Retell's chat agent.
 
 export async function POST(req: NextRequest) {
+  if (!isRetellAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
 
   // Retell inbound SMS webhook sends fields at root level or nested
@@ -150,10 +155,10 @@ export async function POST(req: NextRequest) {
         );
 
         // Notify owner
-        if (business.phone) {
+        if (normalizedBusinessPhone) {
           const { formatDateTime } = await import("@/lib/utils");
           await sendSms(
-            business.phone,
+            normalizedBusinessPhone,
             `[RingPaw] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
             to
           );
@@ -210,9 +215,9 @@ export async function POST(req: NextRequest) {
           );
 
           // Notify owner
-          if (business.phone) {
+          if (normalizedBusinessPhone) {
             await sendSms(
-              business.phone,
+              normalizedBusinessPhone,
               `[RingPaw] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${waitlistEntry.petName || "their pet"}.`,
               to
             );
