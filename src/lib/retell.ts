@@ -187,10 +187,8 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  // Keep begin_message short and neutral — personalization happens in the
-  // agent's first generated response via {{customer_context}} in the system
-  // prompt. The begin_message is spoken BEFORE our webhook can inject
-  // per-caller context, so it must work for both new and returning callers.
+  // Keep begin_message short and neutral — personalization happens after the
+  // lookup_customer_context tool runs at the start of each call.
   return `Thanks for calling ${business.name}! Give me one sec.`;
 }
 
@@ -222,7 +220,6 @@ export async function createRetellLLM(config: {
     retell_llm_dynamic_variables: {
       current_date: currentDate,
       current_date_iso: currentDateIso,
-      customer_context: "No prior customer record found. Treat as a new customer.",
     },
   };
 
@@ -265,7 +262,6 @@ export async function updateRetellLLM(
   body.retell_llm_dynamic_variables = {
     current_date: currentDate,
     current_date_iso: currentDateIso,
-    customer_context: "No prior customer record found. Treat as a new customer.",
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
@@ -281,16 +277,20 @@ export async function updateRetellLLM(
  * customer context. Customer context is fetched per-call by the
  * lookup_customer_context tool, which the agent always calls first.
  */
-export async function refreshRetellLLMForCall(llmId: string): Promise<void> {
+export async function refreshRetellLLMForCall(
+  llmId: string,
+  timezone: string = "America/Los_Angeles"
+): Promise<void> {
   const now = new Date();
   const currentDate = now.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: timezone,
   });
   const currentDateIso = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Los_Angeles",
+    timeZone: timezone,
   }).format(now);
 
   const vars: Record<string, string> = {

@@ -68,8 +68,9 @@ async function handleCallStarted(call: RetellCallPayload) {
     // lookup_customer_context tool fetches context per-call reliably.
     const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
     if (llmId) {
+      const biz = phoneNum.business as { timezone?: string | null; retellConfig?: { llmId?: string } | null };
       try {
-        await refreshRetellLLMForCall(llmId);
+        await refreshRetellLLMForCall(llmId, biz.timezone || undefined);
       } catch (err) {
         console.error("[webhook] Failed to refresh LLM date:", err);
       }
