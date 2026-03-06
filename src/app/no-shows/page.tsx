@@ -65,6 +65,14 @@ interface WaitlistEntry {
   createdAt: string;
 }
 
+interface LapsingClient {
+  customerName: string;
+  customerPhone: string;
+  petName: string | null;
+  lastVisitDate: string;
+  daysSinceVisit: number;
+}
+
 export default function NoShowProtectionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -73,8 +81,11 @@ export default function NoShowProtectionPage() {
   const [recentNoShows, setRecentNoShows] = useState<RecentNoShow[]>([]);
   const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [lapsingClients, setLapsingClients] = useState<LapsingClient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"pending" | "noShows" | "waitlist">("pending");
+  const [blasting, setBlasting] = useState(false);
+  const [blastResult, setBlastResult] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"pending" | "noShows" | "waitlist" | "lapsing">("pending");
   const [showAddWaitlist, setShowAddWaitlist] = useState(false);
   const [waitlistForm, setWaitlistForm] = useState({
     customerName: "",
@@ -109,6 +120,7 @@ export default function NoShowProtectionPage() {
         setOffenders(data.repeatOffenders || []);
         setRecentNoShows(data.recentNoShows || []);
         setPendingConfirmation(data.pendingConfirmation || []);
+        setLapsingClients(data.lapsingClients || []);
       }
 
       if (waitlistRes.ok) {
@@ -156,6 +168,30 @@ export default function NoShowProtectionPage() {
       }
     } catch (error) {
       console.error("Error:", error);
+    }
+  }
+
+  async function blastLapsingClients() {
+    if (!lapsingClients.length) return;
+    setBlasting(true);
+    setBlastResult(null);
+    try {
+      const phones = lapsingClients.map((c) => c.customerPhone).filter(Boolean);
+      const res = await fetch("/api/notifications/lapsing-blast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerPhones: phones }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBlastResult(`Sent to ${data.sent} of ${data.total} clients.`);
+      } else {
+        setBlastResult("Failed to send. Check your phone number setup.");
+      }
+    } catch {
+      setBlastResult("Error sending messages.");
+    } finally {
+      setBlasting(false);
     }
   }
 
@@ -327,6 +363,7 @@ export default function NoShowProtectionPage() {
             { key: "pending" as const, label: "Pending", count: pendingConfirmation.length },
             { key: "noShows" as const, label: "No-Shows", count: recentNoShows.length },
             { key: "waitlist" as const, label: "Waitlist", count: waitlist.length },
+            { key: "lapsing" as const, label: "Lapsing Clients", count: lapsingClients.length },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -565,6 +602,87 @@ export default function NoShowProtectionPage() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </>
+          )}
+          {/* Lapsing Clients Tab */}
+          {activeTab === "lapsing" && (
+            <>
+              {lapsingClients.length === 0 ? (
+                <div className="text-center py-16 text-paw-brown/50">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 opacity-30">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <p className="font-bold">No lapsing clients</p>
+                  <p className="text-sm mt-1">Everyone has been in recently!</p>
+                </div>
+              ) : (
+                <>
+                  <div className="px-8 py-4 bg-paw-amber/5 border-b border-paw-brown/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <p className="text-sm text-paw-brown/60 font-medium">
+                      {lapsingClients.length} client{lapsingClients.length !== 1 ? "s" : ""} haven&apos;t booked in a while
+                    </p>
+                    <div className="flex items-center gap-3">
+                      {blastResult && (
+                        <span className="text-xs font-bold text-emerald-600">{blastResult}</span>
+                      )}
+                      <button
+                        onClick={blastLapsingClients}
+                        disabled={blasting}
+                        className="px-5 py-2 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <line x1="22" y1="2" x2="11" y2="13" />
+                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                        {blasting ? "Sending…" : `Text All ${lapsingClients.length}`}
+                      </button>
+                    </div>
+                  </div>
+                  <table className="w-full text-left">
+                    <thead className="bg-paw-cream/50 border-b border-paw-brown/5">
+                      <tr>
+                        <th className="px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Customer & Pet</th>
+                        <th className="px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">Last Visit</th>
+                        <th className="px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Days Since</th>
+                        <th className="px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">Phone</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-paw-brown/5">
+                      {lapsingClients.map((client, i) => (
+                        <tr key={i} className="hover:bg-paw-cream/30 transition-colors">
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-paw-amber/20 flex items-center justify-center font-bold text-paw-brown text-sm">
+                                {client.customerName.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-paw-brown text-sm">{client.customerName}</p>
+                                <p className="text-xs text-paw-brown/50">{client.petName || "—"}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 text-sm text-paw-brown/60 hidden sm:table-cell">
+                            {formatDateTime(client.lastVisitDate)}
+                          </td>
+                          <td className="px-6 py-5">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              client.daysSinceVisit > 90
+                                ? "bg-red-100 text-red-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {client.daysSinceVisit}d ago
+                            </span>
+                          </td>
+                          <td className="px-8 py-5 text-right text-sm text-paw-brown/50">
+                            {formatPhoneNumber(client.customerPhone)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </>
           )}

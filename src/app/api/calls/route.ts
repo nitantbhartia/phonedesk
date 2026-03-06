@@ -22,8 +22,18 @@ export async function GET(req: NextRequest) {
   const offset = parseInt(url.searchParams.get("offset") || "0");
   const status = url.searchParams.get("status");
 
+  const search = url.searchParams.get("search")?.trim();
+
   const where: Record<string, unknown> = { businessId: business.id };
   if (status) where.status = status;
+  if (search) {
+    where.OR = [
+      { callerName: { contains: search, mode: "insensitive" } },
+      { callerPhone: { contains: search } },
+      { transcript: { contains: search, mode: "insensitive" } },
+      { summary: { contains: search, mode: "insensitive" } },
+    ];
+  }
 
   const [calls, total] = await Promise.all([
     prisma.call.findMany({
