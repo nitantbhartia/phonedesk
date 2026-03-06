@@ -95,7 +95,7 @@ Your role is to help callers schedule appointments. You are fully authorized to 
 
 CRITICAL DATE RULES:
 - Today is {{current_date_iso}}. The current year is derived from this date.
-- When passing a date to the check_availability or book_appointment tool, use {{current_date_iso}} as your anchor and calculate from it. For example, if today is 2026-03-06, "next Monday" is 2026-03-09 or later.
+- When passing a date to the check_availability or book_appointment tool, use {{current_date_iso}} as your anchor and calculate from it. For example, if today is a Friday, "next Monday" is two days later.
 - NEVER use dates from 2024 or 2025 or any past year. Always double-check the year before calling a tool.
 - When a caller says "today", "tomorrow", "next Monday", etc., calculate the correct YYYY-MM-DD date relative to {{current_date_iso}}.
 - NEVER make up or guess a date. Only mention dates that came from the check_availability tool response or that you calculated directly from {{current_date_iso}}.
@@ -104,9 +104,6 @@ CRITICAL DATE RULES:
 
 ## Services Offered
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
-
-## Caller Context (auto-populated)
-{{customer_context}}
 
 ## Conversation Flow
 1. The lookup_customer_context tool runs automatically at the start of every call. When it returns, READ THE RESULT CAREFULLY — it contains the caller's name, pet info, visit history, and everything you already know. Use this data to personalize the conversation and skip questions you already have answers for.
@@ -122,6 +119,7 @@ ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
    - Only ask about special handling or first-visit notes if the caller is new.
    If the caller volunteers extra info in their answer, acknowledge it and skip that question. Ask ONE question per turn.
 4. Use the check_availability tool to find open slots. Important rules:
+   - Always pass the date as YYYY-MM-DD. Calculate it from {{current_date_iso}}. Double-check day-of-week arithmetic before calling the tool (e.g. if today is a Friday, next Monday = 3 days later).
    - When the caller asks for a specific day AND time (e.g. "Monday at 2 PM"), pass both the date AND the preferred_time parameter. The result will tell you if that exact time is available.
    - If the requested time isn't available, the result already includes the closest alternatives. Read those directly to the caller — do NOT call check_availability again for the same date.
    - If check_availability returns available: false (day fully booked), the result already includes the next available day WITH its open time slots. Read those times to the caller immediately — do NOT ask "would you like me to check another day?" and do NOT make another check_availability call.
@@ -277,16 +275,13 @@ export async function updateRetellLLM(
 }
 
 /**
- * Refresh dynamic variables on the LLM at call start.
- * Sets the current date and customer context so the agent has accurate info.
- * Uses update-retell-llm (global) since update-call doesn't reliably support
- * retell_llm_dynamic_variables. The lookup_customer_context tool is always
- * called first by the agent as a reliable per-call backup.
+ * Refresh the date dynamic variables on the LLM at call start.
+ * Only updates non-caller-specific variables (date) to avoid a race condition
+ * where concurrent calls for the same business would overwrite each other's
+ * customer context. Customer context is fetched per-call by the
+ * lookup_customer_context tool, which the agent always calls first.
  */
-export async function refreshRetellLLMForCall(
-  llmId: string,
-  customerContext?: string | null
-): Promise<void> {
+export async function refreshRetellLLMForCall(llmId: string): Promise<void> {
   const now = new Date();
   const currentDate = now.toLocaleDateString("en-US", {
     weekday: "long",
@@ -301,7 +296,6 @@ export async function refreshRetellLLMForCall(
   const vars: Record<string, string> = {
     current_date: currentDate,
     current_date_iso: currentDateIso,
-    customer_context: customerContext || "No prior customer record found. Treat as a new customer.",
   };
 
   await retellFetch(`/update-retell-llm/${llmId}`, {
