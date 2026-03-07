@@ -85,13 +85,23 @@ export function isRetellWebhookValid(
     return true;
   }
 
+  // Diagnostic logging — redacted but enough to debug mismatches
+  const sigPrefix = signature.slice(0, 20);
+  const isCompound = /^v=\d+,d=/.test(signature);
+  const tsMatch = /^v=(\d+),d=/.exec(signature);
+  const tsAge = tsMatch
+    ? Math.round((Date.now() - Number(tsMatch[1])) / 1000) + "s ago"
+    : "n/a";
   console.error(
-    "[retell-auth] Verification failed. apiKey set:",
-    !!apiKey,
-    "signature present:",
-    !!signature,
-    "webhookSecret set:",
-    !!webhookSecret,
+    "[retell-auth] Verification failed.",
+    "apiKey set:", !!apiKey,
+    "keyLen:", apiKey?.length,
+    "keyPrefix:", apiKey?.slice(0, 6),
+    "signature present:", !!signature,
+    "sigPrefix:", sigPrefix,
+    "isCompound:", isCompound,
+    "tsAge:", tsAge,
+    "webhookSecret set:", !!webhookSecret,
   );
   return false;
 }
