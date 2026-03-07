@@ -19,6 +19,18 @@ export function isRetellWebhookValid(
   const apiKey = process.env.RETELL_API_KEY;
   const webhookSecret = process.env.RETELL_WEBHOOK_SECRET;
 
+  // Debug: log what we received so we can diagnose auth failures
+  console.log("[retell-auth] DEBUG:", {
+    hasApiKey: !!apiKey,
+    hasWebhookSecret: !!webhookSecret,
+    signatureHeader: signature || "(empty)",
+    authorizationHeader: headers?.get("authorization") || "(none)",
+    xRetellSecret: headers?.get("x-retell-secret") || "(none)",
+    xRetellToken: headers?.get("x-retell-token") || "(none)",
+    xRetellSignature: headers?.get("x-retell-signature") || "(none)",
+    bodyPreview: body?.substring(0, 100) || "(empty)",
+  });
+
   // Try HMAC signature verification first (preferred)
   if (apiKey && signature) {
     try {
