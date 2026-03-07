@@ -198,8 +198,9 @@ export async function POST(req: NextRequest) {
           const intakeLink = `${appUrl}/intake/${intakeForm.token}`;
           const intakeMessage = `Hi ${customerName}! Please fill out this quick form before your visit to ${business.name}: ${intakeLink}`;
 
-          if (fullBusiness?.phoneNumber?.number) {
-            await sendSms(custPhone, intakeMessage, fullBusiness.phoneNumber.number);
+          const smsFrom = process.env.TWILIO_PHONE_NUMBER || fullBusiness?.phoneNumber?.number;
+          if (smsFrom) {
+            await sendSms(custPhone, intakeMessage, smsFrom);
           }
         }
       } catch (intakeError) {

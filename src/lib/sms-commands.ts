@@ -18,11 +18,12 @@ interface ParsedCommand {
 async function sendOutboundSms(to: string, body: string, fromNumber: string) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioFrom = process.env.TWILIO_PHONE_NUMBER || fromNumber;
 
   if (accountSid && authToken) {
     const payload = new URLSearchParams({
       To: to,
-      From: fromNumber,
+      From: twilioFrom,
       Body: body,
     });
 
@@ -445,7 +446,7 @@ export async function executeCommand(
           await sendSms(
             checkInAppt.customerPhone,
             `${checkInAppt.petName || petName} is checked in at ${business.name}! We'll text you when they're ready.`,
-            business.phoneNumber.number
+            process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number
           );
         }
         responseMessage = `${checkInAppt.petName || petName} is checked in. Customer has been notified.`;
@@ -486,7 +487,7 @@ export async function executeCommand(
           await sendSms(
             startAppt.customerPhone,
             `${startAppt.petName || petName} is in the chair! We'll text you when they're ready for pickup.`,
-            business.phoneNumber.number
+            process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number
           );
         }
         responseMessage = `${startAppt.petName || petName} is now being groomed. Customer has been notified.`;
@@ -600,7 +601,7 @@ export async function executeCommand(
           await sendSms(
             doneAppt.customerPhone,
             `${doneAppt.petName || petName} is all done and looking fabulous! Head to ${business.address || business.name} for pickup.`,
-            business.phoneNumber.number
+            process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number
           );
         }
         responseMessage = `${doneAppt.petName || petName} is ready for pickup. Customer has been notified.`;

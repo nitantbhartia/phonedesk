@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   if (business.phoneNumber?.number) {
     try {
-      await sendSms(customerPhone, message, business.phoneNumber.number);
+      await sendSms(customerPhone, message, process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number);
     } catch (error) {
       console.error("Failed to send intake SMS:", error);
     }

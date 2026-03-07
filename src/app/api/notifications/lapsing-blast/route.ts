@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No customers provided" }, { status: 400 });
   }
 
-  const fromNumber = business.phoneNumber.number;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const results: { phone: string; success: boolean }[] = [];
 
   for (const phone of customerPhones) {
