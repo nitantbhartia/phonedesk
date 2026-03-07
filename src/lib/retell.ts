@@ -64,8 +64,10 @@ Your role is to answer calls when the owner is busy with a client, collect booki
 ${serviceList || "- Full Groom\n- Bath & Brush\n- Nail Trim"}
 
 ## Conversation Flow
-1. If caller phone context is available, call lookup_customer_context before asking for the caller's name.
-2. Greet the caller warmly. If returning-customer context exists, personalize the greeting and avoid asking for information already on file unless you need to confirm a change.
+1. IMMEDIATELY after your greeting, call lookup_customer_context — do this on EVERY call before saying anything else. Do NOT ask the caller for their name first.
+2. Once lookup results return:
+   - If the caller is a returning customer, greet them by name warmly (e.g. "Welcome back, [Name]!") and skip asking for any information already on file (name, pet name, breed, size, past services) unless you need to confirm a change.
+   - If the caller is new, introduce yourself and ask for their name.
 3. Ask exactly one question per turn, then stop and wait for the caller.
 4. When the caller provides multiple pieces of info at once, acknowledge ALL of it, then ask ONE follow-up question about whatever is still missing. Don't ignore info they already gave you. Example: Caller says "I need a full groom, maybe Thursday" → acknowledge both ("Full groom on Thursday, got it —") then move to the next missing piece ("— what time works best?").
 5. Collect any missing information:
@@ -121,7 +123,7 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  return `Hi! You've reached ${business.name}. ${business.ownerName} is with a client right now, but I can help you book an appointment. What's your name?`;
+  return `Hi! You've reached ${business.name}. ${business.ownerName} is with a client right now, but I can help you. One moment while I pull up your information.`;
 }
 
 // --- Retell LLM (Response Engine) ---
@@ -229,6 +231,7 @@ export async function createRetellAgent(config: {
       },
       agent_name: config.agentName,
       voice_id: config.voiceId || "11labs-Adrian",
+      voice_speed: 0.9,
       webhook_url: config.webhookUrl,
       language: "en-US",
     }),
@@ -241,12 +244,14 @@ export async function updateRetellAgent(
     agentName: string;
     voiceId: string;
     webhookUrl: string;
+    voiceSpeed: number;
   }>
 ): Promise<void> {
   const body: Record<string, unknown> = {};
   if (updates.agentName) body.agent_name = updates.agentName;
   if (updates.voiceId) body.voice_id = updates.voiceId;
   if (updates.webhookUrl) body.webhook_url = updates.webhookUrl;
+  if (updates.voiceSpeed !== undefined) body.voice_speed = updates.voiceSpeed;
 
   await retellFetch(`/update-agent/${agentId}`, {
     method: "PATCH",
@@ -343,7 +348,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "lookup_customer_context",
       description:
-        "Look up an existing customer by caller phone number before asking repeat callers for their details.",
+        "Look up an existing customer by caller phone number. MUST be called immediately at the start of every call, before asking the caller any questions.",
       url: `${appUrl}/api/retell/lookup-customer`,
       speak_during_execution: false,
       parameters: {
@@ -463,6 +468,11 @@ export async function syncRetellAgent(business: SyncableBusiness) {
   const config = buildAgentConfig(business);
   const existingConfig = business.retellConfig;
 
+  // Use custom greeting from settings if saved, otherwise use the generated default
+  if (existingConfig?.greeting) {
+    config.beginMessage = existingConfig.greeting;
+  }
+
   if (existingConfig?.agentId && existingConfig.llmId) {
     await updateRetellLLM(existingConfig.llmId, {
       generalPrompt: config.generalPrompt,
@@ -474,6 +484,7 @@ export async function syncRetellAgent(business: SyncableBusiness) {
       agentName: config.agentName,
       voiceId: config.voiceId,
       webhookUrl: config.webhookUrl,
+      voiceSpeed: 0.9,
     });
 
     return prisma.retellConfig.update({
