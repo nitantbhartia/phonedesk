@@ -4,7 +4,8 @@ import type { Business, RetellConfig, Service } from "@prisma/client";
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
 const DEFAULT_VOICE_ID = "11labs-Grace";
-const DEFAULT_VOICE_SPEED = 0.86;
+const DEFAULT_VOICE_SPEED = 1.0;
+const DEFAULT_VOLUME = 1.0;
 
 function getRetellApiKey() {
   const key = process.env.RETELL_API_KEY;
@@ -178,7 +179,7 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  return `Thanks for calling ${business.name}, this is Pip! One moment while I pull up your information.`;
+  return `Hi, you've reached ${business.name}! Give me just one moment.`;
 }
 
 // --- Retell LLM (Response Engine) ---
@@ -289,6 +290,7 @@ export async function createRetellAgent(config: {
       agent_name: config.agentName,
       voice_id: config.voiceId || DEFAULT_VOICE_ID,
       voice_speed: DEFAULT_VOICE_SPEED,
+      volume: DEFAULT_VOLUME,
       webhook_url: config.webhookUrl,
       language: "en-US",
     }),
@@ -302,6 +304,7 @@ export async function updateRetellAgent(
     voiceId: string;
     webhookUrl: string;
     voiceSpeed: number;
+    volume: number;
   }>
 ): Promise<void> {
   const body: Record<string, unknown> = {};
@@ -309,6 +312,7 @@ export async function updateRetellAgent(
   if (updates.voiceId) body.voice_id = updates.voiceId;
   if (updates.webhookUrl) body.webhook_url = updates.webhookUrl;
   if (updates.voiceSpeed !== undefined) body.voice_speed = updates.voiceSpeed;
+  if (updates.volume !== undefined) body.volume = updates.volume;
 
   await retellFetch(`/update-agent/${agentId}`, {
     method: "PATCH",
@@ -542,6 +546,7 @@ export async function syncRetellAgent(business: SyncableBusiness) {
       voiceId: config.voiceId,
       webhookUrl: config.webhookUrl,
       voiceSpeed: DEFAULT_VOICE_SPEED,
+      volume: DEFAULT_VOLUME,
     });
 
     return prisma.retellConfig.update({
