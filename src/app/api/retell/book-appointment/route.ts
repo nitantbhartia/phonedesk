@@ -8,16 +8,19 @@ import {
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemory } from "@/lib/customer-memory";
 import { sendSms } from "@/lib/sms";
-import { isRetellAuthorized } from "@/lib/retell-auth";
+import { isRetellWebhookValid } from "@/lib/retell-auth";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
 export async function POST(req: NextRequest) {
-  if (!isRetellAuthorized(req)) {
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-retell-signature") || "";
+
+  if (!isRetellWebhookValid(rawBody, signature)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = JSON.parse(rawBody);
   const { args, call } = body;
 
   console.log("[book-appointment] args:", JSON.stringify(args), "from:", call?.from_number, "to:", call?.to_number);

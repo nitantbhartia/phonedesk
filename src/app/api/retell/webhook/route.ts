@@ -6,17 +6,20 @@ import {
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
 import { refreshRetellLLMForCall } from "@/lib/retell";
-import { isRetellAuthorized } from "@/lib/retell-auth";
+import { isRetellWebhookValid } from "@/lib/retell-auth";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
 
 export async function POST(req: NextRequest) {
-  if (!isRetellAuthorized(req)) {
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-retell-signature") || "";
+
+  if (!isRetellWebhookValid(rawBody, signature)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = JSON.parse(rawBody);
   const { event, call } = body;
 
   if (!event || !call) {
