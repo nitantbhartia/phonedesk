@@ -5,14 +5,17 @@ import {
   deduplicatePets,
   lookupCustomerContext,
 } from "@/lib/customer-memory";
-import { isRetellAuthorized } from "@/lib/retell-auth";
+import { isRetellWebhookValid } from "@/lib/retell-auth";
 
 export async function POST(req: NextRequest) {
-  if (!isRetellAuthorized(req)) {
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-retell-signature") || "";
+
+  if (!isRetellWebhookValid(rawBody, signature)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = JSON.parse(rawBody);
   const { args, call } = body;
 
   const calledNumber = call?.to_number;
