@@ -1,183 +1,226 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
-import { isRetellAuthorized } from "@/lib/retell-auth";
 
-type BusinessHoursMap = Record<string, { open: string; close: string }>;
+const MONTH_MAP: Record<string, number> = {
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12,
+};
 
-function parseTimeString(value: string): { hour: number; minute: number } {
-  const trimmed = value.trim();
-  const is12Hour = /AM|PM/i.test(trimmed);
-  if (is12Hour) {
-    const [timePart, meridiem] = trimmed.split(/\s+/);
-    const [rawHour, rawMinute = "0"] = timePart.split(":");
-    let hour = Number(rawHour);
-    const minute = Number(rawMinute);
-    if (meridiem?.toUpperCase() === "PM" && hour !== 12) hour += 12;
-    if (meridiem?.toUpperCase() === "AM" && hour === 12) hour = 0;
-    return { hour, minute };
-  }
-  const [hourString, minuteString = "0"] = trimmed.split(":");
-  return { hour: Number(hourString), minute: Number(minuteString) };
+const WEEKDAY_INDEX: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+function formatDateParts(year: number, month: number, day: number) {
+  return `${year.toString().padStart(4, "0")}-${month
+    .toString()
+    .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
 }
 
-function getHoursForDay(
-  hours: BusinessHoursMap,
-  dayKey: string
-): { open: string; close: string } | undefined {
-  if (hours[dayKey]) return hours[dayKey];
-
-  const fullDayNames: Record<string, string> = {
-    sat: "saturday", sun: "sunday", mon: "monday", tue: "tuesday",
-    wed: "wednesday", thu: "thursday", fri: "friday",
-  };
-  if (fullDayNames[dayKey] && hours[fullDayNames[dayKey]]) {
-    return hours[fullDayNames[dayKey]];
-  }
-
-  if (["mon", "tue", "wed", "thu", "fri"].includes(dayKey) && hours["mon-fri"]) {
-    return hours["mon-fri"];
-  }
-
-  return undefined;
+function addDays(ymdDate: string, deltaDays: number) {
+  const base = new Date(`${ymdDate}T00:00:00Z`);
+  base.setUTCDate(base.getUTCDate() + deltaDays);
+  return base.toISOString().slice(0, 10);
 }
 
-function isBusinessOpenOnDate(
-  dateStr: string,
-  hours: BusinessHoursMap | null
-): boolean {
-  if (!hours || Object.keys(hours).length === 0) return true; // default open
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-  const dayKey = dayNames[new Date(y, m - 1, d).getDay()];
-  const dayHours = getHoursForDay(hours, dayKey);
-  return !!(dayHours?.open && dayHours?.close);
+function getCurrentWeekdayInTimezone(timezone: string) {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "long",
+  })
+    .format(new Date())
+    .toLowerCase();
+
+  return WEEKDAY_INDEX[weekday];
 }
 
-function formatBusinessHoursForAgent(hours: BusinessHoursMap): string {
-  const dayLabels: Record<string, string> = {
-    "mon-fri": "Mon–Fri", mon: "Mon", tue: "Tue", wed: "Wed",
-    thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
-    monday: "Mon", tuesday: "Tue", wednesday: "Wed",
-    thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun",
-  };
-  return Object.entries(hours)
-    .filter(([, v]) => v?.open && v?.close)
-    .map(([day, { open, close }]) => `${dayLabels[day] || day}: ${open}–${close}`)
-    .join(", ");
+function parseRelativeWeekday(input: string, timezone: string) {
+  const weekdayMatch = input.match(
+    /\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i
+  );
+  if (!weekdayMatch) return null;
+
+  const targetWeekday = WEEKDAY_INDEX[weekdayMatch[1].toLowerCase()];
+  const currentWeekday = getCurrentWeekdayInTimezone(timezone);
+  if (targetWeekday === undefined || currentWeekday === undefined) return null;
+
+  let deltaDays = (targetWeekday - currentWeekday + 7) % 7;
+  const lowered = input.toLowerCase();
+
+  if (lowered.includes("next ")) {
+    if (deltaDays === 0) deltaDays = 7;
+  } else if (!lowered.includes("this ")) {
+    if (deltaDays === 0) deltaDays = 7;
+  }
+
+  const todayInTz = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+  }).format(new Date());
+
+  return addDays(todayInTz, deltaDays);
 }
 
-/**
- * Parse a date string from the AI model into YYYY-MM-DD in the business timezone.
- *
- * All date math happens in the business timezone to avoid off-by-one errors
- * when the server is UTC and the business is in a US timezone.
- */
-function resolveDate(input: string, timezone: string): string {
-  const now = new Date();
+function formatSpokenDate(ymdDate: string, timezone: string) {
+  const [year, month, day] = ymdDate.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
 
-  // Get today's date/day-of-week in the BUSINESS timezone (not server timezone)
-  const bizDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(now);
-  const [bizYear, bizMonth, bizDay] = bizDateStr.split("-").map(Number);
-  const bizDow = new Date(Date.UTC(bizYear, bizMonth - 1, bizDay, 12)).getUTCDay();
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
 
-  // Helper: given year/month/day, return YYYY-MM-DD (handles month overflow)
-  const ymd = (y: number, m: number, d: number) => {
-    const dt = new Date(Date.UTC(y, m - 1, d, 12));
-    return dt.toISOString().slice(0, 10);
-  };
+function normalizeDateInput(rawDate: unknown, timezone: string) {
+  const todayInTz = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+  }).format(new Date());
 
-  const lower = input.trim().toLowerCase();
-
-  if (lower === "today" || lower === "now") {
-    return bizDateStr;
-  }
-  if (lower === "tomorrow") {
-    return ymd(bizYear, bizMonth, bizDay + 1);
+  if (typeof rawDate !== "string" || !rawDate.trim()) {
+    return todayInTz;
   }
 
-  // "next monday", "this friday", etc.
-  const dayNames = [
-    "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
-  ];
-  const nextMatch = lower.match(/^(?:next|this)\s+(\w+)$/);
-  if (nextMatch) {
-    const targetDay = dayNames.indexOf(nextMatch[1]);
-    if (targetDay !== -1) {
-      let daysAhead = targetDay - bizDow;
-      if (daysAhead <= 0) daysAhead += 7;
-      return ymd(bizYear, bizMonth, bizDay + daysAhead);
+  const input = rawDate.trim();
+  const relativeWeekday = parseRelativeWeekday(input, timezone);
+  if (relativeWeekday) return relativeWeekday;
+
+  const ymd = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) return input;
+
+  const isoPrefix = input.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+  if (isoPrefix) return isoPrefix[1];
+
+  const monthName = input.match(
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b[\s,]+(\d{1,2})(?:st|nd|rd|th)?(?:[\s,]+(\d{4}))?/i
+  );
+  if (monthName) {
+    const month = MONTH_MAP[monthName[1].toLowerCase()];
+    const day = Number(monthName[2]);
+    const currentYear = Number(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        year: "numeric",
+      }).format(new Date())
+    );
+    const year = monthName[3] ? Number(monthName[3]) : currentYear;
+    if (month && day >= 1 && day <= 31) {
+      return formatDateParts(year, month, day);
     }
   }
 
-  // Bare day name: "monday", "friday"
-  const bareDay = dayNames.indexOf(lower);
-  if (bareDay !== -1) {
-    let daysAhead = bareDay - bizDow;
-    if (daysAhead <= 0) daysAhead += 7;
-    return ymd(bizYear, bizMonth, bizDay + daysAhead);
-  }
-
-  // Already YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS — strip any time part
-  const isoMatch = input.trim().match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
-  if (isoMatch) {
-    return isoMatch[1];
-  }
-
-  // Strip leading day-name prefix that AI models often add
-  // e.g., "Monday, March 9" → "March 9", "Tuesday March 10, 2026" → "March 10, 2026"
-  const stripped = input.trim().replace(/^(?:mon|tue|wed|thu|fri|sat|sun)\w*[,]?\s+/i, "");
-
-  // Try parsing (handles "March 9, 2026", "3/10/2026", etc.)
-  // Use UTC components to avoid timezone day-shift
-  const tryParse = (s: string): string | null => {
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return null;
-    const y = d.getUTCFullYear();
-    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(d.getUTCDate()).padStart(2, "0");
-    let result = `${y}-${m}-${day}`;
-    // Fix wrong year from year-less strings (e.g., "March 9" → 2001)
-    if (result < bizDateStr) {
-      result = `${bizYear}-${m}-${day}`;
-      if (result < bizDateStr) {
-        result = `${bizYear + 1}-${m}-${day}`;
-      }
+  const slash = input.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+  if (slash) {
+    const month = Number(slash[1]);
+    const day = Number(slash[2]);
+    const currentYear = Number(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        year: "numeric",
+      }).format(new Date())
+    );
+    const yearRaw = slash[3];
+    const year = yearRaw
+      ? yearRaw.length === 2
+        ? 2000 + Number(yearRaw)
+        : Number(yearRaw)
+      : currentYear;
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return formatDateParts(year, month, day);
     }
-    return result;
-  };
+  }
 
-  const fromStripped = tryParse(stripped);
-  if (fromStripped) return fromStripped;
+  const parsed = new Date(input);
+  if (!Number.isNaN(parsed.getTime())) {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+    }).format(parsed);
+  }
 
-  // Try appending current year for year-less strings like "March 9"
-  const fromWithYear = tryParse(`${stripped}, ${bizYear}`);
-  if (fromWithYear) return fromWithYear;
+  return todayInTz;
+}
 
-  // Try the original input in case stripping removed something needed
-  const fromOriginal = tryParse(input);
-  if (fromOriginal) return fromOriginal;
+function normalizePreferredTime(rawTime: unknown) {
+  if (typeof rawTime !== "string") return "";
+  return rawTime.trim().toLowerCase().replace(/\s+/g, " ");
+}
 
-  // Give up — return today
-  console.warn(`[check-availability] Could not parse date "${input}", defaulting to today`);
-  return bizDateStr;
+function timeTextToMinutes(rawTime: string) {
+  const input = normalizePreferredTime(rawTime);
+  if (!input) return null;
+
+  if (input === "noon") return 12 * 60;
+  if (input === "midnight") return 0;
+
+  const match = input.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+  if (!match) return null;
+
+  let hour = Number(match[1]);
+  const minute = match[2] ? Number(match[2]) : 0;
+  const meridiem = match[3]?.toLowerCase();
+
+  if (minute < 0 || minute > 59 || hour < 0 || hour > 23) return null;
+
+  if (meridiem === "am") {
+    if (hour === 12) hour = 0;
+  } else if (meridiem === "pm") {
+    if (hour !== 12) hour += 12;
+  }
+
+  if (!meridiem && hour > 23) return null;
+  return hour * 60 + minute;
+}
+
+function formatSlotTime(date: Date, timezone: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+  })
+    .format(date)
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function getSlotMinutes(date: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === "hour")?.value || "0");
+  const minute = Number(
+    parts.find((part) => part.type === "minute")?.value || "0"
+  );
+  return hour * 60 + minute;
 }
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to check calendar availability for a given date.
 export async function POST(req: NextRequest) {
-  if (!isRetellAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const body = await req.json();
   const { args, call } = body;
 
   const date = args?.date;
   const serviceName = args?.service_name;
-  const preferredTime = args?.preferred_time; // e.g., "2:00 PM", "14:00", "10 AM"
-
-  console.log("[check-availability] args:", JSON.stringify(args), "from:", call?.from_number, "to:", call?.to_number);
+  const preferredTime = args?.preferred_time;
 
   // Identify business from the called number
   const calledNumber = call?.to_number;
@@ -189,211 +232,94 @@ export async function POST(req: NextRequest) {
     : null;
 
   if (!phoneNum?.business) {
-    console.error("[check-availability] No business found for calledNumber:", calledNumber);
     return NextResponse.json({
-      result: "I apologize, but I'm having trouble accessing the scheduling system right now. Can you hold on a moment while I try again?",
+      result:
+        "I apologize, but I'm having trouble accessing the system right now. Let me take your information and have someone call you back.",
     });
   }
 
   const business = phoneNum.business;
   const timezone = business.timezone || "America/Los_Angeles";
-  let requestedDate = date
-    ? resolveDate(date, timezone)
-    : new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
-
-  console.log("[check-availability] resolved date:", requestedDate, "timezone:", timezone, "service:", serviceName);
-
-  // Auto-correct past dates: the AI model sometimes hallucinates old years
-  // (e.g. 2024-05-21 instead of 2026-05-21). Fix the year automatically.
-  const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
-  if (requestedDate < todayStr) {
-    const [, mm, dd] = requestedDate.split("-");
-    const [currentYear] = todayStr.split("-");
-    let corrected = `${currentYear}-${mm}-${dd}`;
-    // If month/day is still in the past this year, use next year
-    if (corrected < todayStr) {
-      corrected = `${Number(currentYear) + 1}-${mm}-${dd}`;
-    }
-    console.warn("[check-availability] Auto-corrected past date:", requestedDate, "→", corrected);
-    requestedDate = corrected;
-  }
+  const requestedDate = normalizeDateInput(date, timezone);
+  const spokenDate = formatSpokenDate(requestedDate, timezone);
+  const preferred = normalizePreferredTime(preferredTime);
+  const preferredMinutes = preferred ? timeTextToMinutes(preferred) : null;
 
   // Find service duration
-  const service = serviceName
-    ? business.services.find(
-        (s) =>
-          s.isActive &&
-          s.name.toLowerCase().includes(serviceName.toLowerCase())
-      )
-    : null;
+  const service = business.services.find(
+    (s) =>
+      s.isActive && s.name.toLowerCase().includes((serviceName || "").toLowerCase())
+  );
   const duration = service?.duration || 60;
 
   try {
-    const slots = await getAvailableSlots(
-      business.id,
-      requestedDate,
-      duration
-    );
-
-    console.log("[check-availability] found", slots.length, "slots for", requestedDate);
-
-    const todayStr = new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      timeZone: timezone,
-    });
+    const slots = await getAvailableSlots(business.id, requestedDate, duration);
 
     if (slots.length === 0) {
-      const businessHours = business.businessHours as BusinessHoursMap | null;
-      const isClosed = !isBusinessOpenOnDate(requestedDate, businessHours);
-
-      // Look ahead up to 7 days to find the next day with openings,
-      // including its actual slots so the agent can offer them immediately
-      let nextAvailableDay: string | null = null;
-      let nextAvailableSlots: Awaited<ReturnType<typeof getAvailableSlots>> = [];
-      const [ry, rm, rd] = requestedDate.split("-").map(Number);
-      for (let i = 1; i <= 7; i++) {
-        const probe = new Date(ry, rm - 1, rd + i);
-        const probeStr = probe.toISOString().slice(0, 10);
-        if (!isBusinessOpenOnDate(probeStr, businessHours)) continue;
-        const probeSlots = await getAvailableSlots(business.id, probeStr, duration);
-        if (probeSlots.length > 0) {
-          nextAvailableDay = new Intl.DateTimeFormat("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            timeZone: timezone,
-          }).format(probe);
-          nextAvailableSlots = probeSlots;
-          break;
-        }
-      }
-
-      const requestedDayName = new Intl.DateTimeFormat("en-US", {
-        weekday: "long",
-        timeZone: timezone,
-      }).format(new Date(ry, rm - 1, rd));
-
-      const checkedDateLabel = new Intl.DateTimeFormat("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        timeZone: timezone,
-      }).format(new Date(ry, rm - 1, rd));
-
-      let message: string;
-      if (isClosed) {
-        const hoursStr = businessHours ? formatBusinessHoursForAgent(businessHours) : "";
-        message = `We're closed on ${requestedDayName}s.${hoursStr ? ` Our hours are ${hoursStr}.` : ""}`;
-      } else {
-        message = `We're fully booked on ${requestedDayName}.`;
-      }
-
-      // Include next-day slots inline so the agent can offer them without another tool call
-      if (nextAvailableDay && nextAvailableSlots.length > 0) {
-        const nextSlotDescriptions = describeAvailableSlots(nextAvailableSlots, timezone, 5);
-        message += ` The next available day is ${nextAvailableDay} with openings at ${nextSlotDescriptions}. Would any of those times work?`;
-      } else if (nextAvailableDay) {
-        message += ` The next available day is ${nextAvailableDay}. Would you like me to check that day?`;
-      } else {
-        message += ` Would you like to try a different day?`;
-      }
-
       return NextResponse.json({
-        result: message,
+        result: `I don't have any openings on ${spokenDate}. Would you like to try a different day?`,
         available: false,
         available_slots: [],
-        checked_date: requestedDate,
-        checked_date_label: checkedDateLabel,
         timezone,
-        current_date: todayStr,
-        next_available_day: nextAvailableDay,
-        next_available_slots: nextAvailableSlots.slice(0, 3).map((slot) => ({
-          start_time: slot.start.toISOString(),
-          end_time: slot.end.toISOString(),
-        })),
+        normalized_date: requestedDate,
       });
     }
 
-    // If the caller requested a specific time, sort slots by proximity to it
-    // and tell the agent whether that exact time is available
-    let slotsToOffer = slots;
-    let preferredAvailable = false;
-    let preferredTimeLabel = "";
-
-    if (preferredTime) {
-      const prefParsed = parseTimeString(preferredTime);
-      if (!isNaN(prefParsed.hour)) {
-        const prefMinutes = prefParsed.hour * 60 + prefParsed.minute;
-        preferredTimeLabel = preferredTime;
-
-        // Check if preferred time matches any slot (within 5 min)
-        preferredAvailable = slots.some((s) => {
-          const slotMinutes = s.start.getUTCHours() * 60 + s.start.getUTCMinutes();
-          // Convert to local for comparison
-          const slotLocal = new Date(s.start).toLocaleTimeString("en-US", {
-            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
-          });
-          const [sh, sm] = slotLocal.split(":").map(Number);
-          return Math.abs((sh * 60 + sm) - prefMinutes) < 5;
-        });
-
-        // Sort by proximity to preferred time
-        slotsToOffer = [...slots].sort((a, b) => {
-          const aLocal = new Date(a.start).toLocaleTimeString("en-US", {
-            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
-          });
-          const bLocal = new Date(b.start).toLocaleTimeString("en-US", {
-            timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: false,
-          });
-          const [ah, am] = aLocal.split(":").map(Number);
-          const [bh, bm] = bLocal.split(":").map(Number);
-          return Math.abs((ah * 60 + am) - prefMinutes) - Math.abs((bh * 60 + bm) - prefMinutes);
-        });
-      }
-    }
-
-    const offered = slotsToOffer.slice(0, 5).map((slot) => ({
+    const offered = slots.slice(0, 3).map((slot) => ({
       start_time: slot.start.toISOString(),
       end_time: slot.end.toISOString(),
+      display_time: formatSlotTime(slot.start, timezone),
     }));
-    const slotDescriptions = describeAvailableSlots(slotsToOffer, timezone, 5);
+    const slotDescriptions = describeAvailableSlots(slots, timezone);
+    const preferredSlot =
+      preferred.length > 0
+        ? slots.find((slot) => {
+            if (preferredMinutes !== null) {
+              return getSlotMinutes(slot.start, timezone) === preferredMinutes;
+            }
+            return formatSlotTime(slot.start, timezone) === preferred;
+          })
+        : undefined;
 
-    // Include explicit date name so the agent relays it accurately
-    const [ry2, rm2, rd2] = requestedDate.split("-").map(Number);
-    const requestedDateLabel = new Intl.DateTimeFormat("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      timeZone: timezone,
-    }).format(new Date(ry2, rm2 - 1, rd2));
+    if (preferred) {
+      if (preferredSlot) {
+        return NextResponse.json({
+          result: `${preferredTime} is available on ${spokenDate}. Would you like me to book that now?`,
+          available: true,
+          requested_time_available: true,
+          requested_slot: {
+            start_time: preferredSlot.start.toISOString(),
+            end_time: preferredSlot.end.toISOString(),
+            display_time: formatSlotTime(preferredSlot.start, timezone),
+          },
+          available_slots: offered,
+          timezone,
+          normalized_date: requestedDate,
+        });
+      }
 
-    let resultMessage: string;
-    if (preferredTime && !preferredAvailable) {
-      resultMessage = `${preferredTimeLabel} isn't available on ${requestedDateLabel}. The closest openings are ${slotDescriptions}. Would any of those work?`;
-    } else if (preferredTime && preferredAvailable) {
-      resultMessage = `${preferredTimeLabel} on ${requestedDateLabel} is available! Should I book it?`;
-    } else {
-      resultMessage = `I have openings on ${requestedDateLabel} at ${slotDescriptions}. Which time works best for you?`;
+      return NextResponse.json({
+        result: `${preferredTime} isn't available on ${spokenDate}. I do have openings at ${slotDescriptions}. Which one works best?`,
+        available: true,
+        requested_time_available: false,
+        available_slots: offered,
+        timezone,
+        normalized_date: requestedDate,
+      });
     }
 
     return NextResponse.json({
-      result: resultMessage,
+      result: `I have openings on ${spokenDate} at ${slotDescriptions}. Which time works best for you?`,
       available: true,
-      preferred_time_available: preferredTime ? preferredAvailable : undefined,
       available_slots: offered,
-      total_slots_on_day: slots.length,
-      checked_date: requestedDate,
-      checked_date_label: requestedDateLabel,
       timezone,
-      current_date: todayStr,
+      normalized_date: requestedDate,
     });
   } catch (error) {
-    console.error("[check-availability] Error:", error);
+    console.error("Error checking availability:", error);
     return NextResponse.json({
-      result: "I'm having a little trouble pulling up the schedule right now. What day and time were you thinking? I'll try again.",
+      result:
+        "Let me check with the owner on availability. What day and time would work best for you?",
     });
   }
 }

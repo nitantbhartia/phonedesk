@@ -15,6 +15,41 @@ interface ParsedCommand {
   entities: Record<string, string>;
 }
 
+async function sendOutboundSms(to: string, body: string, fromNumber: string) {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (accountSid && authToken) {
+    const payload = new URLSearchParams({
+      To: to,
+      From: fromNumber,
+      Body: body,
+    });
+
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${accountSid}:${authToken}`
+          ).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: payload.toString(),
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Twilio SMS error: ${text}`);
+    }
+    return;
+  }
+
+  await sendSms(to, body, fromNumber);
+}
+
 const COMMAND_EXAMPLES = `
 Examples of owner SMS commands:
 - "Block tomorrow" → { "intent": "block_calendar", "entities": { "date": "tomorrow", "allDay": "true" } }
@@ -345,7 +380,7 @@ export async function executeCommand(
         });
         // Notify customer
         if (appt.customerPhone) {
-          await sendSms(
+          await sendOutboundSms(
             appt.customerPhone,
             `Hi ${appt.customerName}, your appointment at ${business.name} has been cancelled. Please call us to reschedule.`,
             fromNumber
@@ -579,7 +614,7 @@ export async function executeCommand(
   }
 
   // Send response back to owner
-  await sendSms(replyTo, `[RingPaw] ${responseMessage}`, fromNumber);
+  await sendOutboundSms(replyTo, `[RingPaw] ${responseMessage}`, fromNumber);
 
   return responseMessage;
 }
