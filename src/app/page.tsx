@@ -375,30 +375,38 @@ function LandingPageContent() {
         <div className="absolute -left-20 top-20 w-96 h-96 bg-paw-sky rounded-full blur-3xl opacity-50" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-paw-brown">Built for Grooming Businesses</h2>
+            <h2 className="text-4xl font-extrabold text-paw-brown">Built for Groomers. Not Just Anyone.</h2>
           </div>
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Calendar Sync */}
+
+          {/* Two hero feature cards */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            {/* Breed-Smart Booking */}
             <div className="bg-paw-cream rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center gap-8 shadow-soft group">
               <div className="flex-1 space-y-4">
                 <div className="w-12 h-12 bg-paw-sky rounded-2xl flex items-center justify-center text-paw-brown mb-2">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                    <circle cx="11" cy="11" r="3" /><path d="M6 3.5C6 4.88 4.88 6 3.5 6S1 4.88 1 3.5 2.12 1 3.5 1 6 2.12 6 3.5Z" transform="translate(3 1)" /><path d="M6 3.5C6 4.88 4.88 6 3.5 6S1 4.88 1 3.5 2.12 1 3.5 1 6 2.12 6 3.5Z" transform="translate(11 1)" /><path d="M6 3.5C6 4.88 4.88 6 3.5 6S1 4.88 1 3.5 2.12 1 3.5 1 6 2.12 6 3.5Z" transform="translate(1 8)" /><path d="M6 3.5C6 4.88 4.88 6 3.5 6S1 4.88 1 3.5 2.12 1 3.5 1 6 2.12 6 3.5Z" transform="translate(13 8)" /><ellipse cx="12" cy="19" rx="4" ry="3" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold">Smart Calendar Sync</h3>
-                <p className="text-paw-brown/70">No double bookings, ever. RingPaw checks your real-time availability before offering a slot &mdash; works with Google Calendar, Square Appointments, and Acuity.</p>
+                <h3 className="text-2xl font-bold">Breed-Smart Booking</h3>
+                <p className="text-paw-brown/70">Caller mentions their bernedoodle? RingPaw auto-sets the right appointment length, flags matting concerns, and asks the right questions &mdash; without you lifting a finger.</p>
               </div>
               <div className="w-full md:w-48 h-48 bg-white rounded-3xl shadow-inner-light p-4 rotate-3 group-hover:rotate-0 transition-transform duration-300">
-                <div className="w-full h-full border border-gray-100 rounded-2xl p-2 flex flex-col gap-2">
-                  <div className="h-2 w-1/2 bg-gray-100 rounded" />
-                  <div className="flex-1 bg-paw-sky/30 rounded-xl p-2">
-                    <div className="w-2 h-2 rounded-full bg-paw-orange mb-1" />
-                    <div className="h-1.5 w-12 bg-paw-brown/20 rounded" />
+                <div className="w-full h-full border border-gray-100 rounded-2xl p-3 flex flex-col gap-2">
+                  <div className="text-[10px] font-semibold text-paw-brown/50 uppercase tracking-wide">Bernedoodle</div>
+                  <div className="flex-1 bg-paw-sky/30 rounded-xl p-2 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-paw-orange" />
+                      <div className="text-[9px] text-paw-brown/60">2.5 hr slot</div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-paw-orange" />
+                      <div className="text-[9px] text-paw-brown/60">Check matting</div>
+                    </div>
                   </div>
-                  <div className="flex-1 bg-paw-amber/20 rounded-xl p-2">
-                    <div className="w-2 h-2 rounded-full bg-paw-brown mb-1" />
-                    <div className="h-1.5 w-16 bg-paw-brown/20 rounded" />
+                  <div className="flex-1 bg-paw-amber/20 rounded-xl p-2 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <div className="text-[9px] text-paw-brown/60">Auto-booked</div>
                   </div>
                 </div>
               </div>
@@ -412,20 +420,94 @@ function LandingPageContent() {
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold">SMS Control Center</h3>
-                <p className="text-white/70">Run your whole schedule over text. Block a day, pause bookings, or add a new service just by texting. No app login. No dashboard. Just text RingPaw like you&apos;d text an employee. &quot;Block tomorrow&quot; &rarr; Done.</p>
+                <h3 className="text-2xl font-bold">Text to Control Everything</h3>
+                <p className="text-white/70">Block a day, pause bookings, add a service, check tomorrow&apos;s schedule &mdash; just text RingPaw like you&apos;d text an employee. &quot;Block tomorrow&quot; &rarr; Done.</p>
               </div>
               <div className="w-full md:w-48 h-48 bg-paw-surface/10 rounded-3xl shadow-inner-light p-4 -rotate-3 group-hover:rotate-0 transition-transform duration-300 backdrop-blur-sm border border-white/10">
-                <div className="space-y-3 pt-4">
-                  <div className="bg-white/20 p-2 rounded-lg rounded-tl-none w-3/4">
-                    <div className="h-1.5 bg-white/50 rounded w-full" />
+                <div className="space-y-2.5 pt-3">
+                  <div className="bg-white/20 py-1.5 px-2.5 rounded-lg rounded-tl-none w-3/4">
+                    <div className="text-[9px] text-white/80">Block tomorrow</div>
                   </div>
-                  <div className="bg-paw-amber text-paw-brown p-2 rounded-lg rounded-tr-none w-3/4 ml-auto">
-                    <div className="h-1.5 bg-paw-brown/50 rounded w-full" />
+                  <div className="bg-paw-amber py-1.5 px-2.5 rounded-lg rounded-tr-none w-3/4 ml-auto">
+                    <div className="text-[9px] text-paw-brown font-medium">Done! March 8 blocked.</div>
+                  </div>
+                  <div className="bg-white/20 py-1.5 px-2.5 rounded-lg rounded-tl-none w-4/5">
+                    <div className="text-[9px] text-white/80">Add service: Puppy bath $45</div>
+                  </div>
+                  <div className="bg-paw-amber py-1.5 px-2.5 rounded-lg rounded-tr-none w-3/4 ml-auto">
+                    <div className="text-[9px] text-paw-brown font-medium">Added! Puppy Bath &mdash; $45</div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Compact feature grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                ),
+                title: "Real-Time Calendar Booking",
+                desc: "Checks your live availability before offering any slot. No double bookings. Works with Google Calendar, Square, and Calendly.",
+              },
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                ),
+                title: "Daily Revenue Report",
+                desc: "Every evening: calls answered, bookings created, and estimated revenue protected. Know exactly what RingPaw earned you.",
+              },
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                ),
+                title: "Repeat Customer Recognition",
+                desc: "Remembers your regulars. Greets them by name, knows the breed, and skips straight to scheduling. Every caller feels like a VIP.",
+              },
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                ),
+                title: "Automatic Review Requests",
+                desc: "2 hours after pickup, RingPaw texts the owner a warm review request with your Google link. Watch your review count climb weekly.",
+              },
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                ),
+                title: "No-Show Protection",
+                desc: "48hr and 24hr reminders sent automatically. If someone cancels, RingPaw texts your waitlist and fills the slot before you notice.",
+              },
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                ),
+                title: "Dog Profile Cards",
+                desc: "After every visit, owners get a personalized summary with groomer notes and a one-tap rebooking link. They share it. You get new clients.",
+              },
+            ].map((feature) => (
+              <div key={feature.title} className="bg-paw-cream/50 rounded-2xl p-5 hover:bg-paw-cream transition-colors duration-200">
+                <div className="w-9 h-9 bg-paw-sky/60 rounded-xl flex items-center justify-center text-paw-brown mb-3">
+                  {feature.icon}
+                </div>
+                <h4 className="text-sm font-bold text-paw-brown mb-1">{feature.title}</h4>
+                <p className="text-xs text-paw-brown/60 leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
