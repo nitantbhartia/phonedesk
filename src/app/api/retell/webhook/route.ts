@@ -43,7 +43,7 @@ async function handleCallStarted(call: RetellCallPayload) {
     return new NextResponse(null, { status: 204 });
   }
 
-  const calledNumber = call.to_number;
+  const calledNumber = normalizePhoneNumber(call.to_number);
 
   const phoneNum = calledNumber
     ? await prisma.phoneNumber.findFirst({
@@ -91,7 +91,7 @@ async function handleCallStarted(call: RetellCallPayload) {
 }
 
 async function handleCallEnded(call: RetellCallPayload) {
-  const calledNumber = call.to_number;
+  const calledNumber = normalizePhoneNumber(call.to_number);
 
   const phoneNum = calledNumber
     ? await prisma.phoneNumber.findFirst({
