@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       await executeCommand(business.id, command, from, to);
     } catch (error) {
       console.error("Error processing owner command:", error);
-      const { sendSms } = await import("@/lib/retell");
+      const { sendSms } = await import("@/lib/sms");
       await sendSms(
         from,
         "[RingPaw] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
           data: { status: "CANCELLED" },
         });
 
-        const { sendSms } = await import("@/lib/retell");
+        const { sendSms } = await import("@/lib/sms");
         await sendSms(
           from,
           `Your appointment at ${business.name} has been cancelled. Call us to reschedule!`,
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
           );
         }
       } else {
-        const { sendSms } = await import("@/lib/retell");
+        const { sendSms } = await import("@/lib/sms");
         await sendSms(
           from,
           `No upcoming appointment found. Call ${business.name} to make changes.`,
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        const { sendSms } = await import("@/lib/retell");
+        const { sendSms } = await import("@/lib/sms");
         await sendSms(
           from,
           `Your appointment at ${business.name} is confirmed! See you soon. 🐾`,
@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
         const endTime = new Date(startTime.getTime() + serviceDuration * 60000);
 
         const slotOpen = await isSlotAvailable(business.id, startTime, endTime);
-        const { sendSms } = await import("@/lib/retell");
+        const { sendSms } = await import("@/lib/sms");
 
         if (!slotOpen) {
           await sendSms(
@@ -235,7 +235,7 @@ export async function POST(req: NextRequest) {
         orderBy: { completedAt: "desc" },
       });
 
-      const { sendSms } = await import("@/lib/retell");
+      const { sendSms } = await import("@/lib/sms");
 
       if (lastCompleted) {
         const petName = lastCompleted.petName || "your pet";
@@ -268,7 +268,7 @@ export async function POST(req: NextRequest) {
         orderBy: { startTime: "asc" },
       });
 
-      const { sendSms } = await import("@/lib/retell");
+      const { sendSms } = await import("@/lib/sms");
       const { formatDateTime } = await import("@/lib/utils");
 
       if (appointment) {
@@ -303,7 +303,7 @@ export async function POST(req: NextRequest) {
       }
     } else if (messageBody.trim()) {
       // Unrecognized message — send a helpful reply with available commands
-      const { sendSms } = await import("@/lib/retell");
+      const { sendSms } = await import("@/lib/sms");
       await sendSms(
         from,
         `Thanks for texting ${business.name}! Here's what I can help with:\n\n` +

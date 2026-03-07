@@ -7,7 +7,7 @@ import {
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemory } from "@/lib/customer-memory";
-import { sendSms } from "@/lib/retell";
+import { sendSms } from "@/lib/sms";
 import { isRetellAuthorized } from "@/lib/retell-auth";
 
 // Retell custom tool endpoint: called by the voice agent during a call
