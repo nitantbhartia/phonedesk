@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
     pet_size: petSize,
     service_name: svcName,
     start_time: startTime,
+    groomer_name: groomerName,
   } = args || {};
 
   if (!customerName || !startTime) {
@@ -65,6 +66,17 @@ export async function POST(req: NextRequest) {
           s.isActive &&
           s.name.toLowerCase().includes(svcName.toLowerCase())
       )
+    : null;
+
+  // Match groomer by name if requested
+  const groomer = groomerName
+    ? await prisma.groomer.findFirst({
+        where: {
+          businessId: business.id,
+          isActive: true,
+          name: { contains: groomerName, mode: "insensitive" },
+        },
+      })
     : null;
 
   const timezone = business.timezone || "America/Los_Angeles";
@@ -127,7 +139,22 @@ export async function POST(req: NextRequest) {
       servicePrice: service?.price,
       startTime: start,
       endTime: end,
+      groomerId: groomer?.id,
     });
+
+    // Save groomer preference on customer record
+    if (groomer) {
+      const custPhone = normalizePhoneNumber(customerPhone || call?.from_number);
+      if (custPhone) {
+        await prisma.customer.updateMany({
+          where: {
+            businessId: business.id,
+            phone: custPhone,
+          },
+          data: { preferredGroomerId: groomer.id },
+        });
+      }
+    }
 
     await upsertCustomerMemory({
       businessId: business.id,

@@ -40,6 +40,7 @@ export async function GET() {
     where: { userId },
     include: {
       services: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
+      groomers: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
       phoneNumber: true,
       calendarConnections: { where: { isActive: true } },
       retellConfig: true,
@@ -231,6 +232,7 @@ export async function POST(req: NextRequest) {
     where: { id: business.id },
     include: {
       services: { where: { isActive: true } },
+      groomers: { where: { isActive: true } },
       retellConfig: true,
     },
   });
@@ -291,7 +293,7 @@ export async function PATCH(req: NextRequest) {
       // Sync changes to Retell so greeting/voice/personality take effect
       const fullBusiness = await prisma.business.findUnique({
         where: { id: business.id },
-        include: { services: { where: { isActive: true } }, retellConfig: true },
+        include: { services: { where: { isActive: true } }, groomers: { where: { isActive: true } }, retellConfig: true },
       });
       if (fullBusiness?.retellConfig) {
         try {

@@ -158,6 +158,7 @@ export default function OnboardingPage() {
     { name: "Nail Trim", price: "20", duration: "15" },
   ]);
   const [bookingMode, setBookingMode] = useState<"SOFT" | "HARD">("SOFT");
+  const [groomers, setGroomers] = useState<Array<{ name: string; specialties: string }>>([]);
 
   // Step 3: Calendar
   const [calendarConnected, setCalendarConnected] = useState(false);
@@ -301,6 +302,22 @@ export default function OnboardingPage() {
       });
 
       if (!res.ok) throw new Error("Failed to save profile");
+
+      // Save groomers if any were added
+      const validGroomers = groomers.filter((g) => g.name.trim());
+      if (validGroomers.length > 0) {
+        await fetch("/api/business/groomers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            groomers: validGroomers.map((g) => ({
+              name: g.name.trim(),
+              specialties: g.specialties.split(",").map((s) => s.trim()).filter(Boolean),
+            })),
+          }),
+        });
+      }
+
       setStep(3);
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -727,6 +744,64 @@ export default function OnboardingPage() {
                   <option value="HARD">Hard Book</option>
                 </OnboardingSelect>
               </div>
+            </div>
+          </div>
+
+          {/* Groomers (optional) */}
+          <div className="space-y-4">
+            <OnboardingLabel info="Add groomers so callers can request a specific person. You can always add more later in Settings.">
+              Your Groomers (Optional)
+            </OnboardingLabel>
+            <div className="space-y-3">
+              {groomers.map((groomer, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-white p-3 rounded-2xl border-2 border-paw-brown/5 shadow-sm"
+                >
+                  <input
+                    type="text"
+                    placeholder="Groomer name"
+                    value={groomer.name}
+                    onChange={(e) => {
+                      const updated = [...groomers];
+                      updated[i] = { ...groomer, name: e.target.value };
+                      setGroomers(updated);
+                    }}
+                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none min-w-0"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Specialties (e.g. doodles, cats)"
+                    value={groomer.specialties}
+                    onChange={(e) => {
+                      const updated = [...groomers];
+                      updated[i] = { ...groomer, specialties: e.target.value };
+                      setGroomers(updated);
+                    }}
+                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none min-w-0"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setGroomers(groomers.filter((_, j) => j !== i))}
+                    className="p-2 text-paw-brown/30 hover:text-paw-orange transition-colors shrink-0"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setGroomers([...groomers, { name: "", specialties: "" }])}
+                className="flex items-center gap-2 text-sm font-bold text-paw-orange hover:text-paw-brown transition-colors px-2"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add a groomer
+              </button>
             </div>
           </div>
 
