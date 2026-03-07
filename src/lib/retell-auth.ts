@@ -1,35 +1,66 @@
 import Retell from "retell-sdk";
+import { createHmac, timingSafeEqual } from "crypto";
 
 /**
  * Verify a Retell webhook/tool request using HMAC-SHA256 signature.
  *
- * Retell signs the **canonical** JSON body (equivalent to JSON.stringify of the
- * parsed object). The raw body from req.text() may have different whitespace,
- * so we try both the raw body and the canonical form.
+ * Retell SDK v4+ signs with a compound format: `v={timestamp},d={hex_hmac}`
+ * where the HMAC message is `body + timestamp`. The SDK enforces a 5-minute
+ * replay window, which can fail if server clocks drift. We therefore:
  *
- * Fallback: shared secret via x-retell-secret / Authorization header.
+ *   1. Try the SDK verify (new format, strict 5-min window).
+ *   2. Try the same compound format manually with a 15-min window (clock drift).
+ *   3. Try a simple HMAC-SHA256 of the raw body (older Retell signing format).
+ *
+ * Fallback: RETELL_WEBHOOK_SECRET compared against the x-retell-signature
+ * header directly (useful when the API key and signing key differ).
  */
 export function isRetellWebhookValid(
   body: string,
   signature: string,
   headers?: Headers,
 ): boolean {
-  const apiKey = process.env.RETELL_API_KEY;
-  const webhookSecret = process.env.RETELL_WEBHOOK_SECRET;
+  const apiKey = process.env.RETELL_API_KEY?.trim();
+  const webhookSecret = process.env.RETELL_WEBHOOK_SECRET?.trim();
 
   // Try HMAC signature verification (preferred)
   if (apiKey && signature) {
-    // Try raw body first
+    // 1. SDK verify — handles compound format v={ts},d={hex_hmac} with 5-min window
     try {
       if (Retell.verify(body, apiKey, signature)) return true;
     } catch {
       // fall through
     }
 
-    // Try canonical JSON — Retell signs JSON.stringify(body) per their docs
+    // 2. Same compound format but with a 15-minute window to tolerate clock drift
     try {
-      const canonical = JSON.stringify(JSON.parse(body));
-      if (canonical !== body && Retell.verify(canonical, apiKey, signature)) {
+      const match = /^v=(\d+),d=(.+)$/.exec(signature);
+      if (match) {
+        const poststamp = Number(match[1]);
+        const postDigest = match[2]!;
+        if (Math.abs(Date.now() - poststamp) <= 15 * 60 * 1000) {
+          const computed = createHmac("sha256", apiKey)
+            .update(body + poststamp)
+            .digest("hex");
+          const a = Buffer.from(computed);
+          const b = Buffer.from(postDigest);
+          if (a.length === b.length && timingSafeEqual(a, b)) return true;
+        }
+      }
+    } catch {
+      // fall through
+    }
+
+    // 3. Simple HMAC-SHA256 of body (older/plain Retell signing — no timestamp)
+    try {
+      const hexSig = createHmac("sha256", apiKey).update(body).digest("hex");
+      const b64Sig = createHmac("sha256", apiKey)
+        .update(body)
+        .digest("base64");
+      if (
+        timingSafeCompare(hexSig, signature) ||
+        timingSafeCompare(b64Sig, signature)
+      ) {
         return true;
       }
     } catch {
@@ -37,19 +68,10 @@ export function isRetellWebhookValid(
     }
   }
 
-  // Fallback: shared secret via header
-  if (webhookSecret && headers) {
-    const authHeader = headers.get("authorization");
-    const bearerToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice("Bearer ".length).trim()
-      : null;
-    const headerToken =
-      headers.get("x-retell-secret") || headers.get("x-retell-token");
-
-    const candidates = [bearerToken, headerToken].filter(Boolean) as string[];
-    if (candidates.some((token) => token === webhookSecret)) {
-      return true;
-    }
+  // Fallback: RETELL_WEBHOOK_SECRET compared against the signature header
+  // (covers setups where a separate signing secret is configured)
+  if (webhookSecret && signature) {
+    if (timingSafeCompare(webhookSecret, signature)) return true;
   }
 
   // No keys configured at all — passthrough in dev
@@ -72,6 +94,13 @@ export function isRetellWebhookValid(
     !!webhookSecret,
   );
   return false;
+}
+
+function timingSafeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return timingSafeEqual(bufA, bufB);
 }
 
 /**
