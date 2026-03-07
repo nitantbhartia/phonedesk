@@ -6,6 +6,7 @@ function getClient() {
   if (!_client) {
     const sid = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
+    console.log("[Twilio] Initializing client — SID:", sid ? `${sid.slice(0, 8)}...${sid.slice(-4)}` : "MISSING", "| Token:", token ? `${token.slice(0, 4)}...${token.slice(-4)}` : "MISSING");
     if (!sid || !token) {
       throw new Error("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set");
     }
@@ -25,6 +26,7 @@ export async function sendSms(
   { retries = 2 }: { retries?: number } = {}
 ): Promise<void> {
   const fromNumber = from || process.env.TWILIO_PHONE_NUMBER;
+  console.log("[Twilio] sendSms — to:", to, "| from (param):", from || "none", "| from (env):", process.env.TWILIO_PHONE_NUMBER || "MISSING", "| using:", fromNumber || "NONE");
   if (!fromNumber) {
     throw new Error("From number is required for Twilio SMS (set TWILIO_PHONE_NUMBER as fallback)");
   }
