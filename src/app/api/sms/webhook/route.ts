@@ -152,6 +152,7 @@ export async function POST(req: NextRequest) {
     return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
   }
 
+  console.log("[SMS Webhook] Creating smsLog...");
   await prisma.smsLog.create({
     data: {
       direction: "INBOUND",
@@ -160,19 +161,23 @@ export async function POST(req: NextRequest) {
       body: messageBody,
     },
   });
+  console.log("[SMS Webhook] smsLog created");
 
   const phoneRecord = await prisma.phoneNumber.findFirst({
     where: { number: to },
     include: { business: true },
   });
+  console.log("[SMS Webhook] phoneRecord lookup —", { found: !!phoneRecord, hasBusiness: !!phoneRecord?.business });
 
   if (!phoneRecord?.business) {
+    console.log("[SMS Webhook] No business found for number, returning early");
     return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
   }
 
   const business = phoneRecord.business;
   const normalizedFrom = normalizePhoneNumber(from);
   const normalizedBusinessPhone = normalizePhoneNumber(business.phone);
+  console.log("[SMS Webhook] Phone comparison —", { normalizedFrom, normalizedBusinessPhone, isOwner: normalizedFrom === normalizedBusinessPhone });
 
   if (
     normalizedFrom &&
@@ -180,7 +185,9 @@ export async function POST(req: NextRequest) {
     normalizedFrom === normalizedBusinessPhone
   ) {
     try {
+      console.log("[SMS Webhook] Owner detected — parsing command...");
       const command = await parseOwnerCommand(messageBody);
+      console.log("[SMS Webhook] Parsed command —", JSON.stringify(command));
       await prisma.smsLog.updateMany({
         where: {
           fromNumber: from,
@@ -190,9 +197,11 @@ export async function POST(req: NextRequest) {
         data: { intent: command.intent, businessId: business.id },
       });
 
+      console.log("[SMS Webhook] Executing command...");
       await executeCommand(business.id, command, from, to);
+      console.log("[SMS Webhook] Command executed successfully");
     } catch (error) {
-      console.error("Error processing owner command:", error);
+      console.error("[SMS Webhook] Error processing owner command:", error);
       await sendSmsReply(
         from,
         "[RingPaw] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
