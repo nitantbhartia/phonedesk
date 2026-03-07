@@ -397,45 +397,6 @@ export async function deleteRetellPhoneNumber(
   });
 }
 
-// --- SMS Sending ---
-
-// Send an outbound SMS via Retell's create-sms-chat endpoint.
-// The notification_message dynamic variable instructs the agent to relay it verbatim.
-export async function sendSms(
-  to: string,
-  body: string,
-  from?: string,
-  { retries = 2 }: { retries?: number } = {}
-): Promise<void> {
-  if (!from) {
-    throw new Error("From number is required for Retell SMS");
-  }
-
-  let lastError: Error | undefined;
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      await retellFetch("/create-sms-chat", {
-        method: "POST",
-        body: JSON.stringify({
-          from_number: from,
-          to_number: to,
-          retell_llm_dynamic_variables: {
-            notification_message: body,
-          },
-        }),
-      });
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
-      }
-    }
-  }
-
-  throw lastError ?? new Error("Failed to send SMS");
-}
-
 // --- Tool Definitions for Voice Agent ---
 
 interface RetellTool {

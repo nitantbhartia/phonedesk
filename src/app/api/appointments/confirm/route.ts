@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   // Notify owner
   if (appointment.business.phone && appointment.business.phoneNumber) {
-    const { sendSms } = await import("@/lib/retell");
+    const { sendSms } = await import("@/lib/sms");
     const { formatDateTime } = await import("@/lib/utils");
     await sendSms(
       appointment.business.phone,
