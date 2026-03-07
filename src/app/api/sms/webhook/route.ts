@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
@@ -5,35 +6,140 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
 
-// Retell inbound SMS webhook (set via inbound_sms_webhook_url on the phone number)
-// Retell sends: { agent_id, from_number, to_number, message }
-// For standard inbound texts the message field is present at root level.
-// We handle known keywords (CANCEL, CONFIRM, STATUS, REBOOK, BOOK) directly
-// and pass everything else through to Retell's chat agent.
+type InboundSource = "retell" | "twilio";
 
-export async function POST(req: NextRequest) {
-  if (!isRetellAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+type InboundPayload = {
+  source: InboundSource;
+  from: string;
+  to: string;
+  messageBody: string;
+  twilioFormData?: FormData;
+};
+
+function getPublicRequestUrl(req: NextRequest) {
+  const url = new URL(req.url);
+  const proto =
+    req.headers.get("x-forwarded-proto") || url.protocol.replace(":", "");
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  return `${proto}://${host || url.host}${url.pathname}${url.search}`;
+}
+
+function verifyTwilioSignature(req: NextRequest, formData: FormData) {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) {
+    return true;
   }
 
-  const body = await req.json();
+  const signature = req.headers.get("x-twilio-signature");
+  if (!signature) {
+    return false;
+  }
 
-  // Retell inbound SMS webhook sends fields at root level or nested
-  const from = (body.from_number || body.chat_inbound?.from_number) as string;
-  const to = (body.to_number || body.chat_inbound?.to_number) as string;
-  const messageBody = (body.message || body.text || body.chat_inbound?.message || "") as string;
+  const params = Array.from(formData.entries())
+    .map(([key, value]) => [key, String(value)] as const)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+
+  const data =
+    getPublicRequestUrl(req) +
+    params.map(([key, value]) => `${key}${value}`).join("");
+  const expected = createHmac("sha1", authToken).update(data).digest("base64");
+
+  const sigBuf = Buffer.from(signature, "utf8");
+  const expBuf = Buffer.from(expected, "utf8");
+  if (sigBuf.length !== expBuf.length) {
+    return false;
+  }
+
+  return timingSafeEqual(sigBuf, expBuf);
+}
+
+async function parseInboundPayload(req: NextRequest): Promise<InboundPayload> {
+  const contentType = req.headers.get("content-type") || "";
+
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const formData = await req.formData();
+    return {
+      source: "twilio",
+      from: String(formData.get("From") || "").trim(),
+      to: String(formData.get("To") || "").trim(),
+      messageBody: String(formData.get("Body") || "").trim(),
+      twilioFormData: formData,
+    };
+  }
+
+  const body = await req.json().catch(() => ({}));
+  return {
+    source: "retell",
+    from: String(body.from_number || body.chat_inbound?.from_number || "").trim(),
+    to: String(body.to_number || body.chat_inbound?.to_number || "").trim(),
+    messageBody: String(
+      body.message || body.text || body.chat_inbound?.message || ""
+    ).trim(),
+  };
+}
+
+async function sendSmsReply(to: string, body: string, from: string) {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (accountSid && authToken) {
+    const payload = new URLSearchParams({
+      To: to,
+      From: from,
+      Body: body,
+    });
+
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${accountSid}:${authToken}`
+          ).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: payload.toString(),
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Twilio SMS error: ${text}`);
+    }
+    return;
+  }
+
+  const { sendSms } = await import("@/lib/retell");
+  await sendSms(to, body, from);
+}
+
+export async function POST(req: NextRequest) {
+  const inbound = await parseInboundPayload(req);
+  const { source, from, to, messageBody, twilioFormData } = inbound;
+
+  if (source === "retell" && !isRetellAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   if (!from || !to) {
     return NextResponse.json({ ok: true });
   }
 
-  // Rate limit: 20 messages per minute per sender
+  if (
+    source === "twilio" &&
+    twilioFormData &&
+    !verifyTwilioSignature(req, twilioFormData)
+  ) {
+    console.warn("Rejected Twilio webhook: invalid signature");
+    return NextResponse.json({ ok: false }, { status: 401 });
+  }
+
   const { allowed } = rateLimit(`sms:${from}`, { limit: 20, windowMs: 60_000 });
   if (!allowed) {
     return NextResponse.json({ ok: true });
   }
 
-  // Log inbound SMS
   await prisma.smsLog.create({
     data: {
       direction: "INBOUND",
@@ -43,7 +149,6 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Find the business by RingPaw number
   const phoneRecord = await prisma.phoneNumber.findFirst({
     where: { number: to },
     include: { business: true },
@@ -57,13 +162,13 @@ export async function POST(req: NextRequest) {
   const normalizedFrom = normalizePhoneNumber(from);
   const normalizedBusinessPhone = normalizePhoneNumber(business.phone);
 
-  // Check if this is the owner texting (from their business phone)
-  if (normalizedFrom && normalizedBusinessPhone && normalizedFrom === normalizedBusinessPhone) {
-    // Owner SMS command
+  if (
+    normalizedFrom &&
+    normalizedBusinessPhone &&
+    normalizedFrom === normalizedBusinessPhone
+  ) {
     try {
       const command = await parseOwnerCommand(messageBody);
-
-      // Log parsed intent
       await prisma.smsLog.updateMany({
         where: {
           fromNumber: from,
@@ -76,15 +181,13 @@ export async function POST(req: NextRequest) {
       await executeCommand(business.id, command, from, to);
     } catch (error) {
       console.error("Error processing owner command:", error);
-      const { sendSms } = await import("@/lib/sms");
-      await sendSms(
+      await sendSmsReply(
         from,
         "[RingPaw] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
         to
       );
     }
   } else {
-    // Customer SMS - check for CANCEL/CONFIRM keyword
     const upperBody = messageBody.trim().toUpperCase();
 
     if (upperBody === "CANCEL") {
@@ -104,24 +207,23 @@ export async function POST(req: NextRequest) {
           data: { status: "CANCELLED" },
         });
 
-        const { sendSms } = await import("@/lib/sms");
-        await sendSms(
+        await sendSmsReply(
           from,
           `Your appointment at ${business.name} has been cancelled. Call us to reschedule!`,
           to
         );
 
-        // Notify owner
         if (normalizedBusinessPhone) {
-          await sendSms(
+          await sendSmsReply(
             normalizedBusinessPhone,
-            `[RingPaw] ${appointment.customerName} cancelled their ${appointment.serviceName || "grooming"} appointment.`,
+            `[RingPaw] ${appointment.customerName} cancelled their ${
+              appointment.serviceName || "grooming"
+            } appointment.`,
             to
           );
         }
       } else {
-        const { sendSms } = await import("@/lib/sms");
-        await sendSms(
+        await sendSmsReply(
           from,
           `No upcoming appointment found. Call ${business.name} to make changes.`,
           to
@@ -147,25 +249,24 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        const { sendSms } = await import("@/lib/sms");
-        await sendSms(
+        await sendSmsReply(
           from,
           `Your appointment at ${business.name} is confirmed! See you soon. 🐾`,
           to
         );
 
-        // Notify owner
         if (normalizedBusinessPhone) {
           const { formatDateTime } = await import("@/lib/utils");
-          await sendSms(
+          await sendSmsReply(
             normalizedBusinessPhone,
-            `[RingPaw] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
+            `[RingPaw] ${appointment.customerName} confirmed their ${
+              appointment.serviceName || "grooming"
+            } appointment (${formatDateTime(appointment.startTime)}).`,
             to
           );
         }
       }
     } else if (upperBody === "BOOK") {
-      // Waitlist: customer wants the offered slot
       const waitlistEntry = await prisma.waitlistEntry.findFirst({
         where: {
           businessId: business.id,
@@ -176,23 +277,21 @@ export async function POST(req: NextRequest) {
       });
 
       if (waitlistEntry) {
-        // Create actual appointment from waitlist entry
         const { bookAppointment, isSlotAvailable } = await import("@/lib/calendar");
         const startTime = waitlistEntry.preferredDate;
-        const serviceDuration = 60; // default 1 hour
+        const serviceDuration = 60;
         const endTime = new Date(startTime.getTime() + serviceDuration * 60000);
 
         const slotOpen = await isSlotAvailable(business.id, startTime, endTime);
-        const { sendSms } = await import("@/lib/sms");
 
         if (!slotOpen) {
-          await sendSms(
+          await sendSmsReply(
             from,
-            `Sorry, that slot was just taken. We'll let you know when the next opening comes up!`,
+            "Sorry, that slot was just taken. We'll let you know when the next opening comes up!",
             to
           );
         } else {
-          const appointment = await bookAppointment(business.id, {
+          await bookAppointment(business.id, {
             customerName: waitlistEntry.customerName,
             customerPhone: waitlistEntry.customerPhone,
             petName: waitlistEntry.petName || undefined,
@@ -208,24 +307,26 @@ export async function POST(req: NextRequest) {
             data: { status: "BOOKED", bookedAt: new Date() },
           });
 
-          await sendSms(
+          await sendSmsReply(
             from,
-            `Great — you're booked! We'll see ${waitlistEntry.petName || "your pet"} at ${business.name} soon. Reply CANCEL if plans change.`,
+            `Great — you're booked! We'll see ${
+              waitlistEntry.petName || "your pet"
+            } at ${business.name} soon. Reply CANCEL if plans change.`,
             to
           );
 
-          // Notify owner
           if (normalizedBusinessPhone) {
-            await sendSms(
+            await sendSmsReply(
               normalizedBusinessPhone,
-              `[RingPaw] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${waitlistEntry.petName || "their pet"}.`,
+              `[RingPaw] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${
+                waitlistEntry.petName || "their pet"
+              }.`,
               to
             );
           }
         }
       }
     } else if (upperBody === "REBOOK") {
-      // Customer wants to rebook after receiving a rebooking reminder
       const lastCompleted = await prisma.appointment.findFirst({
         where: {
           businessId: business.id,
@@ -235,24 +336,21 @@ export async function POST(req: NextRequest) {
         orderBy: { completedAt: "desc" },
       });
 
-      const { sendSms } = await import("@/lib/sms");
-
       if (lastCompleted) {
         const petName = lastCompleted.petName || "your pet";
-        await sendSms(
+        await sendSmsReply(
           from,
           `Great! Call us at ${business.phone || to} and we'll get ${petName} scheduled. Or text us your preferred date/time and we'll check availability!`,
           to
         );
       } else {
-        await sendSms(
+        await sendSmsReply(
           from,
           `We'd love to book you in! Call us at ${business.phone || to} to schedule an appointment.`,
           to
         );
       }
     } else if (upperBody === "STATUS") {
-      // Customer checking on their pet's grooming status
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date();
@@ -268,7 +366,6 @@ export async function POST(req: NextRequest) {
         orderBy: { startTime: "asc" },
       });
 
-      const { sendSms } = await import("@/lib/sms");
       const { formatDateTime } = await import("@/lib/utils");
 
       if (appointment) {
@@ -283,35 +380,37 @@ export async function POST(req: NextRequest) {
             statusMessage = `${petName} is currently being groomed! Almost done.`;
             break;
           case "READY_FOR_PICKUP":
-            statusMessage = `${petName} is ready for pickup! Head to ${business.address || business.name}.`;
+            statusMessage = `${petName} is ready for pickup! Head to ${
+              business.address || business.name
+            }.`;
             break;
           case "PICKED_UP":
             statusMessage = `All done! Hope ${petName} feels great.`;
             break;
           default:
-            statusMessage = `Your appointment is scheduled for ${formatDateTime(appointment.startTime)}. We'll update you when ${petName} is checked in!`;
+            statusMessage = `Your appointment is scheduled for ${formatDateTime(
+              appointment.startTime
+            )}. We'll update you when ${petName} is checked in!`;
             break;
         }
 
-        await sendSms(from, statusMessage, to);
+        await sendSmsReply(from, statusMessage, to);
       } else {
-        await sendSms(
+        await sendSmsReply(
           from,
           `No appointment found for today. Call ${business.name} for details.`,
           to
         );
       }
     } else if (messageBody.trim()) {
-      // Unrecognized message — send a helpful reply with available commands
-      const { sendSms } = await import("@/lib/sms");
-      await sendSms(
+      await sendSmsReply(
         from,
         `Thanks for texting ${business.name}! Here's what I can help with:\n\n` +
-        `STATUS - Check on your pet\n` +
-        `CONFIRM - Confirm an appointment\n` +
-        `CANCEL - Cancel an appointment\n` +
-        `REBOOK - Schedule your next visit\n\n` +
-        `Or call us at ${business.phone || to} to speak with someone!`,
+          "STATUS - Check on your pet\n" +
+          "CONFIRM - Confirm an appointment\n" +
+          "CANCEL - Cancel an appointment\n" +
+          "REBOOK - Schedule your next visit\n\n" +
+          `Or call us at ${business.phone || to} to speak with someone!`,
         to
       );
     }
