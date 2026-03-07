@@ -90,7 +90,6 @@ async function sendSmsReply(to: string, body: string, from: string) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const twilioFrom = process.env.TWILIO_PHONE_NUMBER || from;
-  console.log("[Twilio] sendSmsReply — SID:", accountSid ? `${accountSid.slice(0, 8)}...${accountSid.slice(-4)}` : "MISSING", "| Token:", authToken ? `${authToken.slice(0, 4)}...${authToken.slice(-4)}` : "MISSING", "| from:", twilioFrom);
 
   if (accountSid && authToken) {
     const payload = new URLSearchParams({
@@ -125,10 +124,8 @@ async function sendSmsReply(to: string, body: string, from: string) {
 }
 
 export async function POST(req: NextRequest) {
-  console.log("[SMS Webhook] HIT — method:", req.method, "content-type:", req.headers.get("content-type"));
   const inbound = await parseInboundPayload(req);
   const { source, from, to, messageBody, twilioFormData } = inbound;
-  console.log("[SMS Webhook] Parsed —", { source, from, to, messageBody: messageBody.slice(0, 50) });
 
   if (source === "retell" && !isRetellAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -143,8 +140,8 @@ export async function POST(req: NextRequest) {
     twilioFormData &&
     !verifyTwilioSignature(req, twilioFormData)
   ) {
-    // TODO: re-enable after debugging — skipping sig check to test webhook flow
-    console.warn("[SMS Webhook] Twilio signature mismatch — proceeding anyway for debugging");
+    console.warn("[SMS Webhook] Twilio signature verification failed — rejecting request");
+    return twimlOk();
   }
 
   const { allowed } = rateLimit(`sms:${from}`, { limit: 20, windowMs: 60_000 });
@@ -152,7 +149,6 @@ export async function POST(req: NextRequest) {
     return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
   }
 
-  console.log("[SMS Webhook] Creating smsLog...");
   await prisma.smsLog.create({
     data: {
       direction: "INBOUND",
@@ -161,23 +157,19 @@ export async function POST(req: NextRequest) {
       body: messageBody,
     },
   });
-  console.log("[SMS Webhook] smsLog created");
 
   const phoneRecord = await prisma.phoneNumber.findFirst({
     where: { number: to },
     include: { business: true },
   });
-  console.log("[SMS Webhook] phoneRecord lookup —", { found: !!phoneRecord, hasBusiness: !!phoneRecord?.business });
 
   if (!phoneRecord?.business) {
-    console.log("[SMS Webhook] No business found for number, returning early");
     return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
   }
 
   const business = phoneRecord.business;
   const normalizedFrom = normalizePhoneNumber(from);
   const normalizedBusinessPhone = normalizePhoneNumber(business.phone);
-  console.log("[SMS Webhook] Phone comparison —", { normalizedFrom, normalizedBusinessPhone, isOwner: normalizedFrom === normalizedBusinessPhone });
 
   if (
     normalizedFrom &&
@@ -185,9 +177,7 @@ export async function POST(req: NextRequest) {
     normalizedFrom === normalizedBusinessPhone
   ) {
     try {
-      console.log("[SMS Webhook] Owner detected — parsing command...");
       const command = await parseOwnerCommand(messageBody);
-      console.log("[SMS Webhook] Parsed command —", JSON.stringify(command));
       await prisma.smsLog.updateMany({
         where: {
           fromNumber: from,
@@ -197,9 +187,7 @@ export async function POST(req: NextRequest) {
         data: { intent: command.intent, businessId: business.id },
       });
 
-      console.log("[SMS Webhook] Executing command...");
       await executeCommand(business.id, command, from, to);
-      console.log("[SMS Webhook] Command executed successfully");
     } catch (error) {
       console.error("[SMS Webhook] Error processing owner command:", error);
       await sendSmsReply(

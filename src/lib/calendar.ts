@@ -6,6 +6,7 @@ import type {
   CalendarConnection,
   PetSize,
 } from "@prisma/client";
+import { buildConfirmLink } from "./appointment-token";
 
 type BusinessHoursMap = Record<string, { open: string; close: string }>;
 type DateParts = { year: number; month: number; day: number };
@@ -819,7 +820,7 @@ export async function bookAppointment(
       throw new Error("Requested slot was booked by another caller");
     }
 
-    return tx.appointment.create({
+    const created = await tx.appointment.create({
       data: {
         businessId,
         customerName: details.customerName,
@@ -836,6 +837,16 @@ export async function bookAppointment(
         notes: details.notes,
       },
     });
+
+    // Generate signed confirm link for PENDING appointments
+    if (created.status === "PENDING") {
+      return tx.appointment.update({
+        where: { id: created.id },
+        data: { confirmLink: buildConfirmLink(created.id) },
+      });
+    }
+
+    return created;
   });
 
   if (primaryCalendar) {
