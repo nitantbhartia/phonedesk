@@ -9,6 +9,7 @@ import {
   Calendar,
   Bot,
   CreditCard,
+  BarChart3,
   LogOut,
   Menu,
   X,
@@ -16,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,6 +32,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const userInitial = session?.user?.name?.[0] || session?.user?.email?.[0] || "U";
+  const showOwnerNav = isOwnerDashboardEmailClient(session?.user?.email || null);
+  const finalNavItems = showOwnerNav
+    ? [...navItems, { href: "/owner", label: "Owner", icon: BarChart3 }]
+    : navItems;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -80,7 +86,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <nav className="flex-1 px-3 py-4 space-y-1">
-              {navItems.map((item) => {
+              {finalNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive =
                   pathname === item.href ||
