@@ -24,14 +24,15 @@ export async function sendSms(
   from?: string,
   { retries = 2 }: { retries?: number } = {}
 ): Promise<void> {
-  if (!from) {
-    throw new Error("From number is required for Twilio SMS");
+  const fromNumber = from || process.env.TWILIO_PHONE_NUMBER;
+  if (!fromNumber) {
+    throw new Error("From number is required for Twilio SMS (set TWILIO_PHONE_NUMBER as fallback)");
   }
 
   let lastError: Error | undefined;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      await getClient().messages.create({ to, from, body });
+      await getClient().messages.create({ to, from: fromNumber, body });
       return;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));

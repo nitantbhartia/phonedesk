@@ -81,11 +81,12 @@ async function parseInboundPayload(req: NextRequest): Promise<InboundPayload> {
 async function sendSmsReply(to: string, body: string, from: string) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioFrom = process.env.TWILIO_PHONE_NUMBER || from;
 
   if (accountSid && authToken) {
     const payload = new URLSearchParams({
       To: to,
-      From: from,
+      From: twilioFrom,
       Body: body,
     });
 

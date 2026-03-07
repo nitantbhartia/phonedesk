@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     await sendSms(
       appointment.business.phone,
       `[RingPaw] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
-      appointment.business.phoneNumber.number
+      process.env.TWILIO_PHONE_NUMBER || appointment.business.phoneNumber.number
     );
   }
 
