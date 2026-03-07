@@ -172,6 +172,46 @@ export async function updateRetellLLM(
   });
 }
 
+/**
+ * Refresh the LLM prompt with today's date so the agent resolves
+ * "today", "tomorrow", day-of-week references correctly.
+ */
+export async function refreshRetellLLMForCall(
+  llmId: string,
+  timezone?: string
+): Promise<void> {
+  const tz = timezone || "America/Los_Angeles";
+  const todayStr = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: tz,
+  });
+
+  // Fetch current LLM config
+  const data = (await retellFetch(`/get-retell-llm/${llmId}`, { method: "GET" })) as { general_prompt?: string } | null;
+  let prompt = data?.general_prompt || "";
+
+  const dateLine = `- Today's date: ${todayStr}`;
+  const dateLinePattern = /^- Today's date: .+$/m;
+
+  if (dateLinePattern.test(prompt)) {
+    prompt = prompt.replace(dateLinePattern, dateLine);
+  } else {
+    // Insert after "## Business Information" header
+    prompt = prompt.replace(
+      /^(## Business Information)$/m,
+      `$1\n${dateLine}`
+    );
+  }
+
+  await retellFetch(`/update-retell-llm/${llmId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ general_prompt: prompt }),
+  });
+}
+
 // --- Retell Agent ---
 
 export async function createRetellAgent(config: {
