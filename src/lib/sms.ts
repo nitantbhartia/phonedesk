@@ -1,9 +1,18 @@
 import twilio from "twilio";
 
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+let _client: ReturnType<typeof twilio> | null = null;
+
+function getClient() {
+  if (!_client) {
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    if (!sid || !token) {
+      throw new Error("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set");
+    }
+    _client = twilio(sid, token);
+  }
+  return _client;
+}
 
 /**
  * Send an outbound SMS via Twilio.
@@ -22,7 +31,7 @@ export async function sendSms(
   let lastError: Error | undefined;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      await client.messages.create({ to, from, body });
+      await getClient().messages.create({ to, from, body });
       return;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
