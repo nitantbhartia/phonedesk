@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { sendSms } from "./sms";
 import { formatDateTime } from "./utils";
+import { normalizePhoneNumber } from "./phone";
 import type { Appointment, Business, PhoneNumber } from "@prisma/client";
 
 type BusinessWithPhone = Business & { phoneNumber: PhoneNumber | null };
@@ -9,7 +10,8 @@ export async function sendBookingNotificationToOwner(
   business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!business.phone) {
+  const ownerPhone = normalizePhoneNumber(business.phone);
+  if (!ownerPhone) {
     console.warn("[SMS] Skipping owner notification: business.phone is not set for business", business.id);
     return;
   }
@@ -34,14 +36,15 @@ export async function sendBookingNotificationToOwner(
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(business.phone, message, fromNumber);
+  await sendSms(ownerPhone, message, fromNumber);
 }
 
 export async function sendBookingConfirmationToCustomer(
   business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!appointment.customerPhone) {
+  const customerPhone = normalizePhoneNumber(appointment.customerPhone);
+  if (!customerPhone) {
     console.warn("[SMS] Skipping customer confirmation: no customerPhone on appointment", appointment.id);
     return;
   }
@@ -68,7 +71,7 @@ export async function sendBookingConfirmationToCustomer(
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(appointment.customerPhone, message, fromNumber);
+  await sendSms(customerPhone, message, fromNumber);
 }
 
 export async function sendMissedCallNotification(
@@ -82,24 +85,26 @@ export async function sendMissedCallNotification(
   }
 
   const fromNumber = business.phoneNumber.number;
+  const ownerPhone = normalizePhoneNumber(business.phone);
+  const callerE164 = normalizePhoneNumber(callerPhone);
 
   // Notify owner
-  if (business.phone) {
+  if (ownerPhone) {
     const ownerMessage = [
       `[RingPaw] Missed call - no booking made.`,
       `Caller: ${callerName || "Unknown"} (${callerPhone})`,
       `They may call back or you can reach out.`,
     ].join("\n");
-    await sendSms(business.phone, ownerMessage, fromNumber);
+    await sendSms(ownerPhone, ownerMessage, fromNumber);
   }
 
   // Auto-reply to caller
-  if (callerPhone && callerPhone !== "Unknown") {
+  if (callerE164) {
     const callerMessage = [
       `Hi${callerName ? ` ${callerName}` : ""}! Sorry we missed your call to ${business.name}.`,
       `Reply BOOK to schedule an appointment, or call us back anytime. We'd love to help! 🐾`,
     ].join(" ");
-    await sendSms(callerPhone, callerMessage, fromNumber);
+    await sendSms(callerE164, callerMessage, fromNumber);
   }
 }
 
@@ -107,7 +112,8 @@ export async function sendAppointmentReminder(
   business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!appointment.customerPhone || !business.phoneNumber) return;
+  const customerPhone = normalizePhoneNumber(appointment.customerPhone);
+  if (!customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
@@ -121,7 +127,7 @@ export async function sendAppointmentReminder(
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(appointment.customerPhone, message, fromNumber);
+  await sendSms(customerPhone, message, fromNumber);
 
   await prisma.appointment.update({
     where: { id: appointment.id },
@@ -135,7 +141,8 @@ export async function send48hReminder(
   business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!appointment.customerPhone || !business.phoneNumber) return;
+  const customerPhone = normalizePhoneNumber(appointment.customerPhone);
+  if (!customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
@@ -150,7 +157,7 @@ export async function send48hReminder(
     `We appreciate the heads up! 🐾`,
   ].join("\n");
 
-  await sendSms(appointment.customerPhone, message, fromNumber);
+  await sendSms(customerPhone, message, fromNumber);
 
   await prisma.appointment.update({
     where: { id: appointment.id },
@@ -165,7 +172,8 @@ export async function sendWaitlistOpeningNotification(
   entry: { customerPhone: string; customerName: string; petName?: string | null; serviceName?: string | null },
   openingTime: string
 ) {
-  if (!entry.customerPhone || !business.phoneNumber) return;
+  const customerPhone = normalizePhoneNumber(entry.customerPhone);
+  if (!customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
 
@@ -179,7 +187,7 @@ export async function sendWaitlistOpeningNotification(
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(entry.customerPhone, message, fromNumber);
+  await sendSms(customerPhone, message, fromNumber);
 }
 
 // --- No-Show Protection: No-response follow-up call ---
@@ -188,7 +196,8 @@ export async function sendNoResponseFollowUp(
   business: BusinessWithPhone,
   appointment: Appointment
 ) {
-  if (!appointment.customerPhone || !business.phoneNumber) return;
+  const customerPhone = normalizePhoneNumber(appointment.customerPhone);
+  if (!customerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
@@ -200,7 +209,7 @@ export async function sendNoResponseFollowUp(
     `Please reply CONFIRM or CANCEL so we can plan accordingly. If we don't hear back, we may need to release the slot. Thank you!`,
   ].join("\n");
 
-  await sendSms(appointment.customerPhone, message, fromNumber);
+  await sendSms(customerPhone, message, fromNumber);
 }
 
 // --- No-Show: Notify owner of cancellation + waitlist fill ---
@@ -210,7 +219,8 @@ export async function sendCancellationWithWaitlistNotification(
   cancelledAppt: Appointment,
   waitlistCustomerName?: string
 ) {
-  if (!business.phone || !business.phoneNumber) return;
+  const ownerPhone = normalizePhoneNumber(business.phone);
+  if (!ownerPhone || !business.phoneNumber) return;
 
   const fromNumber = business.phoneNumber.number;
   const time = formatDateTime(cancelledAppt.startTime, business.timezone);
@@ -225,5 +235,5 @@ export async function sendCancellationWithWaitlistNotification(
         `No one on the waitlist for this time.`,
       ].join("\n");
 
-  await sendSms(business.phone, message, fromNumber);
+  await sendSms(ownerPhone, message, fromNumber);
 }

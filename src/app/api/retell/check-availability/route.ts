@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
+import { isRetellAuthorized } from "@/lib/retell-auth";
 
 type BusinessHoursMap = Record<string, { open: string; close: string }>;
 
@@ -165,6 +166,10 @@ function resolveDate(input: string, timezone: string): string {
 // Retell custom tool endpoint: called by the voice agent during a call
 // to check calendar availability for a given date.
 export async function POST(req: NextRequest) {
+  if (!isRetellAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const { args, call } = body;
 

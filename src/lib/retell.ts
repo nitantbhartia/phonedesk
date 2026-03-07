@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import type { Business, RetellConfig, Service } from "@prisma/client";
+import { buildRetellWebhookUrl } from "./retell-auth";
 
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "gemini-2.5-flash";
@@ -424,7 +425,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       name: "lookup_customer_context",
       description:
         "ALWAYS call this tool FIRST at the start of every call before saying anything else. It checks if the caller is a returning customer and retrieves their name, pet info, and visit history. IMPORTANT: When this tool returns data, you MUST use it. If a customer name, pet name, breed, or size is returned, do NOT ask for that information again — greet them by name, reference their pet, and skip straight to scheduling. No parameters needed — the caller's phone number is provided automatically.",
-      url: `${appUrl}/api/retell/lookup-customer`,
+      url: buildRetellWebhookUrl(appUrl, "/api/retell/lookup-customer"),
       speak_during_execution: true,
       speak_after_execution: true,
       execution_message_description: "Give me one second while I pull up your info...",
@@ -444,7 +445,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       name: "check_availability",
       description:
         "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
-      url: `${appUrl}/api/retell/check-availability`,
+      url: buildRetellWebhookUrl(appUrl, "/api/retell/check-availability"),
       speak_during_execution: true,
       speak_after_execution: true,
       execution_message_description: "Let me check our availability for you...",
@@ -475,7 +476,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       name: "book_appointment",
       description:
         "Book an appointment for the customer after collecting all required information. IMPORTANT: For the start_time parameter, copy the exact start_time value from the check_availability tool's available_slots array — do NOT calculate or re-derive the date yourself. This ensures the date and time are accurate.",
-      url: `${appUrl}/api/retell/book-appointment`,
+      url: buildRetellWebhookUrl(appUrl, "/api/retell/book-appointment"),
       speak_during_execution: true,
       speak_after_execution: true,
       execution_message_description:
@@ -522,7 +523,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       name: "get_quote",
       description:
         "Get a price quote for a specific breed, size, and service combination. Call when customer asks about pricing.",
-      url: `${appUrl}/api/retell/get-quote`,
+      url: buildRetellWebhookUrl(appUrl, "/api/retell/get-quote"),
       speak_during_execution: false,
       parameters: {
         type: "object",
@@ -566,7 +567,7 @@ export function buildAgentConfig(
     generalPrompt: generateSystemPrompt(business, retellConfig?.personality),
     beginMessage: retellConfig?.greeting?.trim() || generateGreeting(business),
     voiceId: retellConfig?.voiceId || "11labs-Adrian",
-    webhookUrl: `${appUrl}/api/retell/webhook`,
+    webhookUrl: buildRetellWebhookUrl(appUrl, "/api/retell/webhook"),
     tools: buildAgentTools(appUrl),
   };
 }
