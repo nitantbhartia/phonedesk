@@ -1,16 +1,13 @@
 import Retell from "retell-sdk";
-import { createHmac } from "crypto";
 
 /**
- * Verify a Retell webhook/tool request.
+ * Verify a Retell webhook/tool request using HMAC-SHA256 signature.
  *
- * Supports two auth methods (tried in order):
- * 1. HMAC-SHA256 via x-retell-signature header (verified with RETELL_API_KEY)
- * 2. Shared secret via x-retell-secret / Authorization header (RETELL_WEBHOOK_SECRET)
+ * Retell signs the **canonical** JSON body (equivalent to JSON.stringify of the
+ * parsed object). The raw body from req.text() may have different whitespace,
+ * so we try both the raw body and the canonical form.
  *
- * If neither RETELL_API_KEY nor RETELL_WEBHOOK_SECRET is configured:
- *   - production: reject
- *   - dev: allow passthrough
+ * Fallback: shared secret via x-retell-secret / Authorization header.
  */
 export function isRetellWebhookValid(
   body: string,
@@ -20,44 +17,23 @@ export function isRetellWebhookValid(
   const apiKey = process.env.RETELL_API_KEY;
   const webhookSecret = process.env.RETELL_WEBHOOK_SECRET;
 
-  // Debug: log what we received so we can diagnose auth failures
-  console.log("[retell-auth] DEBUG:", {
-    hasApiKey: !!apiKey,
-    hasWebhookSecret: !!webhookSecret,
-    signatureHeader: signature || "(empty)",
-    authorizationHeader: headers?.get("authorization") || "(none)",
-    xRetellSecret: headers?.get("x-retell-secret") || "(none)",
-    xRetellToken: headers?.get("x-retell-token") || "(none)",
-    xRetellSignature: headers?.get("x-retell-signature") || "(none)",
-    bodyPreview: body?.substring(0, 100) || "(empty)",
-  });
-
-  // Try HMAC signature verification first (preferred)
+  // Try HMAC signature verification (preferred)
   if (apiKey && signature) {
+    // Try raw body first
     try {
-      // Manual HMAC debug: compute what we expect and compare
-      const sigMatch = /v=(\d+),d=(.*)/.exec(signature);
-      if (sigMatch) {
-        const ts = sigMatch[1];
-        const digest = sigMatch[2];
-        const expected = createHmac("sha256", apiKey).update(body + ts).digest("hex");
-        const timeDiff = Math.abs(Date.now() - Number(ts));
-        console.log("[retell-auth] HMAC debug:", {
-          timestamp: ts,
-          timeDiffMs: timeDiff,
-          timeDiffMin: (timeDiff / 60000).toFixed(1),
-          receivedDigest: digest?.substring(0, 16) + "...",
-          expectedDigest: expected.substring(0, 16) + "...",
-          digestMatch: expected === digest,
-          apiKeyPrefix: apiKey.substring(0, 8) + "...",
-          bodyLength: body.length,
-        });
+      if (Retell.verify(body, apiKey, signature)) return true;
+    } catch {
+      // fall through
+    }
+
+    // Try canonical JSON — Retell signs JSON.stringify(body) per their docs
+    try {
+      const canonical = JSON.stringify(JSON.parse(body));
+      if (canonical !== body && Retell.verify(canonical, apiKey, signature)) {
+        return true;
       }
-      const valid = Retell.verify(body, apiKey, signature);
-      if (valid) return true;
-      console.warn("[retell-auth] HMAC signature verification returned false");
-    } catch (err) {
-      console.warn("[retell-auth] HMAC signature verification threw:", err);
+    } catch {
+      // fall through
     }
   }
 
@@ -87,7 +63,6 @@ export function isRetellWebhookValid(
     return true;
   }
 
-  // Keys are set but verification failed
   console.error(
     "[retell-auth] Verification failed. apiKey set:",
     !!apiKey,
