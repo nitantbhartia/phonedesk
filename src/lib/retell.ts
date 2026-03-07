@@ -231,6 +231,7 @@ export async function createRetellAgent(config: {
       },
       agent_name: config.agentName,
       voice_id: config.voiceId || "11labs-Adrian",
+      voice_speed: 0.9,
       webhook_url: config.webhookUrl,
       language: "en-US",
     }),
@@ -243,12 +244,14 @@ export async function updateRetellAgent(
     agentName: string;
     voiceId: string;
     webhookUrl: string;
+    voiceSpeed: number;
   }>
 ): Promise<void> {
   const body: Record<string, unknown> = {};
   if (updates.agentName) body.agent_name = updates.agentName;
   if (updates.voiceId) body.voice_id = updates.voiceId;
   if (updates.webhookUrl) body.webhook_url = updates.webhookUrl;
+  if (updates.voiceSpeed !== undefined) body.voice_speed = updates.voiceSpeed;
 
   await retellFetch(`/update-agent/${agentId}`, {
     method: "PATCH",
@@ -481,6 +484,7 @@ export async function syncRetellAgent(business: SyncableBusiness) {
       agentName: config.agentName,
       voiceId: config.voiceId,
       webhookUrl: config.webhookUrl,
+      voiceSpeed: 0.9,
     });
 
     return prisma.retellConfig.update({
