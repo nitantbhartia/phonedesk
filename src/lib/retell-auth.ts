@@ -1,20 +1,13 @@
 import Retell from "retell-sdk";
 
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
-
 /**
- * Verify a Retell webhook/tool request.
+ * Verify a Retell webhook/tool request using HMAC-SHA256 signature.
  *
- * Auth methods (tried in order):
- * 1. HMAC-SHA256 via x-retell-signature header (verified with RETELL_API_KEY)
- * 2. Shared secret via x-retell-secret / Authorization header (RETELL_WEBHOOK_SECRET)
- * 3. If HMAC fails but signature has valid Retell format and timestamp is fresh,
- *    allow through (handles API key rotation gracefully). Log a warning so the
- *    key mismatch is visible and can be fixed.
+ * Retell signs the **canonical** JSON body (equivalent to JSON.stringify of the
+ * parsed object). The raw body from req.text() may have different whitespace,
+ * so we try both the raw body and the canonical form.
  *
- * If neither RETELL_API_KEY nor RETELL_WEBHOOK_SECRET is configured:
- *   - production: reject
- *   - dev: allow passthrough
+ * Fallback: shared secret via x-retell-secret / Authorization header.
  */
 export function isRetellWebhookValid(
   body: string,
@@ -24,13 +17,23 @@ export function isRetellWebhookValid(
   const apiKey = process.env.RETELL_API_KEY;
   const webhookSecret = process.env.RETELL_WEBHOOK_SECRET;
 
-  // Try HMAC signature verification first (preferred)
+  // Try HMAC signature verification (preferred)
   if (apiKey && signature) {
+    // Try raw body first
     try {
-      const valid = Retell.verify(body, apiKey, signature);
-      if (valid) return true;
+      if (Retell.verify(body, apiKey, signature)) return true;
     } catch {
-      // fall through to other methods
+      // fall through
+    }
+
+    // Try canonical JSON — Retell signs JSON.stringify(body) per their docs
+    try {
+      const canonical = JSON.stringify(JSON.parse(body));
+      if (canonical !== body && Retell.verify(canonical, apiKey, signature)) {
+        return true;
+      }
+    } catch {
+      // fall through
     }
   }
 
@@ -46,24 +49,6 @@ export function isRetellWebhookValid(
     const candidates = [bearerToken, headerToken].filter(Boolean) as string[];
     if (candidates.some((token) => token === webhookSecret)) {
       return true;
-    }
-  }
-
-  // Fallback: accept if signature has valid Retell format with fresh timestamp.
-  // This handles the case where RETELL_API_KEY was rotated in the dashboard
-  // but not yet updated in the environment.
-  if (signature) {
-    const match = /^v=(\d+),d=[0-9a-f]{64}$/.exec(signature);
-    if (match) {
-      const ts = Number(match[1]);
-      const age = Math.abs(Date.now() - ts);
-      if (age < FIVE_MINUTES_MS) {
-        console.warn(
-          "[retell-auth] HMAC digest mismatch — RETELL_API_KEY is likely stale. " +
-            "Allowing request based on valid signature format. Please update the key.",
-        );
-        return true;
-      }
     }
   }
 
