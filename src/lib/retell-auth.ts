@@ -1,59 +1,96 @@
 import Retell from "retell-sdk";
 
 /**
- * Verify a Retell webhook request using HMAC-SHA256 signature.
- * Retell signs the raw JSON body with the API key and sends
- * the signature in the `x-retell-signature` header.
+ * Verify a Retell webhook/tool request.
  *
- * The caller must pass the raw body string so we can verify
- * the signature before JSON-parsing.
+ * Supports two auth methods (tried in order):
+ * 1. HMAC-SHA256 via x-retell-signature header (verified with RETELL_API_KEY)
+ * 2. Shared secret via x-retell-secret / Authorization header (RETELL_WEBHOOK_SECRET)
+ *
+ * If neither RETELL_API_KEY nor RETELL_WEBHOOK_SECRET is configured:
+ *   - production: reject
+ *   - dev: allow passthrough
  */
-export function isRetellWebhookValid(body: string, signature: string): boolean {
+export function isRetellWebhookValid(
+  body: string,
+  signature: string,
+  headers?: Headers,
+): boolean {
   const apiKey = process.env.RETELL_API_KEY;
-  if (!apiKey) {
+  const webhookSecret = process.env.RETELL_WEBHOOK_SECRET;
+
+  // Try HMAC signature verification first (preferred)
+  if (apiKey && signature) {
+    try {
+      const valid = Retell.verify(body, apiKey, signature);
+      if (valid) return true;
+      console.warn("[retell-auth] HMAC signature verification returned false");
+    } catch (err) {
+      console.warn("[retell-auth] HMAC signature verification threw:", err);
+    }
+  }
+
+  // Fallback: shared secret via header
+  if (webhookSecret && headers) {
+    const authHeader = headers.get("authorization");
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length).trim()
+      : null;
+    const headerToken =
+      headers.get("x-retell-secret") || headers.get("x-retell-token");
+
+    const candidates = [bearerToken, headerToken].filter(Boolean) as string[];
+    if (candidates.some((token) => token === webhookSecret)) {
+      return true;
+    }
+  }
+
+  // No keys configured at all — passthrough in dev
+  if (!apiKey && !webhookSecret) {
     if (process.env.NODE_ENV === "production") {
-      console.error("[retell-auth] RETELL_API_KEY is not set in production — rejecting webhook");
+      console.error(
+        "[retell-auth] Neither RETELL_API_KEY nor RETELL_WEBHOOK_SECRET is set — rejecting",
+      );
       return false;
     }
-    // In dev, allow passthrough when no API key is configured
     return true;
   }
 
-  if (!signature) {
-    console.error("[retell-auth] Missing x-retell-signature header");
-    return false;
-  }
-
-  try {
-    return Retell.verify(body, apiKey, signature);
-  } catch (err) {
-    console.error("[retell-auth] Signature verification failed:", err);
-    return false;
-  }
+  // Keys are set but verification failed
+  console.error(
+    "[retell-auth] Verification failed. apiKey set:",
+    !!apiKey,
+    "signature present:",
+    !!signature,
+    "webhookSecret set:",
+    !!webhookSecret,
+  );
+  return false;
 }
 
 /**
- * @deprecated Use isRetellWebhookValid with raw body + signature instead.
- * Kept for backwards compatibility during migration.
+ * Header-based auth check for Retell requests that don't use raw body verification.
+ * Checks RETELL_WEBHOOK_SECRET against common auth headers.
  */
 export function isRetellAuthorized(req: Request): boolean {
-  // This legacy function cannot properly verify HMAC signatures because
-  // it doesn't have access to the raw request body. Callers should
-  // migrate to isRetellWebhookValid.
-  const apiKey = process.env.RETELL_API_KEY;
-  if (!apiKey) {
+  const webhookSecret = process.env.RETELL_WEBHOOK_SECRET;
+  if (!webhookSecret) {
     if (process.env.NODE_ENV === "production") {
-      console.error("[retell-auth] RETELL_API_KEY is not set — rejecting request");
+      console.error("[retell-auth] RETELL_WEBHOOK_SECRET is not set — rejecting");
       return false;
     }
     return true;
   }
-  // Cannot verify without raw body; reject in production
-  if (process.env.NODE_ENV === "production") {
-    console.error("[retell-auth] isRetellAuthorized is deprecated — use isRetellWebhookValid");
-    return false;
-  }
-  return true;
+
+  const authHeader = req.headers.get("authorization");
+  const bearerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length).trim()
+    : null;
+  const headerToken =
+    req.headers.get("x-retell-secret") || req.headers.get("x-retell-token");
+
+  const candidates = [bearerToken, headerToken].filter(Boolean) as string[];
+  return candidates.some((token) => token === webhookSecret);
 }
 
 export function buildRetellWebhookUrl(baseUrl: string, path: string): string {
