@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
-  sendBookingNotificationToOwner,
-  sendBookingConfirmationToCustomer,
   sendMissedCallNotification,
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
-import { upsertCustomerMemoryFromCall, lookupCustomerContext, buildCustomerContextSummary } from "@/lib/customer-memory";
+import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
 import { refreshRetellLLMForCall } from "@/lib/retell";
+import { isRetellAuthorized } from "@/lib/retell-auth";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
 
 export async function POST(req: NextRequest) {
+  if (!isRetellAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const { event, call } = body;
 
@@ -33,6 +36,10 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleCallStarted(call: RetellCallPayload) {
+  if (!call.call_id) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   const calledNumber = call.to_number;
 
   const phoneNum = calledNumber
@@ -51,7 +58,7 @@ async function handleCallStarted(call: RetellCallPayload) {
     const knownName = customerContext.customer?.name || null;
 
     await prisma.call.upsert({
-      where: { retellCallId: call.call_id || "" },
+      where: { retellCallId: call.call_id },
       create: {
         businessId: phoneNum.businessId,
         retellCallId: call.call_id,
@@ -62,17 +69,17 @@ async function handleCallStarted(call: RetellCallPayload) {
       update: { status: "IN_PROGRESS", callerName: knownName },
     });
 
-    // Refresh date + inject customer context on the LLM config.
-    // update-call doesn't reliably support retell_llm_dynamic_variables, so
-    // we use update-retell-llm instead. Customer context is also fetched via
-    // the lookup_customer_context tool (always called first) as a reliable backup.
+    // Refresh date on the LLM. Customer context is not injected here to
+    // avoid a race condition when two calls arrive simultaneously for the
+    // same business (global LLM vars are shared across all calls). The
+    // lookup_customer_context tool fetches context per-call reliably.
     const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
     if (llmId) {
-      const contextSummary = buildCustomerContextSummary(customerContext);
+      const biz = phoneNum.business as { timezone?: string | null; retellConfig?: { llmId?: string } | null };
       try {
-        await refreshRetellLLMForCall(llmId, contextSummary);
+        await refreshRetellLLMForCall(llmId, biz.timezone || undefined);
       } catch (err) {
-        console.error("[webhook] Failed to refresh LLM context:", err);
+        console.error("[webhook] Failed to refresh LLM date:", err);
       }
     }
   }
@@ -108,41 +115,29 @@ async function handleCallEnded(call: RetellCallPayload) {
       })
     : null;
 
-  const callRecord = existingCall
-    ? await prisma.call.update({
-        where: { retellCallId: call.call_id },
-        data: {
-          callerPhone: call.from_number,
-          duration,
-          transcript: call.transcript || null,
-          status: "COMPLETED",
-          recordingUrl: call.recording_url || null,
-        },
-      })
-    : await prisma.call.create({
-        data: {
-          businessId: business.id,
-          retellCallId: call.call_id,
-          callerPhone: call.from_number,
-          duration,
-          transcript: call.transcript || null,
-          status: "COMPLETED",
-          recordingUrl: call.recording_url || null,
-        },
-      });
-
-  // If no appointment was created during the call, mark as NO_BOOKING
-  if (!callRecord.appointmentId) {
+  if (existingCall) {
     await prisma.call.update({
-      where: { id: callRecord.id },
-      data: { status: "NO_BOOKING" },
+      where: { retellCallId: call.call_id },
+      data: {
+        callerPhone: call.from_number,
+        duration,
+        transcript: call.transcript || null,
+        status: "COMPLETED",
+        recordingUrl: call.recording_url || null,
+      },
     });
-
-    await sendMissedCallNotification(
-      business as Parameters<typeof sendMissedCallNotification>[0],
-      call.from_number || "Unknown",
-      undefined
-    );
+  } else {
+    await prisma.call.create({
+      data: {
+        businessId: business.id,
+        retellCallId: call.call_id,
+        callerPhone: call.from_number,
+        duration,
+        transcript: call.transcript || null,
+        status: "COMPLETED",
+        recordingUrl: call.recording_url || null,
+      },
+    });
   }
 
   return new NextResponse(null, { status: 204 });
@@ -207,6 +202,30 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
         outcome: existingCall.appointmentId ? "BOOKED" : "NO_BOOKING",
         contactedAt: new Date(),
       });
+    }
+
+    const refreshedCall = await prisma.call.findUnique({
+      where: { retellCallId: call.call_id },
+      include: { business: { include: { phoneNumber: true } } },
+    });
+
+    if (
+      refreshedCall &&
+      !refreshedCall.appointmentId &&
+      refreshedCall.status !== "NO_BOOKING"
+    ) {
+      await prisma.call.update({
+        where: { id: refreshedCall.id },
+        data: { status: "NO_BOOKING" },
+      });
+
+      await sendMissedCallNotification(
+        refreshedCall.business as Parameters<
+          typeof sendMissedCallNotification
+        >[0],
+        call.from_number || refreshedCall.callerPhone || "Unknown",
+        refreshedCall.callerName || undefined
+      );
     }
   }
 

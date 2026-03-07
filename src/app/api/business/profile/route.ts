@@ -235,27 +235,30 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  if (!fullBusiness?.retellConfig) {
-    console.error("[Retell Sync] No retellConfig found for business", business.id);
+  if (!fullBusiness) {
     return NextResponse.json(
-      { business, error: "No voice agent configured. Please complete onboarding to provision a phone number first." },
-      { status: 400 }
+      { business, error: "Business profile saved, but failed to reload profile for voice sync." },
+      { status: 500 }
     );
   }
 
-  try {
-    console.log("[Retell Sync] Syncing agent for business", business.id, "bookingMode:", fullBusiness.bookingMode, "agentId:", fullBusiness.retellConfig.agentId, "llmId:", fullBusiness.retellConfig.llmId);
-    await syncRetellAgent(fullBusiness);
-    console.log("[Retell Sync] Success for business", business.id);
-  } catch (error) {
-    console.error("[Retell Sync] Failed for business", business.id, error);
-    return NextResponse.json(
-      { business, error: "Settings saved but failed to sync to voice agent: " + (error instanceof Error ? error.message : String(error)) },
-      { status: 502 }
-    );
+  if (fullBusiness.retellConfig) {
+    try {
+      console.log("[Retell Sync] Syncing agent for business", business.id, "bookingMode:", fullBusiness.bookingMode, "agentId:", fullBusiness.retellConfig.agentId, "llmId:", fullBusiness.retellConfig.llmId);
+      await syncRetellAgent(fullBusiness);
+      console.log("[Retell Sync] Success for business", business.id);
+    } catch (error) {
+      console.error("[Retell Sync] Failed for business", business.id, error);
+      return NextResponse.json(
+        { business, error: "Settings saved but failed to sync to voice agent: " + (error instanceof Error ? error.message : String(error)) },
+        { status: 502 }
+      );
+    }
+  } else {
+    console.log("[Retell Sync] Skipping sync because no Retell config exists yet for business", business.id);
   }
 
-  return NextResponse.json({ business, synced: true });
+  return NextResponse.json({ business, synced: Boolean(fullBusiness.retellConfig) });
 }
 
 export async function PATCH(req: NextRequest) {
