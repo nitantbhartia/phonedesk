@@ -6,6 +6,7 @@ import {
   lookupCustomerContext,
 } from "@/lib/customer-memory";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
+import { normalizePhoneNumber } from "@/lib/phone";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   const body = JSON.parse(rawBody);
   const { args, call } = body;
 
-  const calledNumber = call?.to_number;
+  const calledNumber = normalizePhoneNumber(call?.to_number);
   const phoneRecord = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },

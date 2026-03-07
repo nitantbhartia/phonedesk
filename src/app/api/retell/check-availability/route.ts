@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
+import { normalizePhoneNumber } from "@/lib/phone";
 
 const MONTH_MAP: Record<string, number> = {
   january: 1,
@@ -222,8 +223,8 @@ export async function POST(req: NextRequest) {
   const serviceName = args?.service_name;
   const preferredTime = args?.preferred_time;
 
-  // Identify business from the called number
-  const calledNumber = call?.to_number;
+  // Identify business from the called number (normalize to match DB format)
+  const calledNumber = normalizePhoneNumber(call?.to_number);
   const phoneNum = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },

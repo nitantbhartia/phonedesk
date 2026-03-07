@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
+import { normalizePhoneNumber } from "@/lib/phone";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
   const { args, call } = body;
   const serviceName = String(args?.service_name || "").trim();
 
-  const calledNumber = call?.to_number;
+  const calledNumber = normalizePhoneNumber(call?.to_number);
   const phoneNum = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },
