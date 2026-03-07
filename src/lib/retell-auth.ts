@@ -1,4 +1,5 @@
 import Retell from "retell-sdk";
+import { createHmac } from "crypto";
 
 /**
  * Verify a Retell webhook/tool request.
@@ -34,6 +35,24 @@ export function isRetellWebhookValid(
   // Try HMAC signature verification first (preferred)
   if (apiKey && signature) {
     try {
+      // Manual HMAC debug: compute what we expect and compare
+      const sigMatch = /v=(\d+),d=(.*)/.exec(signature);
+      if (sigMatch) {
+        const ts = sigMatch[1];
+        const digest = sigMatch[2];
+        const expected = createHmac("sha256", apiKey).update(body + ts).digest("hex");
+        const timeDiff = Math.abs(Date.now() - Number(ts));
+        console.log("[retell-auth] HMAC debug:", {
+          timestamp: ts,
+          timeDiffMs: timeDiff,
+          timeDiffMin: (timeDiff / 60000).toFixed(1),
+          receivedDigest: digest?.substring(0, 16) + "...",
+          expectedDigest: expected.substring(0, 16) + "...",
+          digestMatch: expected === digest,
+          apiKeyPrefix: apiKey.substring(0, 8) + "...",
+          bodyLength: body.length,
+        });
+      }
       const valid = Retell.verify(body, apiKey, signature);
       if (valid) return true;
       console.warn("[retell-auth] HMAC signature verification returned false");
