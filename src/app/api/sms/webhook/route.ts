@@ -82,6 +82,7 @@ async function sendSmsReply(to: string, body: string, from: string) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const twilioFrom = process.env.TWILIO_PHONE_NUMBER || from;
+  console.log("[Twilio] sendSmsReply — SID:", accountSid ? `${accountSid.slice(0, 8)}...${accountSid.slice(-4)}` : "MISSING", "| Token:", authToken ? `${authToken.slice(0, 4)}...${authToken.slice(-4)}` : "MISSING", "| from:", twilioFrom);
 
   if (accountSid && authToken) {
     const payload = new URLSearchParams({
