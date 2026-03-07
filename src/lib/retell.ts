@@ -465,6 +465,11 @@ export async function syncRetellAgent(business: SyncableBusiness) {
   const config = buildAgentConfig(business);
   const existingConfig = business.retellConfig;
 
+  // Use custom greeting from settings if saved, otherwise use the generated default
+  if (existingConfig?.greeting) {
+    config.beginMessage = existingConfig.greeting;
+  }
+
   if (existingConfig?.agentId && existingConfig.llmId) {
     await updateRetellLLM(existingConfig.llmId, {
       generalPrompt: config.generalPrompt,

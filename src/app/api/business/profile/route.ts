@@ -287,6 +287,19 @@ export async function PATCH(req: NextRequest) {
         where: { businessId: business.id },
         data: retellData,
       });
+
+      // Sync changes to Retell so greeting/voice/personality take effect
+      const fullBusiness = await prisma.business.findUnique({
+        where: { id: business.id },
+        include: { services: { where: { isActive: true } }, retellConfig: true },
+      });
+      if (fullBusiness?.retellConfig) {
+        try {
+          await syncRetellAgent(fullBusiness);
+        } catch (err) {
+          console.error("[PATCH] Failed to sync retell config:", err);
+        }
+      }
     }
     delete body.agentActive;
     delete body.voiceId;
