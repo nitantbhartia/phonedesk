@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
 
 const navItems = [
   {
@@ -90,6 +91,18 @@ const navItems = [
   },
 ];
 
+const ownerNavItem = {
+  href: "/owner",
+  label: "Owner",
+  icon: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 3v18h18" />
+      <path d="M7 14l4-4 3 3 5-5" />
+      <path d="M19 8v5h-5" />
+    </svg>
+  ),
+};
+
 interface UsageStats {
   minutesUsed: number;
   minutesLimit: number;
@@ -100,6 +113,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const showOwnerNav = isOwnerDashboardEmailClient(session?.user?.email || null);
+  const finalNavItems = showOwnerNav ? [...navItems, ownerNavItem] : navItems;
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [forwardingReady, setForwardingReady] = useState<boolean | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -182,7 +197,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 space-y-2">
-          {navItems.map((item) => {
+          {finalNavItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/dashboard" && pathname.startsWith(item.href));
