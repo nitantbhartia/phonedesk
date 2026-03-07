@@ -125,8 +125,10 @@ async function sendSmsReply(to: string, body: string, from: string) {
 }
 
 export async function POST(req: NextRequest) {
+  console.log("[SMS Webhook] HIT — method:", req.method, "content-type:", req.headers.get("content-type"));
   const inbound = await parseInboundPayload(req);
   const { source, from, to, messageBody, twilioFormData } = inbound;
+  console.log("[SMS Webhook] Parsed —", { source, from, to, messageBody: messageBody.slice(0, 50) });
 
   if (source === "retell" && !isRetellAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
