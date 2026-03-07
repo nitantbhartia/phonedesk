@@ -26,7 +26,14 @@ export async function GET(req: NextRequest) {
   );
 
   const buildRedirectUrl = (path: string, params?: Record<string, string>) => {
-    const target = new URL(path, appUrl);
+    // Prevent open redirect: only allow relative paths, not absolute URLs
+    const safePath = path.startsWith("/") ? path : `/settings/calendar`;
+    const target = new URL(safePath, appUrl);
+    // Double-check the origin matches to prevent protocol-relative redirects
+    const base = new URL(appUrl);
+    if (target.origin !== base.origin) {
+      return new URL("/settings/calendar", appUrl);
+    }
     if (params) {
       for (const [key, value] of Object.entries(params)) {
         target.searchParams.set(key, value);
