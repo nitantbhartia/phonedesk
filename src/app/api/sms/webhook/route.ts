@@ -6,6 +6,14 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
 
+/** Return an empty TwiML response (Twilio requires text/xml Content-Type) */
+function twimlOk() {
+  return new Response(
+    '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
+    { status: 200, headers: { "Content-Type": "text/xml" } }
+  );
+}
+
 type InboundSource = "retell" | "twilio";
 
 type InboundPayload = {
@@ -125,7 +133,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!from || !to) {
-    return NextResponse.json({ ok: true });
+    return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
   }
 
   if (
@@ -134,12 +142,12 @@ export async function POST(req: NextRequest) {
     !verifyTwilioSignature(req, twilioFormData)
   ) {
     console.warn("Rejected Twilio webhook: invalid signature");
-    return NextResponse.json({ ok: false }, { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const { allowed } = rateLimit(`sms:${from}`, { limit: 20, windowMs: 60_000 });
   if (!allowed) {
-    return NextResponse.json({ ok: true });
+    return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
   }
 
   await prisma.smsLog.create({
@@ -157,7 +165,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (!phoneRecord?.business) {
-    return NextResponse.json({ ok: true });
+    return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
   }
 
   const business = phoneRecord.business;
@@ -418,5 +426,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true });
+  return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
 }
