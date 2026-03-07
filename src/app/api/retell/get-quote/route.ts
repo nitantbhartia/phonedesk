@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-retell-signature") || "";
 
-  if (!isRetellWebhookValid(rawBody, signature)) {
+  if (!isRetellWebhookValid(rawBody, signature, req.headers)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
