@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { syncRetellAgent } from "@/lib/retell";
+import { seedBreedRecommendations } from "@/lib/breed-recommendations";
 
 async function resolveUserId(session: {
   user?: { id?: string | null; email?: string | null; name?: string | null; image?: string | null };
@@ -180,6 +181,8 @@ export async function POST(req: NextRequest) {
         onboardingStep: 3,
       },
     });
+    // Seed default breed recommendations for new businesses
+    await seedBreedRecommendations(business.id, prisma);
   }
 
   // Upsert services
@@ -234,6 +237,7 @@ export async function POST(req: NextRequest) {
       services: { where: { isActive: true } },
       groomers: { where: { isActive: true } },
       retellConfig: true,
+      breedRecommendations: { orderBy: { priority: "desc" } },
     },
   });
 
@@ -293,7 +297,7 @@ export async function PATCH(req: NextRequest) {
       // Sync changes to Retell so greeting/voice/personality take effect
       const fullBusiness = await prisma.business.findUnique({
         where: { id: business.id },
-        include: { services: { where: { isActive: true } }, groomers: { where: { isActive: true } }, retellConfig: true },
+        include: { services: { where: { isActive: true } }, groomers: { where: { isActive: true } }, retellConfig: true, breedRecommendations: { orderBy: { priority: "desc" } } },
       });
       if (fullBusiness?.retellConfig) {
         try {

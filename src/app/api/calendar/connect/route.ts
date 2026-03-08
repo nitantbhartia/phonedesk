@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
         : "https://connect.squareupsandbox.com";
       const squareAuthUrl = new URL(`${squareBaseUrl}/oauth2/authorize`);
       squareAuthUrl.searchParams.set("client_id", process.env.SQUARE_APP_ID || "");
-      squareAuthUrl.searchParams.set("scope", "APPOINTMENTS_READ APPOINTMENTS_WRITE APPOINTMENTS_ALL_READ APPOINTMENTS_ALL_WRITE MERCHANT_PROFILE_READ");
+      squareAuthUrl.searchParams.set("scope", "APPOINTMENTS_READ APPOINTMENTS_WRITE APPOINTMENTS_ALL_READ APPOINTMENTS_ALL_WRITE MERCHANT_PROFILE_READ CUSTOMERS_READ CUSTOMERS_WRITE CATALOG_READ");
       squareAuthUrl.searchParams.set("session", "false");
       squareAuthUrl.searchParams.set(
         "state",

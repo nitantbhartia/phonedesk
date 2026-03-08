@@ -49,6 +49,7 @@ export async function POST() {
     include: {
       services: { where: { isActive: true } },
       retellConfig: true,
+      breedRecommendations: { orderBy: { priority: "desc" } },
     },
   });
 

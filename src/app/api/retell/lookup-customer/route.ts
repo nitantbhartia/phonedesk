@@ -7,6 +7,7 @@ import {
 } from "@/lib/customer-memory";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { normalizePhoneNumber } from "@/lib/phone";
+import { getCRMWithFallback } from "@/crm/withFallback";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -32,13 +33,41 @@ export async function POST(req: NextRequest) {
       result:
         "Customer context is unavailable because the business could not be resolved.",
       found: false,
+      square_customer_id: null,
     });
   }
 
-  const context = await lookupCustomerContext(
-    phoneRecord.business.id,
-    args?.caller_phone || call?.from_number
-  );
+  const callerPhone = args?.caller_phone || call?.from_number;
+  const businessId = phoneRecord.business.id;
+
+  // Run internal DB lookup and Square CRM lookup concurrently
+  const [internalContext, squareCustomer] = await Promise.allSettled([
+    lookupCustomerContext(businessId, callerPhone),
+    getCRMWithFallback(businessId).then((crm) => {
+      const normalized = normalizePhoneNumber(callerPhone);
+      return normalized ? crm.getCustomer(normalized) : null;
+    }),
+  ]);
+
+  const context =
+    internalContext.status === "fulfilled"
+      ? internalContext.value
+      : { found: false, normalizedPhone: null, customer: null, pets: [], behaviorLogs: [] };
+
+  const squareCust =
+    squareCustomer.status === "fulfilled" ? squareCustomer.value : null;
+
+  if (squareCustomer.status === "rejected") {
+    console.error("[lookup-customer] Square lookup failed:", squareCustomer.reason);
+  }
+
+  const squareCustomerId = squareCust?.id || context.customer?.squareCustomerId || null;
+
+  // If Square has this customer but we don't have them locally yet, treat as found
+  const found = Boolean(context.customer || squareCust);
+
+  // Prefer Square's name if available and internal record not found, otherwise use internal
+  const customerName = context.customer?.name || squareCust?.name || null;
 
   const todayStr = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -48,11 +77,23 @@ export async function POST(req: NextRequest) {
     timeZone: phoneRecord.business.timezone || "America/Los_Angeles",
   });
 
+  // Build the human-readable summary
+  let result: string;
+  if (!found) {
+    result = "No prior customer record found for this caller. Treat them as a new customer and collect full booking details.";
+  } else if (!context.customer && squareCust) {
+    // Found in Square but not in our internal DB
+    result = `Returning customer found in Square CRM. Customer name: ${squareCust.name}. Phone: ${callerPhone}. Greet them by name and collect booking details.`;
+  } else {
+    result = buildCustomerContextSummary(context);
+  }
+
   return NextResponse.json({
-    result: buildCustomerContextSummary(context),
-    found: context.found,
-    customer_name: context.customer?.name || null,
-    visit_count: context.customer?.visitCount || 0,
+    result,
+    found,
+    square_customer_id: squareCustomerId,
+    customer_name: customerName,
+    visit_count: context.customer?.visitCount || squareCust?.visitCount || 0,
     last_service_name: context.customer?.lastServiceName || null,
     last_visit_at: context.customer?.lastVisitAt?.toISOString() || null,
     pets: deduplicatePets(context.pets).map((pet) => ({

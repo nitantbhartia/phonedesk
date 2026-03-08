@@ -212,6 +212,28 @@ export async function sendNoResponseFollowUp(
   await sendSms(customerPhone, message, fromNumber);
 }
 
+// --- 30-Minute "On My Way" Reminder ---
+
+export async function sendOnMyWayReminder(
+  business: BusinessWithPhone,
+  appointment: Appointment
+) {
+  const customerPhone = normalizePhoneNumber(appointment.customerPhone);
+  if (!customerPhone || !business.phoneNumber) return;
+
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
+  const time = formatDateTime(appointment.startTime, business.timezone);
+
+  const message = `Heads up! ${appointment.petName || "Your pet"}'s appointment at ${business.name} is in 30 minutes (${time}). See you soon! 🐾`;
+
+  await sendSms(customerPhone, message, fromNumber);
+
+  await prisma.appointment.update({
+    where: { id: appointment.id },
+    data: { onMyWaySent: true },
+  });
+}
+
 // --- No-Show: Notify owner of cancellation + waitlist fill ---
 
 export async function sendCancellationWithWaitlistNotification(
