@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Service } from "@prisma/client";
 import { bookAppointment, isSlotAvailable, parseLocalDatetime } from "@/lib/calendar";
 import {
   sendBookingNotificationToOwner,
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   const service = svcName
     ? business.services.find(
-        (s) =>
+        (s: Service) =>
           s.isActive &&
           s.name.toLowerCase().includes(svcName.toLowerCase())
       )

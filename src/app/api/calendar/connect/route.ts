@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
       const calendar = google.calendar({ version: "v3", auth: oauth2Client });
       const calendarList = await calendar.calendarList.list();
       const primaryCal = calendarList.data.items?.find(
-        (c) => c.primary
+        (c: { primary?: boolean | null; id?: string | null }) => c.primary
       );
 
       // Check if already connected

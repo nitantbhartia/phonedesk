@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Service } from "@prisma/client";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { getCRMWithFallback } from "@/crm/withFallback";
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
     orderBy: { name: "asc" },
   });
 
-  const services = dbServices.map((s) => ({
+  const services = dbServices.map((s: Service) => ({
     name: s.name,
     price: s.price,
     price_cents: Math.round(s.price * 100),
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
   }));
 
   const summary = services
-    .map((s) => `${s.name} $${s.price} (${s.duration_minutes} min)`)
+    .map((s: { name: string; price: number; duration_minutes: number }) => `${s.name} $${s.price} (${s.duration_minutes} min)`)
     .join(", ");
 
   return NextResponse.json({
