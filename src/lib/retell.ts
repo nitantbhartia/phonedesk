@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import type { Business, RetellConfig, Service } from "@prisma/client";
+import type { Business, BreedRecommendation, RetellConfig, Service } from "@prisma/client";
 
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
@@ -36,8 +36,23 @@ async function retellFetch(path: string, options: RequestInit = {}) {
 
 // --- System Prompt & Greeting ---
 
+function buildBreedGuideSection(recommendations: BreedRecommendation[]): string {
+  if (recommendations.length === 0) return "";
+  const sorted = [...recommendations].sort((a, b) => b.priority - a.priority);
+  const lines = sorted.map(
+    (r) =>
+      `- Breed contains "${r.breedKeyword}": recommend "${r.recommendedServiceKeyword}". Reason: ${r.reason}`
+  );
+  return `---
+BREED SERVICE GUIDE
+After the caller tells you their dog's breed, check if it matches any entry below (case-insensitive substring match). If it does, warmly recommend that service before asking which service they want. Be helpful, not pushy — offer it as friendly expertise.
+${lines.join("\n")}
+Example: caller says "standard poodle" → "For a standard poodle I'd actually recommend the full groom over the bath and brush — their coats need the extra work. Want to go with that?"
+Use the Reason to inform your explanation but rephrase it naturally. Never read the Reason verbatim.`;
+}
+
 export function generateSystemPrompt(
-  business: Business & { services: Service[] }
+  business: Business & { services: Service[]; breedRecommendations: BreedRecommendation[] }
 ): string {
   const serviceList = business.services
     .filter((s) => s.isActive)
@@ -59,6 +74,8 @@ export function generateSystemPrompt(
     .join(", ");
 
   const serviceListNatural = serviceNames || "full grooms, bath and brush, nail trims";
+
+  const breedGuideSection = buildBreedGuideSection(business.breedRecommendations);
 
   const pricingNatural = business.services
     .filter((s) => s.isActive)
@@ -154,7 +171,7 @@ WHAT YOU NEVER DO
 - Never rush a caller who is talking about their dog — this is rapport, not a distraction
 - Never confirm a time slot before book_appointment returns success
 - Never reinvent or reformat timestamps from tool results
-- Never re-check availability for the same day unless the caller requests a different day`;
+- Never re-check availability for the same day unless the caller requests a different day${breedGuideSection ? "\n" + breedGuideSection : ""}`;
 }
 
 function formatBusinessHours(
@@ -507,7 +524,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
 
 // --- Build Full Config ---
 
-export function buildAgentConfig(business: Business & { services: Service[] }) {
+export function buildAgentConfig(business: Business & { services: Service[]; breedRecommendations: BreedRecommendation[] }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   return {
@@ -522,6 +539,7 @@ export function buildAgentConfig(business: Business & { services: Service[] }) {
 
 type SyncableBusiness = Business & {
   services: Service[];
+  breedRecommendations: BreedRecommendation[];
   retellConfig?: RetellConfig | null;
 };
 

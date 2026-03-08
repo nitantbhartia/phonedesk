@@ -29,6 +29,7 @@ async function syncAllAgentsOnStartup() {
       include: {
         services: { where: { isActive: true } },
         retellConfig: true,
+        breedRecommendations: { orderBy: { priority: "desc" } },
       },
     });
 

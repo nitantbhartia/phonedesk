@@ -87,6 +87,7 @@ model Business {
   rebookingConfig RebookingConfig?
   behaviorLogs    BehaviorLog[]
   reviewRequests  ReviewRequest[]
+  breedRecommendations BreedRecommendation[]
   googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
   stripeCustomerId String? @unique
@@ -226,6 +227,7 @@ model Appointment {
   notes           String?           @db.Text
   reminderSent    Boolean           @default(false)
   reminder48hSent Boolean           @default(false)
+  onMyWaySent     Boolean           @default(false)
   confirmedAt     DateTime?         // when the customer confirmed via SMS/link
   noShowMarkedAt  DateTime?         // when marked as no-show
   groomingStatus  GroomingStatus?   // Feature 2: live appointment status
@@ -390,6 +392,22 @@ model PricingRule {
   updatedAt   DateTime  @updatedAt
 
   @@unique([businessId, serviceId, breed, size])
+}
+
+// Breed-Based Service Recommendation Engine
+model BreedRecommendation {
+  id                        String   @id @default(cuid())
+  businessId                String
+  business                  Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  breedKeyword              String   // lowercase substring to match, e.g. "poodle"
+  recommendedServiceKeyword String   // substring of service name, e.g. "full groom"
+  reason                    String   // shown to the AI to explain the recommendation naturally
+  priority                  Int      @default(0) // higher = listed first in prompt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, breedKeyword])
 }
 
 // Feature 5: Rebooking Engine

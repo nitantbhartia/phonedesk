@@ -73,6 +73,7 @@ export async function POST(req: Request) {
       phoneNumber: true,
       services: { where: { isActive: true } },
       retellConfig: true,
+      breedRecommendations: { orderBy: { priority: "desc" } },
     },
   });
 
