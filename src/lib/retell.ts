@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import type { Business, BreedRecommendation, RetellConfig, Service } from "@prisma/client";
+import type { Business, BreedRecommendation, RetellConfig, Service, Groomer } from "@prisma/client";
 
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
@@ -52,7 +52,7 @@ Use the Reason to inform your explanation but rephrase it naturally. Never read 
 }
 
 export function generateSystemPrompt(
-  business: Business & { services: Service[]; breedRecommendations: BreedRecommendation[] }
+  business: Business & { services: Service[]; breedRecommendations: BreedRecommendation[]; groomers?: Groomer[] }
 ): string {
   const serviceList = business.services
     .filter((s) => s.isActive)
@@ -90,6 +90,8 @@ Location: ${business.address || business.city || "Not specified"}
 Hours: ${hours}
 Services on file (use get_services for live prices):
 ${serviceList || "- Full Groom: $75 (90 minutes)\n- Bath & Brush: $45 (60 minutes)\n- Nail Trim: $20 (15 minutes)"}
+${business.groomers && business.groomers.filter(g => g.isActive).length > 0 ? `Groomers:
+${business.groomers.filter(g => g.isActive).map(g => `- ${g.name}${g.specialties.length > 0 ? ` (specializes in: ${g.specialties.join(", ")})` : ""}`).join("\n")}` : ""}
 ---
 PERSONALITY & TONE
 You are warm, unhurried, and genuinely interested in the caller and their dog. You sound like a real person — slightly casual but professional. Never robotic. Never rushed.
@@ -131,7 +133,8 @@ One question per turn. Skip anything already known from lookup. Collect in this 
 - Dog's size (Small, Medium, Large, or Extra Large)
 - Service — ask naturally using names from get_services: "What were we thinking for [dog name] today? We do [service names from get_services]."
 - Special handling needs or notes
-- Whether this is their first visit
+- Whether this is their first visit${business.groomers && business.groomers.filter(g => g.isActive).length > 0 ? `
+- Groomer preference — ask naturally: "Do you have a preferred groomer, or is anyone fine?" If they mention a name, confirm it matches one of your groomers.` : ""}
 - Preferred day and time
 STEP 4 — CHECK AVAILABILITY
 After caller gives a preferred date and time, call check_availability once using date, service_name, and preferred_time in the same tool call.
@@ -516,6 +519,11 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             description:
               "Square customer ID from lookup_customer_context, if the caller is a returning Square customer",
           },
+          groomer_name: {
+            type: "string",
+            description:
+              "The name of the preferred groomer, if the customer requested one.",
+          },
         },
         required: ["customer_name", "start_time"],
       },
@@ -570,7 +578,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
 
 // --- Build Full Config ---
 
-export function buildAgentConfig(business: Business & { services: Service[]; breedRecommendations: BreedRecommendation[] }) {
+export function buildAgentConfig(business: Business & { services: Service[]; breedRecommendations: BreedRecommendation[]; groomers?: Groomer[] }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   return {
@@ -586,6 +594,7 @@ export function buildAgentConfig(business: Business & { services: Service[]; bre
 type SyncableBusiness = Business & {
   services: Service[];
   breedRecommendations: BreedRecommendation[];
+  groomers?: Groomer[];
   retellConfig?: RetellConfig | null;
 };
 

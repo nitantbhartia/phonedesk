@@ -171,6 +171,7 @@ export async function lookupCustomerContext(businessId: string, phone?: string |
       pets: {
         orderBy: { createdAt: "asc" },
       },
+      preferredGroomer: true,
     },
   });
 
@@ -269,6 +270,9 @@ export function buildCustomerContextSummary(context: Awaited<ReturnType<typeof l
       ? `Last call summary: ${context.customer.lastCallSummary}.`
       : "",
     context.customer.notes ? `Customer notes: ${context.customer.notes}.` : "",
+    (context.customer as { preferredGroomer?: { name: string } | null }).preferredGroomer
+      ? `Preferred groomer: ${(context.customer as { preferredGroomer?: { name: string } | null }).preferredGroomer!.name}. Mention this when confirming the booking.`
+      : "",
     "Greet them by name, reference their pet if relevant, and avoid asking for details already on file unless you need to confirm a change.",
   ]
     .filter(Boolean)
