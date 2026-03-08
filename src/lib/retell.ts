@@ -88,7 +88,7 @@ Business: ${business.name}
 Owner: ${business.ownerName}
 Location: ${business.address || business.city || "Not specified"}
 Hours: ${hours}
-Services:
+Services on file (use get_services for live prices):
 ${serviceList || "- Full Groom: $75 (90 minutes)\n- Bath & Brush: $45 (60 minutes)\n- Nail Trim: $20 (15 minutes)"}
 ---
 PERSONALITY & TONE
@@ -114,8 +114,9 @@ Example: Caller says "I need a full groom, maybe Thursday"
 → "Full groom on Thursday — perfect. What time works best for you?"
 ---
 CONVERSATION FLOW
-STEP 1 — LOOKUP (do this silently before speaking)
-Immediately call lookup_customer_context on every call before saying anything. Do NOT ask for their name first.
+STEP 1 — LOOKUP & SERVICES (do both silently before speaking)
+Immediately call lookup_customer_context on every call. Then call get_services. Do NOT speak until both tool calls complete.
+Use the services returned by get_services for ALL price and service name references throughout the call.
 STEP 2 — GREETING
 If returning customer:
 "Hey [Name]! So great to hear from you — how's [Dog Name] doing?"
@@ -128,7 +129,7 @@ One question per turn. Skip anything already known from lookup. Collect in this 
 - Dog's name
 - Dog's breed
 - Dog's size (Small, Medium, Large, or Extra Large)
-- Service — ask naturally: "What were we thinking for [dog name] today? We do ${serviceListNatural}."
+- Service — ask naturally using names from get_services: "What were we thinking for [dog name] today? We do [service names from get_services]."
 - Special handling needs or notes
 - Whether this is their first visit
 - Preferred day and time
@@ -146,6 +147,7 @@ STEP 6 — CONFIRM & CLOSE
 "Perfect! [Dog Name] is all set for a [Service] on [Day, Date] at [Time]. ${business.ownerName} will send you a confirmation text shortly. Is there anything else I can help you with?"
 For first-time visitors add:
 "Since it's your first visit, plan to arrive a few minutes early so we can get [Dog Name]'s info on file. We're so excited to meet them!"
+Before ending any call, call add_call_note with the square_customer_id from lookup (if available), the outcome (booked / cancelled / inquiry_only / no_booking), and a 1-2 sentence summary of the call. Then call end_call.
 ---
 EDGE CASES
 CANCELLATIONS:
@@ -159,7 +161,7 @@ AFTER-HOURS:
 CALLER ASKS IF THIS IS AI:
 "I'm Pip, ${business.ownerName}'s receptionist — I make sure no call goes to voicemail while he's with a client. I can get you fully booked right now if you'd like!"
 PRICING:
-Do not mention pricing unless the caller asks. If asked, share the service prices naturally: "${pricingNatural || "A full groom is $75, bath and brush is $45, and nail trims are $20."}."
+Do not mention pricing unless the caller asks. If asked, use the prices returned by get_services. Never quote a price that didn't come from get_services.
 NAME SPELLING:
 Always confirm spelling if a name is unclear.
 ---
@@ -509,15 +511,59 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             description:
               "The appointment start time in ISO 8601 format (YYYY-MM-DDTHH:MM:SS)",
           },
+          square_customer_id: {
+            type: "string",
+            description:
+              "Square customer ID from lookup_customer_context, if the caller is a returning Square customer",
+          },
         },
         required: ["customer_name", "start_time"],
+      },
+    },
+    {
+      type: "custom",
+      name: "get_services",
+      description:
+        "Fetch current service names, prices, and durations from the groomer's catalog. Call this silently after lookup_customer_context, before greeting the caller.",
+      url: `${appUrl}/api/retell/get-services`,
+      speak_during_execution: false,
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+    {
+      type: "custom",
+      name: "add_call_note",
+      description:
+        "Write a post-call summary note to the customer's CRM record. Call this before end_call on every call.",
+      url: `${appUrl}/api/retell/add-call-note`,
+      speak_during_execution: false,
+      parameters: {
+        type: "object",
+        properties: {
+          square_customer_id: {
+            type: "string",
+            description: "Square customer ID from lookup_customer_context result",
+          },
+          outcome: {
+            type: "string",
+            description: "The outcome of the call",
+            enum: ["booked", "cancelled", "inquiry_only", "no_booking"],
+          },
+          note: {
+            type: "string",
+            description: "1-2 sentence summary of the call",
+          },
+        },
+        required: ["outcome", "note"],
       },
     },
     {
       type: "end_call",
       name: "end_call",
       description:
-        "End the call after the booking is confirmed or the conversation is complete.",
+        "End the call after the booking is confirmed or the conversation is complete. Always call add_call_note before this.",
     },
   ];
 }

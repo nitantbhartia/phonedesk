@@ -9,6 +9,7 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemory } from "@/lib/customer-memory";
 import { sendSms } from "@/lib/sms";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
+import { getCRMWithFallback } from "@/crm/withFallback";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
     pet_size: petSize,
     service_name: svcName,
     start_time: startTime,
+    square_customer_id: squareCustomerId,
   } = args || {};
 
   if (!customerName || !startTime) {
@@ -129,7 +131,7 @@ export async function POST(req: NextRequest) {
       endTime: end,
     });
 
-    await upsertCustomerMemory({
+    const internalCustomer = await upsertCustomerMemory({
       businessId: business.id,
       customerName,
       customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
@@ -139,6 +141,29 @@ export async function POST(req: NextRequest) {
       serviceName: service?.name || svcName,
       appointmentStart: start,
     });
+
+    // Sync with Square CRM: create customer in Square if this is a new customer
+    if (internalCustomer && !squareCustomerId) {
+      try {
+        const crm = await getCRMWithFallback(business.id);
+        if (crm.getCRMType() === "square") {
+          const custPhone = normalizedCustomerPhone || customerPhone || call?.from_number;
+          const squareCust = await crm.createCustomer({
+            name: customerName,
+            phone: custPhone || "",
+          });
+          // Store Square customer ID for future calls
+          await prisma.customer.update({
+            where: { id: internalCustomer.id },
+            data: { squareCustomerId: squareCust.id },
+          });
+          console.log(`[book-appointment] Created Square customer ${squareCust.id} for ${customerName}`);
+        }
+      } catch (crmErr) {
+        // Non-blocking: Square customer creation failure doesn't fail the booking
+        console.error("[book-appointment] Square customer create failed (non-fatal):", crmErr);
+      }
+    }
 
     // Link call to appointment
     if (call?.call_id) {

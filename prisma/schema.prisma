@@ -257,6 +257,7 @@ model Customer {
   lastCallSummary String?  @db.Text
   lastOutcome     String?
   noShowCount     Int      @default(0)
+  squareCustomerId String?  // Square CRM customer ID for write-back
   pets            Pet[]
   behaviorLogs    BehaviorLog[]
   createdAt       DateTime @default(now())
