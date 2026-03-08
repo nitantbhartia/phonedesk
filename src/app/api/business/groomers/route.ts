@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
         services: { where: { isActive: true } },
         retellConfig: true,
         groomers: { where: { isActive: true } },
+        breedRecommendations: { orderBy: { priority: "desc" } },
       },
     });
     if (business?.retellConfig) {
