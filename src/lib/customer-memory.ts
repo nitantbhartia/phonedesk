@@ -157,6 +157,7 @@ export async function lookupCustomerContext(businessId: string, phone?: string |
       normalizedPhone: null,
       customer: null,
       pets: [],
+      behaviorLogs: [],
     };
   }
 
