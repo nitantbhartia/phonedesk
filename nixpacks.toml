@@ -1,5 +1,5 @@
-# Prevent Nixpacks from auto-injecting `prisma migrate deploy` into the build
-# phase. The database is only reachable at runtime, so migrations are run via
-# the startCommand in railway.json instead.
+# Bypass `npm run build` so Nixpacks cannot inject `prisma migrate deploy`
+# into the npm script. Call the build steps directly instead.
+# Migrations are handled at runtime via startCommand in railway.json.
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["npx prisma generate", "npx next build"]
