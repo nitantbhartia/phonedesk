@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Service } from "@prisma/client";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 import { normalizePhoneNumber } from "@/lib/phone";
 
@@ -248,7 +249,7 @@ export async function POST(req: NextRequest) {
 
   // Find service duration
   const service = business.services.find(
-    (s) =>
+    (s: Service) =>
       s.isActive && s.name.toLowerCase().includes((serviceName || "").toLowerCase())
   );
   const duration = service?.duration || 60;

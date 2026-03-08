@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Service } from "@prisma/client";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { normalizePhoneNumber } from "@/lib/phone";
 
@@ -31,9 +32,9 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const activeServices = phoneNum.business.services.filter((s) => s.isActive);
+  const activeServices = phoneNum.business.services.filter((s: Service) => s.isActive);
   const matchedService = serviceName
-    ? activeServices.find((service) =>
+    ? activeServices.find((service: Service) =>
         service.name.toLowerCase().includes(serviceName.toLowerCase())
       )
     : null;
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
   if (!matchedService) {
     const serviceList = activeServices
       .slice(0, 4)
-      .map((service) => `${service.name} ($${service.price})`)
+      .map((service: Service) => `${service.name} ($${service.price})`)
       .join(", ");
     return NextResponse.json({
       result: serviceList

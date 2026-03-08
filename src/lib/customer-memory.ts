@@ -212,7 +212,7 @@ export async function lookupCustomerContext(businessId: string, phone?: string |
  * trailing e/ie/y variations like Rexi/Rexie/Rexy). Keeps the record with
  * the most complete data (breed + size filled in).
  */
-export function deduplicatePets<T extends { name: string; breed?: string | null; size?: string | null }>(pets: T[]): T[] {
+export function deduplicatePets<T extends { name: string; breed?: string | null; size?: string | null; notes?: string | null }>(pets: T[]): T[] {
   const seen = new Map<string, T>();
   for (const pet of pets) {
     // Normalize: lowercase, strip trailing e/ie/y/ey variants

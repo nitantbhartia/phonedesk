@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   deleteRetellPhoneNumber,
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const provisioned = await prisma.$transaction(async (tx) => {
+    const provisioned = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.$queryRaw`
         SELECT pg_advisory_xact_lock(hashtext(${business.id}))
       `;

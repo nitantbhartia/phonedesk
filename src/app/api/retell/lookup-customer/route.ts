@@ -100,7 +100,6 @@ export async function POST(req: NextRequest) {
       name: pet.name,
       breed: pet.breed,
       size: pet.size,
-      notes: pet.notes,
     })),
     preferred_groomer: (context.customer as { preferredGroomer?: { name: string } | null })?.preferredGroomer?.name || null,
     current_date: todayStr,

@@ -92,7 +92,7 @@ export async function GET() {
   // Estimate revenue protected (only confirmed/completed bookings)
   const avgServicePrice =
     business.services.length > 0
-      ? business.services.reduce((sum, s) => sum + s.price, 0) / business.services.length
+      ? business.services.reduce((sum: number, s: { price: number }) => sum + s.price, 0) / business.services.length
       : 65;
 
   const totalCallMinutes = Math.round((totalDuration._sum.duration || 0) / 60);

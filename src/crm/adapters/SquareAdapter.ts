@@ -187,7 +187,7 @@ export class SquareAdapter implements GroomingCRM {
     // Fetch current note, append no-show entry
     const data = await this.request<{
       customer?: { note?: string };
-    }>("GET", `/v2/customers/${customerId}`).catch(() => ({ customer: {} }));
+    }>("GET", `/v2/customers/${customerId}`).catch(() => ({ customer: undefined }));
 
     const currentNote = data.customer?.note || "";
     const noShowEntry = `No-show: ${appointmentId} (${new Date().toLocaleDateString()})`;
