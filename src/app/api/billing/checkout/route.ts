@@ -4,6 +4,7 @@ import type { Plan } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl, getStripeClient, getStripePriceIdForPlan } from "@/lib/stripe";
+import { ensureStripeCustomerForBusiness } from "@/lib/stripe-billing";
 
 async function resolveUserId(session: {
   user?: { id?: string | null; email?: string | null; name?: string | null; image?: string | null };
@@ -55,21 +56,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Business not found" }, { status: 404 });
     }
 
-    let customerId = business.stripeCustomerId || undefined;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: business.email || session?.user?.email || undefined,
-        name: business.name,
-        metadata: {
-          businessId: business.id,
-        },
-      });
-      customerId = customer.id;
-      await prisma.business.update({
-        where: { id: business.id },
-        data: { stripeCustomerId: customerId },
-      });
-    }
+    const customerId = await ensureStripeCustomerForBusiness({
+      businessId: business.id,
+      businessName: business.name,
+      businessEmail: business.email || session?.user?.email || undefined,
+      stripeCustomerId: business.stripeCustomerId,
+    });
 
     const priceId = getStripePriceIdForPlan(plan);
     const appUrl = getAppUrl();
