@@ -11,6 +11,13 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("@/lib/customer-memory", () => ({
   lookupCustomerContext: vi.fn(),
   buildCustomerContextSummary: vi.fn(),
+  deduplicatePets: vi.fn((pets) => pets),
+}));
+
+vi.mock("@/crm/withFallback", () => ({
+  getCRMWithFallback: vi.fn(async () => ({
+    getCustomer: vi.fn(async () => null),
+  })),
 }));
 
 import { POST } from "./route";
@@ -83,4 +90,3 @@ describe("POST /api/retell/lookup-customer", () => {
     expect(payload.result).toBe("Returning customer found.");
   });
 });
-

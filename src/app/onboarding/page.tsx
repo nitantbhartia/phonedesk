@@ -249,7 +249,7 @@ export default function OnboardingPage() {
     return () => {
       cancelled = true;
     };
-  }, [status]);
+  }, [router, status]);
 
   if (status === "loading") {
     return (

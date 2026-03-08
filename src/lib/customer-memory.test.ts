@@ -23,6 +23,7 @@ describe("buildCustomerContextSummary", () => {
         businessId: "biz_1",
         phone: "+16195550100",
         name: "Sarah",
+        squareCustomerId: null,
         visitCount: 8,
         vipFlag: false,
         notes: "Dog gets anxious during nail trims",
@@ -59,4 +60,3 @@ describe("buildCustomerContextSummary", () => {
     expect(summary).toContain("Last service: Full Groom.");
   });
 });
-

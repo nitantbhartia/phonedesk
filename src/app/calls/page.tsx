@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -53,15 +53,7 @@ export default function CallLogPage() {
 
   const pageSize = 20;
 
-  useEffect(() => {
-    if (authStatus === "unauthenticated") {
-      router.push("/");
-      return;
-    }
-    if (authStatus === "authenticated") fetchCalls();
-  }, [authStatus, router, page, filter, search]);
-
-  async function fetchCalls() {
+  const fetchCalls = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -82,7 +74,15 @@ export default function CallLogPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter, page, search]);
+
+  useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      router.push("/");
+      return;
+    }
+    if (authStatus === "authenticated") void fetchCalls();
+  }, [authStatus, fetchCalls, router]);
 
   const totalPages = Math.ceil(total / pageSize);
 

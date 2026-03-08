@@ -10,14 +10,20 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { getCRMWithFallback } from "@/crm/withFallback";
 
 export async function POST(req: NextRequest) {
-  const rawBody = await req.text();
-  const signature = req.headers.get("x-retell-signature") || "";
+  const rawBody = await getRawBody(req);
+  const signature = getHeader(req, "x-retell-signature");
 
-  if (!isRetellWebhookValid(rawBody, signature, req.headers)) {
+  if (!isRetellWebhookValid(rawBody, signature, getHeaders(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = JSON.parse(rawBody);
+  let body: { args?: { caller_phone?: string }; call?: { to_number?: string; from_number?: string } };
+  try {
+    body = JSON.parse(rawBody || "{}");
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
+
   const { args, call } = body;
 
   const calledNumber = normalizePhoneNumber(call?.to_number);
@@ -104,4 +110,39 @@ export async function POST(req: NextRequest) {
     preferred_groomer: (context.customer as { preferredGroomer?: { name: string } | null })?.preferredGroomer?.name || null,
     current_date: todayStr,
   });
+}
+
+function getHeaders(req: Request): Headers | undefined {
+  const headers = (req as { headers?: unknown }).headers;
+  return headers instanceof Headers ? headers : undefined;
+}
+
+function getHeader(req: Request, key: string): string {
+  const headers = (req as { headers?: unknown }).headers;
+
+  if (headers instanceof Headers) {
+    return headers.get(key) || "";
+  }
+
+  if (headers && typeof headers === "object") {
+    const record = headers as Record<string, string | undefined>;
+    return record[key] || record[key.toLowerCase()] || "";
+  }
+
+  return "";
+}
+
+async function getRawBody(req: Request): Promise<string> {
+  const requestWithText = req as Request & { text?: () => Promise<string> };
+  if (typeof requestWithText.text === "function") {
+    return requestWithText.text();
+  }
+
+  const requestWithJson = req as Request & { json?: () => Promise<unknown> };
+  if (typeof requestWithJson.json === "function") {
+    const payload = await requestWithJson.json();
+    return JSON.stringify(payload ?? {});
+  }
+
+  return "";
 }
