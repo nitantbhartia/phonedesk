@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl, getStripeClient } from "@/lib/stripe";
+import { ensureStripeCustomerForBusiness } from "@/lib/stripe-billing";
 
 async function resolveUserId(session: {
   user?: { id?: string | null; email?: string | null; name?: string | null; image?: string | null };
@@ -36,14 +37,26 @@ export async function POST() {
 
     const business = await prisma.business.findUnique({
       where: { userId },
-      select: { stripeCustomerId: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        stripeCustomerId: true,
+      },
     });
-    if (!business?.stripeCustomerId) {
-      return NextResponse.json({ error: "No Stripe customer found" }, { status: 400 });
+    if (!business) {
+      return NextResponse.json({ error: "Business not found" }, { status: 404 });
     }
 
+    const customerId = await ensureStripeCustomerForBusiness({
+      businessId: business.id,
+      businessName: business.name,
+      businessEmail: business.email || session?.user?.email || undefined,
+      stripeCustomerId: business.stripeCustomerId,
+    });
+
     const portal = await stripe.billingPortal.sessions.create({
-      customer: business.stripeCustomerId,
+      customer: customerId,
       return_url: `${getAppUrl()}/settings/billing`,
     });
 
