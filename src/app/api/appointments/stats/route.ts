@@ -89,7 +89,7 @@ export async function GET() {
 
   // Get details for repeat offenders
   const offenderDetails = await Promise.all(
-    repeatOffenders.map(async (offender) => {
+    repeatOffenders.map(async (offender: { customerPhone: string | null; _count: { id: number } }) => {
       const lastAppt = await prisma.appointment.findFirst({
         where: {
           businessId: business.id,

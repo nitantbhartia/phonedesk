@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Pet, BehaviorLog } from "@prisma/client";
 
 // GET: Pre-appointment brief
 // Input: ?appointmentId=X
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
     if (customerRecord && appointment.petName) {
       petRecord =
         customerRecord.pets.find(
-          (p) =>
+          (p: Pet) =>
             p.name.toLowerCase() === appointment.petName?.toLowerCase()
         ) || null;
     }
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
       take: 20,
     });
 
-    highRisk = recentLogs.some((log) => log.severity === "HIGH_RISK");
+    highRisk = recentLogs.some((log: BehaviorLog) => log.severity === "HIGH_RISK");
   }
 
   // Build behavior summary
