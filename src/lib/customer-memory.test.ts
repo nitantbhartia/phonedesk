@@ -8,6 +8,7 @@ describe("buildCustomerContextSummary", () => {
       normalizedPhone: "+16195550100",
       customer: null,
       pets: [],
+      behaviorLogs: [],
     });
 
     expect(summary).toContain("No prior customer record found");
@@ -30,6 +31,9 @@ describe("buildCustomerContextSummary", () => {
         lastContactAt: new Date("2026-03-01T18:00:00.000Z"),
         lastCallSummary: "Asked about next availability",
         lastOutcome: "NO_BOOKING",
+        noShowCount: 0,
+        preferredGroomerId: null,
+        preferredGroomer: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         pets: [],
@@ -46,6 +50,7 @@ describe("buildCustomerContextSummary", () => {
           updatedAt: new Date(),
         },
       ],
+      behaviorLogs: [],
     });
 
     expect(summary).toContain("Returning customer found.");

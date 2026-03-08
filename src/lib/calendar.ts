@@ -755,6 +755,7 @@ export async function bookAppointment(
     startTime: Date;
     endTime: Date;
     notes?: string;
+    groomerId?: string;
   }
 ) {
   if (
@@ -835,6 +836,7 @@ export async function bookAppointment(
         status: bookingMode === "HARD" ? "CONFIRMED" : "PENDING",
         bookingMode,
         notes: details.notes,
+        groomerId: details.groomerId,
       },
     });
 

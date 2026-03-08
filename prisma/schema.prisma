@@ -87,6 +87,7 @@ model Business {
   rebookingConfig RebookingConfig?
   behaviorLogs    BehaviorLog[]
   reviewRequests  ReviewRequest[]
+  groomers        Groomer[]
   googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
   stripeCustomerId String? @unique
@@ -235,6 +236,8 @@ model Appointment {
   rebookSent      Boolean          @default(false) // Feature 5: rebooking reminder sent
   rebookInterval  Int?             // days until next groom (breed-specific)
   reviewRequested Boolean          @default(false) // Feature 7: review request sent
+  groomerId       String?
+  groomer         Groomer?         @relation(fields: [groomerId], references: [id], onDelete: SetNull)
   calls           Call[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -255,6 +258,8 @@ model Customer {
   lastCallSummary String?  @db.Text
   lastOutcome     String?
   noShowCount     Int      @default(0)
+  preferredGroomerId String?
+  preferredGroomer   Groomer?  @relation(fields: [preferredGroomerId], references: [id], onDelete: SetNull)
   pets            Pet[]
   behaviorLogs    BehaviorLog[]
   createdAt       DateTime @default(now())
@@ -425,6 +430,22 @@ enum BehaviorSeverity {
   NOTE        // general observation
   CAUTION     // needs extra care
   HIGH_RISK   // requires owner discussion before booking
+}
+
+// Groomers / Staff
+model Groomer {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name          String
+  specialties   String[] // e.g. ["doodles", "hand stripping", "cats"]
+  isActive      Boolean  @default(true)
+  appointments  Appointment[]
+  preferredBy   Customer[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([businessId, name])
 }
 
 // Feature 7: Google Review Automation
