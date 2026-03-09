@@ -720,8 +720,8 @@ export async function getAvailableSlots(
       current.getTime() + durationMinutes * 60000
     );
 
-    // Skip slots that are in the past
-    if (current <= now) {
+    // Skip slots within the next 60 minutes (not enough lead time to prepare)
+    if (current.getTime() - now.getTime() < 60 * 60000) {
       current = new Date(current.getTime() + 30 * 60000);
       continue;
     }
