@@ -15,7 +15,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = JSON.parse(rawBody);
+  let body: { call?: Record<string, string> };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const { call } = body;
 
   const calledNumber = normalizePhoneNumber(call?.to_number);

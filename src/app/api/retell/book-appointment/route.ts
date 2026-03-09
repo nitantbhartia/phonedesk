@@ -22,10 +22,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = JSON.parse(rawBody);
+  let body: { args?: Record<string, string>; call?: Record<string, string> };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const { args, call } = body;
 
-  console.log("[book-appointment] args:", JSON.stringify(args), "from:", call?.from_number, "to:", call?.to_number);
+  console.log("[book-appointment] service:", args?.service_name, "pet:", args?.pet_name, "to:", call?.to_number);
 
   // Identify business from the called number
   const calledNumber = normalizePhoneNumber(call?.to_number);
@@ -62,6 +67,12 @@ export async function POST(req: NextRequest) {
       booked: false,
     });
   }
+
+  const VALID_SIZES = ["SMALL", "MEDIUM", "LARGE", "XLARGE"];
+  const normalizedPetSize = petSize ? petSize.toUpperCase() : null;
+  const validatedPetSize = normalizedPetSize && VALID_SIZES.includes(normalizedPetSize)
+    ? (normalizedPetSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE")
+    : null;
 
   const service = svcName
     ? business.services.find(
@@ -137,7 +148,7 @@ export async function POST(req: NextRequest) {
       customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
       petName,
       petBreed,
-      petSize: petSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
+      petSize: validatedPetSize,
       serviceName: service?.name || svcName,
       servicePrice: service?.price,
       startTime: start,
@@ -165,7 +176,7 @@ export async function POST(req: NextRequest) {
       customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
       petName,
       petBreed,
-      petSize: petSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
+      petSize: validatedPetSize,
       serviceName: service?.name || svcName,
       appointmentStart: start,
     });
