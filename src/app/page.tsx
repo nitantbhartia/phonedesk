@@ -528,32 +528,32 @@ function LandingPageContent() {
       <section id="pricing" className="py-12 sm:py-24 px-4 sm:px-6 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-paw-brown">Simple Pricing</h2>
-            <p className="text-paw-brown/70 mt-4">Pays for itself with just one saved appointment. No surprise bills, ever.</p>
+            <h2 className="text-4xl font-extrabold text-paw-brown">Try RingPaw free.</h2>
+            <p className="text-paw-brown/80 mt-4 text-lg font-medium max-w-xl mx-auto">Pay only when Pip books your first appointment. If it doesn&apos;t work in 30 days, you owe nothing.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 items-center">
-            {/* Starter */}
+            {/* Solo */}
             <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-xl font-bold text-paw-brown mb-2">Solo Groomer</h3>
-              <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-extrabold">$49</span>
+              <h3 className="text-xl font-bold text-paw-brown mb-1">Solo</h3>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-4xl font-extrabold">$99</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Just you and your shears. Everything you need to stop missing calls and start filling your schedule.</p>
+              <p className="text-sm text-gray-500 mb-6 leading-snug">For solo groomers who are tired of missing calls between clients.</p>
               <Link
                 href="/auth?mode=signup"
                 className="block w-full py-3 text-center border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
               >
-                Get Started
+                Start Free Trial
               </Link>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  50 Minutes / Month
+                  150 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  AI Call Answering & Booking
+                  Everything Included
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -565,43 +565,39 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Repeat Customer Recognition
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Review Request Automation
+                  Cancel Anytime
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
 
-            {/* Growth */}
+            {/* Studio */}
             <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10 card-glow">
               <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">MOST POPULAR</div>
-              <h3 className="text-xl font-bold text-paw-amber mb-2">Small Shop</h3>
-              <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-5xl font-extrabold text-white">$149</span>
+              <h3 className="text-xl font-bold text-paw-amber mb-1">Studio</h3>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-5xl font-extrabold text-white">$199</span>
                 <span className="text-white/50">/mo</span>
               </div>
-              <p className="text-sm text-white/70 mb-8 h-10">A couple groomers, a busy phone. More minutes and call analytics so you can see every booking you&apos;ve recovered.</p>
+              <p className="text-sm text-white/70 mb-6 leading-snug">For full-time groomers who want Pip handling every missed call.</p>
               <Link
                 href="/auth?mode=signup"
                 className="block w-full py-4 text-center bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg"
               >
-                Get Started
+                Start Free Trial
               </Link>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  200 Minutes / Month
+                  400 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  AI Call Answering & Booking
+                  Priority Setup
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Calendar Integration
+                  Square + Google Calendar
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -609,46 +605,38 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Repeat Customer Recognition
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Review Request Automation
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Call Analytics Dashboard
+                  Cancel Anytime
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-amber hover:underline block text-center">See all features →</a>
             </div>
 
-            {/* Pro */}
+            {/* Shop */}
             <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-xl font-bold text-paw-brown mb-2">Growing Pack</h3>
-              <div className="flex items-baseline gap-1 mb-6">
+              <h3 className="text-xl font-bold text-paw-brown mb-1">Shop</h3>
+              <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-4xl font-extrabold">$299</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. High-volume minutes and dedicated priority support.</p>
+              <p className="text-sm text-gray-500 mb-6 leading-snug">For small shops with multiple groomers and higher call volume.</p>
               <Link
                 href="/auth?mode=signup"
                 className="block w-full py-3 text-center border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
               >
-                Get Started
+                Start Free Trial
               </Link>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  500 Minutes / Month
+                  600 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  AI Call Answering & Booking
+                  Priority Support
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Calendar Integration
+                  Multi-Groomer Routing
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -656,24 +644,17 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Repeat Customer Recognition
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Review Request Automation
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Call Analytics Dashboard
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Priority Support
+                  Cancel Anytime
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
           </div>
+
+          {/* Guarantee line */}
+          <p className="text-center text-sm text-paw-brown/60 mt-10 font-medium">
+            All plans include a 30-day outcome guarantee. If Pip doesn&apos;t book a single appointment, you pay nothing.
+          </p>
         </div>
       </section>
 

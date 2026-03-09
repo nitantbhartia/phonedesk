@@ -11,6 +11,7 @@ import { upsertCustomerMemory } from "@/lib/customer-memory";
 import { sendSms } from "@/lib/sms";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { getCRMWithFallback } from "@/crm/withFallback";
+import { getStripeClient } from "@/lib/stripe";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -243,6 +244,42 @@ export async function POST(req: NextRequest) {
       where: { id: business.id },
       include: { phoneNumber: true },
     });
+
+    // Increment bookingsCount. If this is the very first booking during a trial,
+    // end the trial immediately so the groomer is charged their plan price right now.
+    try {
+      const updatedBiz = await prisma.business.update({
+        where: { id: business.id },
+        data: { bookingsCount: { increment: 1 } },
+        select: { bookingsCount: true, stripeSubscriptionId: true, stripeSubscriptionStatus: true, phone: true },
+      });
+
+      if (
+        updatedBiz.bookingsCount === 1 &&
+        updatedBiz.stripeSubscriptionId &&
+        updatedBiz.stripeSubscriptionStatus === "trialing"
+      ) {
+        // First booking ever — end the trial now so the groomer is charged immediately
+        const stripe = getStripeClient();
+        await stripe.subscriptions.update(updatedBiz.stripeSubscriptionId, {
+          trial_end: "now",
+        });
+        console.log(`[book-appointment] Trial ended for business ${business.id} — first booking triggered immediate charge`);
+
+        // Notify the owner via SMS that their plan is now active
+        const smsFrom = process.env.TWILIO_PHONE_NUMBER || fullBusiness?.phoneNumber?.number;
+        if (smsFrom && updatedBiz.phone) {
+          sendSms(
+            updatedBiz.phone,
+            `Pip just booked your first appointment — your ${business.name} plan is now active! You're all set.`,
+            smsFrom
+          ).catch((e) => console.error("[book-appointment] Trial activation SMS failed:", e));
+        }
+      }
+    } catch (countErr) {
+      // Non-blocking — booking is already confirmed; billing is a side-effect
+      console.error("[book-appointment] bookingsCount increment failed (non-fatal):", countErr);
+    }
 
     if (fullBusiness) {
       const smsResults = await Promise.allSettled([
