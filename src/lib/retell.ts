@@ -4,7 +4,7 @@ import type { Business, BreedRecommendation, RetellConfig, Service, Groomer } fr
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
 const DEFAULT_VOICE_ID = "11labs-Grace";
-const DEFAULT_VOICE_SPEED = 1.0;
+const DEFAULT_VOICE_SPEED = 0.95; // slightly under 1.0 — more unhurried, natural pacing
 const DEFAULT_VOLUME = 1.0;
 
 function getRetellApiKey() {
@@ -96,8 +96,11 @@ ${business.groomers.filter(g => g.isActive).map(g => `- ${g.name}${g.specialties
 PERSONALITY & TONE
 You are warm, unhurried, and genuinely interested in the caller and their dog. You sound like a real person — slightly casual but professional. Never robotic. Never rushed.
 VOICE RULES:
+- Speak at a calm, steady pace throughout every call. Never rush — not even when going through multiple steps.
+- Use a period or an em-dash as your default sentence-ender. Reserve exclamation marks only for genuine moments of warmth, not routine transitions. Wrong: "Perfect! Got it! Great!" Right: "Perfect — let me get that sorted for you."
 - Always acknowledge what the caller just said before moving to your next question. Never jump straight to the next item.
-- Use natural connective phrases: "Of course", "Absolutely", "Oh great", "Sure thing", "Let me check that for you"
+- Use natural connective phrases: "Of course", "Sure thing", "Let me check that for you", "Absolutely"
+- When you need a moment before speaking (checking something, thinking), bridge the gap naturally out loud: "Let me see...", "One moment...", "Give me just a second." Never leave more than a beat of silence without a bridging phrase.
 - The moment a caller mentions their dog's name, use it in your very next sentence and continue using it throughout
 - When a caller mentions a breed, add a brief warm comment: "Oh, goldens always love a full groom" or "Doodles have such beautiful coats"
 - Mirror the caller's energy — chatty caller, be chatty; brief caller, be efficient
@@ -122,10 +125,10 @@ CRITICAL: If lookup_customer_context returns subscription_inactive=true, say exa
 Use the services returned by get_services for ALL price and service name references throughout the call.
 STEP 2 — GREETING
 If returning customer:
-"Hey [Name]! So great to hear from you — how's [Dog Name] doing?"
+"Hey, [Name] — so good to hear from you. How's [Dog Name] doing?"
 Skip any information already on file unless confirming a change.
 If new customer:
-"Thanks for calling ${business.name}, this is Pip! How can I help you today?"
+"Thanks for calling ${business.name}, this is Pip. How can I help you today?"
 STEP 3 — COLLECT MISSING INFORMATION
 One question per turn. Skip anything already known from lookup. Collect in this order if missing:
 - Customer name
@@ -156,9 +159,9 @@ Rules:
 - Accept any yes/sure/yeah/why not as acceptance. Accept any no/nah/skip as decline.
 - If accepted: pass addon_service_name to book_appointment. If declined: book without it. Never ask twice.
 STEP 6 — CONFIRM & CLOSE
-"Perfect! [Dog Name] is all set for a [Service] on [Day, Date] at [Time]. ${business.ownerName} will send you a confirmation text shortly. Is there anything else I can help you with?"
+"Perfect — [Dog Name] is all set for a [Service] on [Day, Date] at [Time]. ${business.ownerName} will send you a confirmation text shortly. Is there anything else I can help you with?"
 For first-time visitors add:
-"Since it's your first visit, plan to arrive a few minutes early so we can get [Dog Name]'s info on file. We're so excited to meet them!"
+"Since it's your first visit, plan to arrive a few minutes early so we can get [Dog Name]'s info on file. We're really looking forward to meeting them."
 Before ending any call, call add_call_note with the square_customer_id from lookup (if available), the outcome (booked / cancelled / inquiry_only / no_booking), and a 1-2 sentence summary of the call. Then call end_call.
 ---
 EDGE CASES
@@ -236,7 +239,7 @@ export async function createRetellLLM(config: {
     start_speaker: "agent",
     general_prompt: config.generalPrompt,
     begin_message: config.beginMessage,
-    model_temperature: 0.1,
+    model_temperature: 0.3,
     tool_call_strict_mode: true,
   };
 
@@ -335,6 +338,15 @@ export async function createRetellAgent(config: {
       volume: DEFAULT_VOLUME,
       webhook_url: config.webhookUrl,
       language: "en-US",
+      // Conversational feel
+      responsiveness: 0.9,          // how quickly agent responds after caller stops — high = snappy
+      interruption_sensitivity: 0.8, // how easily caller can interrupt — natural conversation level
+      enable_backchannel: true,      // say "mm-hmm", "right", "got it" while caller is talking
+      backchannel_frequency: 0.4,    // ~40% of pauses get a backchannel — natural, not excessive
+      backchannel_words: ["mm-hmm", "right", "got it", "of course", "yeah"],
+      reminder_trigger_ms: 6000,     // after 6s of caller silence, gently prompt
+      reminder_max_count: 1,         // only one reminder per conversation
+      normalize_for_speech: true,    // convert numbers, dates, $ signs to spoken form
     }),
   });
 }
@@ -349,7 +361,17 @@ export async function updateRetellAgent(
     volume: number;
   }>
 ): Promise<void> {
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = {
+    // Always apply conversational settings on every sync
+    responsiveness: 0.9,
+    interruption_sensitivity: 0.8,
+    enable_backchannel: true,
+    backchannel_frequency: 0.4,
+    backchannel_words: ["mm-hmm", "right", "got it", "of course", "yeah"],
+    reminder_trigger_ms: 6000,
+    reminder_max_count: 1,
+    normalize_for_speech: true,
+  };
   if (updates.agentName) body.agent_name = updates.agentName;
   if (updates.voiceId) body.voice_id = updates.voiceId;
   if (updates.webhookUrl) body.webhook_url = updates.webhookUrl;
@@ -528,7 +550,8 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       description:
         "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
       url: `${appUrl}/api/retell/check-availability`,
-      speak_during_execution: false,
+      speak_during_execution: true,
+      execution_message_description: "A natural, brief phrase showing you're checking the calendar — e.g. 'Let me pull up that day...' or 'One second, checking what's open...' Vary it slightly each time.",
       parameters: {
         type: "object",
         properties: {
@@ -557,7 +580,8 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       description:
         "Book an appointment for the customer after collecting all required information.",
       url: `${appUrl}/api/retell/book-appointment`,
-      speak_during_execution: false,
+      speak_during_execution: true,
+      execution_message_description: "A brief, warm phrase confirming you're locking it in — e.g. 'Perfect, I'll get that booked right now...' or 'Give me just a second to confirm that slot...' Keep it natural.",
       parameters: {
         type: "object",
         properties: {
