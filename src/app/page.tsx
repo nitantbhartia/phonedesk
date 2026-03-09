@@ -125,7 +125,7 @@ function LandingPageContent() {
           disabled={isSigningIn}
           className="px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
         >
-          {isSigningIn ? "..." : "Start Free"}
+          {isSigningIn ? "..." : "Get Started"}
         </button>
       </nav>
 
@@ -160,7 +160,7 @@ function LandingPageContent() {
                 disabled={isSigningIn}
                 className="px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Try Free for 14 Days \u2014 No Setup Fees"}
+                {isSigningIn ? "Redirecting..." : "Get Started Today"}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
@@ -560,7 +560,7 @@ function LandingPageContent() {
                 disabled={isSigningIn}
                 className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
+                {isSigningIn ? "Redirecting..." : "Get Started"}
               </button>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
@@ -605,7 +605,7 @@ function LandingPageContent() {
                 disabled={isSigningIn}
                 className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
+                {isSigningIn ? "Redirecting..." : "Get Started"}
               </button>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
@@ -653,7 +653,7 @@ function LandingPageContent() {
                 disabled={isSigningIn}
                 className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Start Free Trial"}
+                {isSigningIn ? "Redirecting..." : "Get Started"}
               </button>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
