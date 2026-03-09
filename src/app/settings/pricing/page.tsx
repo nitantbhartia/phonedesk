@@ -239,7 +239,7 @@ export default function PricingPage() {
                 <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Service *
-                    <InfoIcon text="Pick which base service this custom price rule applies to." />
+                    <InfoIcon text="Choose which service this pricing rule overrides. The rule will only activate when a caller books this specific service — it won't affect other services." />
                   </span>
                 </label>
                 <select
@@ -260,7 +260,7 @@ export default function PricingPage() {
                   <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                     <span className="inline-flex items-center gap-1">
                       Breed
-                      <InfoIcon text="Optional: limit this rule to a specific breed." />
+                      <InfoIcon text="Optional. Enter a breed name to apply this price only to that breed (e.g. 'Standard Poodle', 'Goldendoodle'). Leave blank to match all breeds." />
                     </span>
                   </label>
                   <input
@@ -275,7 +275,7 @@ export default function PricingPage() {
                   <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                     <span className="inline-flex items-center gap-1">
                       Size
-                      <InfoIcon text="Optional: limit this rule to one dog size." />
+                      <InfoIcon text="Optional. Restrict this rule to a specific dog size. When both Breed and Size are set, the rule only applies when both match." />
                     </span>
                   </label>
                   <select
@@ -295,7 +295,7 @@ export default function PricingPage() {
                 <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Price *
-                    <InfoIcon text="Final quoted price when this rule matches." />
+                    <InfoIcon text="The price the AI will quote when this rule matches. This overrides the base service price for the specified breed and/or size." />
                   </span>
                 </label>
                 <input
@@ -310,7 +310,7 @@ export default function PricingPage() {
                 <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Notes
-                    <InfoIcon text="Optional internal note for why this pricing override exists." />
+                    <InfoIcon text="Internal note only — not shared with callers. Use it to remind yourself why this rule exists (e.g. '+$20 for dematting', 'large dog surcharge')." />
                   </span>
                 </label>
                 <input

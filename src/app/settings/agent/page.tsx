@@ -299,7 +299,7 @@ export default function AgentSettingsPage() {
           <div className="space-y-3">
             <Label className="inline-flex items-center gap-1.5">
               Conversation Tone
-              <InfoIcon text="Sets the overall vibe callers hear first." />
+              <InfoIcon text="Shapes how your AI sounds to every caller. Friendly feels warm and upbeat, Professional is polished and efficient, Empathetic is gentle and patient. Pick what fits your brand." />
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {TONE_OPTIONS.map((opt) => (
@@ -326,7 +326,7 @@ export default function AgentSettingsPage() {
             <div className="space-y-2">
               <Label className="inline-flex items-center gap-1.5">
                 Conversation Style
-                <InfoIcon text="Controls whether replies are brief, natural, or detailed." />
+                <InfoIcon text="Controls how much the AI says in each turn. Concise keeps answers short and fast. Natural matches how people actually talk. Detailed gives thorough explanations — good if callers ask lots of follow-up questions." />
               </Label>
               <Select value={style} onValueChange={setStyle}>
                 <SelectTrigger>
@@ -345,7 +345,7 @@ export default function AgentSettingsPage() {
             <div className="space-y-2">
               <Label className="inline-flex items-center gap-1.5">
                 Language Style
-                <InfoIcon text="Choose casual or formal wording for the AI voice." />
+                <InfoIcon text="Casual uses contractions and everyday phrases (e.g. 'I'll get that booked for you!'). Formal avoids slang and is more polished (e.g. 'I will arrange that appointment.'). Most grooming clients prefer casual." />
               </Label>
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger>
@@ -364,7 +364,7 @@ export default function AgentSettingsPage() {
           <div className="space-y-2">
             <Label className="inline-flex items-center gap-1.5">
               Custom Instructions (optional)
-              <InfoIcon text="Business-specific rules that get injected into every call." />
+              <InfoIcon text="Rules injected into every call. Use this to handle special cases: 'Always mention we offer free nail trims with full grooms' or 'We only groom dogs, not cats.' Keep instructions clear and specific." />
             </Label>
             <textarea
               className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -447,7 +447,7 @@ export default function AgentSettingsPage() {
               <div className="flex-1 space-y-1">
                 <Label className="inline-flex items-center gap-1.5">
                   Service
-                  <InfoIcon text="Name customers hear when asking what you offer." />
+                  <InfoIcon text="The service name spoken to callers (e.g. 'Full Groom', 'Bath & Brush', 'Nail Trim'). Keep names short and recognizable — callers will hear exactly what you type here." />
                 </Label>
                 <Input
                   value={service.name}
@@ -462,7 +462,7 @@ export default function AgentSettingsPage() {
                 <div className="flex-1 sm:w-24 sm:flex-none space-y-1">
                   <Label className="inline-flex items-center gap-1.5">
                     Price ($)
-                    <InfoIcon text="Used for quoting and estimate responses." />
+                    <InfoIcon text="Base price quoted to callers for this service. If you have breed- or size-specific pricing, set those overrides in the Pricing tab — this is the default fallback." />
                   </Label>
                   <Input
                     type="number"
@@ -477,7 +477,7 @@ export default function AgentSettingsPage() {
                 <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
                   <Label className="inline-flex items-center gap-1.5">
                     Duration (min)
-                    <InfoIcon text="Used to calculate available booking windows." />
+                    <InfoIcon text="How long this service takes in minutes. The AI uses this to block the right amount of time on your calendar and avoid back-to-back conflicts." />
                   </Label>
                   <Input
                     type="number"
