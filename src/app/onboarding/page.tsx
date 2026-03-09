@@ -97,6 +97,20 @@ function buildHoursState(savedHours?: SavedBusinessHours | null) {
   };
 }
 
+function formatPhoneNumber(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+1 ${digits.slice(1, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+
+  return value;
+}
+
 const STEP_CONFIG = [
   {
     title: "Tell us about your shop",
@@ -199,6 +213,9 @@ export default function OnboardingPage() {
   // Step 6: Subscription
   const [subscribed, setSubscribed] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const formattedProvisionedNumber = provisionedNumber
+    ? formatPhoneNumber(provisionedNumber)
+    : "";
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -1181,7 +1198,7 @@ export default function OnboardingPage() {
                   Your RingPaw Number
                 </div>
                 <div className="text-3xl font-extrabold text-paw-brown">
-                  {provisionedNumber}
+                  {formattedProvisionedNumber}
                 </div>
               </div>
 
@@ -1207,7 +1224,7 @@ export default function OnboardingPage() {
                       text: (
                         <>
                           Enter your RingPaw number:{" "}
-                          <strong>{provisionedNumber}</strong>
+                          <strong>{formattedProvisionedNumber}</strong>
                         </>
                       ),
                     },
@@ -1253,66 +1270,75 @@ export default function OnboardingPage() {
       {/* Step 5: Test Call */}
       {step === 5 && (
         <div className="space-y-8">
-          <div className="text-center py-6">
-            <div className="w-24 h-24 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg
-                width="44"
-                height="44"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-paw-brown"
-              >
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l1.09-1.09a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 16z" />
-              </svg>
-            </div>
-
-            <h2 className="text-2xl font-extrabold text-paw-brown mb-3">
-              Call {provisionedNumber || "your RingPaw number"}
-            </h2>
-            <p className="text-paw-brown/50 font-medium mb-4 max-w-md mx-auto">
-              Try booking an appointment as if you were a customer. The AI will
-              greet you, look up your profile, and walk through the full booking flow.
-            </p>
-
-            {/* Demo tip */}
-            <div className="inline-flex items-start gap-3 bg-paw-amber/10 text-paw-brown/70 px-5 py-3 rounded-2xl text-sm font-medium text-left max-w-sm mx-auto mb-8">
-              <span className="text-lg shrink-0">💡</span>
-              <span>
-                No calendar connected? No problem — the AI uses your business
-                hours to offer real slots. The call will appear in your dashboard
-                just like a live call would.
-              </span>
-            </div>
-
-            {!testCallDone ? (
-              <button
-                onClick={() => setTestCallDone(true)}
-                className="px-10 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
-              >
-                I&apos;ve Made My Test Call
-              </button>
-            ) : (
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-3 bg-green-50 text-green-700 px-6 py-3 rounded-full font-bold">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Test call completed!
-                </div>
-                <p className="text-sm text-paw-brown/50 font-medium">
-                  Check your dashboard to see the call log, transcript, and AI summary.
-                </p>
+          <div className="mx-auto max-w-4xl rounded-[2rem] border border-paw-brown/10 bg-white/75 px-5 py-8 shadow-soft sm:px-8 sm:py-10">
+            <div className="mx-auto max-w-2xl text-center">
+              <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-paw-amber/20 mx-auto">
+                <svg
+                  width="46"
+                  height="46"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-paw-brown"
+                >
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
               </div>
-            )}
+
+              <h2 className="text-3xl font-extrabold tracking-tight text-paw-brown sm:text-4xl">
+                Call {formattedProvisionedNumber || "your RingPaw number"}
+              </h2>
+              <p className="mx-auto mt-5 max-w-xl text-lg font-medium leading-8 text-paw-brown/55">
+                Try booking an appointment as if you were a customer. The AI
+                will greet you, look up your profile, and walk through the full
+                booking flow.
+              </p>
+            </div>
+
+            <div className="mx-auto mt-10 grid max-w-4xl gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
+              <div className="rounded-[1.75rem] border border-paw-amber/30 bg-paw-amber/10 px-5 py-4 text-left sm:px-6">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 text-xl leading-none">💡</div>
+                  <p className="text-base font-medium leading-8 text-paw-brown/75 sm:text-lg">
+                    No calendar connected? No problem. The AI uses your
+                    business hours to offer real slots. The call will appear in
+                    your dashboard just like a live call would.
+                  </p>
+                </div>
+              </div>
+
+              {!testCallDone ? (
+                <button
+                  onClick={() => setTestCallDone(true)}
+                  className="min-h-20 w-full rounded-full bg-paw-brown px-8 py-5 text-center text-xl font-bold text-paw-cream transition-all hover:bg-opacity-90 shadow-soft"
+                >
+                  I&apos;ve Made My Test Call
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex min-h-20 w-full items-center justify-center gap-3 rounded-full border border-green-200 bg-green-50 px-6 py-5 text-center font-bold text-green-700">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Test call completed!
+                  </div>
+                  <p className="text-center text-sm font-medium text-paw-brown/50">
+                    Check your dashboard to see the call log, transcript, and
+                    AI summary.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           <OnboardingFooter
@@ -1433,7 +1459,7 @@ export default function OnboardingPage() {
                   : "You can connect later in Settings",
               },
               {
-                label: provisionedNumber || "Phone number",
+                label: formattedProvisionedNumber || "Phone number",
                 desc: "RingPaw number provisioned",
               },
             ].map((item) => (

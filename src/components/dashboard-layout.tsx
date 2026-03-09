@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
 
 const navItems = [
@@ -166,11 +167,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-paw-sky flex">
       {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-paw-cream/80 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="RingPaw" height={40} style={{ height: 40, width: "auto" }} />
-        </div>
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-paw-cream/80 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex items-center justify-between">
+        <BrandLogo
+          mobileWidth={138}
+          desktopWidth={172}
+          className="min-w-0 max-w-[138px]"
+        />
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 text-paw-brown"
@@ -192,68 +194,84 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 bg-paw-cream/50 backdrop-blur-xl border-r border-white/50 p-8 flex flex-col gap-8 transform transition-transform lg:translate-x-0 lg:static lg:inset-auto ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed left-4 right-4 top-20 bottom-4 z-50 w-auto rounded-[2rem] bg-paw-cream/90 backdrop-blur-xl border border-white/60 p-6 shadow-2xl flex flex-col gap-6 overflow-hidden transform transition-transform lg:translate-x-0 lg:static lg:inset-auto lg:left-auto lg:right-auto lg:top-auto lg:bottom-auto lg:z-auto lg:w-72 lg:rounded-none lg:border-r lg:border lg:border-white/50 lg:bg-paw-cream/50 lg:p-8 lg:shadow-none ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-[120%]"
         }`}
       >
-        {/* Logo */}
-        <div className="mb-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="RingPaw" height={48} style={{ height: 48, width: "auto" }} />
+        {/* Logo and account */}
+        <div className="space-y-4">
+          <BrandLogo
+            mobileWidth={168}
+            desktopWidth={212}
+            className="max-w-[212px]"
+          />
+
+          <div className="flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-paw-brown">
+                {session?.user?.name || "RingPaw account"}
+              </p>
+              <p className="truncate text-xs text-paw-brown/60">
+                {session?.user?.email || "Signed in"}
+              </p>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="ml-3 shrink-0 rounded-xl bg-paw-brown px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-paw-cream hover:opacity-90 transition-opacity"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 space-y-2">
-          {finalNavItems.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
-                  isActive
-                    ? "active"
-                    : "text-paw-brown/60 hover:text-paw-brown hover:bg-white/50"
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="flex-1 overflow-y-auto overscroll-contain pr-1">
+          {/* Nav */}
+          <nav className="space-y-2">
+            {finalNavItems.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
+                    isActive
+                      ? "active"
+                      : "text-paw-brown/60 hover:text-paw-brown hover:bg-white/50"
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Plan usage card */}
-        <div className="bg-paw-brown rounded-3xl p-6 text-paw-cream relative overflow-hidden">
-          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-paw-orange/20 rounded-full blur-xl" />
-          <p className="text-xs font-bold text-paw-amber uppercase tracking-wider mb-2">
-            {usage?.plan?.replace("_", " ") || "Pro"} Plan
-          </p>
-          <p className="text-sm font-medium opacity-80 mb-4">
-            {usage ? `${usage.minutesUsed} / ${usage.minutesLimit}` : "— / —"} minutes used this month.
-          </p>
-          <div className="w-full bg-white/10 h-2 rounded-full mb-6">
-            <div
-              className="bg-paw-amber h-full rounded-full transition-all"
-              style={{ width: usage ? `${Math.min(100, (usage.minutesUsed / usage.minutesLimit) * 100)}%` : "0%" }}
-            />
+          {/* Plan usage card */}
+          <div className="mt-6 bg-paw-brown rounded-3xl p-6 text-paw-cream relative overflow-hidden">
+            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-paw-orange/20 rounded-full blur-xl" />
+            <p className="text-xs font-bold text-paw-amber uppercase tracking-wider mb-2">
+              {usage?.plan?.replace("_", " ") || "Pro"} Plan
+            </p>
+            <p className="text-sm font-medium opacity-80 mb-4">
+              {usage ? `${usage.minutesUsed} / ${usage.minutesLimit}` : "— / —"} minutes used this month.
+            </p>
+            <div className="w-full bg-white/10 h-2 rounded-full">
+              <div
+                className="bg-paw-amber h-full rounded-full transition-all"
+                style={{ width: usage ? `${Math.min(100, (usage.minutesUsed / usage.minutesLimit) * 100)}%` : "0%" }}
+              />
+            </div>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full py-2 bg-white/10 hover:bg-white/20 transition-colors rounded-xl text-xs font-bold uppercase tracking-widest"
-          >
-            Sign Out
-          </button>
         </div>
       </aside>
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-45 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

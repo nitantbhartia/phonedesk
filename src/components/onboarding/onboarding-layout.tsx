@@ -29,7 +29,7 @@ export function OnboardingLayout({
   children,
 }: OnboardingLayoutProps) {
   return (
-    <div className="min-h-screen bg-paw-sky antialiased flex flex-col items-center py-12 px-6 relative">
+    <div className="min-h-screen bg-paw-sky antialiased flex flex-col items-center px-4 py-8 sm:px-6 sm:py-10 relative">
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <svg
@@ -49,7 +49,7 @@ export function OnboardingLayout({
       </div>
 
       {/* Logo */}
-      <div className="mb-8 flex items-center gap-2 relative z-10">
+      <div className="mb-6 flex items-center gap-2 relative z-10 sm:mb-8">
         <div className="w-8 h-8 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
           <svg
             width="20"
@@ -159,12 +159,12 @@ export function OnboardingLayout({
         </div>
 
         {/* Content */}
-        <div className="p-8 sm:p-12">
+        <div className="px-5 py-6 sm:px-10 sm:py-9 lg:px-12 lg:py-10">
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-extrabold text-paw-brown mb-2">
+            <h1 className="text-3xl font-extrabold text-paw-brown mb-2 sm:text-[2.1rem]">
               {title}
             </h1>
-            <p className="text-paw-brown/60 font-medium mb-10">{subtitle}</p>
+            <p className="text-paw-brown/60 font-medium mb-6 sm:mb-8">{subtitle}</p>
             {children}
           </div>
         </div>
@@ -172,7 +172,7 @@ export function OnboardingLayout({
 
       {/* Pro Tip */}
       {proTip && (
-        <div className="mt-12 max-w-lg text-center relative z-10">
+        <div className="mt-8 max-w-lg text-center relative z-10 sm:mt-10">
           <div className="inline-flex items-center gap-4 p-4 bg-white/40 backdrop-blur-sm rounded-3xl border border-white/50">
             <div className="w-10 h-10 rounded-full bg-paw-amber/30 flex items-center justify-center text-xl shrink-0">
               💡

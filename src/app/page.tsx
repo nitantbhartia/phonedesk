@@ -1,8 +1,10 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function LandingPage() {
   return (
@@ -20,8 +22,6 @@ function LandingPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [authError, setAuthError] = useState("");
-  const [isSigningIn, setIsSigningIn] = useState(false);
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
   const [missedPerDay, setMissedPerDay] = useState(6);
   const [groomPrice, setGroomPrice] = useState(85);
@@ -64,17 +64,6 @@ function LandingPageContent() {
     };
   }, [session, router, searchParams]);
 
-  const handleStartTrial = () => {
-    setAuthError("");
-    setIsSigningIn(true);
-    // Land back on the root page so post-auth routing can decide whether this
-    // user should resume onboarding or go straight to the dashboard.
-    signIn("google", { callbackUrl: "/" }).catch(() => {
-      setAuthError("Google sign-in failed. Check your auth configuration.");
-      setIsSigningIn(false);
-    });
-  };
-
   if (status === "loading" || isResolvingRedirect) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paw-sky">
@@ -106,22 +95,23 @@ function LandingPageContent() {
       {/* Nav */}
       <div className="sticky top-0 z-50 flex justify-center pt-3 sm:pt-4 px-4">
       <nav className="w-full max-w-5xl px-4 sm:px-6 py-3 flex justify-between items-center glass-card rounded-full shadow-soft">
-        <div className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="RingPaw" height={44} style={{ height: 44, width: "auto" }} />
-        </div>
+        <BrandLogo
+          priority
+          mobileWidth={156}
+          desktopWidth={236}
+          className="min-w-0 max-w-[156px] sm:max-w-[236px]"
+        />
         <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
           <a href="#how-it-works" className="hover:text-paw-brown transition-colors">How it Works</a>
           <a href="#features" className="hover:text-paw-brown transition-colors">Features</a>
           <a href="#pricing" className="hover:text-paw-brown transition-colors">Pricing</a>
         </div>
-        <button
-          onClick={() => void handleStartTrial()}
-          disabled={isSigningIn}
+        <Link
+          href="/auth?mode=signup"
           className="hidden sm:block px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
         >
-          {isSigningIn ? "..." : "Get Started"}
-        </button>
+          Get Started
+        </Link>
       </nav>
       </div>
 
@@ -151,21 +141,23 @@ function LandingPageContent() {
             </p>
 
             <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={() => void handleStartTrial()}
-                disabled={isSigningIn}
+              <Link
+                href="/auth?mode=signup"
                 className="relative overflow-hidden px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50 btn-shimmer"
               >
-                {isSigningIn ? "Redirecting..." : "Get Started Today"}
+                Get Started Today
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
-              </button>
+              </Link>
+              <Link
+                href="/auth?mode=signin"
+                className="px-8 py-4 bg-white text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-paw-cream transition-all shadow-sm flex items-center justify-center gap-2"
+              >
+                Sign In
+              </Link>
             </div>
 
-            {authError ? (
-              <p className="text-sm text-red-600">{authError}</p>
-            ) : null}
           </div>
 
           {/* Right column - phone mockup */}
@@ -551,13 +543,12 @@ function LandingPageContent() {
                 <span className="text-gray-500">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8 h-10">Just you and your shears. Everything you need to stop missing calls and start filling your schedule.</p>
-              <button
-                onClick={() => void handleStartTrial()}
-                disabled={isSigningIn}
+              <Link
+                href="/auth?mode=signup"
                 className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Get Started"}
-              </button>
+                Get Started
+              </Link>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -596,13 +587,12 @@ function LandingPageContent() {
                 <span className="text-white/50">/mo</span>
               </div>
               <p className="text-sm text-white/70 mb-8 h-10">A couple groomers, a busy phone. More minutes and call analytics so you can see every booking you&apos;ve recovered.</p>
-              <button
-                onClick={() => void handleStartTrial()}
-                disabled={isSigningIn}
+              <Link
+                href="/auth?mode=signup"
                 className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Get Started"}
-              </button>
+                Get Started
+              </Link>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -644,13 +634,12 @@ function LandingPageContent() {
                 <span className="text-gray-500">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. High-volume minutes and dedicated priority support.</p>
-              <button
-                onClick={() => void handleStartTrial()}
-                disabled={isSigningIn}
+              <Link
+                href="/auth?mode=signup"
                 className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
               >
-                {isSigningIn ? "Redirecting..." : "Get Started"}
-              </button>
+                Get Started
+              </Link>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
