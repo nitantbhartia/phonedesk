@@ -390,7 +390,7 @@ export default function AgentSettingsPage() {
             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={greeting}
             onChange={(e) => setGreeting(e.target.value.slice(0, 300))}
-            placeholder="Hi! You've reached [Business Name]..."
+            placeholder="Hi! You&apos;ve reached [Business Name]..."
             maxLength={300}
           />
           <div className="flex justify-between items-center">
