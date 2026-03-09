@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { InfoIcon } from "@/components/ui/info-icon";
+import { toast } from "@/components/ui/toast";
 
 interface PricingRule {
   id: string;
@@ -95,9 +96,12 @@ export default function PricingPage() {
         setShowForm(false);
         setForm({ serviceId: "", breed: "", size: "", price: "", notes: "" });
         fetchData();
+        toast.success("Pricing rule added");
+      } else {
+        toast.error("Failed to add rule");
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      toast.error("Failed to add rule");
     } finally {
       setSaving(false);
     }
@@ -107,9 +111,14 @@ export default function PricingPage() {
     setDeleting(id);
     try {
       const res = await fetch(`/api/pricing?id=${id}`, { method: "DELETE" });
-      if (res.ok) fetchData();
-    } catch (error) {
-      console.error("Error:", error);
+      if (res.ok) {
+        fetchData();
+        toast.success("Rule removed");
+      } else {
+        toast.error("Failed to remove rule");
+      }
+    } catch {
+      toast.error("Failed to remove rule");
     } finally {
       setDeleting(null);
     }

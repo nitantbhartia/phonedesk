@@ -116,6 +116,10 @@ export function OnboardingLayout({
             );
           })}
         </div>
+        {/* Current step label — visible only on mobile where labels are hidden */}
+        <div className="sm:hidden px-6 py-2 bg-white/30 text-center text-xs font-bold text-paw-brown/60 uppercase tracking-wider border-b border-paw-brown/5">
+          Step {currentStep} of {STEPS.length} &mdash; {STEPS.find((s) => s.number === currentStep)?.label}
+        </div>
 
         {/* Content */}
         <div className="p-8 sm:p-12">

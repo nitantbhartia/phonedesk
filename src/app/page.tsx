@@ -23,6 +23,8 @@ function LandingPageContent() {
   const [authError, setAuthError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
+  const [missedPerDay, setMissedPerDay] = useState(6);
+  const [groomPrice, setGroomPrice] = useState(85);
 
   useEffect(() => {
     if (!session) return;
@@ -215,52 +217,96 @@ function LandingPageContent() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start">
             <div className="text-4xl font-extrabold text-paw-orange">5 min</div>
-            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average<br />Setup Time</div>
+            <div>
+              <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average<br />Setup Time</div>
+              <div className="text-xs text-paw-brown/35 mt-1">From sign-up to live</div>
+            </div>
           </div>
           <div className="flex items-center gap-4 justify-center md:justify-start">
             <div className="text-4xl font-extrabold text-paw-brown">8</div>
-            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Avg Bookings<br />Recovered / Week</div>
+            <div>
+              <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Bookings Recovered<br />per Week, on Average</div>
+              <div className="text-xs text-paw-brown/35 mt-1">Across active customers</div>
+            </div>
           </div>
           <div className="flex items-center gap-4 justify-center md:justify-start">
             <div className="text-4xl font-extrabold text-paw-amber">$85</div>
-            <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average Groom<br />Value in the US</div>
+            <div>
+              <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average Groom<br />Value in the US</div>
+              <div className="text-xs text-paw-brown/35 mt-1">IBIS World, 2024</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ROI Section */}
+      {/* ROI Calculator */}
       <section className="py-20 px-6 relative z-10">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-paw-brown rounded-[2.5rem] p-10 sm:p-14 text-center relative overflow-hidden">
+          <div className="bg-paw-brown rounded-[2.5rem] p-10 sm:p-14 relative overflow-hidden">
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-paw-amber/10 rounded-full blur-3xl" />
             <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-paw-orange/10 rounded-full blur-3xl" />
             <div className="relative z-10">
               <h2 className="text-sm font-bold tracking-widest text-paw-amber uppercase mb-4">The Real Cost of Missed Calls</h2>
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-6">
-                Here&apos;s what missed calls are actually costing you.
+              <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-8">
+                See what you&apos;re leaving on the table.
               </h3>
-              <div className="text-white/80 text-lg leading-relaxed space-y-4 max-w-xl mx-auto text-left">
-                <p>
-                  The average groomer misses <strong className="text-white">5&ndash;8 calls a day</strong> while working on a client. At $85 per groom, that&apos;s <strong className="text-paw-amber">$425&ndash;$680 every single day</strong> walking out the door.
-                </p>
-                <p>
-                  Most of those callers don&apos;t leave voicemails. They just call the next groomer.
-                </p>
-                <p className="text-paw-amber font-bold">
-                  RingPaw costs $49/month. It pays for itself the first time it answers a call.
-                </p>
+
+              {/* Sliders */}
+              <div className="space-y-6 mb-8">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-semibold text-white/80">Missed calls per day</label>
+                    <span className="text-2xl font-extrabold text-paw-amber">{missedPerDay}</span>
+                  </div>
+                  <input
+                    type="range" min={1} max={20} value={missedPerDay}
+                    onChange={(e) => setMissedPerDay(Number(e.target.value))}
+                    className="w-full accent-paw-amber h-2 rounded-full cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-white/30 mt-1"><span>1</span><span>20</span></div>
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-semibold text-white/80">Average groom price</label>
+                    <span className="text-2xl font-extrabold text-paw-amber">${groomPrice}</span>
+                  </div>
+                  <input
+                    type="range" min={30} max={250} step={5} value={groomPrice}
+                    onChange={(e) => setGroomPrice(Number(e.target.value))}
+                    className="w-full accent-paw-amber h-2 rounded-full cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-white/30 mt-1"><span>$30</span><span>$250</span></div>
+                </div>
               </div>
-              <div className="mt-8">
-                <a
-                  href="#how-it-works"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg"
-                >
-                  See How It Works
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-                  </svg>
-                </a>
+
+              {/* Result */}
+              <div className="bg-white/10 rounded-3xl p-6 mb-8 text-center">
+                <p className="text-sm font-semibold text-white/60 mb-1">You&apos;re losing up to</p>
+                <p className="text-5xl font-extrabold text-paw-amber">
+                  ${(missedPerDay * groomPrice * 5 * 4).toLocaleString()}
+                </p>
+                <p className="text-white/60 text-sm mt-1">per month in missed bookings</p>
+                <p className="text-white/40 text-xs mt-3">
+                  {missedPerDay} calls/day × ${groomPrice} × 5 days × 4 weeks
+                </p>
+                <div className="mt-4 pt-4 border-t border-white/10 text-sm font-semibold text-white/70">
+                  RingPaw costs <span className="text-paw-amber font-bold">$49/mo</span> — it pays for itself the first call it answers.
+                </div>
               </div>
+
+              <p className="text-white/60 text-sm mb-8">
+                Most callers don&apos;t leave voicemails. They just call the next groomer.
+              </p>
+
+              <a
+                href="#how-it-works"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg"
+              >
+                See How It Works
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                </svg>
+              </a>
             </div>
           </div>
         </div>
@@ -433,7 +479,7 @@ function LandingPageContent() {
                   </svg>
                 ),
                 title: "Real-Time Calendar Booking",
-                desc: "Checks your live availability before offering any slot. No double bookings. Works with Google Calendar, Square, and Calendly.",
+                desc: "Checks your live availability before offering any slot. No double bookings. Works with Google Calendar, Square, and Acuity Scheduling.",
               },
               {
                 icon: (
@@ -503,12 +549,12 @@ function LandingPageContent() {
           <div className="grid md:grid-cols-3 gap-8 items-center">
             {/* Starter */}
             <div className="bg-white p-8 rounded-[2rem] shadow-card border border-gray-100">
-              <h3 className="text-xl font-bold text-paw-brown mb-2">Starter</h3>
+              <h3 className="text-xl font-bold text-paw-brown mb-2">Solo Groomer</h3>
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-4xl font-extrabold">$49</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Perfect for solo groomers. Everything you need to stop missing calls and start filling your calendar.</p>
+              <p className="text-sm text-gray-500 mb-8 h-10">Just you and your shears. Everything you need to stop missing calls and start filling your schedule.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -548,12 +594,12 @@ function LandingPageContent() {
             {/* Growth */}
             <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10">
               <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">MOST POPULAR</div>
-              <h3 className="text-xl font-bold text-paw-amber mb-2">Growth</h3>
+              <h3 className="text-xl font-bold text-paw-amber mb-2">Small Shop</h3>
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-5xl font-extrabold text-white">$149</span>
                 <span className="text-white/50">/mo</span>
               </div>
-              <p className="text-sm text-white/70 mb-8 h-10">For shops that can&apos;t afford to miss a single call. More minutes and call analytics to track every recovered booking.</p>
+              <p className="text-sm text-white/70 mb-8 h-10">A couple groomers, a busy phone. More minutes and call analytics so you can see every booking you&apos;ve recovered.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -596,12 +642,12 @@ function LandingPageContent() {
 
             {/* Pro */}
             <div className="bg-white p-8 rounded-[2rem] shadow-card border border-gray-100">
-              <h3 className="text-xl font-bold text-paw-brown mb-2">Pro</h3>
+              <h3 className="text-xl font-bold text-paw-brown mb-2">Growing Pack</h3>
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-4xl font-extrabold">$299</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. Dedicated priority support and everything scaled up.</p>
+              <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. High-volume minutes and dedicated priority support.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}

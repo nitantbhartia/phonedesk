@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { InfoIcon } from "@/components/ui/info-icon";
+import { toast } from "@/components/ui/toast";
 
 interface CalendarConnection {
   id: string;
@@ -113,7 +114,7 @@ export default function CalendarSettingsPage() {
   const [hours, setHours] = useState<HoursState>({ ...DEFAULT_HOURS });
   const [savedHoursJson, setSavedHoursJson] = useState("");
   const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const [conflictsLoading, setConflictsLoading] = useState(false);
   const [conflictsTz, setConflictsTz] = useState("America/Los_Angeles");
@@ -173,7 +174,6 @@ export default function CalendarSettingsPage() {
 
   async function saveHours() {
     setSaving(true);
-    setSaveMessage(null);
     try {
       const businessHours = serializeHours(hours);
       const res = await fetch("/api/business/profile", {
@@ -186,9 +186,10 @@ export default function CalendarSettingsPage() {
         throw new Error(data.error || "Failed to save");
       }
       setSavedHoursJson(JSON.stringify(businessHours));
-      setSaveMessage({ type: "success", text: "Hours saved & synced to voice agent" });
+      setLastSaved(new Date());
+      toast.success("Hours saved & synced to voice agent");
     } catch (error) {
-      setSaveMessage({ type: "error", text: error instanceof Error ? error.message : "Failed to save hours" });
+      toast.error(error instanceof Error ? error.message : "Failed to save hours");
     } finally {
       setSaving(false);
     }
@@ -509,25 +510,15 @@ export default function CalendarSettingsPage() {
           ))}
         </div>
 
-        {saveMessage && (
-          <div
-            className={`mt-4 p-3 rounded-2xl text-sm font-bold ${
-              saveMessage.type === "success"
-                ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-red-50 text-red-700 border border-red-200"
-            }`}
-          >
-            {saveMessage.text}
-          </div>
-        )}
-
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex items-center justify-end gap-3">
+          {lastSaved && !hoursDirty && (
+            <span className="text-xs text-paw-brown/40 font-medium">
+              Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
           {hoursDirty && (
             <button
-              onClick={() => {
-                fetchData();
-                setSaveMessage(null);
-              }}
+              onClick={fetchData}
               className="px-6 py-3 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all text-sm"
             >
               Discard
