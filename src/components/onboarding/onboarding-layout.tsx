@@ -75,51 +75,87 @@ export function OnboardingLayout({
       {/* Main card */}
       <main className="w-full max-w-4xl bg-paw-cream rounded-[2.5rem] shadow-soft border-4 border-white relative z-10 overflow-hidden">
         {/* Step bar */}
-        <div className="flex border-b border-paw-brown/5 bg-white/50 overflow-x-auto hide-scroll">
-          {STEPS.map((step, i) => {
-            const isActive = step.number === currentStep;
-            const isDone = step.number < currentStep;
-            return (
+        <div className="border-b border-paw-brown/5 bg-white/50">
+          {/* Desktop: all steps with connecting track + labels */}
+          <div className="hidden sm:block px-8 py-5">
+            <div className="relative flex items-start">
+              {/* Background track */}
+              <div className="absolute top-4 left-4 right-4 h-0.5 bg-paw-brown/10" />
+              {/* Progress fill */}
               <div
-                key={step.number}
-                className={`flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3 ${
-                  i < STEPS.length - 1 ? "border-r border-paw-brown/5" : ""
-                } ${!isActive && !isDone ? "opacity-40" : ""}`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                    isActive || isDone
-                      ? "bg-paw-brown text-white"
-                      : "bg-paw-sky text-paw-brown"
-                  }`}
-                >
-                  {isDone ? (
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                className="absolute top-4 left-4 h-0.5 bg-paw-brown/30 transition-all duration-300"
+                style={{
+                  width: `calc(${((currentStep - 1) / (STEPS.length - 1)) * 100}% * (100% - 2rem) / 100%)`,
+                }}
+              />
+              {STEPS.map((step) => {
+                const isActive = step.number === currentStep;
+                const isDone = step.number < currentStep;
+                return (
+                  <div
+                    key={step.number}
+                    className="flex-1 flex flex-col items-center"
+                  >
+                    <div
+                      className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
+                        isActive || isDone
+                          ? "bg-paw-brown text-white"
+                          : "bg-white border-2 border-paw-brown/20 text-paw-brown/30"
+                      }`}
                     >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  ) : (
-                    step.number
-                  )}
-                </div>
-                <span className="font-semibold text-paw-brown text-sm truncate hidden sm:inline">
-                  {step.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-        {/* Current step label — visible only on mobile where labels are hidden */}
-        <div className="sm:hidden px-6 py-2 bg-white/30 text-center text-xs font-bold text-paw-brown/60 uppercase tracking-wider border-b border-paw-brown/5">
-          Step {currentStep} of {STEPS.length} &mdash; {STEPS.find((s) => s.number === currentStep)?.label}
+                      {isDone ? (
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : (
+                        step.number
+                      )}
+                    </div>
+                    <span
+                      className={`mt-2 text-[10px] font-semibold text-center leading-snug px-0.5 transition-colors ${
+                        isActive
+                          ? "text-paw-brown"
+                          : isDone
+                            ? "text-paw-brown/50"
+                            : "text-paw-brown/25"
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile: progress bar + current step label */}
+          <div className="sm:hidden px-5 py-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-paw-brown">
+                {STEPS.find((s) => s.number === currentStep)?.label}
+              </span>
+              <span className="text-xs font-bold text-paw-brown/40 tabular-nums">
+                {currentStep} / {STEPS.length}
+              </span>
+            </div>
+            <div className="h-1.5 bg-paw-brown/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-paw-brown rounded-full transition-all duration-300"
+                style={{
+                  width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Content */}
