@@ -124,7 +124,7 @@ export default function CallLogPage() {
         <div>
           <h1 className="text-4xl font-extrabold text-paw-brown">Call Log</h1>
           <p className="text-paw-brown/60 font-medium mt-1">
-            Review and manage recent AI interactions
+            Every call your AI handled — tap any row to read the full transcript and see what was booked.
           </p>
         </div>
         <div className="flex gap-3">

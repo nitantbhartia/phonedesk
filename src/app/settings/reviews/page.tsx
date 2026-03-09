@@ -68,7 +68,7 @@ export default function ReviewsPage() {
       <div>
         <h1 className="text-4xl font-extrabold text-paw-brown">Google Reviews</h1>
         <p className="text-paw-brown/60 font-medium mt-1">
-          Automatically request reviews after each grooming session
+          Automatically send a Google review request after each appointment. Paste your review link once and your AI handles the rest.
         </p>
       </div>
 

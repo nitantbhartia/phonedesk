@@ -203,7 +203,7 @@ export default function AgentSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold">AI Agent Settings</h1>
           <p className="text-muted-foreground">
-            Configure how your AI receptionist handles calls.
+            Customize your AI's voice, personality, services, and booking behavior. Changes sync to your live agent automatically.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
