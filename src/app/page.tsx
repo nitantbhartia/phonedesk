@@ -109,9 +109,9 @@ function LandingPageContent() {
       <nav className="w-full max-w-5xl px-4 sm:px-6 py-3 flex justify-between items-center glass-card rounded-full shadow-soft">
         <BrandLogo
           priority
-          mobileWidth={136}
-          desktopWidth={196}
-          className="min-w-0 max-w-[136px] sm:max-w-[196px]"
+          mobileWidth={156}
+          desktopWidth={236}
+          className="min-w-0 max-w-[156px] sm:max-w-[236px]"
         />
         <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
           <a href="#how-it-works" className="hover:text-paw-brown transition-colors">How it Works</a>
