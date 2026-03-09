@@ -53,6 +53,29 @@ export default function CallLogPage() {
 
   const pageSize = 20;
 
+  function exportCSV() {
+    if (!calls.length) return;
+    const headers = ["Date", "Caller Name", "Phone", "Status", "Pet", "Service", "Duration (s)", "Summary"];
+    const rows = calls.map((c) => [
+      new Date(c.createdAt).toLocaleString(),
+      c.callerName || "",
+      c.callerPhone || "",
+      c.appointment ? "Confirmed" : c.status,
+      c.appointment?.petName || "",
+      c.appointment?.serviceName || "",
+      c.duration ?? "",
+      (c.summary || "").replace(/[\n\r,]/g, " "),
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `calls-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const fetchCalls = useCallback(async () => {
     setLoading(true);
     try {
@@ -104,7 +127,11 @@ export default function CallLogPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="px-5 py-2.5 bg-white rounded-full font-bold text-sm shadow-sm border border-paw-brown/5 flex items-center gap-2 hover:bg-paw-cream transition-colors">
+          <button
+            onClick={exportCSV}
+            disabled={calls.length === 0}
+            className="px-5 py-2.5 bg-white rounded-full font-bold text-sm shadow-sm border border-paw-brown/5 flex items-center gap-2 hover:bg-paw-cream transition-colors disabled:opacity-40"
+          >
             <svg
               width="18"
               height="18"
@@ -117,7 +144,7 @@ export default function CallLogPage() {
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Export
+            Export CSV
           </button>
         </div>
       </div>
