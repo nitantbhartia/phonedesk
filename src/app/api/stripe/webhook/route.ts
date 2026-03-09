@@ -56,14 +56,20 @@ export async function POST(req: NextRequest) {
         const priceId = primaryItem?.price?.id || null;
         const plan = getPlanForStripePriceId(priceId);
 
+        const updateData: Record<string, unknown> = {
+          stripeSubscriptionId: subscription.id,
+          stripePriceId: priceId || undefined,
+          stripeSubscriptionStatus: subscription.status,
+          plan,
+        };
+        // When a subscription becomes active, re-enable call answering
+        // (covers reactivation after cancellation and initial activation)
+        if (subscription.status === "active") {
+          updateData.isActive = true;
+        }
         await prisma.business.updateMany({
           where: { stripeCustomerId: customerId },
-          data: {
-            stripeSubscriptionId: subscription.id,
-            stripePriceId: priceId || undefined,
-            stripeSubscriptionStatus: subscription.status,
-            plan,
-          },
+          data: updateData,
         });
       }
     }
@@ -76,6 +82,7 @@ export async function POST(req: NextRequest) {
       const customerId =
         typeof subscription.customer === "string" ? subscription.customer : null;
       if (customerId) {
+        // Disable live call answering and downgrade plan
         await prisma.business.updateMany({
           where: { stripeCustomerId: customerId },
           data: {
@@ -83,8 +90,20 @@ export async function POST(req: NextRequest) {
             stripePriceId: null,
             stripeSubscriptionStatus: subscription.status,
             plan: "STARTER",
+            isActive: false,
           },
         });
+        // Also disable the Retell agent flag so the dashboard reflects reality
+        const businesses = await prisma.business.findMany({
+          where: { stripeCustomerId: customerId },
+          select: { id: true },
+        });
+        for (const biz of businesses) {
+          await prisma.retellConfig.updateMany({
+            where: { businessId: biz.id },
+            data: { isActive: false },
+          });
+        }
       }
     }
 

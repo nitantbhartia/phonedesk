@@ -126,6 +126,7 @@ export default function DashboardPage() {
   const [agentLive, setAgentLive] = useState(true);
   const [agentToggling, setAgentToggling] = useState(false);
   const [confirmOff, setConfirmOff] = useState(false);
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
   const [fetchError, setFetchError] = useState("");
 
@@ -152,6 +153,8 @@ export default function DashboardPage() {
         if (data.business?.retellConfig) {
           setAgentLive(data.business.retellConfig.isActive ?? true);
         }
+        const subStatus = data.business?.stripeSubscriptionStatus;
+        setSubscriptionActive(subStatus === "active");
       }
 
       if (callsRes.ok) {
@@ -230,41 +233,54 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-6">
           {/* Agent Status Toggle */}
-          <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-sm border border-paw-brown/5">
-            <span className="text-sm font-bold text-paw-brown/70">
-              Agent Status
-            </span>
-            <label className="flex items-center cursor-pointer">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={agentLive}
-                  disabled={agentToggling}
-                  onChange={(e) => {
-                    if (!e.target.checked) {
-                      setConfirmOff(true);
-                    } else {
-                      void toggleAgent(true);
-                    }
-                  }}
-                />
-                <div
-                  className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
-                    agentLive ? "bg-paw-orange" : "bg-gray-200"
-                  }`}
-                />
-                <div
-                  className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${
-                    agentLive ? "translate-x-6" : ""
-                  }`}
-                />
-              </div>
-              <div className="ml-3 text-paw-brown font-bold text-sm">
-                {agentLive ? "Live" : "Off"}
-              </div>
-            </label>
-          </div>
+          {subscriptionActive ? (
+            <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-sm border border-paw-brown/5">
+              <span className="text-sm font-bold text-paw-brown/70">
+                Agent Status
+              </span>
+              <label className="flex items-center cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={agentLive}
+                    disabled={agentToggling}
+                    onChange={(e) => {
+                      if (!e.target.checked) {
+                        setConfirmOff(true);
+                      } else {
+                        void toggleAgent(true);
+                      }
+                    }}
+                  />
+                  <div
+                    className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
+                      agentLive ? "bg-paw-orange" : "bg-gray-200"
+                    }`}
+                  />
+                  <div
+                    className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${
+                      agentLive ? "translate-x-6" : ""
+                    }`}
+                  />
+                </div>
+                <div className="ml-3 text-paw-brown font-bold text-sm">
+                  {agentLive ? "Live" : "Off"}
+                </div>
+              </label>
+            </div>
+          ) : (
+            <Link
+              href="/settings/billing"
+              className="flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/40 text-paw-brown px-5 py-3 rounded-full text-sm font-bold hover:bg-paw-amber/30 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Subscribe to go live
+            </Link>
+          )}
 
           {/* User info */}
           <div className="hidden md:flex items-center gap-3">
@@ -284,7 +300,27 @@ export default function DashboardPage() {
       </header>
 
       {/* Agent-off banner */}
-      {!agentLive && (
+      {!subscriptionActive && (
+        <div className="mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-amber-800 text-sm">No active subscription</p>
+            <p className="text-amber-700/70 text-sm">Your AI receptionist is paused. Subscribe to start taking calls.</p>
+          </div>
+          <Link
+            href="/settings/billing"
+            className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors"
+          >
+            Subscribe
+          </Link>
+        </div>
+      )}
+      {subscriptionActive && !agentLive && (
         <div className="mb-6 flex items-center gap-4 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
           <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5">
