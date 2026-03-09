@@ -9,6 +9,7 @@ export default function ReviewsPage() {
   const router = useRouter();
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,14 +29,15 @@ export default function ReviewsPage() {
         const data = await res.json();
         setGoogleReviewUrl(data.googleReviewUrl || "");
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      // Non-critical: just start with empty field
     } finally {
       setLoading(false);
     }
   }
 
   async function saveConfig() {
+    setSaveError("");
     try {
       const res = await fetch("/api/reviews/config", {
         method: "POST",
@@ -45,9 +47,11 @@ export default function ReviewsPage() {
       if (res.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else {
+        setSaveError("Failed to save. Please try again.");
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setSaveError("Failed to save. Please try again.");
     }
   }
 
@@ -89,6 +93,7 @@ export default function ReviewsPage() {
             {saved ? "Saved!" : "Save"}
           </button>
         </div>
+        {saveError && <p className="mt-2 text-sm text-red-600">{saveError}</p>}
       </div>
 
       {/* How it works */}

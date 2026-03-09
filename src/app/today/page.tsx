@@ -31,6 +31,7 @@ export default function TodayPage() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<TodayAppointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [statusError, setStatusError] = useState("");
   const [noteModal, setNoteModal] = useState<{ appointmentId: string; petName: string } | null>(null);
@@ -66,8 +67,8 @@ export default function TodayPage() {
           setAppointments(todayData.appointments || []);
         }
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setFetchError("Failed to load today's appointments. Please refresh.");
     } finally {
       setLoading(false);
     }
@@ -178,6 +179,13 @@ export default function TodayPage() {
           One-tap status updates — customers get auto-notified via SMS
         </p>
       </div>
+
+      {fetchError && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
+          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+        </div>
+      )}
 
       {statusError && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">

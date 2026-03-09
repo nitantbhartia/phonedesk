@@ -134,8 +134,8 @@ export default function CalendarSettingsPage() {
         setConflicts(data.conflicts || []);
         if (data.timezone) setConflictsTz(data.timezone);
       }
-    } catch (error) {
-      console.error("Error fetching conflicts:", error);
+    } catch {
+      toast.error("Failed to load calendar conflicts. Please refresh.");
     } finally {
       setConflictsLoading(false);
     }
