@@ -49,8 +49,9 @@ export async function POST(req: NextRequest) {
   // stripeSubscriptionStatus='active' is the authoritative check and overrides
   // isActive so that existing subscribers who didn't go through the post-deploy
   // goLive path are never accidentally blocked.
+  // Set STRIPE_BYPASS=true to skip this gate for testing.
   const biz = phoneRecord.business;
-  const hasActiveSub = biz.stripeSubscriptionStatus === "active";
+  const hasActiveSub = biz.stripeSubscriptionStatus === "active" || process.env.STRIPE_BYPASS === "true";
   if (biz.onboardingComplete && !biz.isActive && !hasActiveSub) {
     return NextResponse.json({
       result: `This line is temporarily inactive. Please apologize warmly and tell the caller to reach ${biz.ownerName} directly at the business phone number. Then call end_call immediately.`,

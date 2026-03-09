@@ -48,5 +48,7 @@ export function validateEnv() {
     stripeStarterPriceId: optional("STRIPE_STARTER_PRICE_ID", ""),
     stripeProPriceId: optional("STRIPE_PRO_PRICE_ID", ""),
     stripeBusinessPriceId: optional("STRIPE_BUSINESS_PRICE_ID", ""),
+    // Set STRIPE_BYPASS=true to skip all subscription checks (for testing in prod)
+    stripeBypass: process.env.STRIPE_BYPASS === "true",
   };
 }

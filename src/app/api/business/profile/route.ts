@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { syncRetellAgent } from "@/lib/retell";
 import { seedBreedRecommendations } from "@/lib/breed-recommendations";
 
+const stripeBypass = process.env.STRIPE_BYPASS === "true";
+
 async function resolveUserId(session: {
   user?: { id?: string | null; email?: string | null; name?: string | null; image?: string | null };
 }) {
@@ -106,6 +108,11 @@ export async function GET() {
     avgCallDuration: Math.round(avgDuration._avg.duration || 0),
     totalCallMinutes,
   };
+
+  // When STRIPE_BYPASS=true, tell the UI that the subscription is active
+  if (stripeBypass && business) {
+    (business as Record<string, unknown>).stripeSubscriptionStatus = "active";
+  }
 
   return NextResponse.json({ business, stats });
 }
@@ -284,8 +291,8 @@ export async function PATCH(req: NextRequest) {
       select: { id: true, stripeSubscriptionStatus: true },
     });
     if (business) {
-      // Turning the agent ON requires an active subscription
-      if (body.agentActive === true && business.stripeSubscriptionStatus !== "active") {
+      // Turning the agent ON requires an active subscription (unless bypassed for testing)
+      if (body.agentActive === true && !stripeBypass && business.stripeSubscriptionStatus !== "active") {
         return NextResponse.json(
           { error: "An active subscription is required to enable live call answering." },
           { status: 402 }
@@ -332,8 +339,8 @@ export async function PATCH(req: NextRequest) {
     if (key in body) safeData[key] = body[key];
   }
 
-  // Turning isActive on requires an active subscription
-  if (safeData.isActive === true) {
+  // Turning isActive on requires an active subscription (unless bypassed for testing)
+  if (safeData.isActive === true && !stripeBypass) {
     const biz = await prisma.business.findUnique({
       where: { userId },
       select: { stripeSubscriptionStatus: true },
