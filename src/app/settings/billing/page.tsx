@@ -60,6 +60,7 @@ export default function BillingPage() {
   const [currentPlan, setCurrentPlan] = useState("STARTER");
   const [minutesUsed, setMinutesUsed] = useState(0);
   const [hasStripeCustomer, setHasStripeCustomer] = useState(false);
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const [billingError, setBillingError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -80,6 +81,7 @@ export default function BillingPage() {
         if (data.business) {
           setCurrentPlan(data.business.plan || "STARTER");
           setHasStripeCustomer(Boolean(data.business.stripeCustomerId));
+          setSubscriptionActive(data.business.stripeSubscriptionStatus === "active");
         }
         if (data.stats) {
           setMinutesUsed(data.stats.totalCallMinutes || 0);
@@ -99,7 +101,11 @@ export default function BillingPage() {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId }),
+        body: JSON.stringify({
+          plan: planId,
+          successUrl: "/dashboard?subscribed=true",
+          cancelUrl: "/settings/billing",
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

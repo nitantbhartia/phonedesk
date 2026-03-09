@@ -43,6 +43,23 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // --- Subscription gate ---
+  // Allow calls during onboarding test (onboardingComplete = false).
+  // Once onboarding is done, require an active subscription to take calls.
+  // stripeSubscriptionStatus='active' is the authoritative check and overrides
+  // isActive so that existing subscribers who didn't go through the post-deploy
+  // goLive path are never accidentally blocked.
+  const biz = phoneRecord.business;
+  const hasActiveSub = biz.stripeSubscriptionStatus === "active";
+  if (biz.onboardingComplete && !biz.isActive && !hasActiveSub) {
+    return NextResponse.json({
+      result: `This line is temporarily inactive. Please apologize warmly and tell the caller to reach ${biz.ownerName} directly at the business phone number. Then call end_call immediately.`,
+      found: false,
+      square_customer_id: null,
+      subscription_inactive: true,
+    });
+  }
+
   const callerPhone = args?.caller_phone || call?.from_number;
   const businessId = phoneRecord.business.id;
 

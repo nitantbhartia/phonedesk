@@ -281,9 +281,16 @@ export async function PATCH(req: NextRequest) {
   if (hasRetellUpdates) {
     const business = await prisma.business.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { id: true, stripeSubscriptionStatus: true },
     });
     if (business) {
+      // Turning the agent ON requires an active subscription
+      if (body.agentActive === true && business.stripeSubscriptionStatus !== "active") {
+        return NextResponse.json(
+          { error: "An active subscription is required to enable live call answering." },
+          { status: 402 }
+        );
+      }
       const retellData: Record<string, unknown> = {};
       if (body.agentActive !== undefined) retellData.isActive = Boolean(body.agentActive);
       if (body.voiceId !== undefined) retellData.voiceId = String(body.voiceId);
@@ -323,6 +330,19 @@ export async function PATCH(req: NextRequest) {
   const safeData: Record<string, unknown> = {};
   for (const key of allowedFields) {
     if (key in body) safeData[key] = body[key];
+  }
+
+  // Turning isActive on requires an active subscription
+  if (safeData.isActive === true) {
+    const biz = await prisma.business.findUnique({
+      where: { userId },
+      select: { stripeSubscriptionStatus: true },
+    });
+    if (biz?.stripeSubscriptionStatus !== "active") {
+      // Strip isActive from the update — don't reject outright so
+      // onboardingComplete can still be set (e.g. goLive with no sub)
+      delete safeData.isActive;
+    }
   }
 
   const business = await prisma.business.update({
