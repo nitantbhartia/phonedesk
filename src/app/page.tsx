@@ -104,7 +104,8 @@ function LandingPageContent() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-50 w-full px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center max-w-7xl mx-auto">
+      <div className="sticky top-0 z-50 flex justify-center pt-3 sm:pt-4 px-4">
+      <nav className="w-full max-w-5xl px-4 sm:px-6 py-3 flex justify-between items-center glass-card rounded-full shadow-soft">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -128,37 +129,38 @@ function LandingPageContent() {
           {isSigningIn ? "..." : "Get Started"}
         </button>
       </nav>
+      </div>
 
       {/* Hero */}
-      <header className="relative z-10 pt-8 sm:pt-12 pb-16 sm:pb-24 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      <header className="relative z-10 pt-8 sm:pt-12 pb-12 sm:pb-24 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
           {/* Left column */}
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-paw-surface rounded-full shadow-sm text-sm font-semibold text-paw-brown border border-white/50">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 glass-card rounded-full shadow-sm text-sm font-semibold text-paw-brown">
               <span className="w-2 h-2 rounded-full bg-paw-orange animate-pulse" />
               Phones answered. Bookings filled.
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
-              Busy Grooming <br />
+            <h1 className="animate-fade-in-up-delay-1 text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
+              Busy Grooming{" "}
               <span className="text-paw-orange relative inline-block">
                 Dogs?
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-paw-amber/50" viewBox="0 0 100 10" preserveAspectRatio="none">
                   <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                 </svg>
               </span>{" "}
-              We Answer <br />the Phone.
+              We Answer the Phone.
             </h1>
 
-            <p className="text-xl text-paw-brown/80 leading-relaxed max-w-lg">
+            <p className="animate-fade-in-up-delay-2 text-xl text-paw-brown/80 leading-relaxed max-w-lg">
               When you can&apos;t answer the phone, RingPaw does. It talks to customers, books appointments, and texts confirmations automatically.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
-                className="px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50"
+                className="relative overflow-hidden px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50 btn-shimmer"
               >
                 {isSigningIn ? "Redirecting..." : "Get Started Today"}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -173,10 +175,10 @@ function LandingPageContent() {
           </div>
 
           {/* Right column - phone mockup */}
-          <div className="relative hidden sm:block">
+          <div className="relative hidden sm:block animate-fade-in-up-delay-4">
             <div className="absolute inset-0 bg-paw-amber/20 blur-3xl rounded-full transform translate-y-12" />
 
-            <div className="relative bg-paw-cream rounded-[2.5rem] p-6 shadow-soft border-4 border-white">
+            <div className="animate-float relative glass-card rounded-[2.5rem] p-6 shadow-soft border-2 border-white/70">
               <div className="flex justify-between items-center mb-8 px-2">
                 <div className="w-8 h-8 bg-paw-brown/10 rounded-full flex items-center justify-center">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3E2919" strokeWidth="3">
@@ -213,36 +215,36 @@ function LandingPageContent() {
       </header>
 
       {/* Stats bar */}
-      <section className="py-12 bg-paw-cream/50 border-y border-white/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-          <div className="flex items-center gap-4 justify-center md:justify-start">
-            <div className="text-4xl font-extrabold text-paw-orange">5 min</div>
+      <section className="py-8 sm:py-12 glass-card border-y border-white/60 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-3 gap-3 sm:gap-8 text-center">
+          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 justify-center">
+            <div className="text-2xl sm:text-4xl font-extrabold text-paw-orange leading-none">5 min</div>
             <div>
-              <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average<br />Setup Time</div>
-              <div className="text-xs text-paw-brown/35 mt-1">From sign-up to live</div>
+              <div className="text-[10px] sm:text-sm font-semibold text-paw-brown/70 leading-tight">Average Setup Time</div>
+              <div className="hidden sm:block text-xs text-paw-brown/35 mt-1">From sign-up to live</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 justify-center md:justify-start">
-            <div className="text-4xl font-extrabold text-paw-brown">8</div>
+          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 justify-center">
+            <div className="text-2xl sm:text-4xl font-extrabold text-paw-brown leading-none">8</div>
             <div>
-              <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Bookings Recovered<br />per Week, on Average</div>
-              <div className="text-xs text-paw-brown/35 mt-1">Across active customers</div>
+              <div className="text-[10px] sm:text-sm font-semibold text-paw-brown/70 leading-tight">Bookings per Week</div>
+              <div className="hidden sm:block text-xs text-paw-brown/35 mt-1">Across active customers</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 justify-center md:justify-start">
-            <div className="text-4xl font-extrabold text-paw-amber">$85</div>
+          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 justify-center">
+            <div className="text-2xl sm:text-4xl font-extrabold text-paw-amber leading-none">$85</div>
             <div>
-              <div className="text-sm font-semibold text-paw-brown/70 leading-tight">Average Groom<br />Value in the US</div>
-              <div className="text-xs text-paw-brown/35 mt-1">IBIS World, 2024</div>
+              <div className="text-[10px] sm:text-sm font-semibold text-paw-brown/70 leading-tight">Avg. Groom Value</div>
+              <div className="hidden sm:block text-xs text-paw-brown/35 mt-1">IBIS World, 2024</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ROI Calculator */}
-      <section className="py-20 px-6 relative z-10">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 relative z-10">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-paw-brown rounded-[2.5rem] p-10 sm:p-14 relative overflow-hidden">
+          <div className="bg-paw-brown rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 lg:p-14 relative overflow-hidden">
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-paw-amber/10 rounded-full blur-3xl" />
             <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-paw-orange/10 rounded-full blur-3xl" />
             <div className="relative z-10">
@@ -280,7 +282,7 @@ function LandingPageContent() {
               </div>
 
               {/* Result */}
-              <div className="bg-white/10 rounded-3xl p-6 mb-8 text-center">
+              <div className="glass-card-dark border border-white/15 rounded-3xl p-6 mb-8 text-center">
                 <p className="text-sm font-semibold text-white/60 mb-1">You&apos;re losing up to</p>
                 <p className="text-5xl font-extrabold text-paw-amber">
                   ${(missedPerDay * groomPrice * 5 * 4).toLocaleString()}
@@ -300,7 +302,7 @@ function LandingPageContent() {
 
               <a
                 href="#how-it-works"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
               >
                 See How It Works
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -313,7 +315,7 @@ function LandingPageContent() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-24 px-6 relative z-10">
+      <section id="how-it-works" className="py-12 sm:py-24 px-4 sm:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Workflow</h2>
@@ -381,7 +383,7 @@ function LandingPageContent() {
       </section>
 
       {/* Listen to a Call */}
-      <section id="demo-player" className="py-24 px-6 relative z-10">
+      <section id="demo-player" className="py-12 sm:py-24 px-4 sm:px-6 relative z-10">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Hear it in action</h2>
@@ -398,7 +400,7 @@ function LandingPageContent() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-24 px-6 bg-white relative overflow-hidden">
+      <section id="features" className="py-12 sm:py-24 px-4 sm:px-6 bg-white relative overflow-hidden">
         <div className="absolute -left-20 top-20 w-96 h-96 bg-paw-sky rounded-full blur-3xl opacity-50" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
@@ -408,7 +410,7 @@ function LandingPageContent() {
           {/* Two hero feature cards */}
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Breed-Smart Booking */}
-            <div className="bg-paw-cream rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center gap-8 shadow-soft group">
+            <div className="bg-paw-cream rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-8 shadow-soft group">
               <div className="flex-1 space-y-4">
                 <div className="w-12 h-12 bg-paw-sky rounded-2xl flex items-center justify-center text-paw-brown mb-2">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -440,7 +442,7 @@ function LandingPageContent() {
             </div>
 
             {/* SMS Control */}
-            <div className="bg-paw-brown text-paw-cream rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center gap-8 shadow-soft group">
+            <div className="bg-paw-brown text-paw-cream rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-8 shadow-soft group">
               <div className="flex-1 space-y-4">
                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-paw-amber mb-2">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -540,7 +542,7 @@ function LandingPageContent() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-24 px-6 relative">
+      <section id="pricing" className="py-12 sm:py-24 px-4 sm:px-6 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-paw-brown">Simple Pricing</h2>
@@ -548,7 +550,7 @@ function LandingPageContent() {
           </div>
           <div className="grid md:grid-cols-3 gap-8 items-center">
             {/* Starter */}
-            <div className="bg-white p-8 rounded-[2rem] shadow-card border border-gray-100">
+            <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-xl font-bold text-paw-brown mb-2">Solo Groomer</h3>
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-4xl font-extrabold">$49</span>
@@ -592,7 +594,7 @@ function LandingPageContent() {
             </div>
 
             {/* Growth */}
-            <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10">
+            <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10 card-glow">
               <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">MOST POPULAR</div>
               <h3 className="text-xl font-bold text-paw-amber mb-2">Small Shop</h3>
               <div className="flex items-baseline gap-1 mb-6">
@@ -641,7 +643,7 @@ function LandingPageContent() {
             </div>
 
             {/* Pro */}
-            <div className="bg-white p-8 rounded-[2rem] shadow-card border border-gray-100">
+            <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-xl font-bold text-paw-brown mb-2">Growing Pack</h3>
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-4xl font-extrabold">$299</span>
@@ -696,10 +698,10 @@ function LandingPageContent() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 px-6 max-w-4xl mx-auto">
+      <section className="py-10 sm:py-16 px-4 sm:px-6 max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold text-paw-brown mb-8 text-center">Common Questions</h2>
         <div className="space-y-4">
-          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
               What does it actually sound like?
               <span className="group-open:rotate-180 transition-transform">
@@ -708,7 +710,7 @@ function LandingPageContent() {
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">RingPaw uses a warm, conversational voice built for phone calls. It speaks naturally, asks the right follow-up questions, and handles the flow of a real booking conversation &mdash; not a scripted menu. You can hear it for yourself using the demo player above.</p>
           </details>
-          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
               Will it actually book into my calendar?
               <span className="group-open:rotate-180 transition-transform">
@@ -717,7 +719,7 @@ function LandingPageContent() {
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; and it checks live availability before offering any slot. If you&apos;re already booked at 2&nbsp;PM, RingPaw won&apos;t offer 2&nbsp;PM. The moment a caller confirms, the appointment writes directly to Google Calendar, Square, or Acuity. You&apos;ll see it on your calendar within seconds, no copy-pasting required.</p>
           </details>
-          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
               What if it doesn&apos;t understand something?
               <span className="group-open:rotate-180 transition-transform">
@@ -726,7 +728,7 @@ function LandingPageContent() {
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">RingPaw handles the vast majority of calls on its own &mdash; but when something&apos;s genuinely outside its knowledge, it doesn&apos;t guess or go silent. It tells the caller, &ldquo;Let me have [your name] give you a quick call back,&rdquo; takes their number, and texts you a summary of what they needed. You call back already knowing the context. Nothing falls through the cracks.</p>
           </details>
-          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
               What calendars does it work with?
               <span className="group-open:rotate-180 transition-transform">
@@ -735,7 +737,7 @@ function LandingPageContent() {
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">Google Calendar, Square Appointments, and Acuity Scheduling. If you use any of these, connecting takes about 30 seconds during setup &mdash; just sign in and authorize. More integrations are on the roadmap. Using something else? Let us know and we&apos;ll prioritize it.</p>
           </details>
-          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
               Can I change my hours or block a day?
               <span className="group-open:rotate-180 transition-transform">
@@ -744,7 +746,7 @@ function LandingPageContent() {
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; update your hours any time from the Settings page. Toggle any day on or off, adjust open and close times, and RingPaw picks up the change immediately. Need to block a holiday or take a personal day? Mark it as busy in your connected calendar and RingPaw will treat that time as unavailable, no extra steps needed.</p>
           </details>
-          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
               How hard is setup?
               <span className="group-open:rotate-180 transition-transform">
@@ -753,7 +755,7 @@ function LandingPageContent() {
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">Genuinely about 5 minutes. Sign up, enter your business name and services, connect your calendar, and set up conditional call forwarding &mdash; we give you the exact code to dial on your phone. That&apos;s it. RingPaw is live and answering calls. No developer needed, no complicated config, no ongoing maintenance.</p>
           </details>
-          <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
               Is there a contract?
               <span className="group-open:rotate-180 transition-transform">
