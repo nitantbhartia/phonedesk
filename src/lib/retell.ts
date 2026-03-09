@@ -179,6 +179,16 @@ WHAT YOU NEVER DO
 - Never re-check availability for the same day unless the caller requests a different day${breedGuideSection ? "\n" + breedGuideSection : ""}`;
 }
 
+function formatTime12h(time24: string): string {
+  const [hourStr, minuteStr] = time24.split(":");
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr ?? "0");
+  if (isNaN(hour) || isNaN(minute)) return time24;
+  const meridiem = hour >= 12 ? "pm" : "am";
+  const hour12 = hour % 12 || 12;
+  return minute === 0 ? `${hour12}${meridiem}` : `${hour12}:${minuteStr}${meridiem}`;
+}
+
 function formatBusinessHours(
   hours: Record<string, { open: string; close: string }>
 ): string {
@@ -195,7 +205,8 @@ function formatBusinessHours(
   return Object.entries(hours)
     .filter(([, v]) => v && v.open && v.close)
     .map(
-      ([day, { open, close }]) => `${dayNames[day] || day}: ${open}-${close}`
+      ([day, { open, close }]) =>
+        `${dayNames[day] || day}: ${formatTime12h(open)}–${formatTime12h(close)}`
     )
     .join(", ");
 }
