@@ -357,7 +357,7 @@ export async function provisionRetellPhoneNumber(options: {
   const body: Record<string, unknown> = {
     area_code: options.areaCode || 415,
     inbound_agent_id: options.agentId,
-    nickname: options.nickname || "RingPaw AI Line",
+    nickname: options.nickname || "RingPaw Line",
   };
 
   if (options.smsWebhookUrl) {

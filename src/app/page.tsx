@@ -112,7 +112,7 @@ function LandingPageContent() {
             </svg>
           </div>
           <span className="font-bold text-2xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.ai</span>
+            RingPaw<span className="text-paw-orange">.com</span>
           </span>
         </div>
         <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
@@ -775,7 +775,7 @@ function LandingPageContent() {
               </svg>
             </div>
             <span className="font-bold text-xl tracking-tight">
-              RingPaw<span className="text-paw-amber">.ai</span>
+              RingPaw<span className="text-paw-amber">.com</span>
             </span>
           </div>
           <div className="flex gap-8 text-sm font-medium text-paw-cream/60">
@@ -784,7 +784,7 @@ function LandingPageContent() {
             <a href="#" className="hover:text-white transition-colors">Support</a>
           </div>
           <div className="text-sm text-paw-cream/40">
-            &copy; {new Date().getFullYear()} RingPaw AI. All rights reserved.
+            &copy; {new Date().getFullYear()} RingPaw. All rights reserved.
           </div>
         </div>
       </footer>
