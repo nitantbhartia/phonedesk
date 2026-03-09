@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -7,7 +8,7 @@ import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
 
-const navItems = [
+const navItems: Array<{ href: string; label: string; tourId?: string; icon: React.ReactNode }> = [
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -43,6 +44,7 @@ const navItems = [
   {
     href: "/today",
     label: "Today",
+    tourId: "tour-nav-today",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
@@ -108,6 +110,7 @@ const navItems = [
   {
     href: "/settings/agent",
     label: "AI Settings",
+    tourId: "tour-nav-ai",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="3" />
@@ -117,7 +120,7 @@ const navItems = [
   },
 ];
 
-const ownerNavItem = {
+const ownerNavItem: { href: string; label: string; tourId?: string; icon: React.ReactNode } = {
   href: "/owner",
   label: "Owner",
   icon: (
@@ -236,6 +239,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
+                  {...(item.tourId ? { "data-tour": item.tourId } : {})}
                   className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
                     isActive
                       ? "active"

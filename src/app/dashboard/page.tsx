@@ -442,7 +442,7 @@ export default function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
         {/* Calls Handled */}
-        <div className="bg-white p-6 rounded-[2rem] shadow-card border border-white/50">
+        <div data-tour="tour-calls" className="bg-white p-6 rounded-[2rem] shadow-card border border-white/50">
           <div className="w-10 h-10 bg-paw-sky rounded-2xl flex items-center justify-center text-paw-brown mb-4">
             <svg
               width="20"
@@ -508,7 +508,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Revenue Protected */}
-        <div className="bg-white p-6 rounded-[2rem] shadow-card border border-white/50">
+        <div data-tour="tour-revenue" className="bg-white p-6 rounded-[2rem] shadow-card border border-white/50">
           <div className="w-10 h-10 bg-paw-orange/10 rounded-2xl flex items-center justify-center text-paw-orange mb-4">
             <svg
               width="20"
@@ -578,7 +578,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Call Log */}
-      <div className="bg-white rounded-[2.5rem] shadow-card border border-white/50 overflow-hidden">
+      <div data-tour="tour-calllog" className="bg-white rounded-[2.5rem] shadow-card border border-white/50 overflow-hidden">
         <div className="px-8 py-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-bold text-paw-brown">Recent Call Log</h2>
           <div className="flex gap-2">
