@@ -128,14 +128,19 @@ const STEP_CONFIG = [
     proTip: "Square is the most popular choice for groomers \u2014 RingPaw syncs bookings and avoids double-booking.",
   },
   {
-    title: "Set up call forwarding",
-    subtitle: "Forward missed calls from your business phone to your new RingPaw number.",
-    proTip: "Use conditional forwarding to only route unanswered calls to your AI receptionist.",
+    title: "Get your RingPaw number",
+    subtitle: "We'll provision a local number so your AI receptionist can start taking calls.",
+    proTip: "Your existing business number stays the same — callers still dial it as usual.",
   },
   {
     title: "Make a test call",
     subtitle: "Call your RingPaw number to hear your AI receptionist in action.",
     proTip: "Try asking about pricing, availability, or booking an appointment to see the full experience.",
+  },
+  {
+    title: "Set up call forwarding",
+    subtitle: "Route unanswered calls from your business phone to your RingPaw number.",
+    proTip: "Conditional forwarding means your AI only picks up when you don't — callers never know the difference.",
   },
   {
     title: "Choose your plan",
@@ -1158,99 +1163,42 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 4: Call Forwarding */}
+      {/* Step 4: Get Number */}
       {step === 4 && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {!provisionedNumber ? (
-            <div className="text-center py-8">
-              <div className="w-20 h-20 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="text-paw-brown"
-                >
+            <div className="text-center py-6">
+              <div className="w-16 h-16 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-paw-brown">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-paw-brown mb-2">
-                First, let&apos;s get you a RingPaw number
+              <h3 className="text-lg font-bold text-paw-brown mb-2">
+                Let&apos;s get your RingPaw number
               </h3>
-              <p className="text-paw-brown/50 font-medium mb-8 max-w-md mx-auto">
-                We&apos;ll provision a local number in your area code so your AI
-                receptionist can start taking calls.
+              <p className="text-paw-brown/50 font-medium mb-6 max-w-sm mx-auto text-sm">
+                We&apos;ll provision a local number in your area code. Your existing business number stays the same.
               </p>
               <button
                 onClick={provisionNumber}
                 disabled={loading}
-                className="px-10 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                className="px-8 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
               >
                 {loading ? "Provisioning..." : "Get My Number"}
               </button>
             </div>
           ) : (
-            <>
-              <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-3xl p-6 text-center">
-                <div className="text-sm font-bold text-paw-brown/60 uppercase tracking-wider mb-2">
-                  Your RingPaw Number
-                </div>
-                <div className="text-3xl font-extrabold text-paw-brown">
-                  {formattedProvisionedNumber}
-                </div>
+            <div className="text-center py-4">
+              <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-bold px-4 py-2 rounded-full mb-4">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+                Number provisioned!
               </div>
-
-              <div className="space-y-4">
-                <OnboardingLabel info="Set up conditional call forwarding so that when you don't answer (busy or ringing too long), your carrier automatically routes the call to your RingPaw number. Your existing number stays the same — callers dial it as usual.">
-                  Set up call forwarding on your phone
-                </OnboardingLabel>
-                <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
-                  {[
-                    {
-                      num: 1,
-                      text: (
-                        <>
-                          Open <strong>Settings</strong> &rarr;{" "}
-                          <strong>Phone</strong> &rarr;{" "}
-                          <strong>Call Forwarding</strong>
-                        </>
-                      ),
-                    },
-                    { num: 2, text: "Toggle on Call Forwarding" },
-                    {
-                      num: 3,
-                      text: (
-                        <>
-                          Enter your RingPaw number:{" "}
-                          <strong>{formattedProvisionedNumber}</strong>
-                        </>
-                      ),
-                    },
-                  ].map((item) => (
-                    <div key={item.num} className="flex items-start gap-4">
-                      <div className="w-8 h-8 bg-paw-brown text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">
-                        {item.num}
-                      </div>
-                      <span className="text-paw-brown font-medium pt-1">
-                        {item.text}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-paw-amber/10 border-2 border-paw-amber/20 rounded-2xl p-4">
-                  <p className="text-sm text-paw-brown font-medium">
-                    <strong>For conditional forwarding</strong> (forward only
-                    when busy/unanswered), dial:
-                  </p>
-                  <code className="bg-paw-amber/20 text-paw-brown px-3 py-1 rounded-lg mt-2 inline-block font-bold text-sm">
-                    *61*{provisionedNumber.replace(/\D/g, "")}#
-                  </code>
-                </div>
+              <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-5">
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-1">Your RingPaw Number</p>
+                <p className="text-3xl font-extrabold text-paw-brown">{formattedProvisionedNumber}</p>
+                <p className="text-sm text-paw-brown/50 mt-2">Next step: call this number to test your AI receptionist.</p>
               </div>
-            </>
+            </div>
           )}
 
           {provisionError ? (
@@ -1269,88 +1217,129 @@ export default function OnboardingPage() {
 
       {/* Step 5: Test Call */}
       {step === 5 && (
-        <div className="space-y-8">
-          <div className="mx-auto max-w-4xl rounded-[2rem] border border-paw-brown/10 bg-white/75 px-5 py-8 shadow-soft sm:px-8 sm:py-10">
-            <div className="mx-auto max-w-2xl text-center">
-              <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-paw-amber/20 mx-auto">
-                <svg
-                  width="46"
-                  height="46"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-paw-brown"
-                >
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                </svg>
-              </div>
+        <div className="space-y-5">
+          {/* Number to call */}
+          <div className="bg-paw-brown rounded-2xl p-5 text-center">
+            <p className="text-xs font-bold text-white/50 uppercase tracking-wider mb-1">Call this number now</p>
+            <p className="text-3xl font-extrabold text-paw-amber tracking-wide">
+              {formattedProvisionedNumber || "your RingPaw number"}
+            </p>
+            <p className="text-sm text-white/60 mt-2">Pretend you&apos;re a customer calling to book a groom.</p>
+          </div>
 
-              <h2 className="text-3xl font-extrabold tracking-tight text-paw-brown sm:text-4xl">
-                Call {formattedProvisionedNumber || "your RingPaw number"}
-              </h2>
-              <p className="mx-auto mt-5 max-w-xl text-lg font-medium leading-8 text-paw-brown/55">
-                Try booking an appointment as if you were a customer. The AI
-                will greet you, look up your profile, and walk through the full
-                booking flow.
+          {/* Tip */}
+          <div className="flex items-start gap-3 bg-paw-amber/10 border border-paw-amber/20 rounded-xl p-4">
+            <span className="text-base shrink-0">💡</span>
+            <p className="text-sm text-paw-brown/75 font-medium">
+              No calendar connected? No problem — the AI uses your business hours. The call will show up in your dashboard just like a live call.
+            </p>
+          </div>
+
+          {/* Done button / confirmation */}
+          {!testCallDone ? (
+            <button
+              onClick={() => setTestCallDone(true)}
+              className="w-full py-4 rounded-full bg-paw-brown text-paw-cream font-bold hover:bg-opacity-90 shadow-soft transition-all"
+            >
+              I&apos;ve Made My Test Call ✓
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 w-full py-4 rounded-full border border-green-200 bg-green-50 font-bold text-green-700">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+                Test call completed!
+              </div>
+              <p className="text-center text-xs text-paw-brown/40 font-medium">
+                Check your dashboard to see the call log, transcript, and AI summary.
               </p>
             </div>
-
-            <div className="mx-auto mt-10 grid max-w-4xl gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
-              <div className="rounded-[1.75rem] border border-paw-amber/30 bg-paw-amber/10 px-5 py-4 text-left sm:px-6">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 text-xl leading-none">💡</div>
-                  <p className="text-base font-medium leading-8 text-paw-brown/75 sm:text-lg">
-                    No calendar connected? No problem. The AI uses your
-                    business hours to offer real slots. The call will appear in
-                    your dashboard just like a live call would.
-                  </p>
-                </div>
-              </div>
-
-              {!testCallDone ? (
-                <button
-                  onClick={() => setTestCallDone(true)}
-                  className="min-h-20 w-full rounded-full bg-paw-brown px-8 py-5 text-center text-xl font-bold text-paw-cream transition-all hover:bg-opacity-90 shadow-soft"
-                >
-                  I&apos;ve Made My Test Call
-                </button>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex min-h-20 w-full items-center justify-center gap-3 rounded-full border border-green-200 bg-green-50 px-6 py-5 text-center font-bold text-green-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Test call completed!
-                  </div>
-                  <p className="text-center text-sm font-medium text-paw-brown/50">
-                    Check your dashboard to see the call log, transcript, and
-                    AI summary.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          )}
 
           <OnboardingFooter
             onBack={() => setStep(4)}
             onNext={() => setStep(6)}
-            nextLabel={testCallDone ? "Continue Setup" : "Skip for Now"}
+            nextLabel={testCallDone ? "Set Up Forwarding" : "Skip for Now"}
           />
         </div>
       )}
 
-      {/* Step 6: Choose Plan */}
+      {/* Step 6: Call Forwarding */}
       {step === 6 && (
+        <div className="space-y-5">
+          {provisionedNumber && (
+            <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">Your RingPaw Number</p>
+                <p className="text-xl font-extrabold text-paw-brown">{formattedProvisionedNumber}</p>
+              </div>
+              <button
+                onClick={() => { void navigator.clipboard.writeText(formattedProvisionedNumber); }}
+                className="text-xs font-bold text-paw-brown/60 hover:text-paw-brown px-3 py-1.5 rounded-lg bg-white border border-paw-brown/10 transition-colors"
+              >
+                Copy
+              </button>
+            </div>
+          )}
+
+          <p className="text-sm text-paw-brown/60 font-medium">
+            Set up <strong className="text-paw-brown">conditional call forwarding</strong> on your business phone so calls that go unanswered automatically route to RingPaw. Your number stays the same — customers still call you as usual.
+          </p>
+
+          {/* iPhone instructions */}
+          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 overflow-hidden">
+            <div className="px-4 py-3 bg-paw-cream/50 border-b border-paw-brown/5">
+              <p className="text-xs font-bold text-paw-brown/60 uppercase tracking-wider">iPhone</p>
+            </div>
+            <div className="p-4 space-y-3">
+              {[
+                { n: 1, text: <>Open <strong>Settings</strong> → <strong>Phone</strong> → <strong>Call Forwarding</strong></> },
+                { n: 2, text: <>Toggle <strong>Call Forwarding</strong> on</> },
+                { n: 3, text: <><strong>Forward To:</strong> enter <strong>{formattedProvisionedNumber || "your RingPaw number"}</strong></> },
+              ].map(({ n, text }) => (
+                <div key={n} className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-paw-brown text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{n}</div>
+                  <span className="text-sm text-paw-brown/80 font-medium">{text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Android / carrier code */}
+          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 overflow-hidden">
+            <div className="px-4 py-3 bg-paw-cream/50 border-b border-paw-brown/5">
+              <p className="text-xs font-bold text-paw-brown/60 uppercase tracking-wider">Android or any carrier — dial code (works on all phones)</p>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-paw-brown/70 font-medium">
+                Open your phone dialer and call this code. It activates forwarding for calls you don&apos;t answer (no-answer forwarding).
+              </p>
+              <div className="flex items-center gap-3 bg-paw-cream rounded-xl p-3">
+                <code className="font-bold text-paw-brown text-base tracking-wider flex-1">
+                  *61*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "XXXXXXXXXX"}#
+                </code>
+                <button
+                  onClick={() => { void navigator.clipboard.writeText(`*61*${provisionedNumber.replace(/\D/g, "")}#`); }}
+                  className="text-xs font-bold text-paw-brown/60 hover:text-paw-brown px-3 py-1.5 rounded-lg bg-white border border-paw-brown/10 transition-colors shrink-0"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="text-xs text-paw-brown/40 font-medium">
+                For busy-line forwarding use <code className="bg-paw-cream px-1 rounded">*67*…#</code>, or forward all calls with <code className="bg-paw-cream px-1 rounded">*21*…#</code>.
+              </p>
+            </div>
+          </div>
+
+          <OnboardingFooter
+            onBack={() => setStep(5)}
+            onNext={() => setStep(7)}
+            nextLabel="Continue"
+          />
+        </div>
+      )}
+
+      {/* Step 7: Choose Plan */}
+      {step === 7 && (
         <div className="space-y-6">
           {subscribed ? (
             <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-6 py-4">
@@ -1400,15 +1389,15 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => setStep(5)}
-            onNext={() => setStep(7)}
+            onBack={() => setStep(6)}
+            onNext={() => setStep(8)}
             nextLabel={subscribed ? "Continue" : "Skip for Now"}
           />
         </div>
       )}
 
-      {/* Step 7: Go Live */}
-      {step === 7 && (
+      {/* Step 8: Go Live */}
+      {step === 8 && (
         <div className="space-y-8">
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1497,7 +1486,7 @@ export default function OnboardingPage() {
               </svg>
               <p className="text-sm font-bold text-amber-800">
                 Live call answering requires a subscription.{" "}
-                <button onClick={() => setStep(6)} className="underline hover:no-underline">
+                <button onClick={() => setStep(7)} className="underline hover:no-underline">
                   Choose a plan
                 </button>{" "}
                 to activate it — or explore the dashboard first.
@@ -1508,7 +1497,7 @@ export default function OnboardingPage() {
           <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setStep(6)}
+              onClick={() => setStep(7)}
               className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
             >
               Back

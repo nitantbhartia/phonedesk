@@ -70,7 +70,7 @@ export async function GET() {
       prisma.appointment.count({
         where: {
           businessId: business.id,
-          status: { in: ["CONFIRMED", "COMPLETED"] },
+          status: { in: ["PENDING", "CONFIRMED", "COMPLETED"] },
           createdAt: { gte: monthAgo },
         },
       }),
@@ -91,11 +91,12 @@ export async function GET() {
       }),
     ]);
 
-  // Estimate revenue protected (only confirmed/completed bookings)
-  const avgServicePrice =
+  // Estimate revenue protected
+  const rawAvg =
     business.services.length > 0
-      ? business.services.reduce((sum: number, s: { price: number }) => sum + s.price, 0) / business.services.length
-      : 65;
+      ? business.services.reduce((sum: number, s: { price: number }) => sum + Number(s.price), 0) / business.services.length
+      : 0;
+  const avgServicePrice = rawAvg > 0 ? rawAvg : 65;
 
   const totalCallMinutes = Math.round((totalDuration._sum.duration || 0) / 60);
 

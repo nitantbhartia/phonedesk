@@ -235,9 +235,10 @@ function LandingPageContent() {
             <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-paw-orange/10 rounded-full blur-3xl" />
             <div className="relative z-10">
               <h2 className="text-sm font-bold tracking-widest text-paw-amber uppercase mb-4">The Real Cost of Missed Calls</h2>
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-8">
-                See what you&apos;re leaving on the table.
+              <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-2">
+                Most callers don&apos;t leave voicemails. They just call the next groomer.
               </h3>
+              <p className="text-white/60 text-base mb-8">See what you&apos;re leaving on the table.</p>
 
               {/* Sliders */}
               <div className="space-y-6 mb-8">
@@ -281,10 +282,6 @@ function LandingPageContent() {
                   RingPaw costs <span className="text-paw-amber font-bold">$49/mo</span> — it pays for itself the first call it answers.
                 </div>
               </div>
-
-              <p className="text-white/60 text-sm mb-8">
-                Most callers don&apos;t leave voicemails. They just call the next groomer.
-              </p>
 
               <a
                 href="#how-it-works"
@@ -545,7 +542,7 @@ function LandingPageContent() {
               <p className="text-sm text-gray-500 mb-8 h-10">Just you and your shears. Everything you need to stop missing calls and start filling your schedule.</p>
               <Link
                 href="/auth?mode=signup"
-                className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
+                className="block w-full py-3 text-center border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
               >
                 Get Started
               </Link>
@@ -589,7 +586,7 @@ function LandingPageContent() {
               <p className="text-sm text-white/70 mb-8 h-10">A couple groomers, a busy phone. More minutes and call analytics so you can see every booking you&apos;ve recovered.</p>
               <Link
                 href="/auth?mode=signup"
-                className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg disabled:opacity-50"
+                className="block w-full py-4 text-center bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg"
               >
                 Get Started
               </Link>
@@ -636,7 +633,7 @@ function LandingPageContent() {
               <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. High-volume minutes and dedicated priority support.</p>
               <Link
                 href="/auth?mode=signup"
-                className="w-full py-3 border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors disabled:opacity-50"
+                className="block w-full py-3 text-center border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
               >
                 Get Started
               </Link>
