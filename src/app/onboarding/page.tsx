@@ -124,9 +124,36 @@ const STEP_CONFIG = [
     proTip: "Try asking about pricing, availability, or booking an appointment to see the full experience.",
   },
   {
+    title: "Choose your plan",
+    subtitle: "Pick the plan that fits your shop. You can upgrade or downgrade anytime.",
+    proTip: "Most solo groomers start on Solo Groomer and upgrade when they get busier.",
+  },
+  {
     title: "You're all set!",
     subtitle: "Review your setup and go live when you're ready.",
     proTip: "You can always fine-tune your AI assistant's personality and responses in Settings.",
+  },
+];
+
+const ONBOARDING_PLANS = [
+  {
+    id: "STARTER",
+    name: "Solo Groomer",
+    price: 49,
+    features: ["50 minutes/month", "1 calendar connection", "Basic SMS commands", "Call transcripts"],
+  },
+  {
+    id: "PRO",
+    name: "Small Shop",
+    price: 149,
+    popular: true,
+    features: ["200 minutes/month", "3 calendar connections", "Full SMS command set", "Custom voice & personality"],
+  },
+  {
+    id: "BUSINESS",
+    name: "Growing Pack",
+    price: 299,
+    features: ["500 minutes/month", "5 calendar connections", "Priority support", "Multi-location support"],
   },
 ];
 
@@ -169,6 +196,10 @@ export default function OnboardingPage() {
   // Step 5: Test call status
   const [testCallDone, setTestCallDone] = useState(false);
 
+  // Step 6: Subscription
+  const [subscribed, setSubscribed] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
@@ -192,6 +223,7 @@ export default function OnboardingPage() {
         Number.isFinite(requestedStep) && requestedStep >= 1
           ? Math.min(requestedStep, STEP_CONFIG.length)
           : 1;
+      const subscribedParam = params.get("subscribed") === "true";
       // Always skip the welcome screen when resuming mid-onboarding
 
       try {
@@ -236,6 +268,7 @@ export default function OnboardingPage() {
           }
           setCalendarConnected(hasCalendarConnection);
           setProvisionedNumber(business?.phoneNumber?.number || "");
+          setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
           setStep(normalizedStep);
         }
       } catch {
@@ -366,6 +399,27 @@ export default function OnboardingPage() {
     }
   }
 
+  async function startCheckout(planId: string) {
+    setCheckoutLoading(planId);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: planId,
+          successUrl: "/onboarding?step=6&subscribed=true",
+          cancelUrl: "/onboarding?step=6",
+        }),
+      });
+      const data = await res.json() as { url?: string };
+      if (data.url) window.location.href = data.url;
+    } catch {
+      // User stays on step 6
+    } finally {
+      setCheckoutLoading(null);
+    }
+  }
+
   async function goLive() {
     setLoading(true);
     try {
@@ -449,6 +503,7 @@ export default function OnboardingPage() {
               { icon: "✂️", text: "Services, pricing & groomers" },
               { icon: "📅", text: "Calendar sync" },
               { icon: "📞", text: "Call forwarding to your new number" },
+              { icon: "💳", text: "Choose a plan (from $49/mo)" },
               { icon: "🚀", text: "A quick test call, then go live" },
             ].map((item) => (
               <li key={item.text} className="flex items-center gap-3 text-sm font-medium text-paw-brown/80">
@@ -1254,8 +1309,66 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 6: Go Live */}
+      {/* Step 6: Choose Plan */}
       {step === 6 && (
+        <div className="space-y-6">
+          {subscribed ? (
+            <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-6 py-4">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <p className="font-bold text-green-800">You&apos;re subscribed! Ready to go live.</p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {ONBOARDING_PLANS.map((plan) => (
+              <div
+                key={plan.id}
+                className={`relative bg-white rounded-3xl p-6 border-2 flex flex-col ${plan.popular ? "border-paw-brown shadow-soft" : "border-paw-brown/10"}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-paw-brown text-paw-cream text-xs font-bold rounded-full whitespace-nowrap">
+                    Most Popular
+                  </div>
+                )}
+                <div className="mb-4">
+                  <p className="font-extrabold text-paw-brown text-lg">{plan.name}</p>
+                  <p className="text-3xl font-extrabold text-paw-brown mt-1">
+                    ${plan.price}<span className="text-base font-medium text-paw-brown/50">/mo</span>
+                  </p>
+                </div>
+                <ul className="space-y-2 mb-6 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-paw-brown/70 font-medium">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-paw-amber shrink-0 mt-0.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => void startCheckout(plan.id)}
+                  disabled={checkoutLoading !== null || subscribed}
+                  className={`w-full py-3 rounded-full font-bold text-sm transition-colors disabled:opacity-50 ${plan.popular ? "bg-paw-brown text-paw-cream hover:bg-opacity-90" : "border-2 border-paw-brown text-paw-brown hover:bg-paw-brown hover:text-paw-cream"}`}
+                >
+                  {checkoutLoading === plan.id ? "Redirecting..." : subscribed ? "Selected" : "Choose Plan"}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <OnboardingFooter
+            onBack={() => setStep(5)}
+            onNext={() => setStep(7)}
+            nextLabel={subscribed ? "Continue" : "Skip for Now"}
+          />
+        </div>
+      )}
+
+      {/* Step 7: Go Live */}
+      {step === 7 && (
         <div className="space-y-8">
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1336,10 +1449,26 @@ export default function OnboardingPage() {
             ))}
           </div>
 
+          {!subscribed && (
+            <div className="flex items-center gap-3 bg-amber-50 border-2 border-amber-200 rounded-2xl px-6 py-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p className="text-sm font-bold text-amber-800">
+                A subscription is required to go live.{" "}
+                <button onClick={() => setStep(6)} className="underline hover:no-underline">
+                  Choose a plan
+                </button>
+                .
+              </p>
+            </div>
+          )}
+
           <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setStep(5)}
+              onClick={() => setStep(6)}
               className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
             >
               Back
@@ -1347,8 +1476,8 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goLive}
-              disabled={loading}
-              className="px-10 py-4 bg-green-600 text-white rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50"
+              disabled={loading || !subscribed}
+              className="px-10 py-4 bg-green-600 text-white rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Activating..." : "Go Live!"}
               <svg
