@@ -212,6 +212,7 @@ export async function POST(req: NextRequest) {
             name: svc.name.trim().slice(0, 100),
             price: Math.max(0, Math.min(price, 9999)),
             duration: Math.max(5, Math.min(duration, 480)),
+            isAddon: Boolean(svc.isAddon),
           },
         });
       }
