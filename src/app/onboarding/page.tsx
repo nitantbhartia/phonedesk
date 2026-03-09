@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import {
   OnboardingLayout,
   OnboardingLabel,
@@ -240,13 +241,8 @@ export default function OnboardingPage() {
         typeof window === "undefined"
           ? new URLSearchParams()
           : new URLSearchParams(window.location.search);
-      const requestedStep = Number(params.get("step") || "1");
-      const normalizedStep =
-        Number.isFinite(requestedStep) && requestedStep >= 1
-          ? Math.min(requestedStep, STEP_CONFIG.length)
-          : 1;
+      const requestedStep = Number(params.get("step") || "0");
       const subscribedParam = params.get("subscribed") === "true";
-      // Always skip the welcome screen when resuming mid-onboarding
 
       try {
         const response = await fetch("/api/business/profile");
@@ -291,11 +287,19 @@ export default function OnboardingPage() {
           setCalendarConnected(hasCalendarConnection);
           setProvisionedNumber(business?.phoneNumber?.number || "");
           setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
+
+          // If resuming mid-onboarding (step param set, or profile already has data),
+          // skip the welcome screen and go directly to the requested/first step.
+          const hasExistingProfile = Boolean(business?.name);
+          const normalizedStep =
+            requestedStep >= 1
+              ? Math.min(requestedStep, STEP_CONFIG.length)
+              : hasExistingProfile ? 1 : 0;
           setStep(normalizedStep);
         }
       } catch {
         if (!cancelled) {
-          setStep(normalizedStep);
+          setStep(requestedStep >= 1 ? requestedStep : 0);
         }
       }
     };
@@ -499,15 +503,8 @@ export default function OnboardingPage() {
         </div>
 
         {/* Logo */}
-        <div className="mb-10 flex items-center gap-2 relative z-10">
-          <div className="w-8 h-8 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 2v7.31" /><path d="M14 2v7.31" /><path d="M8.5 2h7" /><path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
-            </svg>
-          </div>
-          <span className="font-bold text-xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.com</span>
-          </span>
+        <div className="mb-6 relative z-10">
+          <BrandLogo mobileWidth={140} desktopWidth={180} priority />
         </div>
 
         {/* Welcome card */}
