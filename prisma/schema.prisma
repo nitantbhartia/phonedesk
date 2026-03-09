@@ -96,6 +96,8 @@ model Business {
   stripeSubscriptionId String? @unique
   stripePriceId    String?
   stripeSubscriptionStatus String?
+  bookingsCount    Int     @default(0) // total bookings Pip has ever made for this business
+  billingConsentGiven Boolean @default(false) // groomer checked the billing consent box at checkout
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
   // goLive path are never accidentally blocked.
   // Set STRIPE_BYPASS=true to skip this gate for testing.
   const biz = phoneRecord.business;
-  const hasActiveSub = biz.stripeSubscriptionStatus === "active" || process.env.STRIPE_BYPASS === "true";
+  // Accept "active" (paid) or "trialing" (30-day outcome trial — card on file, not yet charged)
+  const hasActiveSub = ["active", "trialing"].includes(biz.stripeSubscriptionStatus ?? "") || process.env.STRIPE_BYPASS === "true";
   if (biz.onboardingComplete && !biz.isActive && !hasActiveSub) {
     return NextResponse.json({
       result: `This line is temporarily inactive. Please apologize warmly and tell the caller to reach ${biz.ownerName} directly at the business phone number. Then call end_call immediately.`,

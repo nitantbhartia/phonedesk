@@ -158,22 +158,25 @@ const STEP_CONFIG = [
 const ONBOARDING_PLANS = [
   {
     id: "STARTER",
-    name: "Solo Groomer",
-    price: 49,
-    features: ["50 minutes/month", "1 calendar connection", "Basic SMS commands", "Call transcripts"],
+    name: "Solo",
+    price: 99,
+    features: ["120 minutes/month", "Everything included", "Calendar integration", "$0.40/min overage"],
+    description: "For solo groomers tired of missing calls between clients.",
   },
   {
     id: "PRO",
-    name: "Small Shop",
-    price: 149,
+    name: "Studio",
+    price: 199,
     popular: true,
-    features: ["200 minutes/month", "3 calendar connections", "Full SMS command set", "Custom voice & personality"],
+    features: ["300 minutes/month", "Priority setup", "Square + Google Calendar", "$0.40/min overage"],
+    description: "For full-time groomers who want Pip handling every missed call.",
   },
   {
     id: "BUSINESS",
-    name: "Growing Pack",
-    price: 299,
-    features: ["500 minutes/month", "5 calendar connections", "Priority support", "Multi-location support"],
+    name: "Salon",
+    price: 349,
+    features: ["500 minutes/month", "Priority support", "Multi-groomer routing", "$0.40/min overage"],
+    description: "For small shops with multiple groomers and higher call volume.",
   },
 ];
 
@@ -219,6 +222,7 @@ export default function OnboardingPage() {
   // Step 6: Subscription
   const [subscribed, setSubscribed] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [billingConsent, setBillingConsent] = useState(false);
   const formattedProvisionedNumber = provisionedNumber
     ? formatPhoneNumber(provisionedNumber)
     : "";
@@ -1345,7 +1349,12 @@ export default function OnboardingPage() {
               </svg>
               <p className="font-bold text-green-800">You&apos;re subscribed! Ready to go live.</p>
             </div>
-          ) : null}
+          ) : (
+            <div className="bg-paw-amber/10 border border-paw-amber/30 rounded-2xl px-5 py-4 text-sm text-paw-brown/80 leading-relaxed">
+              <p className="font-bold text-paw-brown mb-1">30-day outcome guarantee</p>
+              Your card is collected now but <strong>not charged</strong> until Pip books your first appointment. If Pip doesn&apos;t book a single appointment in 30 days, your subscription is automatically cancelled — no charge, no hard feelings.
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-3">
             {ONBOARDING_PLANS.map((plan) => (
@@ -1358,12 +1367,15 @@ export default function OnboardingPage() {
                     Most Popular
                   </div>
                 )}
-                <div className="mb-4">
+                <div className="mb-2">
                   <p className="font-extrabold text-paw-brown text-lg">{plan.name}</p>
                   <p className="text-3xl font-extrabold text-paw-brown mt-1">
                     ${plan.price}<span className="text-base font-medium text-paw-brown/50">/mo</span>
                   </p>
                 </div>
+                {plan.description && (
+                  <p className="text-xs text-paw-brown/60 mb-3 leading-snug">{plan.description}</p>
+                )}
                 <ul className="space-y-2 mb-6 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm text-paw-brown/70 font-medium">
@@ -1376,14 +1388,29 @@ export default function OnboardingPage() {
                 </ul>
                 <button
                   onClick={() => void startCheckout(plan.id)}
-                  disabled={checkoutLoading !== null || subscribed}
-                  className={`w-full py-3 rounded-full font-bold text-sm transition-colors disabled:opacity-50 ${plan.popular ? "bg-paw-brown text-paw-cream hover:bg-opacity-90" : "border-2 border-paw-brown text-paw-brown hover:bg-paw-brown hover:text-paw-cream"}`}
+                  disabled={checkoutLoading !== null || subscribed || !billingConsent}
+                  className={`w-full py-3 rounded-full font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${plan.popular ? "bg-paw-brown text-paw-cream hover:bg-opacity-90" : "border-2 border-paw-brown text-paw-brown hover:bg-paw-brown hover:text-paw-cream"}`}
                 >
                   {checkoutLoading === plan.id ? "Redirecting..." : subscribed ? "Selected" : "Choose Plan"}
                 </button>
               </div>
             ))}
           </div>
+
+          {/* Billing consent checkbox — must be checked before any plan can be selected */}
+          {!subscribed && (
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={billingConsent}
+                onChange={(e) => setBillingConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-paw-brown shrink-0"
+              />
+              <span className="text-xs text-paw-brown/70 leading-relaxed">
+                I understand that my card will be saved now but <strong>not charged</strong> until Pip successfully books my first appointment. If no appointment is booked within 30 days, my subscription will be cancelled automatically at no cost. Once Pip books my first appointment, my selected plan price will be charged immediately and will recur monthly until I cancel.
+              </span>
+            </label>
+          )}
 
           <OnboardingFooter
             onBack={() => setStep(6)}
