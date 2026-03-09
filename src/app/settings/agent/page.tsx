@@ -186,16 +186,6 @@ export default function AgentSettingsPage() {
     }
   }
 
-  function previewVoice(label: string) {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(
-      `Hi there! I'm ${label}, your AI receptionist for Happy Paws Grooming. How can I help you today?`
-    );
-    u.rate = 0.95;
-    window.speechSynthesis.speak(u);
-  }
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -281,14 +271,6 @@ export default function AgentSettingsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">{voice.desc}</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">{voice.accent}</p>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); previewVoice(voice.label); }}
-                  className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary/70 hover:text-primary transition-colors"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                  Preview
-                </button>
               </div>
             ))}
           </div>
