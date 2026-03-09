@@ -750,9 +750,8 @@ function LandingPageContent() {
       {/* Footer */}
       <footer className="bg-paw-brown text-paw-cream py-16 px-6 mt-12 rounded-t-[3rem]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="RingPaw" height={40} style={{ height: 40, width: "auto", filter: "brightness(0) invert(1)" }} />
+          <div className="flex items-center" style={{ filter: "brightness(0) invert(1)" }}>
+            <BrandLogo href="/" mobileWidth={120} desktopWidth={150} />
           </div>
           <div className="flex gap-8 text-sm font-medium text-paw-cream/60">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>

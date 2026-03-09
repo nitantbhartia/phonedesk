@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import {
   OnboardingLayout,
   OnboardingLabel,
@@ -499,15 +500,8 @@ export default function OnboardingPage() {
         </div>
 
         {/* Logo */}
-        <div className="mb-10 flex items-center gap-2 relative z-10">
-          <div className="w-8 h-8 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 2v7.31" /><path d="M14 2v7.31" /><path d="M8.5 2h7" /><path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
-            </svg>
-          </div>
-          <span className="font-bold text-xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.com</span>
-          </span>
+        <div className="mb-6 relative z-10">
+          <BrandLogo mobileWidth={140} desktopWidth={180} priority />
         </div>
 
         {/* Welcome card */}
