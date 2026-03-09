@@ -8,59 +8,61 @@ import { CheckCircle, CreditCard, Zap } from "lucide-react";
 const PLANS = [
   {
     id: "STARTER",
-    name: "Solo Groomer",
-    price: 49,
-    minutes: 50,
-    calendars: 1,
-    smsCommands: "Basic",
+    name: "Solo",
+    price: 99,
+    minutes: 120,
     features: [
-      "50 minutes/month",
-      "1 calendar connection",
-      "Basic SMS commands",
-      "Call transcripts",
-      "SMS notifications",
+      "120 minutes/month",
+      "Everything included",
+      "Calendar integration",
+      "$0.40/min overage",
     ],
   },
   {
     id: "PRO",
-    name: "Small Shop",
-    price: 149,
-    minutes: 200,
-    calendars: 3,
-    smsCommands: "Full",
+    name: "Studio",
+    price: 199,
+    minutes: 300,
     popular: true,
     features: [
-      "200 minutes/month",
-      "3 calendar connections",
-      "Full SMS command set",
-      "Custom voice & personality",
-      "Call analytics",
+      "300 minutes/month",
+      "Priority setup",
+      "Square + Google Calendar",
+      "$0.40/min overage",
     ],
   },
   {
     id: "BUSINESS",
-    name: "Growing Pack",
-    price: 299,
+    name: "Salon",
+    price: 349,
     minutes: 500,
-    calendars: 5,
-    smsCommands: "Full + API",
     features: [
       "500 minutes/month",
-      "5 calendar connections",
       "Priority support",
-      "Multi-location support",
-      "Custom AI instructions",
+      "Multi-groomer routing",
+      "$0.40/min overage",
     ],
   },
 ];
 
+interface UsageData {
+  minutesUsed: number;
+  minutesLimit: number;
+  minutesRemaining: number;
+  overageMinutes: number;
+  percentUsed: number;
+  plan: string;
+  planName: string;
+  subscriptionStatus: string | null;
+  periodStart: string;
+}
+
 export default function BillingPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [currentPlan, setCurrentPlan] = useState("STARTER");
-  const [minutesUsed, setMinutesUsed] = useState(0);
+  const [usage, setUsage] = useState<UsageData | null>(null);
   const [hasStripeCustomer, setHasStripeCustomer] = useState(false);
-  const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | null>(null);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const [billingError, setBillingError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -70,22 +72,27 @@ export default function BillingPage() {
       router.push("/");
       return;
     }
-    if (status === "authenticated") fetchBillingData();
+    if (status === "authenticated") void fetchBillingData();
   }, [status, router]);
 
   async function fetchBillingData() {
     try {
-      const res = await fetch("/api/business/profile");
-      if (res.ok) {
-        const data = await res.json();
+      const [profileRes, usageRes] = await Promise.all([
+        fetch("/api/business/profile"),
+        fetch("/api/billing/usage"),
+      ]);
+
+      if (profileRes.ok) {
+        const data = await profileRes.json();
         if (data.business) {
-          setCurrentPlan(data.business.plan || "STARTER");
           setHasStripeCustomer(Boolean(data.business.stripeCustomerId));
-          setSubscriptionActive(data.business.stripeSubscriptionStatus === "active");
+          setStripeSubscriptionId(data.business.stripeSubscriptionId ?? null);
         }
-        if (data.stats) {
-          setMinutesUsed(data.stats.totalCallMinutes || 0);
-        }
+      }
+
+      if (usageRes.ok) {
+        const data = await usageRes.json();
+        setUsage(data);
       }
     } catch {
       setBillingError("Failed to load billing data. Please refresh.");
@@ -108,15 +115,31 @@ export default function BillingPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to start checkout");
-      }
-      if (!data.url) {
-        throw new Error("Checkout URL missing");
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to start checkout");
+      if (!data.url) throw new Error("Checkout URL missing");
       window.location.href = data.url;
     } catch (error) {
       setBillingError(error instanceof Error ? error.message : "Failed to start checkout");
+      setProcessingPlan(null);
+    }
+  }
+
+  async function upgradePlan(planId: string) {
+    setBillingError("");
+    setProcessingPlan(planId);
+    try {
+      const res = await fetch("/api/billing/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to upgrade plan");
+      // Refresh usage data after upgrade
+      await fetchBillingData();
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : "Failed to upgrade plan");
+    } finally {
       setProcessingPlan(null);
     }
   }
@@ -126,25 +149,25 @@ export default function BillingPage() {
     try {
       const res = await fetch("/api/billing/portal", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to open billing portal");
-      }
-      if (!data.url) {
-        throw new Error("Billing portal URL missing");
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to open billing portal");
+      if (!data.url) throw new Error("Billing portal URL missing");
       window.location.href = data.url;
     } catch (error) {
       setBillingError(error instanceof Error ? error.message : "Failed to open billing portal");
     }
   }
 
+  const subscriptionActive = ["active", "trialing"].includes(usage?.subscriptionStatus ?? "");
+  const currentPlan = usage?.plan ?? "STARTER";
+  const currentPlanIndex = PLANS.findIndex((p) => p.id === currentPlan);
   const activePlan = subscriptionActive ? (PLANS.find((p) => p.id === currentPlan) || PLANS[0]) : null;
-  const minuteLimit = activePlan?.minutes ?? 0;
-  const usagePercent =
-    minuteLimit > 0 ? Math.min((minutesUsed / minuteLimit) * 100, 100) : 0;
-  const isAtLimit = usagePercent >= 100;
-  const isNearLimit = usagePercent >= 80;
-  const nextPlan = activePlan ? PLANS[PLANS.findIndex((p) => p.id === currentPlan) + 1] : null;
+  const nextPlan = activePlan && currentPlanIndex < PLANS.length - 1 ? PLANS[currentPlanIndex + 1] : null;
+  const minutesUsed = usage?.minutesUsed ?? 0;
+  const minutesLimit = usage?.minutesLimit ?? (PLANS.find((p) => p.id === currentPlan)?.minutes ?? 120);
+  const percentUsed = usage?.percentUsed ?? 0;
+  const isAtLimit = percentUsed >= 100;
+  const isNearLimit = percentUsed >= 80 && !isAtLimit;
+  const overageMinutes = usage?.overageMinutes ?? 0;
 
   if (loading) {
     return (
@@ -169,7 +192,12 @@ export default function BillingPage() {
           <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-paw-brown">Current Plan: {activePlan.name}</h2>
+                <h2 className="text-2xl font-bold text-paw-brown">
+                  Current Plan: {activePlan.name}
+                  {usage?.subscriptionStatus === "trialing" && (
+                    <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">Trial</span>
+                  )}
+                </h2>
                 <p className="text-paw-brown/60 font-medium mt-1">${activePlan.price}/month</p>
               </div>
               <span
@@ -181,36 +209,40 @@ export default function BillingPage() {
                       : "bg-green-100 text-green-700"
                 }`}
               >
-                {Math.round(minutesUsed)} / {minuteLimit} min
+                {minutesUsed} / {minutesLimit} min
               </span>
             </div>
             <div className="mt-6 space-y-2">
               <div className="flex justify-between text-sm font-medium text-paw-brown/70">
                 <span>Monthly minutes used</span>
-                <span>{Math.round(usagePercent)}%</span>
+                <span>{Math.min(percentUsed, 100)}%</span>
               </div>
               <div className="w-full h-2 rounded-full bg-paw-brown/10 overflow-hidden">
                 <div
                   className={`h-full transition-all ${
                     isAtLimit ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-paw-amber"
                   }`}
-                  style={{ width: `${usagePercent}%` }}
+                  style={{ width: `${Math.min(percentUsed, 100)}%` }}
                 />
               </div>
-              {isAtLimit && (
+              {overageMinutes > 0 && (
+                <p className="text-sm text-red-700 font-medium mt-1">
+                  {overageMinutes} min overage this month — ${(overageMinutes * 0.4).toFixed(2)} billed at $0.40/min
+                </p>
+              )}
+              {isAtLimit && overageMinutes === 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mt-3">
                   <p className="text-sm font-medium text-red-800">
                     You&apos;ve used all your minutes for this month.
                   </p>
-                  <p className="text-sm text-red-700 mt-1">
-                    New calls will go to voicemail until your plan resets.
-                    {nextPlan && (
-                      <> Upgrade to <strong>{nextPlan.name}</strong> for {nextPlan.minutes} min/month.</>
-                    )}
-                  </p>
+                  {nextPlan && (
+                    <p className="text-sm text-red-700 mt-1">
+                      Upgrade to <strong>{nextPlan.name}</strong> for {nextPlan.minutes} min/month.
+                    </p>
+                  )}
                 </div>
               )}
-              {isNearLimit && !isAtLimit && nextPlan && (
+              {isNearLimit && nextPlan && (
                 <p className="text-sm text-amber-700 mt-2">
                   Running low on minutes. Upgrade to {nextPlan.name} for {nextPlan.minutes} min/month.
                 </p>
@@ -237,9 +269,9 @@ export default function BillingPage() {
       <section className="grid md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
           const isCurrent = subscriptionActive && plan.id === currentPlan;
-          const isUpgrade = subscriptionActive
-            ? PLANS.indexOf(plan) > PLANS.findIndex((p) => p.id === currentPlan)
-            : false;
+          const planIndex = PLANS.findIndex((p) => p.id === plan.id);
+          const isUpgrade = subscriptionActive ? planIndex > currentPlanIndex : false;
+          const isDowngrade = subscriptionActive ? planIndex < currentPlanIndex : false;
           return (
             <article
               key={plan.id}
@@ -299,16 +331,24 @@ export default function BillingPage() {
                       ? "bg-paw-amber text-paw-brown hover:bg-white"
                       : "border-2 border-paw-brown text-paw-brown hover:bg-paw-brown hover:text-white"
                   }`}
-                  onClick={() => void startCheckout(plan.id)}
+                  onClick={() => {
+                    if (subscriptionActive && stripeSubscriptionId) {
+                      void upgradePlan(plan.id);
+                    } else {
+                      void startCheckout(plan.id);
+                    }
+                  }}
                   disabled={processingPlan !== null}
                 >
                   {processingPlan === plan.id
-                    ? "Redirecting..."
+                    ? "Updating..."
                     : !subscriptionActive
-                      ? "Subscribe"
+                      ? "Start Free Trial"
                       : isUpgrade
                         ? "Upgrade"
-                        : "Downgrade"}
+                        : isDowngrade
+                          ? "Downgrade"
+                          : "Switch"}
                 </button>
               )}
             </article>
@@ -336,7 +376,7 @@ export default function BillingPage() {
           <p className="text-sm mt-1">
             {hasStripeCustomer
               ? "Open Stripe customer portal to update payment method, invoices, and subscription."
-              : "Choose a plan above to start Stripe checkout and add your payment method."}
+              : "Choose a plan above to start your free trial and add your payment method."}
           </p>
           {hasStripeCustomer ? (
             <button

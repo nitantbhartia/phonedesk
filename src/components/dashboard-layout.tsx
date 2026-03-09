@@ -149,19 +149,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
-    fetch("/api/business/profile")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.business) {
-          const plan = data.business.plan || "STARTER";
-          const limits: Record<string, number> = { STARTER: 50, PRO: 200, BUSINESS: 500 };
+    Promise.all([
+      fetch("/api/business/profile").then((r) => r.ok ? r.json() : null),
+      fetch("/api/billing/usage").then((r) => r.ok ? r.json() : null),
+    ])
+      .then(([profile, usageData]) => {
+        if (profile?.business) {
+          setForwardingReady(!!profile.business.phoneNumber);
+        }
+        if (usageData) {
           setUsage({
-            minutesUsed: data.stats?.totalCallMinutes ?? 0,
-            minutesLimit: limits[plan] ?? 500,
+            minutesUsed: usageData.minutesUsed ?? 0,
+            minutesLimit: usageData.minutesLimit ?? 120,
+            plan: usageData.plan ?? "STARTER",
+          });
+        } else if (profile?.business) {
+          const plan = profile.business.plan || "STARTER";
+          const limits: Record<string, number> = { STARTER: 120, PRO: 300, BUSINESS: 500 };
+          setUsage({
+            minutesUsed: profile.stats?.totalCallMinutes ?? 0,
+            minutesLimit: limits[plan] ?? 120,
             plan,
           });
-          // Show banner if no phone number has been provisioned yet
-          setForwardingReady(!!data.business.phoneNumber);
         }
       })
       .catch(() => {});
