@@ -119,6 +119,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     result,
     found,
+    caller_phone: normalizePhoneNumber(callerPhone),
     square_customer_id: squareCustomerId,
     customer_name: customerName,
     visit_count: context.customer?.visitCount || squareCust?.visitCount || 0,

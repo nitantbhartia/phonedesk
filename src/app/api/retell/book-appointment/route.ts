@@ -170,16 +170,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const internalCustomer = await upsertCustomerMemory({
-      businessId: business.id,
-      customerName,
-      customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
-      petName,
-      petBreed,
-      petSize: validatedPetSize,
-      serviceName: service?.name || svcName,
-      appointmentStart: start,
-    });
+    // Upsert customer memory — non-blocking: a save failure must never kill the booking confirmation
+    let internalCustomer: Awaited<ReturnType<typeof upsertCustomerMemory>> = null;
+    try {
+      internalCustomer = await upsertCustomerMemory({
+        businessId: business.id,
+        customerName,
+        customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
+        petName,
+        petBreed,
+        petSize: validatedPetSize,
+        serviceName: service?.name || svcName,
+        appointmentStart: start,
+      });
+    } catch (memErr) {
+      console.error("[book-appointment] upsertCustomerMemory failed (non-fatal):", memErr);
+    }
 
     // Sync with Square CRM: create customer in Square if this is a new customer
     if (internalCustomer && !squareCustomerId) {

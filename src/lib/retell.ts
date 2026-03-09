@@ -559,7 +559,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           },
           customer_phone: {
             type: "string",
-            description: "The customer's phone number",
+            description: "The customer's phone number in E.164 format. Use the caller_phone value returned by lookup_customer_context, or the inbound caller's phone number.",
           },
           pet_name: {
             type: "string",
