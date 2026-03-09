@@ -238,6 +238,7 @@ model Appointment {
   rebookSent      Boolean          @default(false) // Feature 5: rebooking reminder sent
   rebookInterval  Int?             // days until next groom (breed-specific)
   reviewRequested Boolean          @default(false) // Feature 7: review request sent
+  groomerToken    String?           @unique  // public token for groomer status update link
   groomerId       String?
   groomer         Groomer?         @relation(fields: [groomerId], references: [id], onDelete: SetNull)
   calls           Call[]
@@ -457,6 +458,7 @@ model Groomer {
   businessId    String
   business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name          String
+  phone         String?  // optional — for sending groomer link via SMS
   specialties   String[] // e.g. ["doodles", "hand stripping", "cats"]
   isActive      Boolean  @default(true)
   appointments  Appointment[]
