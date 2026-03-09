@@ -8,7 +8,7 @@ import { CheckCircle, CreditCard, Zap } from "lucide-react";
 const PLANS = [
   {
     id: "STARTER",
-    name: "Starter",
+    name: "Solo Groomer",
     price: 49,
     minutes: 50,
     calendars: 1,
@@ -23,7 +23,7 @@ const PLANS = [
   },
   {
     id: "PRO",
-    name: "Growth",
+    name: "Small Shop",
     price: 149,
     minutes: 200,
     calendars: 3,
@@ -39,7 +39,7 @@ const PLANS = [
   },
   {
     id: "BUSINESS",
-    name: "Pro",
+    name: "Growing Pack",
     price: 299,
     minutes: 500,
     calendars: 5,
