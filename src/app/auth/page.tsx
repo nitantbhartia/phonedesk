@@ -2,12 +2,26 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { AuthPanel } from "@/components/auth-panel";
 
 export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-paw-sky">
+          <div className="animate-pulse text-paw-brown/60">Loading...</div>
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
+  );
+}
+
+function AuthPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
