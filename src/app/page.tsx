@@ -158,31 +158,6 @@ function LandingPageContent() {
               </Link>
             </div>
 
-            <div className="max-w-xl rounded-[2rem] border border-white/60 bg-white/65 p-6 shadow-soft backdrop-blur-md">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paw-brown/45">
-                Unified Access
-              </p>
-              <h2 className="mt-3 text-2xl font-extrabold sm:text-3xl">
-                One auth page for both account creation and sign in.
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-paw-brown/70">
-                Use a password or Google through the same shared flow. New users go to onboarding. Existing users land in their dashboard.
-              </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/auth?mode=signup"
-                  className="rounded-2xl bg-paw-brown px-6 py-3 text-center font-bold text-paw-cream transition hover:bg-opacity-90"
-                >
-                  Create Account
-                </Link>
-                <Link
-                  href="/auth?mode=signin"
-                  className="rounded-2xl border border-paw-brown/10 bg-white px-6 py-3 text-center font-bold text-paw-brown transition hover:bg-paw-cream"
-                >
-                  Sign In
-                </Link>
-              </div>
-            </div>
           </div>
 
           {/* Right column - phone mockup */}

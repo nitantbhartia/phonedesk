@@ -78,7 +78,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             authMode === "signup" ? "bg-paw-brown text-paw-cream" : "text-paw-brown/70"
           }`}
         >
-          Create account
+          Sign up
         </button>
         <button
           type="button"
@@ -90,7 +90,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             authMode === "signin" ? "bg-paw-brown text-paw-cream" : "text-paw-brown/70"
           }`}
         >
-          Sign in
+          Log in
         </button>
       </div>
 
@@ -132,7 +132,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             ? "Please wait..."
             : authMode === "signup"
               ? "Create account"
-              : "Sign in with password"}
+              : "Log in"}
         </button>
       </form>
 
@@ -150,10 +150,6 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
       >
         Continue with Google
       </button>
-
-      <p className="mt-3 text-xs leading-relaxed text-paw-brown/55">
-        Use email and password if you do not want to sign in with Google.
-      </p>
 
       {authError ? <p className="mt-3 text-sm text-red-600">{authError}</p> : null}
     </div>

@@ -77,13 +77,13 @@ function AuthPageContent() {
         <div className="space-y-6">
           <p className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-paw-surface px-4 py-2 text-sm font-semibold">
             <span className="h-2 w-2 rounded-full bg-paw-orange" />
-            One shared page for sign up and sign in
+            RingPaw access
           </p>
           <h1 className="text-4xl font-extrabold leading-tight sm:text-6xl">
-            Access RingPaw with the login method that fits your business.
+            Sign up or log in.
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-paw-brown/75">
-            Create an account with email and password, or continue with Google. New users go straight into onboarding. Existing users land back in their dashboard.
+            Use email and password or continue with Google.
           </p>
         </div>
 
