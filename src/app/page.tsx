@@ -532,9 +532,9 @@ function LandingPageContent() {
             <p className="text-paw-brown/80 mt-4 text-lg font-medium max-w-xl mx-auto">Pay only when Pip books your first appointment. If it doesn&apos;t work in 30 days, you owe nothing.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 items-center">
-            {/* Bath */}
+            {/* Solo */}
             <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-xl font-bold text-paw-brown mb-1">Bath</h3>
+              <h3 className="text-xl font-bold text-paw-brown mb-1">Solo</h3>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-4xl font-extrabold">$99</span>
                 <span className="text-gray-500">/mo</span>
@@ -549,7 +549,7 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  60 Minutes / Month
+                  120 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -565,16 +565,16 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Cancel Anytime
+                  $0.40/min overage
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
 
-            {/* Groom */}
+            {/* Studio */}
             <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10 card-glow">
               <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">MOST POPULAR</div>
-              <h3 className="text-xl font-bold text-paw-amber mb-1">Groom</h3>
+              <h3 className="text-xl font-bold text-paw-amber mb-1">Studio</h3>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-5xl font-extrabold text-white">$199</span>
                 <span className="text-white/50">/mo</span>
@@ -589,7 +589,7 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  150 Minutes / Month
+                  300 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -605,17 +605,17 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Cancel Anytime
+                  $0.40/min overage
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-amber hover:underline block text-center">See all features →</a>
             </div>
 
-            {/* Show Cut */}
+            {/* Salon */}
             <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-xl font-bold text-paw-brown mb-1">Show Cut</h3>
+              <h3 className="text-xl font-bold text-paw-brown mb-1">Salon</h3>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-4xl font-extrabold">$299</span>
+                <span className="text-4xl font-extrabold">$349</span>
                 <span className="text-gray-500">/mo</span>
               </div>
               <p className="text-sm text-gray-500 mb-6 leading-snug">For small shops with multiple groomers and higher call volume.</p>
@@ -628,7 +628,7 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  300 Minutes / Month
+                  500 Minutes / Month
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -644,7 +644,7 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Cancel Anytime
+                  $0.40/min overage
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>

@@ -158,24 +158,24 @@ const STEP_CONFIG = [
 const ONBOARDING_PLANS = [
   {
     id: "STARTER",
-    name: "Bath",
+    name: "Solo",
     price: 99,
-    features: ["60 minutes/month", "Everything included", "Calendar integration", "Cancel anytime"],
+    features: ["120 minutes/month", "Everything included", "Calendar integration", "$0.40/min overage"],
     description: "For solo groomers tired of missing calls between clients.",
   },
   {
     id: "PRO",
-    name: "Groom",
+    name: "Studio",
     price: 199,
     popular: true,
-    features: ["150 minutes/month", "Priority setup", "Square + Google Calendar", "Cancel anytime"],
+    features: ["300 minutes/month", "Priority setup", "Square + Google Calendar", "$0.40/min overage"],
     description: "For full-time groomers who want Pip handling every missed call.",
   },
   {
     id: "BUSINESS",
-    name: "Show Cut",
-    price: 299,
-    features: ["300 minutes/month", "Priority support", "Multi-groomer routing", "Cancel anytime"],
+    name: "Salon",
+    price: 349,
+    features: ["500 minutes/month", "Priority support", "Multi-groomer routing", "$0.40/min overage"],
     description: "For small shops with multiple groomers and higher call volume.",
   },
 ];
