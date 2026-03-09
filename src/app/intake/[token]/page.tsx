@@ -479,7 +479,7 @@ export default function IntakeFormPage() {
         </div>
 
         <p className="text-center text-paw-brown/40 text-xs mt-4">
-          Powered by RingPaw.ai
+          Powered by RingPaw.com
         </p>
       </div>
     </div>

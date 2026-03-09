@@ -122,7 +122,7 @@ export default function CallForwardingSetupPage() {
             </svg>
           </div>
           <span className="font-bold text-2xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.ai</span>
+            RingPaw<span className="text-paw-orange">.com</span>
           </span>
         </div>
         <div className="flex items-center gap-4">

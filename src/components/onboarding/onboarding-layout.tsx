@@ -67,7 +67,7 @@ export function OnboardingLayout({
           </svg>
         </div>
         <span className="font-bold text-xl tracking-tight text-paw-brown">
-          RingPaw<span className="text-paw-orange">.ai</span>
+          RingPaw<span className="text-paw-orange">.com</span>
         </span>
       </div>
 

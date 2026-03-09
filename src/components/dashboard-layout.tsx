@@ -177,7 +177,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
           <span className="font-bold text-2xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.ai</span>
+            RingPaw<span className="text-paw-orange">.com</span>
           </span>
         </div>
         <button
@@ -216,7 +216,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
           <span className="font-bold text-2xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.ai</span>
+            RingPaw<span className="text-paw-orange">.com</span>
           </span>
         </div>
 
