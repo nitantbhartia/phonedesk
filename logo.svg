@@ -1,0 +1,30 @@
+<svg width="400" height="120" viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="RingPaw-Icon">
+    <path d="M30 55C30 35 45 25 60 25C75 25 90 35 90 55" stroke="#4D2C1E" stroke-width="6" stroke-linecap="round"/>
+    
+    <path d="M35 45L25 55C22 58 22 65 28 68L40 70L35 45Z" fill="#D35400" stroke="#4D2C1E" stroke-width="3"/>
+    <path d="M85 45L95 55C98 58 98 65 92 68L80 70L85 45Z" fill="#D35400" stroke="#4D2C1E" stroke-width="3"/>
+    
+    <path d="M40 50C40 40 80 40 80 50C80 85 75 100 60 100C45 100 40 85 40 50Z" fill="#FDF5E6" stroke="#4D2C1E" stroke-width="3"/>
+    
+    <circle cx="48" cy="55" r="8" fill="#D35400"/>
+    <circle cx="72" cy="55" r="8" fill="#D35400"/>
+    
+    <circle cx="50" cy="58" r="2.5" fill="#4D2C1E"/>
+    <circle cx="70" cy="58" r="2.5" fill="#4D2C1E"/>
+    
+    <path d="M50 75C50 70 70 70 70 75C70 85 65 90 60 90C55 90 50 85 50 75Z" fill="#FDF5E6" stroke="#4D2C1E" stroke-width="2"/>
+    <path d="M57 78C57 76 63 76 63 78L60 82L57 78Z" fill="#4D2C1E"/>
+    
+    <rect x="25" y="55" width="10" height="15" rx="5" fill="#FDF5E6" stroke="#4D2C1E" stroke-width="3"/>
+    <rect x="85" y="55" width="10" height="15" rx="5" fill="#FDF5E6" stroke="#4D2C1E" stroke-width="3"/>
+    <path d="M30 70C30 85 40 95 52 95" stroke="#4D2C1E" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="54" cy="95" r="4" fill="#D35400" stroke="#4D2C1E" stroke-width="2"/>
+  </g>
+
+  <g id="RingPaw-Text">
+    <text x="110" y="80" font-family="Arial, sans-serif" font-weight="700" font-size="52" letter-spacing="-1">
+      <tspan fill="#D35400">Ring</tspan><tspan fill="#F4EBD0">Paw</tspan>
+    </text>
+  </g>
+</svg>
