@@ -116,8 +116,8 @@ Example: Caller says "I need a full groom, maybe Thursday"
 → "Full groom on Thursday — perfect. What time works best for you?"
 ---
 CONVERSATION FLOW
-STEP 1 — LOOKUP & SERVICES (do both before your first response)
-As soon as the caller says anything, call lookup_customer_context and get_services in parallel. Do NOT speak until both tool calls complete.
+STEP 1 — LOOKUP, SERVICES & DATE (do all three before your first response)
+As soon as the caller says anything, call get_current_datetime, lookup_customer_context, and get_services in parallel. Do NOT speak until all three tool calls complete. Always use the date from get_current_datetime — never assume today's date from prior knowledge.
 Use the services returned by get_services for ALL price and service name references throughout the call.
 STEP 2 — GREETING
 If returning customer:
@@ -461,6 +461,18 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
   return [
     {
       type: "custom",
+      name: "get_current_datetime",
+      description:
+        "Returns the real current date and time in the business's local timezone. MUST be called at the start of every call alongside lookup_customer_context and get_services. Always use the date returned here — never assume a date from prior knowledge.",
+      url: `${appUrl}/api/retell/current-datetime`,
+      speak_during_execution: false,
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+    {
+      type: "custom",
       name: "lookup_customer_context",
       description:
         "Look up an existing customer by caller phone number. MUST be called immediately at the start of every call, before asking the caller any questions.",
@@ -490,7 +502,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           date: {
             type: "string",
             description:
-              "The date to check availability for. Prefer YYYY-MM-DD, but natural phrases like 'next Monday' are accepted.",
+              "Pass the caller's words exactly as spoken — e.g., 'tomorrow', 'next Monday', 'Friday', 'June 10'. The server resolves relative phrases using the real current date. Never pre-convert to a YYYY-MM-DD date yourself.",
           },
           service_name: {
             type: "string",
