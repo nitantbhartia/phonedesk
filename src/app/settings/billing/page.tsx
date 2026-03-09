@@ -85,8 +85,8 @@ export default function BillingPage() {
           setMinutesUsed(data.stats.totalCallMinutes || 0);
         }
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setBillingError("Failed to load billing data. Please refresh.");
     } finally {
       setLoading(false);
     }

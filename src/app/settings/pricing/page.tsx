@@ -67,8 +67,8 @@ export default function PricingPage() {
           setServices(data.business.services.filter((s: Service & { isActive: boolean }) => s.isActive));
         }
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      toast.error("Failed to load pricing data. Please refresh.");
     } finally {
       setLoading(false);
     }

@@ -128,8 +128,8 @@ export default function NoShowProtectionPage() {
         const data = await waitlistRes.json();
         setWaitlist(data.entries || []);
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setActionError("Failed to load data. Please refresh the page.");
     } finally {
       setLoading(false);
     }

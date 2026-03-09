@@ -148,8 +148,8 @@ export default function AgentSettingsPage() {
           );
         }
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      toast.error("Failed to load settings. Please refresh.");
     } finally {
       setLoading(false);
     }

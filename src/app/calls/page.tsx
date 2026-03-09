@@ -50,6 +50,7 @@ export default function CallLogPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
+  const [fetchError, setFetchError] = useState("");
 
   const pageSize = 20;
 
@@ -92,8 +93,8 @@ export default function CallLogPage() {
         setCalls(data.calls || []);
         setTotal(data.total || 0);
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setFetchError("Failed to load calls. Please refresh.");
     } finally {
       setLoading(false);
     }
@@ -148,6 +149,13 @@ export default function CallLogPage() {
           </button>
         </div>
       </div>
+
+      {fetchError && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
+          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+        </div>
+      )}
 
       {/* Search bar */}
       <form
