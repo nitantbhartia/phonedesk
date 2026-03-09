@@ -3,6 +3,7 @@
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function LandingPage() {
   return (
@@ -106,10 +107,12 @@ function LandingPageContent() {
       {/* Nav */}
       <div className="sticky top-0 z-50 flex justify-center pt-3 sm:pt-4 px-4">
       <nav className="w-full max-w-5xl px-4 sm:px-6 py-3 flex justify-between items-center glass-card rounded-full shadow-soft">
-        <div className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="RingPaw" height={44} style={{ height: 44, width: "auto" }} />
-        </div>
+        <BrandLogo
+          priority
+          mobileWidth={136}
+          desktopWidth={196}
+          className="min-w-0 max-w-[136px] sm:max-w-[196px]"
+        />
         <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
           <a href="#how-it-works" className="hover:text-paw-brown transition-colors">How it Works</a>
           <a href="#features" className="hover:text-paw-brown transition-colors">Features</a>

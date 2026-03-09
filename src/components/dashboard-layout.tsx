@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
 
 const navItems = [
@@ -167,10 +168,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-paw-sky flex">
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-paw-cream/80 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="RingPaw" height={40} style={{ height: 40, width: "auto" }} />
-        </div>
+        <BrandLogo
+          mobileWidth={124}
+          desktopWidth={156}
+          className="min-w-0 max-w-[124px]"
+        />
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 text-paw-brown"
@@ -198,8 +200,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo */}
         <div className="mb-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="RingPaw" height={48} style={{ height: 48, width: "auto" }} />
+          <BrandLogo
+            mobileWidth={148}
+            desktopWidth={184}
+            className="max-w-[184px]"
+          />
         </div>
 
         {/* Nav */}
