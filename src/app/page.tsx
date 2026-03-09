@@ -106,15 +106,9 @@ function LandingPageContent() {
       {/* Nav */}
       <div className="sticky top-0 z-50 flex justify-center pt-3 sm:pt-4 px-4">
       <nav className="w-full max-w-5xl px-4 sm:px-6 py-3 flex justify-between items-center glass-card rounded-full shadow-soft">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 2v7.31" /><path d="M14 2v7.31" /><path d="M8.5 2h7" /><path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
-            </svg>
-          </div>
-          <span className="font-bold text-2xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.com</span>
-          </span>
+        <div className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="RingPaw" height={44} style={{ height: 44, width: "auto" }} />
         </div>
         <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
           <a href="#how-it-works" className="hover:text-paw-brown transition-colors">How it Works</a>
@@ -770,15 +764,9 @@ function LandingPageContent() {
       {/* Footer */}
       <footer className="bg-paw-brown text-paw-cream py-16 px-6 mt-12 rounded-t-[3rem]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-paw-amber rounded-full flex items-center justify-center text-paw-brown">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 2v7.31" /><path d="M14 2v7.31" /><path d="M8.5 2h7" /><path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
-              </svg>
-            </div>
-            <span className="font-bold text-xl tracking-tight">
-              RingPaw<span className="text-paw-amber">.com</span>
-            </span>
+          <div className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="RingPaw" height={40} style={{ height: 40, width: "auto", filter: "brightness(0) invert(1)" }} />
           </div>
           <div className="flex gap-8 text-sm font-medium text-paw-cream/60">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
