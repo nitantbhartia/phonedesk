@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   const normalizedPetSize = petSize ? petSize.toUpperCase() : null;
   const validatedPetSize = normalizedPetSize && VALID_SIZES.includes(normalizedPetSize)
     ? (normalizedPetSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE")
-    : null;
+    : undefined;
 
   const service = svcName
     ? business.services.find(
