@@ -167,18 +167,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-paw-sky flex">
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-paw-cream/80 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10 2v7.31" />
-              <path d="M14 2v7.31" />
-              <path d="M8.5 2h7" />
-              <path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
-            </svg>
-          </div>
-          <span className="font-bold text-2xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.com</span>
-          </span>
+        <div className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="RingPaw" height={40} style={{ height: 40, width: "auto" }} />
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -206,18 +197,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-10 h-10 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10 2v7.31" />
-              <path d="M14 2v7.31" />
-              <path d="M8.5 2h7" />
-              <path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
-            </svg>
-          </div>
-          <span className="font-bold text-2xl tracking-tight text-paw-brown">
-            RingPaw<span className="text-paw-orange">.com</span>
-          </span>
+        <div className="mb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="RingPaw" height={48} style={{ height: 48, width: "auto" }} />
         </div>
 
         {/* Nav */}
