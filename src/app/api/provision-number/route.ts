@@ -105,7 +105,7 @@ export async function POST(req: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const provisioned = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      await tx.$queryRaw`
+      await tx.$executeRaw`
         SELECT pg_advisory_xact_lock(hashtext(${business.id}))
       `;
 

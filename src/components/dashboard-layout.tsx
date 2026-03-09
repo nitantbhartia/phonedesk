@@ -169,9 +169,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-paw-cream/80 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex items-center justify-between">
         <BrandLogo
-          mobileWidth={124}
-          desktopWidth={156}
-          className="min-w-0 max-w-[124px]"
+          mobileWidth={138}
+          desktopWidth={172}
+          className="min-w-0 max-w-[138px]"
         />
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -201,9 +201,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="mb-4">
           <BrandLogo
-            mobileWidth={148}
-            desktopWidth={184}
-            className="max-w-[184px]"
+            mobileWidth={168}
+            desktopWidth={212}
+            className="max-w-[212px]"
           />
         </div>
 
