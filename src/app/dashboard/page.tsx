@@ -127,6 +127,7 @@ export default function DashboardPage() {
   const [agentToggling, setAgentToggling] = useState(false);
   const [confirmOff, setConfirmOff] = useState(false);
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
+  const [fetchError, setFetchError] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -159,6 +160,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      setFetchError("Failed to load dashboard data. Please refresh the page.");
     } finally {
       setLoading(false);
     }
@@ -177,6 +179,7 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error();
     } catch {
       setAgentLive(prev);
+      setFetchError("Failed to update agent status. Please try again.");
     } finally {
       setAgentToggling(false);
     }
@@ -206,6 +209,14 @@ export default function DashboardPage() {
 
   return (
     <div>
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
+          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 transition-colors text-xs font-bold">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>

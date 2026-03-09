@@ -374,9 +374,12 @@ export default function OnboardingPage() {
     try {
       // Derive area code from the user's phone number
       const phoneDigits = phone.replace(/\D/g, "");
-      const areaCode = phoneDigits.length >= 10
-        ? phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3)
-        : "415";
+      if (phoneDigits.length < 10) {
+        setProvisionError("Please go back and enter a valid 10-digit phone number so we can assign you a local area code.");
+        setLoading(false);
+        return;
+      }
+      const areaCode = phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3);
       const res = await fetch("/api/provision-number", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -55,20 +55,17 @@ export default function CallForwardingSetupPage() {
   async function makeTestCall() {
     setTestCallStatus("calling");
     try {
-      const res = await fetch("/api/calls", {
+      const res = await fetch("/api/calls/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "test" }),
       });
       if (res.ok) {
         setTestCallStatus("success");
       } else {
-        // Simulate success for demo
-        setTimeout(() => setTestCallStatus("success"), 3000);
+        setTestCallStatus("failed");
       }
     } catch {
-      // Simulate success for demo
-      setTimeout(() => setTestCallStatus("success"), 3000);
+      setTestCallStatus("failed");
     }
   }
 
@@ -344,7 +341,7 @@ export default function CallForwardingSetupPage() {
                 <div className="space-y-4">
                   <button
                     onClick={makeTestCall}
-                    disabled={testCallStatus === "calling"}
+                    disabled={testCallStatus === "calling" || testCallStatus === "success"}
                     className="w-full py-5 bg-paw-brown text-paw-cream rounded-2xl font-bold text-lg hover:opacity-95 transition-all flex items-center justify-center gap-3 shadow-lg group disabled:opacity-70"
                   >
                     <svg
@@ -362,7 +359,9 @@ export default function CallForwardingSetupPage() {
                       ? "Calling..."
                       : testCallStatus === "success"
                         ? "Call Verified!"
-                        : "Make Test Call"}
+                        : testCallStatus === "failed"
+                          ? "Retry Test Call"
+                          : "Make Test Call"}
                   </button>
 
                   {/* Status area */}
@@ -375,21 +374,27 @@ export default function CallForwardingSetupPage() {
                         className={`flex items-center gap-2 font-bold text-sm ${
                           testCallStatus === "success"
                             ? "text-green-500"
-                            : "text-paw-green"
+                            : testCallStatus === "failed"
+                              ? "text-red-500"
+                              : "text-paw-green"
                         }`}
                       >
                         <span
                           className={`w-2 h-2 rounded-full ${
                             testCallStatus === "success"
                               ? "bg-green-500"
-                              : "bg-paw-green status-pulse"
+                              : testCallStatus === "failed"
+                                ? "bg-red-500"
+                                : "bg-paw-green status-pulse"
                           }`}
                         />
                         {testCallStatus === "success"
                           ? "VERIFIED"
                           : testCallStatus === "calling"
                             ? "CALLING..."
-                            : "WAITING FOR CALL"}
+                            : testCallStatus === "failed"
+                              ? "TEST FAILED"
+                              : "WAITING FOR CALL"}
                       </span>
                     </div>
 
@@ -409,6 +414,20 @@ export default function CallForwardingSetupPage() {
                           </svg>
                           <p className="text-sm font-bold text-green-600">
                             Call forwarding is working!
+                          </p>
+                        </div>
+                      ) : testCallStatus === "failed" ? (
+                        <div className="text-center">
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" className="mx-auto mb-2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                          <p className="text-sm font-bold text-red-600">
+                            Couldn&apos;t place test call.
+                          </p>
+                          <p className="text-xs text-paw-brown/50 mt-1">
+                            You can still finish setup and test manually.
                           </p>
                         </div>
                       ) : (
@@ -441,14 +460,9 @@ export default function CallForwardingSetupPage() {
                   </button>
                   <button
                     onClick={finishSetup}
-                    disabled={testCallStatus !== "success"}
-                    className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                      testCallStatus === "success"
-                        ? "bg-paw-orange text-white hover:opacity-90 shadow-sm"
-                        : "bg-paw-amber/20 text-paw-brown opacity-50 cursor-not-allowed"
-                    }`}
+                    className="px-6 py-3 rounded-xl font-bold transition-all bg-paw-orange text-white hover:opacity-90 shadow-sm"
                   >
-                    Finish Setup
+                    {testCallStatus === "success" ? "Finish Setup" : "Skip & Finish"}
                   </button>
                 </div>
               </div>

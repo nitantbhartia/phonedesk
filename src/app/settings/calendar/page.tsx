@@ -109,8 +109,11 @@ export default function CalendarSettingsPage() {
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [primaryConnectionId, setPrimaryConnectionId] = useState<string>("");
   const [respectBusy, setRespectBusy] = useState(true);
   const [bufferTime, setBufferTime] = useState(true);
+  const [bookingLogicSaving, setBookingLogicSaving] = useState(false);
+  const [bookingLogicSaved, setBookingLogicSaved] = useState(false);
   const [hours, setHours] = useState<HoursState>({ ...DEFAULT_HOURS });
   const [savedHoursJson, setSavedHoursJson] = useState("");
   const [saving, setSaving] = useState(false);
@@ -159,7 +162,11 @@ export default function CalendarSettingsPage() {
       const res = await fetch("/api/business/profile");
       if (res.ok) {
         const data = await res.json();
-        setConnections(data.business?.calendarConnections || []);
+        const conns: CalendarConnection[] = data.business?.calendarConnections || [];
+        setConnections(conns);
+        const primary = conns.find((c) => c.isPrimary);
+        if (primary) setPrimaryConnectionId(primary.id);
+        else if (conns.length > 0) setPrimaryConnectionId(conns[0].id);
         const bh = data.business?.businessHours as SavedBusinessHours | undefined;
         const built = buildHoursState(bh);
         setHours(built);
@@ -169,6 +176,28 @@ export default function CalendarSettingsPage() {
       console.error("Error fetching calendar settings:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveBookingLogic() {
+    setBookingLogicSaving(true);
+    setBookingLogicSaved(false);
+    try {
+      await fetch("/api/business/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          primaryCalendarConnectionId: primaryConnectionId || null,
+          respectBusy,
+          bufferTime,
+        }),
+      });
+      setBookingLogicSaved(true);
+      setTimeout(() => setBookingLogicSaved(false), 3000);
+    } catch (error) {
+      console.error("Error saving booking logic:", error);
+    } finally {
+      setBookingLogicSaving(false);
     }
   }
 
@@ -201,9 +230,13 @@ export default function CalendarSettingsPage() {
       const res = await fetch(`/api/calendar/connect?provider=${provider}`, {
         method: "DELETE",
       });
-      if (res.ok) await fetchData();
-    } catch (error) {
-      console.error("Error disconnecting calendar:", error);
+      if (res.ok) {
+        await fetchData();
+      } else {
+        toast.error("Failed to disconnect calendar. Please try again.");
+      }
+    } catch {
+      toast.error("Failed to disconnect calendar. Please try again.");
     } finally {
       setDisconnecting(null);
     }
@@ -551,23 +584,36 @@ export default function CalendarSettingsPage() {
                 </span>
               </label>
               <div className="relative">
-                <select className="w-full appearance-none bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 font-bold focus:outline-none focus:border-paw-amber transition-all">
-                  <option>Google Calendar: Appointments</option>
-                  <option>Google Calendar: Main Work</option>
-                  <option>Square Appointments Sync</option>
-                </select>
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+                {connections.filter((c) => c.isActive).length === 0 ? (
+                  <div className="w-full bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 text-paw-brown/40 font-bold text-sm">
+                    No calendars connected — connect one above
+                  </div>
+                ) : (
+                  <select
+                    value={primaryConnectionId}
+                    onChange={(e) => setPrimaryConnectionId(e.target.value)}
+                    className="w-full appearance-none bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 font-bold focus:outline-none focus:border-paw-amber transition-all"
                   >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </div>
+                    {connections.filter((c) => c.isActive).map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.provider === "GOOGLE"
+                          ? `Google Calendar${c.calendarId ? `: ${c.calendarId}` : ""}`
+                          : c.provider === "SQUARE"
+                            ? "Square Appointments"
+                            : c.provider === "ACUITY"
+                              ? "Acuity Scheduling"
+                              : c.provider}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {connections.filter((c) => c.isActive).length > 0 && (
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -603,6 +649,19 @@ export default function CalendarSettingsPage() {
                 </label>
               </div>
             </div>
+          </div>
+
+          <div className="mt-6 flex items-center justify-end gap-3">
+            {bookingLogicSaved && (
+              <span className="text-xs text-green-600 font-medium">Saved</span>
+            )}
+            <button
+              onClick={() => void saveBookingLogic()}
+              disabled={bookingLogicSaving}
+              className="px-8 py-3 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50"
+            >
+              {bookingLogicSaving ? "Saving…" : "Save Settings"}
+            </button>
           </div>
         </section>
 
