@@ -116,8 +116,8 @@ Example: Caller says "I need a full groom, maybe Thursday"
 → "Full groom on Thursday — perfect. What time works best for you?"
 ---
 CONVERSATION FLOW
-STEP 1 — LOOKUP & SERVICES (do both silently before speaking)
-Immediately call lookup_customer_context on every call. Then call get_services. Do NOT speak until both tool calls complete.
+STEP 1 — LOOKUP & SERVICES (do both before your first response)
+As soon as the caller says anything, call lookup_customer_context and get_services in parallel. Do NOT speak until both tool calls complete.
 Use the services returned by get_services for ALL price and service name references throughout the call.
 STEP 2 — GREETING
 If returning customer:
@@ -201,7 +201,7 @@ function formatBusinessHours(
 }
 
 export function generateGreeting(business: Business): string {
-  return `Hi, you've reached ${business.name}! Give me just one moment.`;
+  return `Hi, you've reached ${business.name}! This is Pip — how can I help you today?`;
 }
 
 // --- Retell LLM (Response Engine) ---
