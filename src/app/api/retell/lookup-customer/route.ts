@@ -63,6 +63,8 @@ export async function POST(req: NextRequest) {
   const callerPhone = args?.caller_phone || call?.from_number;
   const businessId = phoneRecord.business.id;
 
+  console.log("[lookup-customer] callerPhone:", callerPhone, "from_number:", call?.from_number, "caller_phone arg:", args?.caller_phone, "normalizedPhone:", normalizePhoneNumber(callerPhone));
+
   // Run internal DB lookup and Square CRM lookup concurrently
   const [internalContext, squareCustomer] = await Promise.allSettled([
     lookupCustomerContext(businessId, callerPhone),
@@ -110,6 +112,8 @@ export async function POST(req: NextRequest) {
   } else {
     result = buildCustomerContextSummary(context);
   }
+
+  console.log("[lookup-customer] result: found=", found, "customer=", customerName, "pets=", context.pets.map(p => p.name));
 
   return NextResponse.json({
     result,

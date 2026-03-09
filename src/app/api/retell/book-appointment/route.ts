@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
   const { args, call } = body;
 
-  console.log("[book-appointment] service:", args?.service_name, "pet:", args?.pet_name, "to:", call?.to_number);
+  console.log("[book-appointment] service:", args?.service_name, "pet:", args?.pet_name, "to:", call?.to_number, "from:", call?.from_number, "customer_phone arg:", args?.customer_phone);
 
   // Identify business from the called number
   const calledNumber = normalizePhoneNumber(call?.to_number);
