@@ -26,10 +26,16 @@ export function InfoIcon({
     function updatePos() {
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
-      setPos({
-        top: rect.top + window.scrollY,
-        left: rect.left + rect.width / 2 + window.scrollX,
-      });
+      const tooltipWidth = 256; // w-64
+      const margin = 12;
+      // Center on the icon but clamp so it never overflows the viewport
+      let left = rect.left + rect.width / 2 + window.scrollX;
+      left = Math.max(tooltipWidth / 2 + margin + window.scrollX, left);
+      left = Math.min(
+        window.innerWidth - tooltipWidth / 2 - margin + window.scrollX,
+        left
+      );
+      setPos({ top: rect.top + window.scrollY, left });
     }
 
     updatePos();
@@ -41,15 +47,20 @@ export function InfoIcon({
     };
   }, [open]);
 
+  // Close on outside click or touch
   useEffect(() => {
     if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
+    function handleOutside(e: MouseEvent | TouchEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
   }, [open]);
 
   const tooltip =
@@ -76,8 +87,6 @@ export function InfoIcon({
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
         aria-label={text}
         role="button"
         tabIndex={0}
