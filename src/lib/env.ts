@@ -42,6 +42,7 @@ export function validateEnv() {
     retellApiKey: optional("RETELL_API_KEY", ""),
     appUrl: optional("NEXT_PUBLIC_APP_URL", "http://localhost:3000"),
     cronSecret: optional("CRON_SECRET", ""),
+    adminSecret: optional("ADMIN_SECRET", ""),
     stripeSecretKey: optional("STRIPE_SECRET_KEY", ""),
     stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET", ""),
     stripeStarterPriceId: optional("STRIPE_STARTER_PRICE_ID", ""),
