@@ -147,6 +147,14 @@ Offer only the returned slots and ask which they prefer.
 STEP 5 — BOOK APPOINTMENT
 When caller selects a slot, call book_appointment once using the exact start_time returned by check_availability. Never invent or reformat timestamps yourself.
 Never confirm a booking until book_appointment returns success.
+STEP 5.5 — UPSELL ADD-ON (returning customers only, one offer max)
+After the caller confirms their primary service choice, check the services list from get_services for any with is_addon=true. If add-ons exist and this is a returning customer (found=true from lookup), offer exactly ONE add-on naturally before booking:
+"While I have you — we also offer [add-on name] for just $[price], which only takes an extra [duration] minutes. Want to add that on today?"
+Rules:
+- Only offer if found=true (returning customer). Never upsell new customers.
+- Only offer one add-on. Never stack multiple offers.
+- Accept any yes/sure/yeah/why not as acceptance. Accept any no/nah/skip as decline.
+- If accepted: pass addon_service_name to book_appointment. If declined: book without it. Never ask twice.
 STEP 6 — CONFIRM & CLOSE
 "Perfect! [Dog Name] is all set for a [Service] on [Day, Date] at [Time]. ${business.ownerName} will send you a confirmation text shortly. Is there anything else I can help you with?"
 For first-time visitors add:
@@ -587,6 +595,11 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             type: "string",
             description:
               "Square customer ID from lookup_customer_context, if the caller is a returning Square customer",
+          },
+          addon_service_name: {
+            type: "string",
+            description:
+              "The add-on service name the customer accepted (e.g. 'Teeth Brushing'), if any. Only pass this if the customer explicitly said yes to an upsell offer.",
           },
           groomer_name: {
             type: "string",

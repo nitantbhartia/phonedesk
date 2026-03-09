@@ -56,6 +56,7 @@ interface BusinessData {
     price: number;
     duration: number;
     isActive: boolean;
+    isAddon: boolean;
   }>;
   retellConfig: {
     greeting: string;
@@ -107,7 +108,7 @@ export default function AgentSettingsPage() {
   const [language, setLanguage] = useState("casual");
   const [customInstructions, setCustomInstructions] = useState("");
   const [services, setServices] = useState<
-    Array<{ id?: string; name: string; price: string; duration: string }>
+    Array<{ id?: string; name: string; price: string; duration: string; isAddon: boolean }>
   >([]);
 
   useEffect(() => {
@@ -138,11 +139,12 @@ export default function AgentSettingsPage() {
           }
           setServices(
             data.business.services.map(
-              (s: { id: string; name: string; price: number; duration: number }) => ({
+              (s: { id: string; name: string; price: number; duration: number; isAddon: boolean }) => ({
                 id: s.id,
                 name: s.name,
                 price: s.price.toString(),
                 duration: s.duration.toString(),
+                isAddon: Boolean(s.isAddon),
               })
             )
           );
@@ -437,7 +439,7 @@ export default function AgentSettingsPage() {
         <CardHeader>
           <CardTitle>Services & Pricing</CardTitle>
           <CardDescription>
-            The AI shares these with callers when asked about services.
+            The AI shares these with callers when asked about services. Toggle "Add-on" to let the AI upsell that service to returning customers after confirming their primary booking.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -488,6 +490,19 @@ export default function AgentSettingsPage() {
                     }}
                   />
                 </div>
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+                    Add-on
+                  </Label>
+                  <Switch
+                    checked={service.isAddon}
+                    onCheckedChange={(checked) => {
+                      const updated = [...services];
+                      updated[i] = { ...service, isAddon: checked };
+                      setServices(updated);
+                    }}
+                  />
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -503,7 +518,7 @@ export default function AgentSettingsPage() {
           <Button
             variant="outline"
             onClick={() =>
-              setServices([...services, { name: "", price: "", duration: "60" }])
+              setServices([...services, { name: "", price: "", duration: "60", isAddon: false }])
             }
           >
             <Plus className="w-4 h-4 mr-2" /> Add Service

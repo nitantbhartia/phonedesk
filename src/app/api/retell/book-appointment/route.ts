@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
     pet_breed: petBreed,
     pet_size: petSize,
     service_name: svcName,
+    addon_service_name: addonSvcName,
     start_time: startTime,
     square_customer_id: squareCustomerId,
     groomer_name: groomerName,
@@ -79,6 +80,16 @@ export async function POST(req: NextRequest) {
         (s: Service) =>
           s.isActive &&
           s.name.toLowerCase().includes(svcName.toLowerCase())
+      )
+    : null;
+
+  // Look up add-on service if the AI offered one
+  const addonService = addonSvcName
+    ? business.services.find(
+        (s: Service) =>
+          s.isActive &&
+          s.isAddon &&
+          s.name.toLowerCase().includes(addonSvcName.toLowerCase())
       )
     : null;
 
@@ -120,7 +131,8 @@ export async function POST(req: NextRequest) {
   }
 
   const start = parseLocalDatetime(correctedStartTime, timezone);
-  const end = new Date(start.getTime() + (service?.duration || 60) * 60000);
+  const totalDuration = (service?.duration || 60) + (addonService?.duration || 0);
+  const end = new Date(start.getTime() + totalDuration * 60000);
 
   if (Number.isNaN(start.getTime())) {
     return NextResponse.json({
@@ -143,14 +155,22 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Combine service name and price if add-on was accepted
+    const combinedServiceName = addonService
+      ? `${service?.name || svcName} + ${addonService.name}`
+      : (service?.name || svcName);
+    const combinedServicePrice = addonService
+      ? (service?.price || 0) + addonService.price
+      : service?.price;
+
     const appointment = await bookAppointment(business.id, {
       customerName,
       customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
       petName,
       petBreed,
       petSize: validatedPetSize,
-      serviceName: service?.name || svcName,
-      servicePrice: service?.price,
+      serviceName: combinedServiceName,
+      servicePrice: combinedServicePrice,
       startTime: start,
       endTime: end,
       groomerId: groomer?.id,
@@ -292,9 +312,10 @@ export async function POST(req: NextRequest) {
     });
 
     const isConfirmed = appointment.status === "CONFIRMED";
+    const serviceDisplay = combinedServiceName || "grooming";
     const resultMessage = isConfirmed
-      ? `I've booked ${petName || "your pet"} for a ${service?.name || svcName || "grooming"} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
-      : `I've got ${timeStr} held for ${petName || "your pet"}'s ${service?.name || svcName || "grooming"} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
+      ? `I've booked ${petName || "your pet"} for a ${serviceDisplay} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
+      : `I've got ${timeStr} held for ${petName || "your pet"}'s ${serviceDisplay} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
 
     return NextResponse.json({
       result: resultMessage,

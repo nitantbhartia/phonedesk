@@ -137,6 +137,7 @@ model Service {
   price        Float
   duration     Int      // in minutes
   isActive     Boolean  @default(true)
+  isAddon      Boolean  @default(false) // if true, AI will offer this as an upsell add-on
   bookingMode  BookingMode? // override business default
   pricingRules PricingRule[]
   createdAt    DateTime @default(now())
