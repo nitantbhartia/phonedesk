@@ -32,6 +32,11 @@ export default function TodayPage() {
   const [appointments, setAppointments] = useState<TodayAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState("");
+  const [noteModal, setNoteModal] = useState<{ appointmentId: string; petName: string } | null>(null);
+  const [noteText, setNoteText] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteError, setNoteError] = useState("");
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
@@ -85,33 +90,48 @@ export default function TodayPage() {
               : a
           )
         );
+      } else {
+        setStatusError("Failed to update status. Please try again.");
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setStatusError("Failed to update status. Please try again.");
     } finally {
       setUpdating(null);
     }
   }
 
-  async function logBehaviorNote(appointmentId: string, petName: string) {
-    const note = prompt(`Behavior note for ${petName}:`);
-    if (!note) return;
+  function openNoteModal(appointmentId: string, petName: string) {
+    setNoteModal({ appointmentId, petName });
+    setNoteText("");
+    setNoteError("");
+  }
 
+  async function saveNote() {
+    if (!noteModal || !noteText.trim()) return;
+    setNoteSaving(true);
+    setNoteError("");
     try {
-      await fetch("/api/behavior", {
+      const res = await fetch("/api/behavior", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          petName,
-          appointmentId,
+          petName: noteModal.petName,
+          appointmentId: noteModal.appointmentId,
           severity: "NOTE",
-          note,
+          note: noteText.trim(),
           tags: [],
         }),
       });
-      alert(`Note saved for ${petName}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save note");
+      }
+      setNoteModal(null);
+      setNoteText("");
     } catch (error) {
-      console.error("Error:", error);
+      setNoteError(error instanceof Error ? error.message : "Failed to save note");
+    } finally {
+      setNoteSaving(false);
     }
   }
 
@@ -158,6 +178,13 @@ export default function TodayPage() {
           One-tap status updates — customers get auto-notified via SMS
         </p>
       </div>
+
+      {statusError && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+          <p className="flex-1 text-sm text-red-700 font-medium">{statusError}</p>
+          <button onClick={() => setStatusError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+        </div>
+      )}
 
       {appointments.length === 0 ? (
         <div className="bg-white rounded-4xl shadow-soft p-16 text-center">
@@ -224,7 +251,7 @@ export default function TodayPage() {
                     )}
 
                     <button
-                      onClick={() => logBehaviorNote(appt.id, appt.petName || "Pet")}
+                      onClick={() => openNoteModal(appt.id, appt.petName || "Pet")}
                       className="p-2 sm:p-2.5 bg-paw-cream rounded-xl hover:bg-paw-amber/20 transition-colors shrink-0"
                       title="Add behavior note"
                     >
@@ -238,6 +265,42 @@ export default function TodayPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Behavior Note Modal */}
+      {noteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setNoteModal(null)}>
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-paw-brown mb-1">Behavior Note</h3>
+            <p className="text-sm text-paw-brown/50 mb-5">For {noteModal.petName}</p>
+            <textarea
+              autoFocus
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="e.g. Very anxious near scissors, did well with dryer..."
+              rows={4}
+              className="w-full rounded-2xl border-2 border-paw-brown/10 p-4 text-sm font-medium resize-none focus:outline-none focus:border-paw-amber transition-all"
+            />
+            {noteError && (
+              <p className="text-red-600 text-xs mt-2">{noteError}</p>
+            )}
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setNoteModal(null)}
+                className="flex-1 py-3 rounded-2xl border-2 border-paw-brown/10 font-bold text-paw-brown hover:bg-paw-sky transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void saveNote()}
+                disabled={noteSaving || !noteText.trim()}
+                className="flex-1 py-3 rounded-2xl bg-paw-brown text-white font-bold hover:opacity-90 transition-colors disabled:opacity-50"
+              >
+                {noteSaving ? "Saving…" : "Save Note"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
