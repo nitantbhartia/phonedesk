@@ -206,18 +206,6 @@ function LandingPageContent() {
               </div>
             </div>
 
-            {/* Floating booking confirmation */}
-            <div className="absolute -bottom-4 left-0 sm:-bottom-8 sm:-left-8 bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-soft flex items-center gap-3 sm:gap-4 animate-bounce max-w-[90%] sm:max-w-none" style={{ animationDuration: "3s" }}>
-              <div className="w-12 h-12 rounded-full bg-paw-sky flex items-center justify-center text-paw-brown">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-paw-brown/50 uppercase">Booking Confirmed</p>
-                <p className="text-lg font-bold text-paw-brown">Thursday, 2:00 PM</p>
-              </div>
-            </div>
           </div>
         </div>
       </header>
@@ -681,7 +669,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes. RingPaw connects directly to your calendar and checks real availability before offering any time slots. No double bookings, no manual entry on your end.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; and it checks live availability before offering any slot. If you&apos;re already booked at 2&nbsp;PM, RingPaw won&apos;t offer 2&nbsp;PM. The moment a caller confirms, the appointment writes directly to Google Calendar, Square, or Acuity. You&apos;ll see it on your calendar within seconds, no copy-pasting required.</p>
           </details>
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -690,7 +678,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">If a caller asks something RingPaw can&apos;t handle, it says &quot;Let me have [your name] call you right back&quot; and sends you an instant SMS alert. Nothing falls through the cracks.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">RingPaw handles the vast majority of calls on its own &mdash; but when something&apos;s genuinely outside its knowledge, it doesn&apos;t guess or go silent. It tells the caller, &ldquo;Let me have [your name] give you a quick call back,&rdquo; takes their number, and texts you a summary of what they needed. You call back already knowing the context. Nothing falls through the cracks.</p>
           </details>
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -699,7 +687,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Google Calendar, Square Appointments, and Acuity Scheduling in V1. More integrations coming soon.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Google Calendar, Square Appointments, and Acuity Scheduling. If you use any of these, connecting takes about 30 seconds during setup &mdash; just sign in and authorize. More integrations are on the roadmap. Using something else? Let us know and we&apos;ll prioritize it.</p>
           </details>
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -708,7 +696,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Just text RingPaw. &quot;Block tomorrow&quot; or &quot;Closed Saturday&quot; &mdash; it updates instantly. No dashboard needed.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; update your hours any time from the Settings page. Toggle any day on or off, adjust open and close times, and RingPaw picks up the change immediately. Need to block a holiday or take a personal day? Mark it as busy in your connected calendar and RingPaw will treat that time as unavailable, no extra steps needed.</p>
           </details>
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -717,7 +705,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">About 5 minutes. Connect your calendar, forward your missed calls to the number we provide, and you&apos;re live. No technical skills required.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Genuinely about 5 minutes. Sign up, enter your business name and services, connect your calendar, and set up conditional call forwarding &mdash; we give you the exact code to dial on your phone. That&apos;s it. RingPaw is live and answering calls. No developer needed, no complicated config, no ongoing maintenance.</p>
           </details>
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -726,7 +714,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">No contracts, no setup fees. Cancel anytime. Most groomers stay because it pays for itself within the first week.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">No contracts, no setup fees, no cancellation fees. Month-to-month only. You can cancel from your account settings &mdash; no calls to make, no forms to fill. That said, most groomers who try it don&apos;t cancel. When a $75 groom books itself while you&apos;re elbow-deep in a bernedoodle, it&apos;s hard to go back.</p>
           </details>
         </div>
       </section>
