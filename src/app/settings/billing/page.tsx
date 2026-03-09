@@ -160,7 +160,7 @@ export default function BillingPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-extrabold text-paw-brown">Billing & Plan</h1>
-        <p className="text-paw-brown/60 font-medium mt-1">Manage your subscription and Stripe billing details.</p>
+        <p className="text-paw-brown/60 font-medium mt-1">View your plan, monthly usage, and payment method. Upgrade or cancel anytime.</p>
       </div>
 
       {/* Current Plan Usage */}

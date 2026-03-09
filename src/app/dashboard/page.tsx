@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { DashboardTour, shouldShowTour } from "@/components/dashboard-tour";
 
 interface DashboardStats {
   callsThisWeek: number;
@@ -130,6 +131,7 @@ export default function DashboardPage() {
   const [justSubscribed, setJustSubscribed] = useState(false);
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
   const [fetchError, setFetchError] = useState("");
+  const [tourOpen, setTourOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -140,6 +142,8 @@ export default function DashboardPage() {
       fetchDashboardData();
       const params = new URLSearchParams(window.location.search);
       if (params.get("subscribed") === "true") setJustSubscribed(true);
+      // Show tour automatically for first-time visitors
+      if (shouldShowTour()) setTourOpen(true);
     }
   }, [status, router]);
 
@@ -215,6 +219,8 @@ export default function DashboardPage() {
 
   return (
     <div>
+      <DashboardTour open={tourOpen} onClose={() => setTourOpen(false)} />
+
       {/* Error banner */}
       {fetchError && (
         <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
@@ -230,7 +236,13 @@ export default function DashboardPage() {
             Welcome back, {firstName} 👋
           </h1>
           <p className="text-paw-brown/60 font-medium">
-            Here&apos;s what RingPaw handled for you this week.
+            Here&apos;s what RingPaw handled for you this week.{" "}
+            <button
+              onClick={() => setTourOpen(true)}
+              className="text-paw-orange underline underline-offset-2 hover:text-paw-orange/80 text-sm font-semibold transition-colors"
+            >
+              Take a tour →
+            </button>
           </p>
         </div>
 
