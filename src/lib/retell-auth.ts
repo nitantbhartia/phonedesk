@@ -8,12 +8,14 @@ import { createHmac, timingSafeEqual } from "crypto";
  * where the HMAC message is `body + timestamp`. The SDK enforces a 5-minute
  * replay window, which can fail if server clocks drift. We therefore:
  *
- *   1. Try the SDK verify (new format, strict 5-min window).
- *   2. Try the same compound format manually with a 15-min window (clock drift).
- *   3. Try a simple HMAC-SHA256 of the raw body (older Retell signing format).
+ *   1. Try the SDK verify with RETELL_API_KEY (new format, strict 5-min window).
+ *   2. Try the same compound format manually with a 15-minute window.
+ *   3. Try a simple HMAC-SHA256 of the raw body (older/plain signing format).
+ *   4. Repeat compound/plain verification with RETELL_WEBHOOK_SECRET when a
+ *      separate webhook signing secret is configured.
  *
- * Fallback: RETELL_WEBHOOK_SECRET compared against the x-retell-signature
- * header directly (useful when the API key and signing key differ).
+ * Legacy fallback: compare RETELL_WEBHOOK_SECRET against the signature header
+ * directly in case an older deployment still uses a shared token header.
  */
 export function isRetellWebhookValid(
   body: string,
@@ -22,98 +24,42 @@ export function isRetellWebhookValid(
 ): boolean {
   const apiKey = process.env.RETELL_API_KEY?.trim();
   const webhookSecret = process.env.RETELL_WEBHOOK_SECRET?.trim();
+  const attempts: string[] = [];
+  let compoundWithinWindow = false;
 
-  // Try HMAC signature verification (preferred)
   if (apiKey && signature) {
-    // 1. SDK verify — handles compound format v={ts},d={hex_hmac} with 5-min window
     try {
+      attempts.push("apiKey:sdk");
       if (Retell.verify(body, apiKey, signature)) return true;
     } catch {
-      // fall through
-    }
-
-    // 2. Same compound format but with a 15-minute window to tolerate clock drift
-    try {
-      const match = /^v=(\d+),d=(.+)$/.exec(signature);
-      if (match) {
-        const poststamp = Number(match[1]);
-        const postDigest = match[2]!;
-        if (Math.abs(Date.now() - poststamp) <= 15 * 60 * 1000) {
-          const computed = createHmac("sha256", apiKey)
-            .update(body + poststamp)
-            .digest("hex");
-          const a = Buffer.from(computed);
-          const b = Buffer.from(postDigest);
-          if (a.length === b.length && timingSafeEqual(a, b)) return true;
-        }
-      }
-    } catch {
-      // fall through
-    }
-
-    // 3. Simple HMAC-SHA256 of body (older/plain Retell signing — no timestamp)
-    try {
-      const hexSig = createHmac("sha256", apiKey).update(body).digest("hex");
-      const b64Sig = createHmac("sha256", apiKey)
-        .update(body)
-        .digest("base64");
-      if (
-        timingSafeCompare(hexSig, signature) ||
-        timingSafeCompare(b64Sig, signature)
-      ) {
-        return true;
-      }
-    } catch {
-      // fall through
+      attempts.push("apiKey:sdk:error");
     }
   }
 
-  // Try HMAC verification using webhookSecret as the signing key.
-  // Retell's dashboard lets you configure a separate webhook secret distinct
-  // from the API key — if set, Retell signs with THAT secret.
+  const apiKeyResult = verifyWebhookSignature(body, signature, apiKey, "apiKey");
+  attempts.push(...apiKeyResult.attempts);
+  compoundWithinWindow ||= apiKeyResult.compoundWithinWindow;
+  if (apiKeyResult.valid) {
+    return true;
+  }
+
+  const webhookResult = verifyWebhookSignature(
+    body,
+    signature,
+    webhookSecret,
+    "webhookSecret",
+  );
+  attempts.push(...webhookResult.attempts);
+  compoundWithinWindow ||= webhookResult.compoundWithinWindow;
+  if (webhookResult.valid) {
+    return true;
+  }
+
   if (webhookSecret && signature) {
-    // 4. SDK verify with webhookSecret as key
-    try {
-      if (Retell.verify(body, webhookSecret, signature)) return true;
-    } catch {
-      // fall through
-    }
-
-    // 5. Manual compound verify with webhookSecret + 15-min window
-    try {
-      const match = /^v=(\d+),d=(.+)$/.exec(signature);
-      if (match) {
-        const poststamp = Number(match[1]);
-        const postDigest = match[2]!;
-        if (Math.abs(Date.now() - poststamp) <= 15 * 60 * 1000) {
-          const computed = createHmac("sha256", webhookSecret)
-            .update(body + poststamp)
-            .digest("hex");
-          const a = Buffer.from(computed);
-          const b = Buffer.from(postDigest);
-          if (a.length === b.length && timingSafeEqual(a, b)) return true;
-        }
-      }
-    } catch {
-      // fall through
-    }
-
-    // 6. Plain HMAC of body with webhookSecret (older signing format)
-    try {
-      const hexSig = createHmac("sha256", webhookSecret).update(body).digest("hex");
-      const b64Sig = createHmac("sha256", webhookSecret).update(body).digest("base64");
-      if (
-        timingSafeCompare(hexSig, signature) ||
-        timingSafeCompare(b64Sig, signature)
-      ) {
-        return true;
-      }
-    } catch {
-      // fall through
-    }
+    attempts.push("webhookSecret:literal");
+    if (timingSafeCompare(webhookSecret, signature)) return true;
   }
 
-  // No keys configured at all — passthrough in dev
   if (!apiKey && !webhookSecret) {
     if (process.env.NODE_ENV === "production") {
       console.error(
@@ -124,28 +70,12 @@ export function isRetellWebhookValid(
     return true;
   }
 
-  // Diagnostic logging — redacted but enough to debug mismatches
   const sigPrefix = signature.slice(0, 20);
   const isCompound = /^v=\d+,d=/.test(signature);
-  const tsMatch = /^v=(\d+),d=(.{0,8})/.exec(signature);
+  const tsMatch = /^v=(\d+),d=/.exec(signature);
   const tsAge = tsMatch
     ? Math.round((Date.now() - Number(tsMatch[1])) / 1000) + "s ago"
     : "n/a";
-  // Show what HMAC we computed so mismatches are obvious in logs
-  let apiKeyHmacPrefix = "n/a";
-  let secretHmacPrefix = "n/a";
-  if (tsMatch && apiKey) {
-    try {
-      const poststamp = Number(tsMatch[1]);
-      apiKeyHmacPrefix = createHmac("sha256", apiKey).update(body + poststamp).digest("hex").slice(0, 8);
-    } catch { /**/ }
-  }
-  if (tsMatch && webhookSecret) {
-    try {
-      const poststamp = Number(tsMatch[1]);
-      secretHmacPrefix = createHmac("sha256", webhookSecret).update(body + poststamp).digest("hex").slice(0, 8);
-    } catch { /**/ }
-  }
   console.error(
     "[retell-auth] Verification failed.",
     "apiKey set:", !!apiKey,
@@ -154,14 +84,60 @@ export function isRetellWebhookValid(
     "signature present:", !!signature,
     "sigPrefix:", sigPrefix,
     "isCompound:", isCompound,
+    "compoundWithinWindow:", compoundWithinWindow,
     "tsAge:", tsAge,
     "webhookSecret set:", !!webhookSecret,
-    "webhookSecretLen:", webhookSecret?.length,
-    "computedApiKeyHmac:", apiKeyHmacPrefix,
-    "computedSecretHmac:", secretHmacPrefix,
-    "expectedDigestPrefix:", tsMatch?.[2] ?? "n/a",
+    "attempts:", attempts.join(","),
   );
   return false;
+}
+
+function verifyWebhookSignature(
+  body: string,
+  signature: string,
+  secret: string | undefined,
+  label: string,
+): { valid: boolean; attempts: string[]; compoundWithinWindow: boolean } {
+  const attempts: string[] = [];
+
+  if (!secret || !signature) {
+    return { valid: false, attempts, compoundWithinWindow: false };
+  }
+
+  let compoundWithinWindow = false;
+
+  try {
+    attempts.push(`${label}:compound15m`);
+    const match = /^v=(\d+),d=(.+)$/.exec(signature);
+    if (match) {
+      const poststamp = Number(match[1]);
+      const postDigest = match[2]!;
+      compoundWithinWindow = Math.abs(Date.now() - poststamp) <= 15 * 60 * 1000;
+      if (compoundWithinWindow) {
+        const computed = createHmac("sha256", secret)
+          .update(body + poststamp)
+          .digest("hex");
+        if (timingSafeCompare(computed, postDigest)) {
+          return { valid: true, attempts, compoundWithinWindow };
+        }
+      }
+    }
+  } catch {
+    attempts.push(`${label}:compound15m:error`);
+  }
+
+  try {
+    attempts.push(`${label}:plain`);
+    const hexSig = createHmac("sha256", secret).update(body).digest("hex");
+    const b64Sig = createHmac("sha256", secret).update(body).digest("base64");
+    if (timingSafeCompare(hexSig, signature) || timingSafeCompare(b64Sig, signature)) {
+      return { valid: true, attempts, compoundWithinWindow };
+    }
+  } catch {
+    attempts.push(`${label}:plain:error`);
+  }
+
+  return { valid: false, attempts, compoundWithinWindow };
 }
 
 function timingSafeCompare(a: string, b: string): boolean {
