@@ -19,22 +19,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = JSON.parse(rawBody);
+  let body: { event?: string; call?: RetellCallPayload };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const { event, call } = body;
 
   if (!event || !call) {
     return NextResponse.json({ ok: true });
   }
 
-  switch (event) {
-    case "call_started":
-      return handleCallStarted(call);
-    case "call_ended":
-      return handleCallEnded(call);
-    case "call_analyzed":
-      return handleCallAnalyzed(call);
-    default:
-      return NextResponse.json({ ok: true });
+  try {
+    switch (event) {
+      case "call_started":
+        return await handleCallStarted(call);
+      case "call_ended":
+        return await handleCallEnded(call);
+      case "call_analyzed":
+        return await handleCallAnalyzed(call);
+      default:
+        return NextResponse.json({ ok: true });
+    }
+  } catch (err) {
+    console.error("[webhook] Unhandled error processing event:", event, err);
+    // Return 204 so Retell doesn't retry — the event was received
+    return new NextResponse(null, { status: 204 });
   }
 }
 
@@ -43,104 +55,112 @@ async function handleCallStarted(call: RetellCallPayload) {
     return new NextResponse(null, { status: 204 });
   }
 
-  const calledNumber = normalizePhoneNumber(call.to_number);
+  try {
+    const calledNumber = normalizePhoneNumber(call.to_number);
 
-  const phoneNum = calledNumber
-    ? await prisma.phoneNumber.findFirst({
-        where: { number: calledNumber },
-        include: { business: { include: { retellConfig: true } } },
-      })
-    : null;
+    const phoneNum = calledNumber
+      ? await prisma.phoneNumber.findFirst({
+          where: { number: calledNumber },
+          include: { business: { include: { retellConfig: true } } },
+        })
+      : null;
 
-  if (phoneNum) {
-    // Look up known customer by phone number to pre-fill callerName
-    const customerContext = await lookupCustomerContext(
-      phoneNum.businessId,
-      call.from_number
-    );
-    const knownName = customerContext.customer?.name || null;
+    if (phoneNum) {
+      // Look up known customer by phone number to pre-fill callerName
+      const customerContext = await lookupCustomerContext(
+        phoneNum.businessId,
+        call.from_number
+      );
+      const knownName = customerContext.customer?.name || null;
 
-    await prisma.call.upsert({
-      where: { retellCallId: call.call_id },
-      create: {
-        businessId: phoneNum.businessId,
-        retellCallId: call.call_id,
-        callerPhone: call.from_number,
-        callerName: knownName,
-        status: "IN_PROGRESS",
-      },
-      update: { status: "IN_PROGRESS", callerName: knownName },
-    });
+      await prisma.call.upsert({
+        where: { retellCallId: call.call_id },
+        create: {
+          businessId: phoneNum.businessId,
+          retellCallId: call.call_id,
+          callerPhone: call.from_number,
+          callerName: knownName,
+          status: "IN_PROGRESS",
+        },
+        update: { status: "IN_PROGRESS", callerName: knownName },
+      });
 
-    // Refresh date on the LLM. Customer context is not injected here to
-    // avoid a race condition when two calls arrive simultaneously for the
-    // same business (global LLM vars are shared across all calls). The
-    // lookup_customer_context tool fetches context per-call reliably.
-    const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
-    if (llmId) {
-      const biz = phoneNum.business as { timezone?: string | null; retellConfig?: { llmId?: string } | null };
-      try {
-        await refreshRetellLLMForCall(llmId, biz.timezone || undefined);
-      } catch (err) {
-        console.error("[webhook] Failed to refresh LLM date:", err);
+      // Refresh date on the LLM. Customer context is not injected here to
+      // avoid a race condition when two calls arrive simultaneously for the
+      // same business (global LLM vars are shared across all calls). The
+      // lookup_customer_context tool fetches context per-call reliably.
+      const llmId = (phoneNum.business as { retellConfig?: { llmId?: string } | null })?.retellConfig?.llmId;
+      if (llmId) {
+        const biz = phoneNum.business as { timezone?: string | null; retellConfig?: { llmId?: string } | null };
+        try {
+          await refreshRetellLLMForCall(llmId, biz.timezone || undefined);
+        } catch (err) {
+          console.error("[webhook] Failed to refresh LLM date:", err);
+        }
       }
     }
+  } catch (err) {
+    console.error("[webhook] handleCallStarted DB error:", err);
   }
 
   return new NextResponse(null, { status: 204 });
 }
 
 async function handleCallEnded(call: RetellCallPayload) {
-  const calledNumber = normalizePhoneNumber(call.to_number);
+  try {
+    const calledNumber = normalizePhoneNumber(call.to_number);
 
-  const phoneNum = calledNumber
-    ? await prisma.phoneNumber.findFirst({
-        where: { number: calledNumber },
-        include: { business: { include: { phoneNumber: true } } },
-      })
-    : null;
-
-  if (!phoneNum?.business) return new NextResponse(null, { status: 204 });
-
-  const business = phoneNum.business;
-
-  // Calculate duration - Retell provides duration_ms or we compute from timestamps
-  const duration = call.duration_ms
-    ? Math.round(call.duration_ms / 1000)
-    : call.start_timestamp && call.end_timestamp
-      ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
+    const phoneNum = calledNumber
+      ? await prisma.phoneNumber.findFirst({
+          where: { number: calledNumber },
+          include: { business: { include: { phoneNumber: true } } },
+        })
       : null;
 
-  // Create or update call record
-  const existingCall = call.call_id
-    ? await prisma.call.findUnique({
-        where: { retellCallId: call.call_id },
-      })
-    : null;
+    if (!phoneNum?.business) return new NextResponse(null, { status: 204 });
 
-  if (existingCall) {
-    await prisma.call.update({
-      where: { retellCallId: call.call_id },
-      data: {
-        callerPhone: call.from_number,
-        duration,
-        transcript: call.transcript || null,
-        status: "COMPLETED",
-        recordingUrl: call.recording_url || null,
-      },
-    });
-  } else {
-    await prisma.call.create({
-      data: {
-        businessId: business.id,
-        retellCallId: call.call_id,
-        callerPhone: call.from_number,
-        duration,
-        transcript: call.transcript || null,
-        status: "COMPLETED",
-        recordingUrl: call.recording_url || null,
-      },
-    });
+    const business = phoneNum.business;
+
+    // Calculate duration - Retell provides duration_ms or we compute from timestamps
+    const duration = call.duration_ms
+      ? Math.round(call.duration_ms / 1000)
+      : call.start_timestamp && call.end_timestamp
+        ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
+        : null;
+
+    // Create or update call record
+    const existingCall = call.call_id
+      ? await prisma.call.findUnique({
+          where: { retellCallId: call.call_id },
+        })
+      : null;
+
+    if (existingCall) {
+      await prisma.call.update({
+        where: { retellCallId: call.call_id },
+        data: {
+          callerPhone: call.from_number,
+          duration,
+          transcript: call.transcript || null,
+          status: "COMPLETED",
+          recordingUrl: call.recording_url || null,
+        },
+      });
+    } else {
+      await prisma.call.create({
+        data: {
+          businessId: business.id,
+          retellCallId: call.call_id,
+          callerPhone: call.from_number,
+          duration,
+          transcript: call.transcript || null,
+          status: "COMPLETED",
+          recordingUrl: call.recording_url || null,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("[webhook] handleCallEnded DB error:", err);
   }
 
   return new NextResponse(null, { status: 204 });
