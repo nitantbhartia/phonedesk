@@ -2,6 +2,7 @@
 
 import React from "react";
 import { InfoIcon } from "@/components/ui/info-icon";
+import { BrandLogo } from "@/components/brand-logo";
 
 const STEPS = [
   { number: 1, label: "Business Profile" },
@@ -42,15 +43,8 @@ export function OnboardingLayout({
       </div>
 
       {/* Logo */}
-      <div className="mb-3 flex items-center gap-2 relative z-10">
-        <div className="w-7 h-7 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 2v7.31" /><path d="M14 2v7.31" /><path d="M8.5 2h7" /><path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
-          </svg>
-        </div>
-        <span className="font-bold text-lg tracking-tight text-paw-brown">
-          RingPaw<span className="text-paw-orange">.com</span>
-        </span>
+      <div className="mb-3 relative z-10">
+        <BrandLogo mobileWidth={140} desktopWidth={180} priority />
       </div>
 
       {/* Main card */}
