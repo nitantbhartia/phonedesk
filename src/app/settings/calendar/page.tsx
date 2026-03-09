@@ -417,7 +417,7 @@ export default function CalendarSettingsPage() {
           <h2 className="text-xl font-bold text-paw-brown">
             <span className="inline-flex items-center gap-2">
               Business Hours
-              <InfoIcon text="The AI only offers appointment times inside these hours." />
+              <InfoIcon text="The AI will only offer appointment slots that fall within these hours. Callers asking for times outside your hours will be told you're closed and asked to pick another time." />
             </span>
           </h2>
           <p className="text-paw-brown/60 mt-1 text-sm font-medium">
@@ -556,7 +556,7 @@ export default function CalendarSettingsPage() {
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Primary Destination
-                  <InfoIcon text="Where confirmed appointments are written by default." />
+                  <InfoIcon text="The calendar where RingPaw writes new bookings. If you have multiple connected calendars, pick the one you use for grooming appointments." />
                 </span>
               </label>
               <div className="relative">
@@ -584,7 +584,7 @@ export default function CalendarSettingsPage() {
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Conflict Checking
-                  <InfoIcon text="Rules the AI uses to avoid double-booking." />
+                  <InfoIcon text="Controls how the AI checks for scheduling conflicts. Enabling 'Respect busy' blocks slots marked busy on your personal calendar. Buffer time adds a gap between appointments so you're never rushed." />
                 </span>
               </label>
               <div className="space-y-3">

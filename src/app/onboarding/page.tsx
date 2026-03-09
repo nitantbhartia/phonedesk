@@ -422,7 +422,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="businessName"
-                info="This is what callers hear when your AI receptionist answers."
+                info="The name spoken to callers when your AI answers (e.g. 'Happy Paws Grooming'). Use your full business name exactly as you'd say it on the phone."
               >
                 Business Name
               </OnboardingLabel>
@@ -436,7 +436,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="ownerName"
-                info="Used in greetings so callers know who they are reaching."
+                info="Your first name is used when the AI says 'Sarah is with a client right now, but I can help you.' Helps callers feel they're still reaching the right person."
               >
                 Owner Name
               </OnboardingLabel>
@@ -453,7 +453,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="phone"
-                info="Used to suggest a local area code when generating your AI phone line."
+                info="Your existing business phone number. We use the area code to assign you a local RingPaw number that matches your region, so callers see a familiar number."
               >
                 Phone Number
               </OnboardingLabel>
@@ -467,7 +467,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="address"
-                info="Shared with callers when they ask where to find you."
+                info="Your full street address. The AI will share this when callers ask 'Where are you located?' or 'How do I get there?'"
               >
                 Address
               </OnboardingLabel>
@@ -484,7 +484,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="city"
-                info="Helps localize your business profile and availability context."
+                info="Your city is included in the business profile so the AI can give accurate location context to callers asking about nearby drop-off or parking."
               >
                 City
               </OnboardingLabel>
@@ -498,7 +498,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="state"
-                info="Used for business location context and formatting."
+                info="Two-letter state abbreviation (e.g. CA, TX, FL). Used alongside your city for location context when callers ask where you're based."
               >
                 State
               </OnboardingLabel>
@@ -510,7 +510,7 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="space-y-2">
-              <OnboardingLabel info="All booking slots and reminders use this timezone.">
+              <OnboardingLabel info="All appointment times, SMS reminders, and your daily report are displayed in this timezone. Pick the zone where your business is located.">
                 Timezone
               </OnboardingLabel>
               <OnboardingSelect
@@ -528,7 +528,7 @@ export default function OnboardingPage() {
 
           {/* Business Hours */}
           <div className="space-y-4">
-            <OnboardingLabel info="The AI only offers appointment times inside these hours.">
+            <OnboardingLabel info="Set the days and times you accept appointments. The AI will only offer slots within these hours and tell callers you're closed outside of them. Toggle a day off to mark it closed.">
               Business Hours
             </OnboardingLabel>
             <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
@@ -632,7 +632,7 @@ export default function OnboardingPage() {
       {step === 2 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel info="Add each service so the AI can quote prices and durations accurately.">
+            <OnboardingLabel info="List every service you offer with its price and how long it takes. The AI will quote these prices to callers, use the duration to find available slots, and avoid double-booking.">
               Services &amp; Pricing
             </OnboardingLabel>
             <div className="space-y-3">
@@ -718,7 +718,7 @@ export default function OnboardingPage() {
 
           {/* Booking Mode */}
           <div className="space-y-4">
-            <OnboardingLabel info="Soft mode collects requests for approval. Hard mode books instantly.">
+            <OnboardingLabel info="Soft booking holds the slot for 2 hours and sends the customer a confirmation link — you stay in control. Hard booking confirms immediately on your calendar. Most groomers start with Soft Book.">
               Default Booking Mode
             </OnboardingLabel>
             <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5">
@@ -749,7 +749,7 @@ export default function OnboardingPage() {
 
           {/* Groomers (optional) */}
           <div className="space-y-4">
-            <OnboardingLabel info="Add groomers so callers can request a specific person. You can always add more later in Settings.">
+            <OnboardingLabel info="If you have multiple groomers, add them here so callers can request someone by name. Include their specialties (e.g. doodles, cats, senior dogs) so the AI can match callers to the right groomer.">
               Your Groomers (Optional)
             </OnboardingLabel>
             <div className="space-y-3">
@@ -818,7 +818,7 @@ export default function OnboardingPage() {
       {step === 3 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel info="Connect at least one calendar so availability checks are real-time.">
+            <OnboardingLabel info="Connect the calendar or booking tool you already use. RingPaw reads your live availability before offering any time slot and writes confirmed bookings directly — no double-booking, no manual entry.">
               Connect Your Booking System
             </OnboardingLabel>
             <p className="text-sm text-paw-brown/50 -mt-2">
@@ -1047,7 +1047,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-4">
-                <OnboardingLabel info="Forward missed or busy calls to this number so AI can answer for you.">
+                <OnboardingLabel info="Set up conditional call forwarding so that when you don't answer (busy or ringing too long), your carrier automatically routes the call to your RingPaw number. Your existing number stays the same — callers dial it as usual.">
                   Set up call forwarding on your phone
                 </OnboardingLabel>
                 <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
@@ -1205,7 +1205,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-3">
-            <OnboardingLabel info="Review these settings before activating your AI receptionist.">
+            <OnboardingLabel info="A summary of everything you've configured. Once you click 'Go Live', your AI receptionist will start answering forwarded calls immediately. You can adjust any setting later from the dashboard.">
               Setup Summary
             </OnboardingLabel>
             {[
