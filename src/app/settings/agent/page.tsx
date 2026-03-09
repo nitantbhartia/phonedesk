@@ -203,7 +203,7 @@ export default function AgentSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold">AI Agent Settings</h1>
           <p className="text-muted-foreground">
-            Customize your AI's voice, personality, services, and booking behavior. Changes sync to your live agent automatically.
+            Customize your AI&apos;s voice, personality, services, and booking behavior. Changes sync to your live agent automatically.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -439,7 +439,7 @@ export default function AgentSettingsPage() {
         <CardHeader>
           <CardTitle>Services & Pricing</CardTitle>
           <CardDescription>
-            The AI shares these with callers when asked about services. Toggle "Add-on" to let the AI upsell that service to returning customers after confirming their primary booking.
+            The AI shares these with callers when asked about services. Toggle &ldquo;Add-on&rdquo; to let the AI upsell that service to returning customers after confirming their primary booking.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

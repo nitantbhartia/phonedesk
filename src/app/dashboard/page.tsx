@@ -131,6 +131,10 @@ export default function DashboardPage() {
   const [justSubscribed, setJustSubscribed] = useState(false);
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
   const [fetchError, setFetchError] = useState("");
+  const [usageMinutesUsed, setUsageMinutesUsed] = useState(0);
+  const [usageMinutesLimit, setUsageMinutesLimit] = useState(120);
+  const [usageOverage, setUsageOverage] = useState(0);
+  const [usagePlanName, setUsagePlanName] = useState("");
   const [tourOpen, setTourOpen] = useState(false);
 
   useEffect(() => {
@@ -149,9 +153,10 @@ export default function DashboardPage() {
 
   async function fetchDashboardData() {
     try {
-      const [statsRes, callsRes] = await Promise.all([
+      const [statsRes, callsRes, usageRes] = await Promise.all([
         fetch("/api/business/profile"),
         fetch("/api/calls?limit=10"),
+        fetch("/api/billing/usage"),
       ]);
 
       if (statsRes.ok) {
@@ -161,12 +166,20 @@ export default function DashboardPage() {
           setAgentLive(data.business.retellConfig.isActive ?? true);
         }
         const subStatus = data.business?.stripeSubscriptionStatus;
-        setSubscriptionActive(subStatus === "active");
+        setSubscriptionActive(["active", "trialing"].includes(subStatus ?? ""));
       }
 
       if (callsRes.ok) {
         const data = await callsRes.json();
         if (data.calls) setRecentCalls(data.calls);
+      }
+
+      if (usageRes.ok) {
+        const data = await usageRes.json();
+        setUsageMinutesUsed(data.minutesUsed ?? 0);
+        setUsageMinutesLimit(data.minutesLimit ?? 120);
+        setUsageOverage(data.overageMinutes ?? 0);
+        setUsagePlanName(data.planName ?? "");
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -576,6 +589,59 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Minutes Usage Widget */}
+      {subscriptionActive && usageMinutesLimit > 0 && (() => {
+        const pct = Math.min((usageMinutesUsed / usageMinutesLimit) * 100, 100);
+        const remaining = Math.max(0, usageMinutesLimit - usageMinutesUsed);
+        const isOver = usageOverage > 0;
+        const isNear = pct >= 80 && !isOver;
+        return (
+          <div className="bg-white rounded-[2.5rem] shadow-card border border-white/50 p-6 sm:p-8 mb-10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-1">
+                  {usagePlanName} Plan — Monthly Minutes
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-extrabold text-paw-brown">{usageMinutesUsed}</span>
+                  <span className="text-paw-brown/50 font-medium">/ {usageMinutesLimit} min used</span>
+                  {isOver && (
+                    <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                      +{usageOverage} min overage
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {isOver ? (
+                  <span className="text-sm font-bold text-red-600">
+                    ${(usageOverage * 0.4).toFixed(2)} overage charge
+                  </span>
+                ) : (
+                  <span className={`text-sm font-bold ${isNear ? "text-amber-600" : "text-paw-brown/50"}`}>
+                    {remaining} min remaining
+                  </span>
+                )}
+                {(isOver || isNear) && (
+                  <Link
+                    href="/settings/billing"
+                    className="px-4 py-2 bg-paw-amber text-paw-brown text-sm font-bold rounded-full hover:bg-paw-brown hover:text-white transition-colors"
+                  >
+                    Upgrade
+                  </Link>
+                )}
+              </div>
+            </div>
+            <div className="mt-4 w-full h-2 rounded-full bg-paw-brown/10 overflow-hidden">
+              <div
+                className={`h-full transition-all rounded-full ${isOver ? "bg-red-500" : isNear ? "bg-amber-400" : "bg-paw-amber"}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Recent Call Log */}
       <div data-tour="tour-calllog" className="bg-white rounded-[2.5rem] shadow-card border border-white/50 overflow-hidden">
