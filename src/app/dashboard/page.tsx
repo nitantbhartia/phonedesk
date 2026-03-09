@@ -515,12 +515,12 @@ export default function DashboardPage() {
         <div className="px-8 py-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-bold text-paw-brown">Recent Call Log</h2>
           <div className="flex gap-2">
-            <button className="px-4 py-2 rounded-full border border-gray-100 text-sm font-bold hover:bg-paw-sky transition-colors">
-              Filter
-            </button>
-            <button className="px-4 py-2 rounded-full bg-paw-brown text-white text-sm font-bold hover:opacity-90 transition-all shadow-sm">
-              Download All
-            </button>
+            <Link
+              href="/calls"
+              className="px-4 py-2 rounded-full border border-gray-100 text-sm font-bold hover:bg-paw-sky transition-colors"
+            >
+              View All & Filter
+            </Link>
           </div>
         </div>
 

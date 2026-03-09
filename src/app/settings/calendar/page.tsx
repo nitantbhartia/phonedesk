@@ -195,7 +195,7 @@ export default function CalendarSettingsPage() {
       setBookingLogicSaved(true);
       setTimeout(() => setBookingLogicSaved(false), 3000);
     } catch (error) {
-      console.error("Error saving booking logic:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to save settings. Please try again.");
     } finally {
       setBookingLogicSaving(false);
     }
