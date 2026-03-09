@@ -127,6 +127,7 @@ export default function DashboardPage() {
   const [agentToggling, setAgentToggling] = useState(false);
   const [confirmOff, setConfirmOff] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const [justSubscribed, setJustSubscribed] = useState(false);
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
   const [fetchError, setFetchError] = useState("");
 
@@ -137,6 +138,8 @@ export default function DashboardPage() {
     }
     if (status === "authenticated") {
       fetchDashboardData();
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("subscribed") === "true") setJustSubscribed(true);
     }
   }, [status, router]);
 
@@ -298,6 +301,22 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
+
+      {/* Just subscribed — welcome banner */}
+      {justSubscribed && subscriptionActive && (
+        <div className="mb-6 flex items-center gap-4 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
+          <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-green-800 text-sm">You&apos;re live! 🎉</p>
+            <p className="text-green-700/70 text-sm">Your AI receptionist is now active and ready to answer calls.</p>
+          </div>
+          <button onClick={() => setJustSubscribed(false)} className="text-green-600 hover:text-green-800 text-lg font-bold">×</button>
+        </div>
+      )}
 
       {/* Agent-off banner */}
       {!subscriptionActive && (
