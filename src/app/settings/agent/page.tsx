@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { InfoIcon } from "@/components/ui/info-icon";
+import { toast } from "@/components/ui/toast";
 import {
   Bot,
   Volume2,
@@ -94,7 +95,7 @@ export default function AgentSettingsPage() {
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<{ ok: boolean; message: string } | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Form state
   const [greeting, setGreeting] = useState("");
@@ -156,9 +157,7 @@ export default function AgentSettingsPage() {
 
   async function saveSettings() {
     setSaving(true);
-    setSaveStatus(null);
     try {
-      // Single API call to save everything and sync to Retell
       const res = await fetch("/api/business/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,7 +166,6 @@ export default function AgentSettingsPage() {
           ownerName: business?.ownerName,
           bookingMode,
           services: services.filter((s) => s.name.trim()),
-          // Agent config fields — handled in the same request
           agentActive: isActive,
           voiceId,
           personality: { tone, style, language, customInstructions },
@@ -176,18 +174,26 @@ export default function AgentSettingsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setSaveStatus({ ok: false, message: data.error || "Failed to save settings" });
-      } else if (data.synced) {
-        setSaveStatus({ ok: true, message: "Settings saved and synced to voice agent" });
+        toast.error(data.error || "Failed to save settings");
       } else {
-        setSaveStatus({ ok: true, message: "Settings saved" });
+        toast.success(data.synced ? "Saved and synced to voice agent" : "Settings saved");
+        setLastSaved(new Date());
       }
-    } catch (error) {
-      console.error("Error saving:", error);
-      setSaveStatus({ ok: false, message: "Network error — check your connection" });
+    } catch {
+      toast.error("Network error — check your connection");
     } finally {
       setSaving(false);
     }
+  }
+
+  function previewVoice(label: string) {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(
+      `Hi there! I'm ${label}, your AI receptionist for Happy Paws Grooming. How can I help you today?`
+    );
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
   }
 
   if (loading) {
@@ -208,21 +214,18 @@ export default function AgentSettingsPage() {
             Configure how your AI receptionist handles calls.
           </p>
         </div>
-        <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? "Saving..." : "Save Changes"}
-        </Button>
-      </div>
-
-      {saveStatus && (
-        <div className={`p-3 rounded-lg text-sm ${
-          saveStatus.ok
-            ? "bg-green-50 text-green-800 border border-green-200"
-            : "bg-red-50 text-red-800 border border-red-200"
-        }`}>
-          {saveStatus.message}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          {lastSaved && (
+            <span className="text-xs text-muted-foreground">
+              Saved {lastSaved.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+            </span>
+          )}
+          <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
-      )}
+      </div>
 
       {/* Agent Status */}
       <Card>
@@ -261,10 +264,10 @@ export default function AgentSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {VOICE_OPTIONS.map((voice) => (
-              <button
+              <div
                 key={voice.id}
                 onClick={() => setVoiceId(voice.id)}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
                   voiceId === voice.id
                     ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                     : "border-border hover:border-primary/30"
@@ -278,7 +281,15 @@ export default function AgentSettingsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">{voice.desc}</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">{voice.accent}</p>
-              </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); previewVoice(voice.label); }}
+                  className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary/70 hover:text-primary transition-colors"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                  Preview
+                </button>
+              </div>
             ))}
           </div>
         </CardContent>
@@ -394,12 +405,18 @@ export default function AgentSettingsPage() {
           <textarea
             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={greeting}
-            onChange={(e) => setGreeting(e.target.value)}
+            onChange={(e) => setGreeting(e.target.value.slice(0, 300))}
             placeholder="Hi! You've reached [Business Name]..."
+            maxLength={300}
           />
-          <p className="text-xs text-muted-foreground">
-            Leave blank to use the auto-generated greeting based on your business name.
-          </p>
+          <div className="flex justify-between items-center">
+            <p className="text-xs text-muted-foreground">
+              Leave blank to use the auto-generated greeting based on your business name.
+            </p>
+            <p className={`text-xs font-medium tabular-nums ${greeting.length > 260 ? "text-orange-500" : "text-muted-foreground/50"}`}>
+              {greeting.length}/300
+            </p>
+          </div>
         </CardContent>
       </Card>
 

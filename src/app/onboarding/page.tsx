@@ -788,36 +788,44 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          {/* Booking Mode */}
-          <div className="space-y-4">
-            <OnboardingLabel info="Soft booking holds the slot for 2 hours and sends the customer a confirmation link — you stay in control. Hard booking confirms immediately on your calendar. Most groomers start with Soft Book.">
-              Default Booking Mode
-            </OnboardingLabel>
-            <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-paw-brown">
-                    {bookingMode === "SOFT" ? "Soft Booking" : "Hard Booking"}
-                  </p>
-                  <p className="text-sm text-paw-brown/50 mt-1">
-                    {bookingMode === "SOFT"
-                      ? "Holds slot for 2 hours, sends confirmation link"
-                      : "Confirms immediately on calendar"}
-                  </p>
+          {/* Optional settings — collapsed by default */}
+          <details className="group">
+            <summary className="list-none flex items-center gap-2 cursor-pointer text-sm font-bold text-paw-brown/50 hover:text-paw-brown/80 transition-colors select-none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-open:rotate-90 transition-transform">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+              Optional settings
+            </summary>
+            <div className="mt-4 space-y-4">
+              <OnboardingLabel info="Soft booking holds the slot for 2 hours and sends the customer a confirmation link — you stay in control. Hard booking confirms immediately on your calendar. Most groomers start with Soft Book.">
+                Default Booking Mode
+              </OnboardingLabel>
+              <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-paw-brown">
+                      {bookingMode === "SOFT" ? "Soft Booking" : "Hard Booking"}
+                    </p>
+                    <p className="text-sm text-paw-brown/50 mt-1">
+                      {bookingMode === "SOFT"
+                        ? "Holds slot for 2 hours, sends confirmation link"
+                        : "Confirms immediately on calendar"}
+                    </p>
+                  </div>
+                  <OnboardingSelect
+                    value={bookingMode}
+                    onChange={(e) =>
+                      setBookingMode(e.target.value as "SOFT" | "HARD")
+                    }
+                    className="px-4 py-3 rounded-2xl"
+                  >
+                    <option value="SOFT">Soft Book</option>
+                    <option value="HARD">Hard Book</option>
+                  </OnboardingSelect>
                 </div>
-                <OnboardingSelect
-                  value={bookingMode}
-                  onChange={(e) =>
-                    setBookingMode(e.target.value as "SOFT" | "HARD")
-                  }
-                  className="px-4 py-3 rounded-2xl"
-                >
-                  <option value="SOFT">Soft Book</option>
-                  <option value="HARD">Hard Book</option>
-                </OnboardingSelect>
               </div>
             </div>
-          </div>
+          </details>
 
           {/* Groomers (optional) */}
           <div className="space-y-4">
@@ -1241,7 +1249,7 @@ export default function OnboardingPage() {
           <OnboardingFooter
             onBack={() => setStep(4)}
             onNext={() => setStep(6)}
-            nextDisabled={!testCallDone}
+            nextLabel={testCallDone ? "Continue Setup" : "Skip for Now"}
           />
         </div>
       )}

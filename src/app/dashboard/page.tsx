@@ -125,6 +125,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [agentLive, setAgentLive] = useState(true);
   const [agentToggling, setAgentToggling] = useState(false);
+  const [confirmOff, setConfirmOff] = useState(false);
+  const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -228,7 +230,13 @@ export default function DashboardPage() {
                   className="sr-only"
                   checked={agentLive}
                   disabled={agentToggling}
-                  onChange={(e) => toggleAgent(e.target.checked)}
+                  onChange={(e) => {
+                    if (!e.target.checked) {
+                      setConfirmOff(true);
+                    } else {
+                      void toggleAgent(true);
+                    }
+                  }}
                 />
                 <div
                   className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
@@ -263,6 +271,95 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
+
+      {/* Agent-off banner */}
+      {!agentLive && (
+        <div className="mb-6 flex items-center gap-4 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+          <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-red-700 text-sm">Your AI receptionist is off</p>
+            <p className="text-red-600/70 text-sm">Calls are going to voicemail. Toggle the agent back on to resume.</p>
+          </div>
+          <button
+            onClick={() => void toggleAgent(true)}
+            className="shrink-0 px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors"
+          >
+            Turn back on
+          </button>
+        </div>
+      )}
+
+      {/* Confirmation dialog — turning agent off */}
+      {confirmOff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-paw-brown mb-2">Turn off RingPaw?</h3>
+            <p className="text-paw-brown/60 text-sm mb-6">
+              Calls will go to voicemail until you turn it back on. You might miss bookings while it&apos;s off.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmOff(false)}
+                className="flex-1 py-3 rounded-2xl border-2 border-paw-brown/10 font-bold text-paw-brown hover:bg-paw-sky transition-colors"
+              >
+                Keep it on
+              </button>
+              <button
+                onClick={() => { setConfirmOff(false); void toggleAgent(false); }}
+                className="flex-1 py-3 rounded-2xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
+              >
+                Turn off
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transcript modal */}
+      {transcriptCall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setTranscriptCall(null)}>
+          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-paw-brown">{transcriptCall.callerName || "Unknown Caller"}</h3>
+                <p className="text-sm text-paw-brown/50">{new Date(transcriptCall.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p>
+              </div>
+              <button onClick={() => setTranscriptCall(null)} className="text-paw-brown/40 hover:text-paw-brown transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="space-y-4">
+              {getStatusBadge(transcriptCall)}
+              {transcriptCall.appointment && (
+                <div className="bg-green-50 rounded-2xl p-4 border border-green-100">
+                  <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">Booking Confirmed</p>
+                  <p className="font-bold text-green-900">{transcriptCall.appointment.petName} — {transcriptCall.appointment.serviceName}</p>
+                  <p className="text-sm text-green-700">
+                    {new Date(transcriptCall.appointment.startTime).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </p>
+                </div>
+              )}
+              <div className="bg-paw-sky/30 rounded-2xl p-4">
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Call Summary</p>
+                <p className="text-sm text-paw-brown leading-relaxed">{transcriptCall.summary || "No summary available for this call."}</p>
+              </div>
+              {transcriptCall.duration && (
+                <p className="text-xs text-paw-brown/40 text-right">Duration: {formatDuration(transcriptCall.duration)}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
@@ -496,24 +593,16 @@ export default function DashboardPage() {
                           : "--"}
                       </td>
                       <td className="px-4 sm:px-8 py-4 sm:py-5 text-right">
-                        <Link
-                          href={`/calls?id=${call.id}`}
+                        <button
+                          onClick={() => setTranscriptCall(call)}
                           className="inline-flex items-center gap-2 text-paw-brown font-bold text-sm hover:text-paw-orange transition-colors"
                         >
-                          View Transcript
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                            <polyline points="15 3 21 3 21 9" />
-                            <line x1="10" y1="14" x2="21" y2="3" />
+                          View Summary
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                            <circle cx="12" cy="12" r="3" />
                           </svg>
-                        </Link>
+                        </button>
                       </td>
                     </tr>
                   );
