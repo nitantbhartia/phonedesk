@@ -360,26 +360,50 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 
 // --- Phone Number Provisioning ---
 
+const FALLBACK_AREA_CODES = [415, 212, 312, 512, 720, 206, 404, 617, 213, 303];
+
 export async function provisionRetellPhoneNumber(options: {
   agentId: string;
   areaCode?: number;
   nickname?: string;
   smsWebhookUrl?: string;
 }): Promise<{ phone_number: string }> {
-  const body: Record<string, unknown> = {
-    area_code: options.areaCode || 415,
-    inbound_agent_id: options.agentId,
-    nickname: options.nickname || "RingPaw Line",
+  const smsWebhook = options.smsWebhookUrl;
+
+  const tryProvision = async (areaCode: number) => {
+    const body: Record<string, unknown> = {
+      area_code: areaCode,
+      inbound_agent_id: options.agentId,
+      nickname: options.nickname || "RingPaw Line",
+    };
+    if (smsWebhook) body.inbound_sms_webhook_url = smsWebhook;
+    return retellFetch("/create-phone-number", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   };
 
-  if (options.smsWebhookUrl) {
-    body.inbound_sms_webhook_url = options.smsWebhookUrl;
+  // Try the requested area code first, then fall back to alternatives
+  const areaCodesToTry = [
+    options.areaCode ?? FALLBACK_AREA_CODES[0],
+    ...FALLBACK_AREA_CODES.filter((c) => c !== options.areaCode),
+  ];
+
+  let lastError: Error | null = null;
+  for (const areaCode of areaCodesToTry) {
+    try {
+      return await tryProvision(areaCode);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("No phone numbers of this area code")) {
+        lastError = err instanceof Error ? err : new Error(msg);
+        continue; // try next area code
+      }
+      throw err; // unrelated error, bubble up
+    }
   }
 
-  return retellFetch("/create-phone-number", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  throw lastError ?? new Error("No phone numbers available for any area code");
 }
 
 export async function deleteRetellPhoneNumber(

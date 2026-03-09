@@ -322,10 +322,10 @@ export default function CallLogPage() {
                           </p>
                           <p className="text-sm text-paw-brown/50 truncate">
                             {call.appointment?.petName
-                              ? `${call.appointment.petName}`
+                              ? `${call.appointment.petName} · ${call.callerPhone ? formatPhoneNumber(call.callerPhone) : "No number"}`
                               : call.callerPhone
                                 ? formatPhoneNumber(call.callerPhone)
-                                : "No details"}
+                                : "No number"}
                           </p>
                         </div>
                       </div>
