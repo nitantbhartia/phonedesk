@@ -22,7 +22,7 @@ export function BrandLogo({
         src="/ringpaw-logo.png"
         alt="RingPaw AI"
         width={desktopWidth}
-        height={Math.round((desktopWidth * 527) / 1998)}
+        height={Math.round((desktopWidth * 527) / 2303)}
         priority={priority}
         className="h-auto w-auto max-w-full object-contain"
         sizes={`(max-width: 640px) ${mobileWidth}px, ${desktopWidth}px`}
