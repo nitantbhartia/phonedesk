@@ -138,13 +138,13 @@ export default function BillingPage() {
     }
   }
 
-  const activePlan = PLANS.find((p) => p.id === currentPlan) || PLANS[0];
-  const minuteLimit = activePlan.minutes;
+  const activePlan = subscriptionActive ? (PLANS.find((p) => p.id === currentPlan) || PLANS[0]) : null;
+  const minuteLimit = activePlan?.minutes ?? 0;
   const usagePercent =
     minuteLimit > 0 ? Math.min((minutesUsed / minuteLimit) * 100, 100) : 0;
   const isAtLimit = usagePercent >= 100;
   const isNearLimit = usagePercent >= 80;
-  const nextPlan = PLANS[PLANS.findIndex((p) => p.id === currentPlan) + 1];
+  const nextPlan = activePlan ? PLANS[PLANS.findIndex((p) => p.id === currentPlan) + 1] : null;
 
   if (loading) {
     return (
@@ -165,62 +165,81 @@ export default function BillingPage() {
 
       {/* Current Plan Usage */}
       <section className="bg-white rounded-3xl shadow-card border border-white p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-paw-brown">Current Plan: {activePlan.name}</h2>
-            <p className="text-paw-brown/60 font-medium mt-1">${activePlan.price}/month</p>
-          </div>
-          <span
-            className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold ${
-              isAtLimit
-                ? "bg-red-100 text-red-700"
-                : isNearLimit
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-green-100 text-green-700"
-            }`}
-          >
-            {Math.round(minutesUsed)} / {minuteLimit} min
-          </span>
-        </div>
-        <div className="mt-6 space-y-2">
-          <div className="flex justify-between text-sm font-medium text-paw-brown/70">
-            <span>Monthly minutes used</span>
-            <span>{Math.round(usagePercent)}%</span>
-          </div>
-          <div className="w-full h-2 rounded-full bg-paw-brown/10 overflow-hidden">
-            <div
-              className={`h-full transition-all ${
-                isAtLimit ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-paw-amber"
-              }`}
-              style={{ width: `${usagePercent}%` }}
-            />
-          </div>
-          {isAtLimit && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mt-3">
-              <p className="text-sm font-medium text-red-800">
-                You&apos;ve used all your minutes for this month.
-              </p>
-              <p className="text-sm text-red-700 mt-1">
-                New calls will go to voicemail until your plan resets.
-                {nextPlan && (
-                  <> Upgrade to <strong>{nextPlan.name}</strong> for {nextPlan.minutes} min/month.</>
-                )}
-              </p>
+        {subscriptionActive && activePlan ? (
+          <>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-paw-brown">Current Plan: {activePlan.name}</h2>
+                <p className="text-paw-brown/60 font-medium mt-1">${activePlan.price}/month</p>
+              </div>
+              <span
+                className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold ${
+                  isAtLimit
+                    ? "bg-red-100 text-red-700"
+                    : isNearLimit
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-green-100 text-green-700"
+                }`}
+              >
+                {Math.round(minutesUsed)} / {minuteLimit} min
+              </span>
             </div>
-          )}
-          {isNearLimit && !isAtLimit && nextPlan && (
-            <p className="text-sm text-amber-700 mt-2">
-              Running low on minutes. Upgrade to {nextPlan.name} for {nextPlan.minutes} min/month.
-            </p>
-          )}
-        </div>
+            <div className="mt-6 space-y-2">
+              <div className="flex justify-between text-sm font-medium text-paw-brown/70">
+                <span>Monthly minutes used</span>
+                <span>{Math.round(usagePercent)}%</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-paw-brown/10 overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    isAtLimit ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-paw-amber"
+                  }`}
+                  style={{ width: `${usagePercent}%` }}
+                />
+              </div>
+              {isAtLimit && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mt-3">
+                  <p className="text-sm font-medium text-red-800">
+                    You&apos;ve used all your minutes for this month.
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">
+                    New calls will go to voicemail until your plan resets.
+                    {nextPlan && (
+                      <> Upgrade to <strong>{nextPlan.name}</strong> for {nextPlan.minutes} min/month.</>
+                    )}
+                  </p>
+                </div>
+              )}
+              {isNearLimit && !isAtLimit && nextPlan && (
+                <p className="text-sm text-amber-700 mt-2">
+                  Running low on minutes. Upgrade to {nextPlan.name} for {nextPlan.minutes} min/month.
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-paw-brown">No active plan</h2>
+              <p className="text-paw-brown/60 font-medium mt-1">Choose a plan below to activate your AI receptionist.</p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Plan Comparison */}
       <section className="grid md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
-          const isCurrent = plan.id === currentPlan;
-          const isUpgrade = PLANS.indexOf(plan) > PLANS.findIndex((p) => p.id === currentPlan);
+          const isCurrent = subscriptionActive && plan.id === currentPlan;
+          const isUpgrade = subscriptionActive
+            ? PLANS.indexOf(plan) > PLANS.findIndex((p) => p.id === currentPlan)
+            : false;
           return (
             <article
               key={plan.id}
@@ -283,7 +302,13 @@ export default function BillingPage() {
                   onClick={() => void startCheckout(plan.id)}
                   disabled={processingPlan !== null}
                 >
-                  {processingPlan === plan.id ? "Redirecting..." : isUpgrade ? "Upgrade" : "Downgrade"}
+                  {processingPlan === plan.id
+                    ? "Redirecting..."
+                    : !subscriptionActive
+                      ? "Subscribe"
+                      : isUpgrade
+                        ? "Upgrade"
+                        : "Downgrade"}
                 </button>
               )}
             </article>
