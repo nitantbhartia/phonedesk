@@ -68,10 +68,49 @@ export function isRetellWebhookValid(
     }
   }
 
-  // Fallback: RETELL_WEBHOOK_SECRET compared against the signature header
-  // (covers setups where a separate signing secret is configured)
+  // Try HMAC verification using webhookSecret as the signing key.
+  // Retell's dashboard lets you configure a separate webhook secret distinct
+  // from the API key — if set, Retell signs with THAT secret.
   if (webhookSecret && signature) {
-    if (timingSafeCompare(webhookSecret, signature)) return true;
+    // 4. SDK verify with webhookSecret as key
+    try {
+      if (Retell.verify(body, webhookSecret, signature)) return true;
+    } catch {
+      // fall through
+    }
+
+    // 5. Manual compound verify with webhookSecret + 15-min window
+    try {
+      const match = /^v=(\d+),d=(.+)$/.exec(signature);
+      if (match) {
+        const poststamp = Number(match[1]);
+        const postDigest = match[2]!;
+        if (Math.abs(Date.now() - poststamp) <= 15 * 60 * 1000) {
+          const computed = createHmac("sha256", webhookSecret)
+            .update(body + poststamp)
+            .digest("hex");
+          const a = Buffer.from(computed);
+          const b = Buffer.from(postDigest);
+          if (a.length === b.length && timingSafeEqual(a, b)) return true;
+        }
+      }
+    } catch {
+      // fall through
+    }
+
+    // 6. Plain HMAC of body with webhookSecret (older signing format)
+    try {
+      const hexSig = createHmac("sha256", webhookSecret).update(body).digest("hex");
+      const b64Sig = createHmac("sha256", webhookSecret).update(body).digest("base64");
+      if (
+        timingSafeCompare(hexSig, signature) ||
+        timingSafeCompare(b64Sig, signature)
+      ) {
+        return true;
+      }
+    } catch {
+      // fall through
+    }
   }
 
   // No keys configured at all — passthrough in dev
@@ -88,10 +127,25 @@ export function isRetellWebhookValid(
   // Diagnostic logging — redacted but enough to debug mismatches
   const sigPrefix = signature.slice(0, 20);
   const isCompound = /^v=\d+,d=/.test(signature);
-  const tsMatch = /^v=(\d+),d=/.exec(signature);
+  const tsMatch = /^v=(\d+),d=(.{0,8})/.exec(signature);
   const tsAge = tsMatch
     ? Math.round((Date.now() - Number(tsMatch[1])) / 1000) + "s ago"
     : "n/a";
+  // Show what HMAC we computed so mismatches are obvious in logs
+  let apiKeyHmacPrefix = "n/a";
+  let secretHmacPrefix = "n/a";
+  if (tsMatch && apiKey) {
+    try {
+      const poststamp = Number(tsMatch[1]);
+      apiKeyHmacPrefix = createHmac("sha256", apiKey).update(body + poststamp).digest("hex").slice(0, 8);
+    } catch { /**/ }
+  }
+  if (tsMatch && webhookSecret) {
+    try {
+      const poststamp = Number(tsMatch[1]);
+      secretHmacPrefix = createHmac("sha256", webhookSecret).update(body + poststamp).digest("hex").slice(0, 8);
+    } catch { /**/ }
+  }
   console.error(
     "[retell-auth] Verification failed.",
     "apiKey set:", !!apiKey,
@@ -102,6 +156,10 @@ export function isRetellWebhookValid(
     "isCompound:", isCompound,
     "tsAge:", tsAge,
     "webhookSecret set:", !!webhookSecret,
+    "webhookSecretLen:", webhookSecret?.length,
+    "computedApiKeyHmac:", apiKeyHmacPrefix,
+    "computedSecretHmac:", secretHmacPrefix,
+    "expectedDigestPrefix:", tsMatch?.[2] ?? "n/a",
   );
   return false;
 }
