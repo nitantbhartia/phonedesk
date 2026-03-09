@@ -241,13 +241,8 @@ export default function OnboardingPage() {
         typeof window === "undefined"
           ? new URLSearchParams()
           : new URLSearchParams(window.location.search);
-      const requestedStep = Number(params.get("step") || "1");
-      const normalizedStep =
-        Number.isFinite(requestedStep) && requestedStep >= 1
-          ? Math.min(requestedStep, STEP_CONFIG.length)
-          : 1;
+      const requestedStep = Number(params.get("step") || "0");
       const subscribedParam = params.get("subscribed") === "true";
-      // Always skip the welcome screen when resuming mid-onboarding
 
       try {
         const response = await fetch("/api/business/profile");
@@ -292,11 +287,19 @@ export default function OnboardingPage() {
           setCalendarConnected(hasCalendarConnection);
           setProvisionedNumber(business?.phoneNumber?.number || "");
           setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
+
+          // If resuming mid-onboarding (step param set, or profile already has data),
+          // skip the welcome screen and go directly to the requested/first step.
+          const hasExistingProfile = Boolean(business?.name);
+          const normalizedStep =
+            requestedStep >= 1
+              ? Math.min(requestedStep, STEP_CONFIG.length)
+              : hasExistingProfile ? 1 : 0;
           setStep(normalizedStep);
         }
       } catch {
         if (!cancelled) {
-          setStep(normalizedStep);
+          setStep(requestedStep >= 1 ? requestedStep : 0);
         }
       }
     };
