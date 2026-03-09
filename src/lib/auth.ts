@@ -1,6 +1,8 @@
 import { type NextAuthOptions, type CookieOption } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
+import { verifyPassword } from "./password";
 
 const authSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
 const isSecure =
@@ -50,25 +52,63 @@ async function ensureAppUser(params: {
   return dbUser.id;
 }
 
+function normalizeEmail(email?: string | null): string | null {
+  const normalized = email?.trim().toLowerCase();
+  return normalized || null;
+}
+
 export const authOptions: NextAuthOptions = {
   // No adapter — the PrismaAdapter crashes during the OAuth callback with
   // Prisma v6, producing error=Callback. We persist user/account data manually
   // in the jwt callback instead, with proper error handling.
   secret: authSecret,
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-      authorization: {
-        params: {
-          scope:
-            "openid email profile",
-          access_type: "offline",
-          prompt: "consent",
-        },
+    CredentialsProvider({
+      name: "Email and Password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = normalizeEmail(credentials?.email);
+        const password = credentials?.password;
+
+        if (!email || !password) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        };
       },
     }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+            authorization: {
+              params: {
+                scope: "openid email profile",
+                access_type: "offline",
+                prompt: "consent",
+              },
+            },
+          }),
+        ]
+      : []),
   ],
   session: {
     strategy: "jwt",
@@ -86,41 +126,43 @@ export const authOptions: NextAuthOptions = {
       if (account && user) {
         try {
           const dbUserId = await ensureAppUser({
-            email: user.email,
+            email: normalizeEmail(user.email),
             name: user.name,
             image: user.image,
           });
           token.id = dbUserId ?? user.id;
 
           // Persist OAuth tokens so calendar APIs can use them later
-          await prisma.account.upsert({
-            where: {
-              provider_providerAccountId: {
+          if (account.provider !== "credentials") {
+            await prisma.account.upsert({
+              where: {
+                provider_providerAccountId: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                },
+              },
+              create: {
+                userId: token.id as string,
+                type: account.type,
                 provider: account.provider,
                 providerAccountId: account.providerAccountId,
+                access_token: account.access_token as string | undefined,
+                refresh_token: account.refresh_token as string | undefined,
+                expires_at: account.expires_at as number | undefined,
+                token_type: account.token_type as string | undefined,
+                scope: account.scope as string | undefined,
+                id_token: account.id_token as string | undefined,
               },
-            },
-            create: {
-              userId: token.id as string,
-              type: account.type,
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-              access_token: account.access_token as string | undefined,
-              refresh_token: account.refresh_token as string | undefined,
-              expires_at: account.expires_at as number | undefined,
-              token_type: account.token_type as string | undefined,
-              scope: account.scope as string | undefined,
-              id_token: account.id_token as string | undefined,
-            },
-            update: {
-              access_token: account.access_token as string | undefined,
-              refresh_token: account.refresh_token as string | undefined,
-              expires_at: account.expires_at as number | undefined,
-              token_type: account.token_type as string | undefined,
-              scope: account.scope as string | undefined,
-              id_token: account.id_token as string | undefined,
-            },
-          });
+              update: {
+                access_token: account.access_token as string | undefined,
+                refresh_token: account.refresh_token as string | undefined,
+                expires_at: account.expires_at as number | undefined,
+                token_type: account.token_type as string | undefined,
+                scope: account.scope as string | undefined,
+                id_token: account.id_token as string | undefined,
+              },
+            });
+          }
         } catch (e) {
           console.error("[auth] Failed to persist user/account:", e);
           // Fall back to Google sub so the session still works
@@ -137,7 +179,7 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUserId = await ensureAppUser({
             id: token.id as string | undefined,
-            email: session.user.email,
+            email: normalizeEmail(session.user.email),
             name: session.user.name,
             image: session.user.image,
           });
@@ -165,6 +207,6 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/",
+    signIn: "/auth",
   },
 };
