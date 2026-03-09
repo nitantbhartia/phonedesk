@@ -163,13 +163,6 @@ function LandingPageContent() {
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
               </button>
-              <a
-                href="#demo"
-                className="px-8 py-4 bg-paw-cream text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-white transition-all shadow-sm flex items-center justify-center gap-2"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-paw-orange"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                Hear a Real Call
-              </a>
             </div>
 
             {authError ? (
@@ -527,7 +520,7 @@ function LandingPageContent() {
                 <span className="text-4xl font-extrabold">$49</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Solo groomer? This covers everything you need. Answers calls, books appointments, texts confirmations.</p>
+              <p className="text-sm text-gray-500 mb-8 h-10">Perfect for solo groomers. Everything you need to stop missing calls and start filling your calendar.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -542,13 +535,26 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  1 Calendar Connection
+                  AI Call Answering & Booking
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  SMS Notifications
+                  Calendar Integration
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  SMS Confirmations & Reminders
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Repeat Customer Recognition
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Review Request Automation
                 </li>
               </ul>
+              <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
 
             {/* Growth */}
@@ -559,7 +565,7 @@ function LandingPageContent() {
                 <span className="text-5xl font-extrabold text-white">$149</span>
                 <span className="text-white/50">/mo</span>
               </div>
-              <p className="text-sm text-white/70 mb-8 h-10">For shops that can&apos;t afford to miss a single call. Full SMS control, custom voice, and analytics to track recovered revenue.</p>
+              <p className="text-sm text-white/70 mb-8 h-10">For shops that can&apos;t afford to miss a single call. More minutes and call analytics to track every recovered booking.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -574,17 +580,30 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Full SMS Control
+                  AI Call Answering & Booking
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Custom Voice & Personality
+                  Calendar Integration
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Call Analytics
+                  SMS Confirmations & Reminders
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Repeat Customer Recognition
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Review Request Automation
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Call Analytics Dashboard
                 </li>
               </ul>
+              <a href="#features" className="mt-6 text-xs font-semibold text-paw-amber hover:underline block text-center">See all features →</a>
             </div>
 
             {/* Pro */}
@@ -594,7 +613,7 @@ function LandingPageContent() {
                 <span className="text-4xl font-extrabold">$299</span>
                 <span className="text-gray-500">/mo</span>
               </div>
-              <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. Priority support and everything in Growth, scaled up.</p>
+              <p className="text-sm text-gray-500 mb-8 h-10">Multiple groomers, multiple locations. Dedicated priority support and everything scaled up.</p>
               <button
                 onClick={() => void handleStartTrial()}
                 disabled={isSigningIn}
@@ -609,55 +628,36 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Priority Support
+                  AI Call Answering & Booking
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Multiple Locations
+                  Calendar Integration
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  SMS Confirmations & Reminders
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Repeat Customer Recognition
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Review Request Automation
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Call Analytics Dashboard
+                </li>
+                <li className="flex gap-3">
+                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  Priority Support
                 </li>
               </ul>
+              <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-paw-brown mb-12 text-center">What Groomers Are Saying</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-paw-cream p-8 rounded-[2rem] shadow-sm">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#F5C163" stroke="#F5C163" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                ))}
-              </div>
-              <p className="text-paw-brown/80 italic text-lg leading-relaxed mb-6">&quot;I used to lose 4&ndash;5 bookings a week just from calls I couldn&apos;t answer. RingPaw got me 9 new appointments in the first week. It paid for three months upfront.&quot;</p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-paw-brown/10 rounded-full flex items-center justify-center text-paw-brown font-bold text-lg">?</div>
-                <div>
-                  <p className="font-bold text-paw-brown">[Your beta client&apos;s name]</p>
-                  <p className="text-xs font-bold text-paw-orange uppercase">[Salon name], [City]</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-paw-cream p-8 rounded-[2rem] shadow-sm">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#F5C163" stroke="#F5C163" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                ))}
-              </div>
-              <p className="text-paw-brown/80 italic text-lg leading-relaxed mb-6">&quot;Setup took me less than 10 minutes. I forwarded my calls, tested it once, and it just worked. My clients can&apos;t tell it&apos;s not me answering.&quot;</p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-paw-brown/10 rounded-full flex items-center justify-center text-paw-brown font-bold text-lg">?</div>
-                <div>
-                  <p className="font-bold text-paw-brown">[Second beta client]</p>
-                  <p className="text-xs font-bold text-paw-orange uppercase">[Salon name], [City]</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <p className="text-center text-sm text-paw-brown/40 mt-6 font-medium">These are placeholder quotes. Replace with real beta client testimonials as soon as you have them.</p>
         </div>
       </section>
 
@@ -667,12 +667,12 @@ function LandingPageContent() {
         <div className="space-y-4">
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
-              Does it sound like a robot?
+              What does it actually sound like?
               <span className="group-open:rotate-180 transition-transform">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">No. RingPaw uses a natural, conversational voice trained specifically for phone calls. Most callers don&apos;t realize they&apos;re not talking to a person &mdash; and that&apos;s exactly the point.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">RingPaw uses a warm, conversational voice built for phone calls. It speaks naturally, asks the right follow-up questions, and handles the flow of a real booking conversation &mdash; not a scripted menu. You can hear it for yourself using the demo player above.</p>
           </details>
           <details className="bg-white rounded-3xl p-6 shadow-sm group cursor-pointer">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -728,52 +728,6 @@ function LandingPageContent() {
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">No contracts, no setup fees. Cancel anytime. Most groomers stay because it pays for itself within the first week.</p>
           </details>
-        </div>
-      </section>
-
-      {/* Hear It For Yourself */}
-      <section id="demo" className="py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="bg-paw-sky rounded-[2.5rem] p-10 sm:p-14 relative overflow-hidden">
-            <div className="absolute -right-16 -bottom-16 w-48 h-48 bg-paw-amber/20 rounded-full blur-3xl" />
-            <div className="relative z-10">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-soft">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3E2919" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                </svg>
-              </div>
-              <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Hear It For Yourself</h2>
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-paw-brown leading-tight mb-4">
-                Call our demo line right now
-              </h3>
-              <p className="text-paw-brown/70 text-lg mb-8 max-w-md mx-auto">
-                Hear exactly what your customers will hear. Try booking an appointment, asking about pricing, or just say hi.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a
-                  href="tel:+1XXXXXXXXXX"
-                  className="px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center gap-3"
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                  Call Demo Line
-                </a>
-                <a
-                  href="#listen"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById("demo-player")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="px-8 py-4 bg-white text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-paw-cream transition-all flex items-center gap-2"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-paw-orange"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                  Play 60-Second Demo
-                </a>
-              </div>
-              <p className="text-xs text-paw-brown/40 mt-6 font-medium">Point a spare Twilio number at your Retell agent to make this live.</p>
-            </div>
-          </div>
         </div>
       </section>
 
