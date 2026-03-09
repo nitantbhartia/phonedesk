@@ -28,14 +28,11 @@ export function InfoIcon({
       const rect = ref.current.getBoundingClientRect();
       const tooltipWidth = 256; // w-64
       const margin = 12;
-      // Center on the icon but clamp so it never overflows the viewport
-      let left = rect.left + rect.width / 2 + window.scrollX;
-      left = Math.max(tooltipWidth / 2 + margin + window.scrollX, left);
-      left = Math.min(
-        window.innerWidth - tooltipWidth / 2 - margin + window.scrollX,
-        left
-      );
-      setPos({ top: rect.top + window.scrollY, left });
+      // fixed positioning is viewport-relative — do NOT add scroll offsets
+      let left = rect.left + rect.width / 2;
+      left = Math.max(tooltipWidth / 2 + margin, left);
+      left = Math.min(window.innerWidth - tooltipWidth / 2 - margin, left);
+      setPos({ top: rect.top, left });
     }
 
     updatePos();
