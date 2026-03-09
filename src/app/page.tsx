@@ -134,7 +134,7 @@ function LandingPageContent() {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-paw-surface rounded-full shadow-sm text-sm font-semibold text-paw-brown border border-white/50">
               <span className="w-2 h-2 rounded-full bg-paw-orange animate-pulse" />
-              Now booking 24/7 automatically
+              Phones answered. Bookings filled.
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">

@@ -133,7 +133,7 @@ const STEP_CONFIG = [
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [provisionError, setProvisionError] = useState("");
 
@@ -192,6 +192,7 @@ export default function OnboardingPage() {
         Number.isFinite(requestedStep) && requestedStep >= 1
           ? Math.min(requestedStep, STEP_CONFIG.length)
           : 1;
+      // Always skip the welcome screen when resuming mid-onboarding
 
       try {
         const response = await fetch("/api/business/profile");
@@ -401,6 +402,77 @@ export default function OnboardingPage() {
   }
 
   const config = STEP_CONFIG[step - 1];
+
+  // Welcome screen — shown once before the form steps
+  if (step === 0) {
+    const firstName = session?.user?.name?.split(" ")[0] ?? "there";
+    return (
+      <div className="min-h-screen bg-paw-sky antialiased flex flex-col items-center justify-center py-12 px-6 relative">
+        {/* Background decorations */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+          <svg className="leaf-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber" viewBox="0 0 200 200" fill="currentColor">
+            <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
+          </svg>
+          <svg className="leaf-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-60" viewBox="0 0 200 200" fill="currentColor">
+            <path d="M100 200C140 160 180 120 200 60C160 70 120 90 100 0C80 90 40 70 0 60C20 120 60 160 100 200Z" />
+          </svg>
+        </div>
+
+        {/* Logo */}
+        <div className="mb-10 flex items-center gap-2 relative z-10">
+          <div className="w-8 h-8 bg-paw-brown rounded-full flex items-center justify-center text-paw-amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 2v7.31" /><path d="M14 2v7.31" /><path d="M8.5 2h7" /><path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
+            </svg>
+          </div>
+          <span className="font-bold text-xl tracking-tight text-paw-brown">
+            RingPaw<span className="text-paw-orange">.ai</span>
+          </span>
+        </div>
+
+        {/* Welcome card */}
+        <main className="w-full max-w-lg bg-paw-cream rounded-[2.5rem] shadow-soft border-4 border-white relative z-10 p-10 sm:p-14 text-center">
+          <div className="w-16 h-16 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+            👋
+          </div>
+          <h1 className="text-3xl font-extrabold text-paw-brown mb-3">
+            Hey, {firstName}!
+          </h1>
+          <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
+            Let&apos;s get your AI receptionist set up. It only takes a few minutes — we&apos;ll walk you through it one step at a time.
+          </p>
+
+          {/* What they'll set up */}
+          <ul className="text-left space-y-3 mb-10">
+            {[
+              { icon: "🏪", text: "Your business details & hours" },
+              { icon: "✂️", text: "Services, pricing & groomers" },
+              { icon: "📅", text: "Calendar sync" },
+              { icon: "📞", text: "Call forwarding to your new number" },
+              { icon: "🚀", text: "A quick test call, then go live" },
+            ].map((item) => (
+              <li key={item.text} className="flex items-center gap-3 text-sm font-medium text-paw-brown/80">
+                <span className="w-8 h-8 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm text-base">
+                  {item.icon}
+                </span>
+                {item.text}
+              </li>
+            ))}
+          </ul>
+
+          <button
+            onClick={() => setStep(1)}
+            className="w-full px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2"
+          >
+            Let&apos;s get started
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+            </svg>
+          </button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <OnboardingLayout
