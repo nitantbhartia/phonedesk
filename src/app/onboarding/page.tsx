@@ -10,6 +10,7 @@ import {
   OnboardingSelect,
   OnboardingFooter,
 } from "@/components/onboarding/onboarding-layout";
+import { ReferralCard } from "@/components/referral-card";
 
 interface ServiceEntry {
   name: string;
@@ -221,6 +222,20 @@ export default function OnboardingPage() {
   const formattedProvisionedNumber = provisionedNumber
     ? formatPhoneNumber(provisionedNumber)
     : "";
+  const [referral, setReferral] = useState<null | {
+    code: string;
+    link: string;
+    rewardAmount: number;
+    rewardPlan: string;
+    referrals: Array<{
+      id: string;
+      status: "PENDING" | "BUSINESS_CREATED" | "QUALIFIED";
+      rewardCents: number;
+      qualifiedAt?: string | null;
+      referredBusiness?: { id: string; name: string; plan: string } | null;
+      referredUser?: { email?: string | null; name?: string | null } | null;
+    }>;
+  }>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -277,6 +292,9 @@ export default function OnboardingPage() {
           setTimezone(business?.timezone || "America/Los_Angeles");
           setBookingMode(business?.bookingMode || "SOFT");
           setHours(buildHoursState(business?.businessHours as SavedBusinessHours | undefined));
+          if (data.referral) {
+            setReferral(data.referral);
+          }
           if (business?.services?.length) {
             setServices(
               business.services.map(
@@ -306,6 +324,21 @@ export default function OnboardingPage() {
       cancelled = true;
     };
   }, [router, status]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || step !== 7) {
+      return;
+    }
+
+    fetch("/api/business/profile")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data?.referral) {
+          setReferral(data.referral);
+        }
+      })
+      .catch(() => {});
+  }, [status, step]);
 
   if (status === "loading") {
     return (
@@ -1493,6 +1526,14 @@ export default function OnboardingPage() {
               </p>
             </div>
           )}
+
+          {referral ? (
+            <ReferralCard
+              referral={referral}
+              compact
+              title="Invite another shop once you are live"
+            />
+          ) : null}
 
           <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
             <button

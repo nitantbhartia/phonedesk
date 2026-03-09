@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, CreditCard, Zap } from "lucide-react";
+import { ReferralCard } from "@/components/referral-card";
 
 const PLANS = [
   {
@@ -64,6 +65,20 @@ export default function BillingPage() {
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const [billingError, setBillingError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [referral, setReferral] = useState<null | {
+    code: string;
+    link: string;
+    rewardAmount: number;
+    rewardPlan: string;
+    referrals: Array<{
+      id: string;
+      status: "PENDING" | "BUSINESS_CREATED" | "QUALIFIED";
+      rewardCents: number;
+      qualifiedAt?: string | null;
+      referredBusiness?: { id: string; name: string; plan: string } | null;
+      referredUser?: { email?: string | null; name?: string | null } | null;
+    }>;
+  }>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -85,6 +100,9 @@ export default function BillingPage() {
         }
         if (data.stats) {
           setMinutesUsed(data.stats.totalCallMinutes || 0);
+        }
+        if (data.referral) {
+          setReferral(data.referral);
         }
       }
     } catch {
@@ -232,6 +250,8 @@ export default function BillingPage() {
           </div>
         )}
       </section>
+
+      {referral ? <ReferralCard referral={referral} title="Share RingPaw and earn $50" /> : null}
 
       {/* Plan Comparison */}
       <section className="grid md:grid-cols-3 gap-6">

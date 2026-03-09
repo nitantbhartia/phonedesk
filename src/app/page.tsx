@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { REFERRAL_COOKIE } from "@/lib/referral-constants";
 
 export default function LandingPage() {
   return (
@@ -25,6 +26,18 @@ function LandingPageContent() {
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
   const [missedPerDay, setMissedPerDay] = useState(6);
   const [groomPrice, setGroomPrice] = useState(85);
+  const referralCode = searchParams.get("ref");
+  const signupHref = referralCode
+    ? `/auth?mode=signup&ref=${encodeURIComponent(referralCode)}`
+    : "/auth?mode=signup";
+  const signinHref = referralCode
+    ? `/auth?mode=signin&ref=${encodeURIComponent(referralCode)}`
+    : "/auth?mode=signin";
+
+  useEffect(() => {
+    if (!referralCode) return;
+    document.cookie = `${REFERRAL_COOKIE}=${encodeURIComponent(referralCode)}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+  }, [referralCode]);
 
   useEffect(() => {
     if (!session) return;
@@ -35,6 +48,7 @@ function LandingPageContent() {
       setIsResolvingRedirect(true);
 
       try {
+        await fetch("/api/referrals/claim", { method: "POST" });
         const response = await fetch("/api/business/profile");
         if (!response.ok) {
           throw new Error("Failed to load business profile");
@@ -107,7 +121,7 @@ function LandingPageContent() {
           <a href="#pricing" className="hover:text-paw-brown transition-colors">Pricing</a>
         </div>
         <Link
-          href="/auth?mode=signup"
+          href={signupHref}
           className="hidden sm:block px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
         >
           Get Started
@@ -142,7 +156,7 @@ function LandingPageContent() {
 
             <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
               <Link
-                href="/auth?mode=signup"
+                href={signupHref}
                 className="relative overflow-hidden px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50 btn-shimmer"
               >
                 Get Started Today
@@ -151,7 +165,7 @@ function LandingPageContent() {
                 </svg>
               </Link>
               <Link
-                href="/auth?mode=signin"
+                href={signinHref}
                 className="px-8 py-4 bg-white text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-paw-cream transition-all shadow-sm flex items-center justify-center gap-2"
               >
                 Sign In

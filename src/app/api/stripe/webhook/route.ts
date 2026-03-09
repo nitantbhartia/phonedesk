@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { getPlanForStripePriceId, getStripeClient } from "@/lib/stripe";
+import { updateReferralQualificationForBusiness } from "@/lib/referrals";
 
 function getWebhookSecret() {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -71,6 +72,21 @@ export async function POST(req: NextRequest) {
           where: { stripeCustomerId: customerId },
           data: updateData,
         });
+
+        const businesses = await prisma.business.findMany({
+          where: { stripeCustomerId: customerId },
+          select: { id: true },
+        });
+
+        await Promise.all(
+          businesses.map((business) =>
+            updateReferralQualificationForBusiness({
+              businessId: business.id,
+              plan,
+              stripeSubscriptionStatus: subscription.status,
+            })
+          )
+        );
       }
     }
 
@@ -104,6 +120,16 @@ export async function POST(req: NextRequest) {
             data: { isActive: false },
           });
         }
+
+        await Promise.all(
+          businesses.map((business) =>
+            updateReferralQualificationForBusiness({
+              businessId: business.id,
+              plan: "STARTER",
+              stripeSubscriptionStatus: subscription.status,
+            })
+          )
+        );
       }
     }
 

@@ -6,6 +6,7 @@ import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { AuthPanel } from "@/components/auth-panel";
+import { REFERRAL_COOKIE } from "@/lib/referral-constants";
 
 export default function AuthPage() {
   return (
@@ -26,6 +27,12 @@ function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams.get("mode") === "signin" ? "signin" : "signup";
+  const referralCode = searchParams.get("ref");
+
+  useEffect(() => {
+    if (!referralCode) return;
+    document.cookie = `${REFERRAL_COOKIE}=${encodeURIComponent(referralCode)}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+  }, [referralCode]);
 
   useEffect(() => {
     if (!session) return;
@@ -34,6 +41,7 @@ function AuthPageContent() {
 
     const resolvePostAuthRoute = async () => {
       try {
+        await fetch("/api/referrals/claim", { method: "POST" });
         const response = await fetch("/api/business/profile");
         if (!response.ok) {
           throw new Error("Failed to load business profile");

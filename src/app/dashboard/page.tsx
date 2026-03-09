@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ReferralCard } from "@/components/referral-card";
 
 interface DashboardStats {
   callsThisWeek: number;
@@ -130,6 +131,20 @@ export default function DashboardPage() {
   const [justSubscribed, setJustSubscribed] = useState(false);
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
   const [fetchError, setFetchError] = useState("");
+  const [referral, setReferral] = useState<null | {
+    code: string;
+    link: string;
+    rewardAmount: number;
+    rewardPlan: string;
+    referrals: Array<{
+      id: string;
+      status: "PENDING" | "BUSINESS_CREATED" | "QUALIFIED";
+      rewardCents: number;
+      qualifiedAt?: string | null;
+      referredBusiness?: { id: string; name: string; plan: string } | null;
+      referredUser?: { email?: string | null; name?: string | null } | null;
+    }>;
+  }>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -158,6 +173,9 @@ export default function DashboardPage() {
         }
         const subStatus = data.business?.stripeSubscriptionStatus;
         setSubscriptionActive(subStatus === "active");
+        if (data.referral) {
+          setReferral(data.referral);
+        }
       }
 
       if (callsRes.ok) {
@@ -212,6 +230,8 @@ export default function DashboardPage() {
   const avgServicePrice = stats.revenueProtected > 0 && stats.bookingsConfirmed > 0
     ? Math.round(stats.revenueProtected / stats.bookingsConfirmed)
     : 90;
+  const showReferralPrompt =
+    Boolean(referral) && (stats.callsThisWeek >= 5 || stats.bookingsConfirmed >= 1);
 
   return (
     <div>
@@ -359,6 +379,12 @@ export default function DashboardPage() {
           </button>
         </div>
       )}
+
+      {showReferralPrompt && referral ? (
+        <div className="mb-8">
+          <ReferralCard referral={referral} compact title="Know another shop that misses calls?" />
+        </div>
+      ) : null}
 
       {/* Confirmation dialog — turning agent off */}
       {confirmOff && (

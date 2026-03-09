@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { syncRetellAgent } from "@/lib/retell";
 import { seedBreedRecommendations } from "@/lib/breed-recommendations";
+import { getAppUrl } from "@/lib/stripe";
+import { attachReferralToBusiness, buildReferralLink, ensureBusinessReferralCode } from "@/lib/referrals";
 
 const stripeBypass = process.env.STRIPE_BYPASS === "true";
 
@@ -53,6 +55,48 @@ export async function GET() {
   if (!business) {
     return NextResponse.json({ business: null, stats: null });
   }
+
+  const referralCode = await ensureBusinessReferralCode(business.id);
+  const [sentReferrals, receivedReferral] = await Promise.all([
+    prisma.referral.findMany({
+      where: { referrerBusinessId: business.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        status: true,
+        rewardCents: true,
+        qualifiedAt: true,
+        createdAt: true,
+        referredBusiness: {
+          select: {
+            id: true,
+            name: true,
+            plan: true,
+          },
+        },
+        referredUser: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+      },
+    }),
+    prisma.referral.findUnique({
+      where: { referredBusinessId: business.id },
+      select: {
+        status: true,
+        rewardCents: true,
+        qualifiedAt: true,
+        referrerBusiness: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    }),
+  ]);
 
   // Compute dashboard stats
   const now = new Date();
@@ -114,8 +158,21 @@ export async function GET() {
   if (stripeBypass && business) {
     (business as Record<string, unknown>).stripeSubscriptionStatus = "active";
   }
-
-  return NextResponse.json({ business, stats });
+  return NextResponse.json({
+    business: {
+      ...business,
+      referralCode,
+    },
+    stats,
+    referral: {
+      code: referralCode,
+      link: buildReferralLink(getAppUrl(), referralCode),
+      rewardAmount: 50,
+      rewardPlan: "PRO",
+      referrals: sentReferrals,
+      received: receivedReferral,
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -191,7 +248,10 @@ export async function POST(req: NextRequest) {
     });
     // Seed default breed recommendations for new businesses
     await seedBreedRecommendations(business.id, prisma);
+    await ensureBusinessReferralCode(business.id);
   }
+
+  await attachReferralToBusiness(userId, business.id);
 
   // Upsert services
   if (services && Array.isArray(services)) {

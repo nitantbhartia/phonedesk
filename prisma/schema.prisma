@@ -53,6 +53,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   business      Business?
+  referralClaim Referral?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -96,9 +97,34 @@ model Business {
   stripeSubscriptionId String? @unique
   stripePriceId    String?
   stripeSubscriptionStatus String?
+  referralCode     String?  @unique
+  sentReferrals    Referral[] @relation("ReferralReferrer")
+  receivedReferral Referral?  @relation("ReferralReferredBusiness")
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Referral {
+  id                 String         @id @default(cuid())
+  referrerBusinessId String
+  referrerBusiness   Business       @relation("ReferralReferrer", fields: [referrerBusinessId], references: [id], onDelete: Cascade)
+  referredUserId     String?        @unique
+  referredUser       User?          @relation(fields: [referredUserId], references: [id], onDelete: SetNull)
+  referredBusinessId String?        @unique
+  referredBusiness   Business?      @relation("ReferralReferredBusiness", fields: [referredBusinessId], references: [id], onDelete: SetNull)
+  status             ReferralStatus @default(PENDING)
+  rewardCents        Int            @default(5000)
+  qualifiedAt        DateTime?
+  rewardGrantedAt    DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+enum ReferralStatus {
+  PENDING
+  BUSINESS_CREATED
+  QUALIFIED
 }
 
 enum Plan {
