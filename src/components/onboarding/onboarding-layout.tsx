@@ -21,6 +21,7 @@ interface OnboardingLayoutProps {
   subtitle: string;
   proTip?: string;
   children: React.ReactNode;
+  direction?: "forward" | "backward";
 }
 
 export function OnboardingLayout({
@@ -29,9 +30,13 @@ export function OnboardingLayout({
   subtitle,
   proTip,
   children,
+  direction = "forward",
 }: OnboardingLayoutProps) {
+  const currentLabel = STEPS.find((s) => s.number === currentStep)?.label ?? "";
+  const progressPct = ((currentStep - 1) / (STEPS.length - 1)) * 100;
+
   return (
-    <div className="min-h-screen bg-paw-sky antialiased flex flex-col items-center px-4 py-4 sm:px-6 sm:py-6 relative">
+    <div className="min-h-screen bg-paw-sky antialiased flex flex-col items-center px-4 py-4 sm:px-6 sm:py-5 relative">
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <svg className="leaf-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber" viewBox="0 0 200 200" fill="currentColor">
@@ -43,70 +48,56 @@ export function OnboardingLayout({
       </div>
 
       {/* Logo */}
-      <div className="mb-3 relative z-10">
-        <BrandLogo mobileWidth={140} desktopWidth={180} priority />
+      <div className="mb-3 relative z-10 flex-none">
+        <BrandLogo mobileWidth={130} desktopWidth={155} priority />
       </div>
 
-      {/* Main card */}
-      <main className="w-full max-w-2xl bg-paw-cream rounded-[2rem] shadow-soft border-4 border-white relative z-10 overflow-hidden">
-        {/* Step bar */}
-        <div className="border-b border-paw-brown/5 bg-white/50">
-          {/* Desktop: compact step dots with labels */}
-          <div className="hidden sm:block px-6 py-3">
-            <div className="relative flex items-start">
-              <div className="absolute top-3 left-3 right-3 h-0.5 bg-paw-brown/10" />
-              <div
-                className="absolute top-3 left-3 h-0.5 bg-paw-brown/30 transition-all duration-300"
-                style={{ width: `calc(${((currentStep - 1) / (STEPS.length - 1)) * 100}% * (100% - 1.5rem) / 100%)` }}
-              />
-              {STEPS.map((step) => {
-                const isActive = step.number === currentStep;
-                const isDone = step.number < currentStep;
-                return (
-                  <div key={step.number} className="flex-1 flex flex-col items-center">
-                    <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-colors ${isActive || isDone ? "bg-paw-brown text-white" : "bg-white border-2 border-paw-brown/20 text-paw-brown/30"}`}>
-                      {isDone ? (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      ) : step.number}
-                    </div>
-                    <span className={`mt-1 text-[9px] font-semibold text-center leading-tight px-0.5 transition-colors ${isActive ? "text-paw-brown" : isDone ? "text-paw-brown/50" : "text-paw-brown/20"}`}>
-                      {step.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+      {/* Main card — scrolls internally */}
+      <main
+        className="w-full max-w-2xl bg-paw-cream rounded-[2rem] shadow-soft border-4 border-white relative z-10 flex flex-col"
+        style={{ maxHeight: "calc(100dvh - 6.5rem)" }}
+      >
+        {/* Progress header */}
+        <div className="border-b border-paw-brown/8 bg-white/60 flex-none px-6 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-paw-brown/50 uppercase tracking-widest">
+              Step {currentStep} of {STEPS.length}
+            </span>
+            <span className="text-xs font-bold text-paw-brown/70">{currentLabel}</span>
           </div>
-
-          {/* Mobile: progress bar */}
-          <div className="sm:hidden px-4 py-3 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-paw-brown">{STEPS.find((s) => s.number === currentStep)?.label}</span>
-              <span className="text-xs font-bold text-paw-brown/40 tabular-nums">{currentStep} / {STEPS.length}</span>
-            </div>
-            <div className="h-1.5 bg-paw-brown/10 rounded-full overflow-hidden">
-              <div className="h-full bg-paw-brown rounded-full transition-all duration-300" style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }} />
-            </div>
+          <div className="h-1.5 bg-paw-brown/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-paw-brown rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
         </div>
 
-        {/* Content */}
-        <div className="px-5 py-5 sm:px-8 sm:py-7">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto min-h-0 px-5 py-6 sm:px-8 sm:py-7">
           <div className="max-w-xl mx-auto">
-            <h1 className="text-2xl font-extrabold text-paw-brown mb-1">{title}</h1>
-            <p className="text-paw-brown/55 font-medium text-sm mb-5">{subtitle}</p>
-            {children}
-            {/* Pro Tip — inside card so it's never lost off-screen */}
-            {proTip && (
-              <div className="mt-5 flex items-start gap-3 p-3 bg-white/60 rounded-2xl border border-paw-brown/8">
-                <span className="text-base shrink-0">💡</span>
-                <p className="text-xs font-medium text-paw-brown/65">
-                  <span className="font-bold text-paw-brown">Pro tip: </span>{proTip}
-                </p>
-              </div>
-            )}
+            <div
+              key={currentStep}
+              className={`animate-in fade-in duration-300 ${
+                direction === "backward"
+                  ? "slide-in-from-left-4"
+                  : "slide-in-from-right-4"
+              }`}
+            >
+              <h1 className="text-2xl font-extrabold text-paw-brown mb-1">{title}</h1>
+              <p className="text-paw-brown/55 font-medium text-sm mb-5">{subtitle}</p>
+
+              {children}
+
+              {proTip && (
+                <div className="mt-5 flex items-start gap-3 p-3 bg-white/60 rounded-2xl border border-paw-brown/8">
+                  <span className="text-base shrink-0">💡</span>
+                  <p className="text-xs font-medium text-paw-brown/65">
+                    <span className="font-bold text-paw-brown">Pro tip: </span>{proTip}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>

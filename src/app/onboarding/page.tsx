@@ -184,7 +184,13 @@ export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [loading, setLoading] = useState(false);
+
+  function navigate(newStep: number) {
+    setDirection(newStep > step ? "forward" : "backward");
+    setStep(newStep);
+  }
   const [provisionError, setProvisionError] = useState("");
 
   // Step 1: Business info
@@ -398,7 +404,7 @@ export default function OnboardingPage() {
         });
       }
 
-      setStep(3);
+      navigate(3);
     } catch (error) {
       console.error("Error saving profile:", error);
     } finally {
@@ -496,7 +502,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({ isActive: subscribed, onboardingComplete: true }),
       });
       if (subscribed) {
-        setStep(8);
+        navigate(8);
       } else {
         router.push("/dashboard");
       }
@@ -580,7 +586,7 @@ export default function OnboardingPage() {
           </ul>
 
           <button
-            onClick={() => setStep(1)}
+            onClick={() => navigate(1)}
             className="w-full px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2"
           >
             Let&apos;s get started
@@ -599,6 +605,7 @@ export default function OnboardingPage() {
       title={config.title}
       subtitle={config.subtitle}
       proTip={config.proTip}
+      direction={direction}
     >
       {/* Step 1: Business Profile */}
       {step === 1 && (
@@ -606,7 +613,7 @@ export default function OnboardingPage() {
           className="space-y-8"
           onSubmit={(e) => {
             e.preventDefault();
-            setStep(2);
+            navigate(2);
           }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -813,7 +820,7 @@ export default function OnboardingPage() {
             showBack={true}
             backLabel="Cancel"
             onBack={() => router.push("/")}
-            onNext={() => setStep(2)}
+            onNext={() => navigate(2)}
             nextDisabled={!businessName || !ownerName}
           />
         </form>
@@ -1005,7 +1012,7 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => setStep(1)}
+            onBack={() => navigate(1)}
             onNext={saveBusinessProfile}
             nextLabel="Continue Setup"
             loading={loading}
@@ -1194,8 +1201,8 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => setStep(2)}
-            onNext={() => setStep(4)}
+            onBack={() => navigate(2)}
+            onNext={() => navigate(4)}
             nextLabel={calendarConnected ? "Continue Setup" : "Skip for Now"}
           />
         </div>
@@ -1246,8 +1253,8 @@ export default function OnboardingPage() {
           ) : null}
 
           <OnboardingFooter
-            onBack={() => setStep(3)}
-            onNext={() => setStep(5)}
+            onBack={() => navigate(3)}
+            onNext={() => navigate(5)}
             nextDisabled={!provisionedNumber}
           />
         </div>
@@ -1301,8 +1308,8 @@ export default function OnboardingPage() {
           )}
 
           <OnboardingFooter
-            onBack={() => setStep(4)}
-            onNext={() => setStep(6)}
+            onBack={() => navigate(4)}
+            onNext={() => navigate(6)}
             nextLabel="Choose Plan"
           />
         </div>
@@ -1376,7 +1383,7 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => setStep(7)}
+            onBack={() => navigate(7)}
             onNext={() => router.push("/dashboard")}
             nextLabel="Go to Dashboard"
           />
@@ -1457,8 +1464,8 @@ export default function OnboardingPage() {
           )}
 
           <OnboardingFooter
-            onBack={() => setStep(5)}
-            onNext={() => setStep(7)}
+            onBack={() => navigate(5)}
+            onNext={() => navigate(7)}
             nextLabel={subscribed ? "Continue" : "Skip for Now"}
           />
         </div>
@@ -1554,7 +1561,7 @@ export default function OnboardingPage() {
               </svg>
               <p className="text-sm font-bold text-amber-800">
                 Live call answering requires a subscription.{" "}
-                <button onClick={() => setStep(6)} className="underline hover:no-underline">
+                <button onClick={() => navigate(6)} className="underline hover:no-underline">
                   Choose a plan
                 </button>{" "}
                 to activate it — or explore the dashboard first.
@@ -1565,7 +1572,7 @@ export default function OnboardingPage() {
           <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setStep(6)}
+              onClick={() => navigate(6)}
               className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
             >
               Back
