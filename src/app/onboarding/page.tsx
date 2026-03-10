@@ -1255,13 +1255,20 @@ export default function OnboardingPage() {
               I&apos;ve Made My Test Call ✓
             </button>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-center gap-2 w-full py-4 rounded-full border border-green-200 bg-green-50 font-bold text-green-700">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                 Test call completed!
               </div>
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="w-full py-4 rounded-full bg-paw-orange text-white font-bold hover:bg-opacity-90 shadow-soft transition-all flex items-center justify-center gap-2"
+              >
+                Preview Your Dashboard
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
               <p className="text-center text-xs text-paw-brown/40 font-medium">
-                Check your dashboard to see the call log, transcript, and AI summary.
+                See your call log, transcript, and AI summary — then come back to finish setup.
               </p>
             </div>
           )}
