@@ -262,22 +262,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Plan usage card */}
-          <div className="mt-6 bg-paw-brown rounded-3xl p-6 text-paw-cream relative overflow-hidden">
-            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-paw-orange/20 rounded-full blur-xl" />
-            <p className="text-xs font-bold text-paw-amber uppercase tracking-wider mb-2">
-              {usage?.plan?.replace("_", " ") || "Pro"} Plan
-            </p>
-            <p className="text-sm font-medium opacity-80 mb-4">
-              {usage ? `${usage.minutesUsed} / ${usage.minutesLimit}` : "— / —"} minutes used this month.
-            </p>
-            <div className="w-full bg-white/10 h-2 rounded-full">
-              <div
-                className="bg-paw-amber h-full rounded-full transition-all"
-                style={{ width: usage ? `${Math.min(100, (usage.minutesUsed / usage.minutesLimit) * 100)}%` : "0%" }}
-              />
-            </div>
-          </div>
         </div>
       </aside>
 

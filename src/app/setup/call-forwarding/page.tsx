@@ -30,7 +30,9 @@ export default function CallForwardingSetupPage() {
           const hasNumber = Boolean(data.business?.phoneNumber?.number);
           // Always go to step 8 if a number is provisioned — the onboarding page
           // allows step 8 even after onboardingComplete so the dashboard banner works.
-          router.replace(hasNumber ? "/onboarding?step=8" : "/onboarding?step=6");
+          // If no number yet, send to step 7 (go-live/provision) — not step 6 (payment),
+          // which is blocked for users who already have onboardingComplete=true.
+          router.replace(hasNumber ? "/onboarding?step=8" : "/onboarding?step=7");
         } else {
           router.replace("/onboarding?step=6");
         }

@@ -5,6 +5,7 @@ import { useEffect, useCallback, useState } from "react";
 export const TOUR_KEY = "ringpaw_tour_v1";
 
 const TOOLTIP_W = 320;
+const TOOLTIP_H_EST = 260; // estimated max tooltip height for overflow detection
 const SPOT_PAD = 10; // padding around the highlighted element
 const GAP = 16;      // gap between spotlight edge and tooltip card
 
@@ -80,23 +81,42 @@ function computeTooltipStyle(
   side: Step["side"],
 ): React.CSSProperties {
   const vw = window.innerWidth;
-  const clampLeft = (l: number) => Math.max(16, Math.min(l, vw - TOOLTIP_W - 16));
+  const vh = window.innerHeight;
+  const w = Math.min(TOOLTIP_W, vw - 32);
+  const clampLeft = (l: number) => Math.max(16, Math.min(l, vw - w - 16));
+  const clampTop = (t: number) => Math.max(16, Math.min(t, vh - TOOLTIP_H_EST - 16));
   const spotTop = rect.top - SPOT_PAD;
   const spotLeft = rect.left - SPOT_PAD;
   const spotW = rect.width + SPOT_PAD * 2;
   const spotH = rect.height + SPOT_PAD * 2;
+  const centerLeft = clampLeft(spotLeft + spotW / 2 - w / 2);
 
   switch (side) {
-    case "bottom":
-      return { top: spotTop + spotH + GAP, left: clampLeft(spotLeft + spotW / 2 - TOOLTIP_W / 2), width: TOOLTIP_W };
-    case "top":
-      return { top: spotTop - GAP - 230, left: clampLeft(spotLeft + spotW / 2 - TOOLTIP_W / 2), width: TOOLTIP_W };
+    case "bottom": {
+      const below = spotTop + spotH + GAP;
+      // Flip to above if tooltip would overflow the bottom
+      const top = below + TOOLTIP_H_EST + 16 > vh
+        ? Math.max(16, spotTop - GAP - TOOLTIP_H_EST)
+        : below;
+      return { top, left: centerLeft, width: w };
+    }
+    case "top": {
+      const above = spotTop - GAP - TOOLTIP_H_EST;
+      // Flip to below if tooltip would overflow the top
+      const top = above < 16 ? spotTop + spotH + GAP : above;
+      return { top: clampTop(top), left: centerLeft, width: w };
+    }
     case "right":
-      return { top: Math.max(16, spotTop + spotH / 2 - 115), left: Math.min(spotLeft + spotW + GAP, vw - TOOLTIP_W - 16), width: TOOLTIP_W };
+      return { top: clampTop(spotTop + spotH / 2 - TOOLTIP_H_EST / 2), left: Math.min(spotLeft + spotW + GAP, vw - w - 16), width: w };
     case "left":
-      return { top: Math.max(16, spotTop + spotH / 2 - 115), left: Math.max(16, spotLeft - TOOLTIP_W - GAP), width: TOOLTIP_W };
-    default:
-      return { top: spotTop + spotH + GAP, left: clampLeft(spotLeft + spotW / 2 - TOOLTIP_W / 2), width: TOOLTIP_W };
+      return { top: clampTop(spotTop + spotH / 2 - TOOLTIP_H_EST / 2), left: Math.max(16, spotLeft - w - GAP), width: w };
+    default: {
+      const below = spotTop + spotH + GAP;
+      const top = below + TOOLTIP_H_EST + 16 > vh
+        ? Math.max(16, spotTop - GAP - TOOLTIP_H_EST)
+        : below;
+      return { top, left: centerLeft, width: w };
+    }
   }
 }
 
@@ -182,7 +202,7 @@ export function DashboardTour({ open, onClose }: Props) {
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: Math.min(TOOLTIP_W + 40, (typeof window !== "undefined" ? window.innerWidth : 400) - 32),
+        width: Math.min(TOOLTIP_W, (typeof window !== "undefined" ? window.innerWidth : 400) - 32),
       };
 
   return (
@@ -217,7 +237,8 @@ export function DashboardTour({ open, onClose }: Props) {
       {/* Tooltip card */}
       <div
         style={{ ...tooltipPosition, pointerEvents: "auto" }}
-        className="bg-white rounded-3xl shadow-2xl overflow-hidden"
+        className="bg-white rounded-3xl shadow-2xl overflow-y-auto"
+        style={{ maxHeight: typeof window !== "undefined" ? window.innerHeight - 32 : "90vh" }}
       >
         {/* Progress bar */}
         <div className="h-1 bg-gray-100">
