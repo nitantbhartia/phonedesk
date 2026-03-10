@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 /**
- * This standalone page is superseded by the onboarding flow.
- * Redirect authenticated users to the call-forwarding step (step 8)
- * of /onboarding so they see the same consistent UI.
+ * Redirects to the call-forwarding step of the onboarding flow (step 8),
+ * but only if the business already has a RingPaw number provisioned.
+ * If not, redirects to step 4 (Get Number) so they provision one first.
  * Unauthenticated visitors are sent to the home page.
  */
 export default function CallForwardingSetupPage() {
@@ -17,9 +17,27 @@ export default function CallForwardingSetupPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/");
-    } else if (status === "authenticated") {
-      router.replace("/onboarding?step=8");
+      return;
     }
+
+    if (status !== "authenticated") return;
+
+    async function redirect() {
+      try {
+        const res = await fetch("/api/business/profile");
+        if (res.ok) {
+          const data = await res.json();
+          const hasNumber = Boolean(data.business?.phoneNumber?.number);
+          router.replace(hasNumber ? "/onboarding?step=8" : "/onboarding?step=4");
+        } else {
+          router.replace("/onboarding?step=4");
+        }
+      } catch {
+        router.replace("/onboarding?step=4");
+      }
+    }
+
+    void redirect();
   }, [status, router]);
 
   return (
