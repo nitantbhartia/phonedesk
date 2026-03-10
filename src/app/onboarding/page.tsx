@@ -223,10 +223,10 @@ export default function OnboardingPage() {
   const [provisionedNumber, setProvisionedNumber] = useState("");
 
   // Step 5: Test call status
-  const [testCallDone, setTestCallDone] = useState(false);
   const [callPhase, setCallPhase] = useState<"waiting" | "in_progress" | "completed">("waiting");
   const [detectedCallSummary, setDetectedCallSummary] = useState<string | null>(null);
   const baselineCallCount = useRef<number | null>(null);
+  const callPhaseRef = useRef(callPhase);
 
   // Step 6: Subscription
   const [subscribed, setSubscribed] = useState(false);
@@ -340,11 +340,17 @@ export default function OnboardingPage() {
     };
   }, [router, status]);
 
-  // Poll for test call on step 5 — works via Retell webhooks (call_started → call_ended → call_analyzed)
+  // Keep ref in sync with callPhase so the polling closure always sees the latest value
+  useEffect(() => { callPhaseRef.current = callPhase; }, [callPhase]);
+
+  // Poll for test call on step 5 — detects calls via Retell webhooks writing to DB
   useEffect(() => {
-    if (step !== 5 || testCallDone) return;
+    if (step !== 5) return;
 
     let pollInterval: ReturnType<typeof setInterval>;
+
+    const isTerminal = (s?: string) =>
+      s === "COMPLETED" || s === "NO_BOOKING" || s === "MISSED";
 
     const startPolling = async () => {
       try {
@@ -358,23 +364,23 @@ export default function OnboardingPage() {
           const res = await fetch("/api/calls?limit=5");
           const data = await res.json() as { calls?: Array<{ status?: string; summary?: string | null }> };
           const calls = data.calls ?? [];
+          const phase = callPhaseRef.current;
+
           if (baselineCallCount.current !== null && calls.length > baselineCallCount.current) {
             const newest = calls[0];
-            if (newest?.status === "COMPLETED" || newest?.status === "MISSED") {
+            if (isTerminal(newest?.status)) {
               setDetectedCallSummary(newest?.summary ?? null);
               setCallPhase("completed");
-              setTestCallDone(true);
             } else {
-              // call_started fired — AI is on the call right now
+              // call_started fired — AI is live
               setCallPhase("in_progress");
             }
-          } else if (callPhase === "in_progress") {
-            // already detected in-progress, keep polling for completion
+          } else if (phase === "in_progress") {
+            // count hasn't changed, but status may have updated to terminal
             const newest = calls[0];
-            if (newest?.status === "COMPLETED" || newest?.status === "MISSED") {
+            if (isTerminal(newest?.status)) {
               setDetectedCallSummary(newest?.summary ?? null);
               setCallPhase("completed");
-              setTestCallDone(true);
             }
           }
         } catch { /* ignore */ }
@@ -383,7 +389,7 @@ export default function OnboardingPage() {
 
     void startPolling();
     return () => clearInterval(pollInterval);
-  }, [step, testCallDone, callPhase]);
+  }, [step]);
 
   if (status === "loading") {
     return (
@@ -1311,26 +1317,39 @@ export default function OnboardingPage() {
       {/* Step 5: Test Call */}
       {step === 5 && (
         <div className="space-y-5">
-          {!testCallDone ? (
-            <>
-              {/* Pulsing animation + number */}
-              <div className="text-center py-2">
-                <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-5">
+          {/* Phone icon — changes based on phase */}
+          <div className="text-center py-2">
+            <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-5">
+              {callPhase === "waiting" && (
+                <>
                   <div className="absolute inset-0 rounded-full bg-paw-orange/20 animate-ping" style={{ animationDuration: "1.8s" }} />
                   <div className="absolute inset-3 rounded-full bg-paw-orange/15 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
-                  <div className="relative w-20 h-20 rounded-full bg-paw-brown flex items-center justify-center shadow-soft">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                  </div>
-                </div>
+                </>
+              )}
+              {callPhase === "in_progress" && (
+                <>
+                  <div className="absolute inset-0 rounded-full bg-amber-400/25 animate-ping" style={{ animationDuration: "1.2s" }} />
+                  <div className="absolute inset-3 rounded-full bg-amber-400/20 animate-ping" style={{ animationDuration: "1.2s", animationDelay: "0.3s" }} />
+                </>
+              )}
+              {callPhase === "completed" && (
+                <div className="absolute inset-0 rounded-full bg-green-400/20" />
+              )}
+              <div className={`relative w-20 h-20 rounded-full flex items-center justify-center shadow-soft transition-colors duration-500 ${callPhase === "completed" ? "bg-green-500" : callPhase === "in_progress" ? "bg-amber-500" : "bg-paw-brown"}`}>
+                {callPhase === "completed" ? (
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                )}
+              </div>
+            </div>
 
-                {/* AI live badge */}
-                <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  Your AI is live and listening
-                </div>
-
+            {callPhase === "waiting" && (
+              <>
                 <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
                 <a
                   href={`tel:${provisionedNumber}`}
@@ -1339,88 +1358,71 @@ export default function OnboardingPage() {
                   {formattedProvisionedNumber || "—"}
                 </a>
                 <p className="text-xs text-paw-brown/40 mt-1">Tap to dial · or enter manually</p>
+              </>
+            )}
+
+            {callPhase === "in_progress" && (
+              <div className="animate-in fade-in duration-300">
+                <p className="text-sm font-bold text-amber-600 mb-1">Your AI is on the call right now</p>
+                <p className="text-xs text-paw-brown/40">Stay on the line — we&apos;ll detect when it&apos;s done.</p>
               </div>
+            )}
 
-              {/* Sample script */}
-              <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8">
-                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try saying this →</p>
-                <p className="text-sm text-paw-brown/80 italic leading-relaxed">
-                  &ldquo;Hi, I&apos;m calling to book a grooming appointment for my golden retriever. He needs a full groom — do you have anything available next week?&rdquo;
-                </p>
+            {callPhase === "completed" && (
+              <div className="animate-in fade-in duration-300">
+                <p className="text-sm font-bold text-green-700 mb-1">{detectedCallSummary ? "Call complete — your AI handled it!" : "Test call marked as done!"}</p>
+                <p className="text-xs text-paw-brown/40">Your AI is ready for real calls.</p>
               </div>
+            )}
+          </div>
 
-                  {callPhase === "in_progress" ? (
-                /* AI is handling the call right now */
-                <div className="animate-in fade-in duration-300 bg-paw-brown rounded-2xl p-4 text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <span className="w-2 h-2 rounded-full bg-paw-amber animate-pulse" />
-                    <span className="text-sm font-bold text-white">Your AI is on the call right now</span>
-                    <span className="w-2 h-2 rounded-full bg-paw-amber animate-pulse" />
-                  </div>
-                  <p className="text-xs text-white/50">Stay on the line — we&apos;ll show you the summary when it&apos;s done.</p>
-                </div>
-              ) : (
-                /* Waiting indicator */
-                <div className="flex items-center justify-center gap-3 py-1 text-paw-brown/40 text-xs font-bold">
-                  <span className="flex gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "120ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "240ms" }} />
-                  </span>
-                  Waiting for your call
-                </div>
-              )}
-
-              {/* Manual fallback — only show when waiting */}
-              {callPhase === "waiting" && (
-                <button
-                  onClick={() => { setCallPhase("completed"); setTestCallDone(true); }}
-                  className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
-                >
-                  I&apos;ve already called ✓
-                </button>
-              )}
-            </>
-          ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 space-y-4">
-              {/* Success card */}
-              <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-bold text-green-800">
-                      {callPhase === "completed" && detectedCallSummary ? "Call complete — your AI handled it!" : "Test call marked as done!"}
-                    </p>
-                    <p className="text-xs text-green-700/70 mt-0.5">
-                      {callPhase === "completed" && detectedCallSummary ? "Here's what your AI said:" : "Your AI is ready for real calls."}
-                    </p>
-                  </div>
-                </div>
-
-                {detectedCallSummary && (
-                  <div className="bg-white rounded-xl p-3 border border-green-100">
-                    <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">AI Call Summary</p>
-                    <p className="text-sm text-paw-brown/80 leading-relaxed">{detectedCallSummary}</p>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="w-full py-4 rounded-full bg-paw-orange text-white font-bold hover:bg-opacity-90 shadow-soft transition-all flex items-center justify-center gap-2"
-              >
-                Preview Your Dashboard
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
-              <p className="text-center text-xs text-paw-brown/40 font-medium">
-                See the full transcript and call log — then come back to choose a plan.
+          {/* Sample script — only while waiting */}
+          {callPhase === "waiting" && (
+            <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8">
+              <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try saying this →</p>
+              <p className="text-sm text-paw-brown/80 italic leading-relaxed">
+                &ldquo;Hi, I&apos;m calling to book a grooming appointment for my golden retriever. He needs a full groom — do you have anything available next week?&rdquo;
               </p>
+            </div>
+          )}
+
+          {/* In-progress banner */}
+          {callPhase === "in_progress" && (
+            <div className="animate-in fade-in duration-300 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-sm font-bold text-amber-700">Listening to your call live</span>
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              </div>
+              <p className="text-xs text-amber-600/70 mt-1">We&apos;ll automatically move forward when the call ends.</p>
+            </div>
+          )}
+
+          {/* AI call summary — after completion */}
+          {callPhase === "completed" && detectedCallSummary && (
+            <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
+              <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">AI Call Summary</p>
+              <p className="text-sm text-paw-brown/80 leading-relaxed">{detectedCallSummary}</p>
+            </div>
+          )}
+
+          {/* Status indicator / manual fallback */}
+          {callPhase === "waiting" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3 py-1 text-paw-brown/40 text-xs font-bold">
+                <span className="flex gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "120ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "240ms" }} />
+                </span>
+                Waiting for your call
+              </div>
+              <button
+                onClick={() => setCallPhase("completed")}
+                className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
+              >
+                I&apos;ve already called ✓
+              </button>
             </div>
           )}
 
@@ -1428,6 +1430,7 @@ export default function OnboardingPage() {
             onBack={() => navigate(4)}
             onNext={() => navigate(6)}
             nextLabel="Choose Plan"
+            nextDisabled={callPhase === "waiting"}
           />
         </div>
       )}

@@ -217,6 +217,7 @@ model Call {
   appointmentId   String?
   appointment     Appointment? @relation(fields: [appointmentId], references: [id])
   recordingUrl    String?
+  isTestCall      Boolean     @default(false) // true if made before onboarding complete; excluded from usage counts
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }

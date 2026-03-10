@@ -88,6 +88,13 @@ async function handleCallStarted(call: RetellCallPayload) {
       );
       const knownName = customerContext.customer?.name || null;
 
+      // Mark as test call if the business hasn't completed onboarding yet
+      const business = await prisma.business.findUnique({
+        where: { id: phoneNum.businessId },
+        select: { onboardingComplete: true },
+      });
+      const isTestCall = !(business?.onboardingComplete ?? true);
+
       await prisma.call.upsert({
         where: { retellCallId: call.call_id },
         create: {
@@ -96,6 +103,7 @@ async function handleCallStarted(call: RetellCallPayload) {
           callerPhone: call.from_number,
           callerName: knownName,
           status: "IN_PROGRESS",
+          isTestCall,
         },
         update: { status: "IN_PROGRESS", callerName: knownName },
       });
