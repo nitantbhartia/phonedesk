@@ -28,12 +28,12 @@ export default function CallForwardingSetupPage() {
         if (res.ok) {
           const data = await res.json();
           const hasNumber = Boolean(data.business?.phoneNumber?.number);
-          router.replace(hasNumber ? "/onboarding?step=8" : "/onboarding?step=4");
+          router.replace(hasNumber ? "/onboarding?step=8" : "/onboarding?step=6");
         } else {
-          router.replace("/onboarding?step=4");
+          router.replace("/onboarding?step=6");
         }
       } catch {
-        router.replace("/onboarding?step=4");
+        router.replace("/onboarding?step=6");
       }
     }
 
