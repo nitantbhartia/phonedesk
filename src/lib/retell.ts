@@ -320,6 +320,9 @@ export async function refreshRetellLLMForCall(
 
 // --- Retell Agent ---
 
+const MAX_CALL_DURATION_MS = 300_000;  // 5 min cap for all live calls
+const DEMO_CALL_DURATION_MS = 240_000; // 4 min cap for onboarding test calls
+
 export async function createRetellAgent(config: {
   llmId: string;
   agentName: string;
@@ -339,6 +342,7 @@ export async function createRetellAgent(config: {
       volume: DEFAULT_VOLUME,
       webhook_url: config.webhookUrl,
       language: "en-US",
+      max_call_duration_ms: MAX_CALL_DURATION_MS,
       // Conversational feel
       responsiveness: 0.9,          // how quickly agent responds after caller stops — high = snappy
       interruption_sensitivity: 0.8, // how easily caller can interrupt — natural conversation level
@@ -360,6 +364,7 @@ export async function updateRetellAgent(
     webhookUrl: string;
     voiceSpeed: number;
     volume: number;
+    maxCallDurationMs: number;
   }>
 ): Promise<void> {
   const body: Record<string, unknown> = {
@@ -372,6 +377,7 @@ export async function updateRetellAgent(
     reminder_trigger_ms: 6000,
     reminder_max_count: 1,
     normalize_for_speech: true,
+    max_call_duration_ms: updates.maxCallDurationMs ?? MAX_CALL_DURATION_MS,
   };
   if (updates.agentName) body.agent_name = updates.agentName;
   if (updates.voiceId) body.voice_id = updates.voiceId;
@@ -384,6 +390,8 @@ export async function updateRetellAgent(
     body: JSON.stringify(body),
   });
 }
+
+export { DEMO_CALL_DURATION_MS };
 
 export async function deleteRetellAgent(agentId: string): Promise<void> {
   await retellFetch(`/delete-agent/${agentId}`, { method: "DELETE" });

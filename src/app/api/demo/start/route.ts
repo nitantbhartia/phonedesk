@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { syncRetellAgent, updateRetellPhoneNumber } from "@/lib/retell";
+import { syncRetellAgent, updateRetellPhoneNumber, updateRetellAgent, DEMO_CALL_DURATION_MS } from "@/lib/retell";
 
 const DEMO_SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -75,6 +75,11 @@ export async function POST() {
   // smsWebhookUrl intentionally omitted — demo numbers aren't A2P-registered.
   await updateRetellPhoneNumber(available.retellPhoneNumber, {
     inboundAgentId: agentId,
+  });
+
+  // Cap test calls at 4 minutes — the agent will be reset to 5 min on next syncRetellAgent call
+  await updateRetellAgent(agentId, { maxCallDurationMs: DEMO_CALL_DURATION_MS }).catch((e) => {
+    console.error("[demo/start] Failed to set demo call duration limit:", e);
   });
 
   // Create or refresh the demo session
