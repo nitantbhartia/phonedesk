@@ -169,7 +169,7 @@ const ONBOARDING_PLANS = [
     price: 199,
     popular: true,
     features: ["300 minutes/month", "Priority setup", "Square + Google Calendar", "$0.40/min overage"],
-    description: "For full-time groomers who want Pip handling every missed call.",
+    description: "For full-time groomers who want RingPaw handling every missed call.",
   },
   {
     id: "BUSINESS",
@@ -530,7 +530,7 @@ export default function OnboardingPage() {
               { icon: "✂️", text: "Services, pricing & groomers" },
               { icon: "📅", text: "Calendar sync" },
               { icon: "📞", text: "Call forwarding to your new number" },
-              { icon: "💳", text: "Choose a plan (from $49/mo)" },
+              { icon: "💳", text: "Choose a plan (from $99/mo)" },
               { icon: "🚀", text: "A quick test call, then go live" },
             ].map((item) => (
               <li key={item.text} className="flex items-center gap-3 text-sm font-medium text-paw-brown/80">
@@ -1352,7 +1352,7 @@ export default function OnboardingPage() {
           ) : (
             <div className="bg-paw-amber/10 border border-paw-amber/30 rounded-2xl px-5 py-4 text-sm text-paw-brown/80 leading-relaxed">
               <p className="font-bold text-paw-brown mb-1">30-day outcome guarantee</p>
-              Your card is collected now but <strong>not charged</strong> until Pip books your first appointment. If Pip doesn&apos;t book a single appointment in 30 days, your subscription is automatically cancelled — no charge, no hard feelings.
+              Your card is collected now but <strong>not charged</strong> until RingPaw books your first appointment. If RingPaw doesn&apos;t book a single appointment in 30 days, your subscription is automatically cancelled — no charge, no hard feelings.
             </div>
           )}
 
@@ -1407,7 +1407,7 @@ export default function OnboardingPage() {
                 className="mt-0.5 w-4 h-4 accent-paw-brown shrink-0"
               />
               <span className="text-xs text-paw-brown/70 leading-relaxed">
-                I understand that my card will be saved now but <strong>not charged</strong> until Pip successfully books my first appointment. If no appointment is booked within 30 days, my subscription will be cancelled automatically at no cost. Once Pip books my first appointment, my selected plan price will be charged immediately and will recur monthly until I cancel.
+                I understand that my card will be saved now but <strong>not charged</strong> until RingPaw successfully books my first appointment. If no appointment is booked within 30 days, my subscription will be cancelled automatically at no cost. Once RingPaw books my first appointment, my selected plan price will be charged immediately and will recur monthly until I cancel.
               </span>
             </label>
           )}
