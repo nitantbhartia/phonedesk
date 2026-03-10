@@ -259,6 +259,7 @@ model Appointment {
   rebookSent      Boolean          @default(false) // Feature 5: rebooking reminder sent
   rebookInterval  Int?             // days until next groom (breed-specific)
   reviewRequested Boolean          @default(false) // Feature 7: review request sent
+  isTestBooking   Boolean          @default(false) // true if booked via a demo/test call; excluded from billing triggers
   groomerToken    String?           @unique  // public token for groomer status update link
   groomerId       String?
   groomer         Groomer?         @relation(fields: [groomerId], references: [id], onDelete: SetNull)

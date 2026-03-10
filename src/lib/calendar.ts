@@ -756,6 +756,7 @@ export async function bookAppointment(
     endTime: Date;
     notes?: string;
     groomerId?: string;
+    isTestBooking?: boolean;
   }
 ) {
   if (
@@ -837,6 +838,7 @@ export async function bookAppointment(
         bookingMode,
         notes: details.notes,
         groomerId: details.groomerId,
+        isTestBooking: details.isTestBooking ?? false,
       },
     });
 
