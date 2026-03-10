@@ -168,7 +168,7 @@ function LandingPageContent() {
               <p className="text-center text-xs font-bold tracking-widest text-paw-orange uppercase mb-4">
                 Hear a real booking call
               </p>
-              <DemoCallPlayer audioSrc="/audio/luna-call.wav" />
+              <DemoCallPlayer audioSrc="/luna-call.wav" />
             </div>
           </div>
         </div>
