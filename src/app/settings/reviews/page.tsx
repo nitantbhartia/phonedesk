@@ -9,7 +9,6 @@ export default function ReviewsPage() {
   const router = useRouter();
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,15 +28,14 @@ export default function ReviewsPage() {
         const data = await res.json();
         setGoogleReviewUrl(data.googleReviewUrl || "");
       }
-    } catch {
-      // Non-critical: just start with empty field
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
   }
 
   async function saveConfig() {
-    setSaveError("");
     try {
       const res = await fetch("/api/reviews/config", {
         method: "POST",
@@ -47,11 +45,9 @@ export default function ReviewsPage() {
       if (res.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
-      } else {
-        setSaveError("Failed to save. Please try again.");
       }
-    } catch {
-      setSaveError("Failed to save. Please try again.");
+    } catch (error) {
+      console.error("Error:", error);
     }
   }
 
@@ -68,7 +64,7 @@ export default function ReviewsPage() {
       <div>
         <h1 className="text-4xl font-extrabold text-paw-brown">Google Reviews</h1>
         <p className="text-paw-brown/60 font-medium mt-1">
-          Automatically send a Google review request after each appointment. Paste your review link once and your AI handles the rest.
+          Automatically request reviews after each grooming session
         </p>
       </div>
 
@@ -93,7 +89,6 @@ export default function ReviewsPage() {
             {saved ? "Saved!" : "Save"}
           </button>
         </div>
-        {saveError && <p className="mt-2 text-sm text-red-600">{saveError}</p>}
       </div>
 
       {/* How it works */}

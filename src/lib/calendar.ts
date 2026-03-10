@@ -186,7 +186,7 @@ export async function createSquareBooking(
               service_variation_id: "any", // Let Square pick default service
             },
           ],
-          customer_note: `${details.customerName}${details.serviceName ? ` - ${details.serviceName}` : ""} (Booked via RingPaw)`,
+          customer_note: `${details.customerName}${details.serviceName ? ` - ${details.serviceName}` : ""} (Booked via RingPaw AI)`,
         },
       }),
     }
@@ -295,7 +295,7 @@ export async function createAcuityAppointment(
         lastName,
         email: details.customerEmail || "",
         phone: details.customerPhone || "",
-        notes: "Booked via RingPaw",
+        notes: "Booked via RingPaw AI",
       }),
     }
   );
@@ -720,8 +720,8 @@ export async function getAvailableSlots(
       current.getTime() + durationMinutes * 60000
     );
 
-    // Skip slots within the next 60 minutes (not enough lead time to prepare)
-    if (current.getTime() - now.getTime() < 60 * 60000) {
+    // Skip slots that are in the past
+    if (current <= now) {
       current = new Date(current.getTime() + 30 * 60000);
       continue;
     }
@@ -861,7 +861,7 @@ export async function bookAppointment(
       details.petSize ? `Size: ${details.petSize}` : "",
       details.notes ? `Notes: ${details.notes}` : "",
       "",
-      "Booked via RingPaw",
+      "Booked via RingPaw AI",
     ]
       .filter(Boolean)
       .join("\n");

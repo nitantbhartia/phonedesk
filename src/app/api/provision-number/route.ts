@@ -103,52 +103,35 @@ export async function POST(req: Request) {
       throw new Error("Retell agent could not be created");
     }
 
-    // Check for existing number before calling Retell
-    const existingPhoneNumber = await prisma.phoneNumber.findUnique({
-      where: { businessId: business.id },
-    });
-
-    if (existingPhoneNumber) {
-      return NextResponse.json({
-        phoneNumber: existingPhoneNumber.number,
-        alreadyProvisioned: true,
-      });
-    }
-
-    // Call Retell outside the transaction to avoid timeout
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const result = await provisionRetellPhoneNumber({
-      agentId,
-      areaCode,
-      nickname: `${business.name} - RingPaw`,
-      smsWebhookUrl: buildRetellWebhookUrl(appUrl, "/api/sms/webhook"),
-    });
+    const provisioned = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.$executeRaw`
+        SELECT pg_advisory_xact_lock(hashtext(${business.id}))
+      `;
 
-    if (!isProvisionedPhoneNumber(result?.phone_number)) {
-      throw new Error("Retell returned an invalid phone number");
-    }
+      const existingPhoneNumber = await tx.phoneNumber.findUnique({
+        where: { businessId: business.id },
+      });
 
-    // Save to DB in a short transaction (no external calls inside)
-    let provisioned: { phoneNumber: string; alreadyProvisioned: boolean };
-    try {
-      provisioned = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        await tx.$executeRaw`
-          SELECT pg_advisory_xact_lock(hashtext(${business.id}))
-        `;
+      if (existingPhoneNumber) {
+        return {
+          phoneNumber: existingPhoneNumber.number,
+          alreadyProvisioned: true,
+        };
+      }
 
-        // Double-check under the lock in case of concurrent requests
-        const existing = await tx.phoneNumber.findUnique({
-          where: { businessId: business.id },
-        });
+      const result = await provisionRetellPhoneNumber({
+        agentId,
+        areaCode,
+        nickname: `${business.name} - RingPaw AI`,
+        smsWebhookUrl: buildRetellWebhookUrl(appUrl, "/api/sms/webhook"),
+      });
 
-        if (existing) {
-          // Another request already provisioned a number; clean up the one we just created
-          await deleteRetellPhoneNumber(result.phone_number).catch((e) => {
-            console.error("Failed to clean up extra Retell number:", e);
-          });
-          return { phoneNumber: existing.number, alreadyProvisioned: true };
-        }
+      if (!isProvisionedPhoneNumber(result?.phone_number)) {
+        throw new Error("Retell returned an invalid phone number");
+      }
 
+      try {
         await tx.phoneNumber.create({
           data: {
             businessId: business.id,
@@ -157,21 +140,23 @@ export async function POST(req: Request) {
             provider: "RETELL",
           },
         });
-
-        await tx.business.update({
-          where: { id: business.id },
-          data: { onboardingStep: 5 },
+      } catch (error) {
+        await deleteRetellPhoneNumber(result.phone_number).catch((cleanupError) => {
+          console.error("Failed to clean up duplicate Retell number:", cleanupError);
         });
+        throw error;
+      }
 
-        return { phoneNumber: result.phone_number, alreadyProvisioned: false };
+      await tx.business.update({
+        where: { id: business.id },
+        data: { onboardingStep: 5 },
       });
-    } catch (error) {
-      // DB write failed — clean up the Retell number we already created
-      await deleteRetellPhoneNumber(result.phone_number).catch((cleanupError) => {
-        console.error("Failed to clean up Retell number after DB error:", cleanupError);
-      });
-      throw error;
-    }
+
+      return {
+        phoneNumber: result.phone_number,
+        alreadyProvisioned: false,
+      };
+    });
 
     return NextResponse.json({
       phoneNumber: provisioned.phoneNumber,

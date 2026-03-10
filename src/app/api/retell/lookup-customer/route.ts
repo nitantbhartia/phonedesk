@@ -43,29 +43,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // --- Subscription gate ---
-  // Allow calls during onboarding test (onboardingComplete = false).
-  // Once onboarding is done, require an active subscription to take calls.
-  // stripeSubscriptionStatus='active' is the authoritative check and overrides
-  // isActive so that existing subscribers who didn't go through the post-deploy
-  // goLive path are never accidentally blocked.
-  // Set STRIPE_BYPASS=true to skip this gate for testing.
-  const biz = phoneRecord.business;
-  // Accept "active" (paid) or "trialing" (30-day outcome trial — card on file, not yet charged)
-  const hasActiveSub = ["active", "trialing"].includes(biz.stripeSubscriptionStatus ?? "") || process.env.STRIPE_BYPASS === "true";
-  if (biz.onboardingComplete && !biz.isActive && !hasActiveSub) {
-    return NextResponse.json({
-      result: `This line is temporarily inactive. Please apologize warmly and tell the caller to reach ${biz.ownerName} directly at the business phone number. Then call end_call immediately.`,
-      found: false,
-      square_customer_id: null,
-      subscription_inactive: true,
-    });
-  }
-
   const callerPhone = args?.caller_phone || call?.from_number;
   const businessId = phoneRecord.business.id;
-
-  console.log("[lookup-customer] callerPhone:", callerPhone, "from_number:", call?.from_number, "caller_phone arg:", args?.caller_phone, "normalizedPhone:", normalizePhoneNumber(callerPhone));
 
   // Run internal DB lookup and Square CRM lookup concurrently
   const [internalContext, squareCustomer] = await Promise.allSettled([
@@ -115,12 +94,9 @@ export async function POST(req: NextRequest) {
     result = buildCustomerContextSummary(context);
   }
 
-  console.log("[lookup-customer] result: found=", found, "customer=", customerName, "pets=", context.pets.map(p => p.name));
-
   return NextResponse.json({
     result,
     found,
-    caller_phone: normalizePhoneNumber(callerPhone),
     square_customer_id: squareCustomerId,
     customer_name: customerName,
     visit_count: context.customer?.visitCount || squareCust?.visitCount || 0,

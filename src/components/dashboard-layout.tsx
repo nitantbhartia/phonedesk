@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -8,7 +7,7 @@ import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
 
-const navItems: Array<{ href: string; label: string; tourId?: string; icon: React.ReactNode }> = [
+const navItems = [
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -44,7 +43,6 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
   {
     href: "/today",
     label: "Today",
-    tourId: "tour-nav-today",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
@@ -77,16 +75,6 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     ),
   },
   {
-    href: "/settings/billing",
-    label: "Billing",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <line x1="2" y1="10" x2="22" y2="10" />
-      </svg>
-    ),
-  },
-  {
     href: "/settings/reviews",
     label: "Reviews",
     icon: (
@@ -110,7 +98,6 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
   {
     href: "/settings/agent",
     label: "AI Settings",
-    tourId: "tour-nav-ai",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="3" />
@@ -120,7 +107,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
   },
 ];
 
-const ownerNavItem: { href: string; label: string; tourId?: string; icon: React.ReactNode } = {
+const ownerNavItem = {
   href: "/owner",
   label: "Owner",
   icon: (
@@ -172,9 +159,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-paw-cream/80 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex items-center justify-between">
         <BrandLogo
-          mobileWidth={138}
-          desktopWidth={172}
-          className="min-w-0 max-w-[138px]"
+          mobileWidth={124}
+          desktopWidth={156}
+          className="min-w-0 max-w-[124px]"
         />
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -204,9 +191,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {/* Logo and account */}
         <div className="space-y-4">
           <BrandLogo
-            mobileWidth={168}
-            desktopWidth={212}
-            className="max-w-[212px]"
+            mobileWidth={148}
+            desktopWidth={184}
+            className="max-w-[184px]"
           />
 
           <div className="flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
@@ -239,7 +226,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  {...(item.tourId ? { "data-tour": item.tourId } : {})}
                   className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
                     isActive
                       ? "active"

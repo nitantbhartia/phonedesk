@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { syncRetellAgent } from "@/lib/retell";
 import { seedBreedRecommendations } from "@/lib/breed-recommendations";
 
-const stripeBypass = process.env.STRIPE_BYPASS === "true";
-
 async function resolveUserId(session: {
   user?: { id?: string | null; email?: string | null; name?: string | null; image?: string | null };
 }) {
@@ -45,7 +43,19 @@ export async function GET() {
       services: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
       groomers: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
       phoneNumber: true,
-      calendarConnections: { where: { isActive: true } },
+      calendarConnections: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          provider: true,
+          isPrimary: true,
+          isActive: true,
+          calendarId: true,
+          metadata: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       retellConfig: true,
     },
   });
@@ -70,7 +80,7 @@ export async function GET() {
       prisma.appointment.count({
         where: {
           businessId: business.id,
-          status: { in: ["PENDING", "CONFIRMED", "COMPLETED"] },
+          status: { in: ["CONFIRMED", "COMPLETED"] },
           createdAt: { gte: monthAgo },
         },
       }),
@@ -91,12 +101,11 @@ export async function GET() {
       }),
     ]);
 
-  // Estimate revenue protected
-  const rawAvg =
+  // Estimate revenue protected (only confirmed/completed bookings)
+  const avgServicePrice =
     business.services.length > 0
-      ? business.services.reduce((sum: number, s: { price: number }) => sum + Number(s.price), 0) / business.services.length
-      : 0;
-  const avgServicePrice = rawAvg > 0 ? rawAvg : 65;
+      ? business.services.reduce((sum: number, s: { price: number }) => sum + s.price, 0) / business.services.length
+      : 65;
 
   const totalCallMinutes = Math.round((totalDuration._sum.duration || 0) / 60);
 
@@ -109,11 +118,6 @@ export async function GET() {
     avgCallDuration: Math.round(avgDuration._avg.duration || 0),
     totalCallMinutes,
   };
-
-  // When STRIPE_BYPASS=true, tell the UI that the subscription is active
-  if (stripeBypass && business) {
-    (business as Record<string, unknown>).stripeSubscriptionStatus = "active";
-  }
 
   return NextResponse.json({ business, stats });
 }
@@ -212,7 +216,6 @@ export async function POST(req: NextRequest) {
             name: svc.name.trim().slice(0, 100),
             price: Math.max(0, Math.min(price, 9999)),
             duration: Math.max(5, Math.min(duration, 480)),
-            isAddon: Boolean(svc.isAddon),
           },
         });
       }
@@ -290,16 +293,9 @@ export async function PATCH(req: NextRequest) {
   if (hasRetellUpdates) {
     const business = await prisma.business.findUnique({
       where: { userId },
-      select: { id: true, stripeSubscriptionStatus: true },
+      select: { id: true },
     });
     if (business) {
-      // Turning the agent ON requires an active subscription (unless bypassed for testing)
-      if (body.agentActive === true && !stripeBypass && business.stripeSubscriptionStatus !== "active") {
-        return NextResponse.json(
-          { error: "An active subscription is required to enable live call answering." },
-          { status: 402 }
-        );
-      }
       const retellData: Record<string, unknown> = {};
       if (body.agentActive !== undefined) retellData.isActive = Boolean(body.agentActive);
       if (body.voiceId !== undefined) retellData.voiceId = String(body.voiceId);
@@ -339,19 +335,6 @@ export async function PATCH(req: NextRequest) {
   const safeData: Record<string, unknown> = {};
   for (const key of allowedFields) {
     if (key in body) safeData[key] = body[key];
-  }
-
-  // Turning isActive on requires an active subscription (unless bypassed for testing)
-  if (safeData.isActive === true && !stripeBypass) {
-    const biz = await prisma.business.findUnique({
-      where: { userId },
-      select: { stripeSubscriptionStatus: true },
-    });
-    if (biz?.stripeSubscriptionStatus !== "active") {
-      // Strip isActive from the update — don't reject outright so
-      // onboardingComplete can still be set (e.g. goLive with no sub)
-      delete safeData.isActive;
-    }
   }
 
   const business = await prisma.business.update({

@@ -96,8 +96,6 @@ model Business {
   stripeSubscriptionId String? @unique
   stripePriceId    String?
   stripeSubscriptionStatus String?
-  bookingsCount    Int     @default(0) // total bookings Pip has ever made for this business
-  billingConsentGiven Boolean @default(false) // groomer checked the billing consent box at checkout
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -140,7 +138,6 @@ model Service {
   duration     Int      // in minutes
   isAddon      Boolean  @default(false)
   isActive     Boolean  @default(true)
-  isAddon      Boolean  @default(false) // if true, AI will offer this as an upsell add-on
   bookingMode  BookingMode? // override business default
   pricingRules PricingRule[]
   createdAt    DateTime @default(now())
@@ -243,7 +240,6 @@ model Appointment {
   rebookSent      Boolean          @default(false) // Feature 5: rebooking reminder sent
   rebookInterval  Int?             // days until next groom (breed-specific)
   reviewRequested Boolean          @default(false) // Feature 7: review request sent
-  groomerToken    String?           @unique  // public token for groomer status update link
   groomerId       String?
   groomer         Groomer?         @relation(fields: [groomerId], references: [id], onDelete: SetNull)
   calls           Call[]
@@ -463,7 +459,6 @@ model Groomer {
   businessId    String
   business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name          String
-  phone         String?  // optional — for sending groomer link via SMS
   specialties   String[] // e.g. ["doodles", "hand stripping", "cats"]
   isActive      Boolean  @default(true)
   appointments  Appointment[]

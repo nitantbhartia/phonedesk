@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { google } from "googleapis";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+const OAUTH_STATE_COOKIE = "calendar_oauth_state";
+const OAUTH_STATE_TTL_SECONDS = 15 * 60;
+
+type OAuthStatePayload = {
+  redirect: string;
+  provider: "google" | "square" | "acuity";
+  nonce: string;
+  ts: number;
+};
 
 function getBaseAppUrl(req: NextRequest) {
   return (
@@ -10,6 +21,56 @@ function getBaseAppUrl(req: NextRequest) {
     process.env.NEXT_PUBLIC_APP_URL ||
     req.nextUrl.origin
   );
+}
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, "utf8");
+  const bBuf = Buffer.from(b, "utf8");
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
+
+function encodeState(state: OAuthStatePayload): string {
+  return Buffer.from(JSON.stringify(state), "utf8").toString("base64url");
+}
+
+function decodeState(stateParam: string | null): OAuthStatePayload | null {
+  if (!stateParam) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(Buffer.from(stateParam, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== "object") return null;
+  const obj = parsed as Record<string, unknown>;
+  const provider = obj.provider;
+  const redirect = obj.redirect;
+  const nonce = obj.nonce;
+  const ts = obj.ts;
+
+  if (
+    (provider !== "google" && provider !== "square" && provider !== "acuity") ||
+    typeof redirect !== "string" ||
+    typeof nonce !== "string" ||
+    !/^[a-f0-9]{32}$/i.test(nonce) ||
+    typeof ts !== "number"
+  ) {
+    return null;
+  }
+
+  return { provider, redirect, nonce, ts };
+}
+
+function isValidState(payload: OAuthStatePayload, cookieNonce: string | undefined): boolean {
+  if (!cookieNonce) return false;
+  if (!timingSafeEqualString(payload.nonce, cookieNonce)) return false;
+
+  const now = Date.now();
+  if (payload.ts > now + 60_000) return false;
+  return now - payload.ts <= OAUTH_STATE_TTL_SECONDS * 1000;
 }
 
 export async function GET(req: NextRequest) {
@@ -42,6 +103,40 @@ export async function GET(req: NextRequest) {
     return target;
   };
 
+  const redirectWithStateCookie = (targetUrl: string, providerValue: "google" | "square" | "acuity") => {
+    const nonce = randomBytes(16).toString("hex");
+    const encodedState = encodeState({
+      redirect,
+      provider: providerValue,
+      nonce,
+      ts: Date.now(),
+    });
+    const finalTarget = new URL(targetUrl);
+    finalTarget.searchParams.set("state", encodedState);
+
+    const response = NextResponse.redirect(finalTarget.toString());
+    response.cookies.set(OAUTH_STATE_COOKIE, nonce, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/api/calendar/connect",
+      maxAge: OAUTH_STATE_TTL_SECONDS,
+    });
+    return response;
+  };
+
+  const redirectFromCallback = (path: string, params?: Record<string, string>) => {
+    const response = NextResponse.redirect(buildRedirectUrl(path, params));
+    response.cookies.set(OAUTH_STATE_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/api/calendar/connect",
+      maxAge: 0,
+    });
+    return response;
+  };
+
   // If no code, redirect to OAuth
   if (!code) {
     if (provider === "google") {
@@ -52,9 +147,8 @@ export async function GET(req: NextRequest) {
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events",
         ],
-        state: JSON.stringify({ redirect, provider }),
       });
-      return NextResponse.redirect(authUrl);
+      return redirectWithStateCookie(authUrl, "google");
     }
 
     if (provider === "square") {
@@ -66,14 +160,10 @@ export async function GET(req: NextRequest) {
       squareAuthUrl.searchParams.set("scope", "APPOINTMENTS_READ APPOINTMENTS_WRITE APPOINTMENTS_ALL_READ APPOINTMENTS_ALL_WRITE MERCHANT_PROFILE_READ CUSTOMERS_READ CUSTOMERS_WRITE CATALOG_READ");
       squareAuthUrl.searchParams.set("session", "false");
       squareAuthUrl.searchParams.set(
-        "state",
-        JSON.stringify({ redirect, provider: "square" })
-      );
-      squareAuthUrl.searchParams.set(
         "redirect_uri",
         `${appUrl}/api/calendar/connect`
       );
-      return NextResponse.redirect(squareAuthUrl.toString());
+      return redirectWithStateCookie(squareAuthUrl.toString(), "square");
     }
 
     if (provider === "acuity") {
@@ -82,11 +172,7 @@ export async function GET(req: NextRequest) {
       acuityAuthUrl.searchParams.set("client_id", process.env.ACUITY_CLIENT_ID || "");
       acuityAuthUrl.searchParams.set("redirect_uri", `${appUrl}/api/calendar/connect`);
       acuityAuthUrl.searchParams.set("scope", "api-v1");
-      acuityAuthUrl.searchParams.set(
-        "state",
-        JSON.stringify({ redirect, provider: "acuity" })
-      );
-      return NextResponse.redirect(acuityAuthUrl.toString());
+      return redirectWithStateCookie(acuityAuthUrl.toString(), "acuity");
     }
 
     return NextResponse.json(
@@ -95,10 +181,18 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const parsedState = decodeState(stateParam);
+  const cookieNonce = req.cookies.get(OAUTH_STATE_COOKIE)?.value;
+  if (!parsedState || !isValidState(parsedState, cookieNonce)) {
+    return redirectFromCallback("/settings/calendar", {
+      error: "invalid_oauth_state",
+    });
+  }
+
   // Handle OAuth callback
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.redirect(buildRedirectUrl("/"));
+    return redirectFromCallback("/");
   }
 
   const business = await prisma.business.findUnique({
@@ -106,18 +200,11 @@ export async function GET(req: NextRequest) {
   });
 
   if (!business) {
-    return NextResponse.redirect(buildRedirectUrl("/onboarding"));
+    return redirectFromCallback("/onboarding");
   }
 
-  let parsedState: { redirect?: string; provider?: string } = {};
-  try {
-    if (stateParam) parsedState = JSON.parse(stateParam);
-  } catch {
-    // ignore
-  }
-
-  const calendarProvider = parsedState.provider || "google";
-  const redirectPath = parsedState.redirect || redirect;
+  const calendarProvider = parsedState.provider;
+  const redirectPath = parsedState.redirect || "/settings/calendar";
 
   if (calendarProvider === "google") {
     try {
@@ -173,16 +260,10 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      return NextResponse.redirect(
-        buildRedirectUrl(redirectPath)
-      );
+      return redirectFromCallback(redirectPath);
     } catch (error) {
       console.error("Google Calendar OAuth error:", error);
-      return NextResponse.redirect(
-        buildRedirectUrl(redirectPath, {
-          error: "calendar_connect_failed",
-        })
-      );
+      return redirectFromCallback(redirectPath, { error: "calendar_connect_failed" });
     }
   }
 
@@ -254,12 +335,10 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      return NextResponse.redirect(buildRedirectUrl(redirectPath));
+      return redirectFromCallback(redirectPath);
     } catch (error) {
       console.error("Square OAuth error:", error);
-      return NextResponse.redirect(
-        buildRedirectUrl(redirectPath, { error: "calendar_connect_failed" })
-      );
+      return redirectFromCallback(redirectPath, { error: "calendar_connect_failed" });
     }
   }
 
@@ -339,18 +418,14 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      return NextResponse.redirect(buildRedirectUrl(redirectPath));
+      return redirectFromCallback(redirectPath);
     } catch (error) {
       console.error("Acuity OAuth error:", error);
-      return NextResponse.redirect(
-        buildRedirectUrl(redirectPath, { error: "calendar_connect_failed" })
-      );
+      return redirectFromCallback(redirectPath, { error: "calendar_connect_failed" });
     }
   }
 
-  return NextResponse.redirect(
-    buildRedirectUrl(redirectPath)
-  );
+  return redirectFromCallback(redirectPath);
 }
 
 // DELETE: Disconnect a calendar provider

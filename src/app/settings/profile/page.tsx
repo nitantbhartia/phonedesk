@@ -133,7 +133,6 @@ export default function BusinessProfilePage() {
   const { status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ ok: boolean; message: string } | null>(null);
 
@@ -189,8 +188,8 @@ export default function BusinessProfilePage() {
           );
         }
       }
-    } catch {
-      setFetchError("Failed to load profile data. Please refresh.");
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -272,13 +271,6 @@ export default function BusinessProfilePage() {
 
   return (
     <div className="space-y-6">
-      {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
-          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Business Profile</h1>

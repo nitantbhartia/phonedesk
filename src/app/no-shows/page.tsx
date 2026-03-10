@@ -83,7 +83,6 @@ export default function NoShowProtectionPage() {
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [lapsingClients, setLapsingClients] = useState<LapsingClient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionError, setActionError] = useState("");
   const [blasting, setBlasting] = useState(false);
   const [blastResult, setBlastResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"pending" | "noShows" | "waitlist" | "lapsing">("pending");
@@ -128,33 +127,27 @@ export default function NoShowProtectionPage() {
         const data = await waitlistRes.json();
         setWaitlist(data.entries || []);
       }
-    } catch {
-      setActionError("Failed to load data. Please refresh the page.");
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
   }
 
   async function markNoShow(appointmentId: string) {
-    setActionError("");
     try {
       const res = await fetch("/api/appointments/no-show", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ appointmentId }),
       });
-      if (res.ok) {
-        fetchData();
-      } else {
-        setActionError("Failed to mark no-show. Please try again.");
-      }
-    } catch {
-      setActionError("Failed to mark no-show. Please try again.");
+      if (res.ok) fetchData();
+    } catch (error) {
+      console.error("Error:", error);
     }
   }
 
   async function addToWaitlist() {
-    setActionError("");
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
@@ -172,11 +165,9 @@ export default function NoShowProtectionPage() {
           preferredTime: "",
         });
         fetchData();
-      } else {
-        setActionError("Failed to add to waitlist. Please try again.");
       }
-    } catch {
-      setActionError("Failed to add to waitlist. Please try again.");
+    } catch (error) {
+      console.error("Error:", error);
     }
   }
 
@@ -205,16 +196,11 @@ export default function NoShowProtectionPage() {
   }
 
   async function removeFromWaitlist(id: string) {
-    setActionError("");
     try {
       const res = await fetch(`/api/waitlist?id=${id}`, { method: "DELETE" });
-      if (res.ok) {
-        fetchData();
-      } else {
-        setActionError("Failed to remove from waitlist. Please try again.");
-      }
-    } catch {
-      setActionError("Failed to remove from waitlist. Please try again.");
+      if (res.ok) fetchData();
+    } catch (error) {
+      console.error("Error:", error);
     }
   }
 
@@ -253,13 +239,6 @@ export default function NoShowProtectionPage() {
           </button>
         </div>
       </div>
-
-      {actionError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{actionError}</p>
-          <button onClick={() => setActionError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
-        </div>
-      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -11,7 +11,6 @@ import { upsertCustomerMemory } from "@/lib/customer-memory";
 import { sendSms } from "@/lib/sms";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { getCRMWithFallback } from "@/crm/withFallback";
-import { getStripeClient } from "@/lib/stripe";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -23,15 +22,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { args?: Record<string, string>; call?: Record<string, string> };
+  let body: {
+    args?: {
+      customer_name?: string;
+      customer_phone?: string;
+      pet_name?: string;
+      pet_breed?: string;
+      pet_size?: string;
+      service_name?: string;
+      start_time?: string;
+      square_customer_id?: string;
+      groomer_name?: string;
+    };
+    call?: { call_id?: string; from_number?: string; to_number?: string };
+  };
   try {
-    body = JSON.parse(rawBody);
+    body = JSON.parse(rawBody || "{}");
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
   const { args, call } = body;
 
-  console.log("[book-appointment] service:", args?.service_name, "pet:", args?.pet_name, "to:", call?.to_number, "from:", call?.from_number, "customer_phone arg:", args?.customer_phone);
+  console.log("[book-appointment] args:", JSON.stringify(args), "from:", call?.from_number, "to:", call?.to_number);
 
   // Identify business from the called number
   const calledNumber = normalizePhoneNumber(call?.to_number);
@@ -57,7 +69,6 @@ export async function POST(req: NextRequest) {
     pet_breed: petBreed,
     pet_size: petSize,
     service_name: svcName,
-    addon_service_name: addonSvcName,
     start_time: startTime,
     square_customer_id: squareCustomerId,
     groomer_name: groomerName,
@@ -70,27 +81,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const VALID_SIZES = ["SMALL", "MEDIUM", "LARGE", "XLARGE"];
-  const normalizedPetSize = petSize ? petSize.toUpperCase() : null;
-  const validatedPetSize = normalizedPetSize && VALID_SIZES.includes(normalizedPetSize)
-    ? (normalizedPetSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE")
-    : undefined;
-
   const service = svcName
     ? business.services.find(
         (s: Service) =>
           s.isActive &&
           s.name.toLowerCase().includes(svcName.toLowerCase())
-      )
-    : null;
-
-  // Look up add-on service if the AI offered one
-  const addonService = addonSvcName
-    ? business.services.find(
-        (s: Service) =>
-          s.isActive &&
-          s.isAddon &&
-          s.name.toLowerCase().includes(addonSvcName.toLowerCase())
       )
     : null;
 
@@ -132,8 +127,7 @@ export async function POST(req: NextRequest) {
   }
 
   const start = parseLocalDatetime(correctedStartTime, timezone);
-  const totalDuration = (service?.duration || 60) + (addonService?.duration || 0);
-  const end = new Date(start.getTime() + totalDuration * 60000);
+  const end = new Date(start.getTime() + (service?.duration || 60) * 60000);
 
   if (Number.isNaN(start.getTime())) {
     return NextResponse.json({
@@ -156,22 +150,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Combine service name and price if add-on was accepted
-    const combinedServiceName = addonService
-      ? `${service?.name || svcName} + ${addonService.name}`
-      : (service?.name || svcName);
-    const combinedServicePrice = addonService
-      ? (service?.price || 0) + addonService.price
-      : service?.price;
-
     const appointment = await bookAppointment(business.id, {
       customerName,
       customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
       petName,
       petBreed,
-      petSize: validatedPetSize,
-      serviceName: combinedServiceName,
-      servicePrice: combinedServicePrice,
+      petSize: petSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
+      serviceName: service?.name || svcName,
+      servicePrice: service?.price,
       startTime: start,
       endTime: end,
       groomerId: groomer?.id,
@@ -191,22 +177,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Upsert customer memory — non-blocking: a save failure must never kill the booking confirmation
-    let internalCustomer: Awaited<ReturnType<typeof upsertCustomerMemory>> = null;
-    try {
-      internalCustomer = await upsertCustomerMemory({
-        businessId: business.id,
-        customerName,
-        customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
-        petName,
-        petBreed,
-        petSize: validatedPetSize,
-        serviceName: service?.name || svcName,
-        appointmentStart: start,
-      });
-    } catch (memErr) {
-      console.error("[book-appointment] upsertCustomerMemory failed (non-fatal):", memErr);
-    }
+    const internalCustomer = await upsertCustomerMemory({
+      businessId: business.id,
+      customerName,
+      customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
+      petName,
+      petBreed,
+      petSize: petSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE",
+      serviceName: service?.name || svcName,
+      appointmentStart: start,
+    });
 
     // Sync with Square CRM: create customer in Square if this is a new customer
     if (internalCustomer && !squareCustomerId) {
@@ -244,42 +224,6 @@ export async function POST(req: NextRequest) {
       where: { id: business.id },
       include: { phoneNumber: true },
     });
-
-    // Increment bookingsCount. If this is the very first booking during a trial,
-    // end the trial immediately so the groomer is charged their plan price right now.
-    try {
-      const updatedBiz = await prisma.business.update({
-        where: { id: business.id },
-        data: { bookingsCount: { increment: 1 } },
-        select: { bookingsCount: true, stripeSubscriptionId: true, stripeSubscriptionStatus: true, phone: true },
-      });
-
-      if (
-        updatedBiz.bookingsCount === 1 &&
-        updatedBiz.stripeSubscriptionId &&
-        updatedBiz.stripeSubscriptionStatus === "trialing"
-      ) {
-        // First booking ever — end the trial now so the groomer is charged immediately
-        const stripe = getStripeClient();
-        await stripe.subscriptions.update(updatedBiz.stripeSubscriptionId, {
-          trial_end: "now",
-        });
-        console.log(`[book-appointment] Trial ended for business ${business.id} — first booking triggered immediate charge`);
-
-        // Notify the owner via SMS that their plan is now active
-        const smsFrom = process.env.TWILIO_PHONE_NUMBER || fullBusiness?.phoneNumber?.number;
-        if (smsFrom && updatedBiz.phone) {
-          sendSms(
-            updatedBiz.phone,
-            `Pip just booked your first appointment — your ${business.name} plan is now active! You're all set.`,
-            smsFrom
-          ).catch((e) => console.error("[book-appointment] Trial activation SMS failed:", e));
-        }
-      }
-    } catch (countErr) {
-      // Non-blocking — booking is already confirmed; billing is a side-effect
-      console.error("[book-appointment] bookingsCount increment failed (non-fatal):", countErr);
-    }
 
     if (fullBusiness) {
       const smsResults = await Promise.allSettled([
@@ -349,10 +293,9 @@ export async function POST(req: NextRequest) {
     });
 
     const isConfirmed = appointment.status === "CONFIRMED";
-    const serviceDisplay = combinedServiceName || "grooming";
     const resultMessage = isConfirmed
-      ? `I've booked ${petName || "your pet"} for a ${serviceDisplay} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
-      : `I've got ${timeStr} held for ${petName || "your pet"}'s ${serviceDisplay} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
+      ? `I've booked ${petName || "your pet"} for a ${service?.name || svcName || "grooming"} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
+      : `I've got ${timeStr} held for ${petName || "your pet"}'s ${service?.name || svcName || "grooming"} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
 
     return NextResponse.json({
       result: resultMessage,

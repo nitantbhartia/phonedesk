@@ -15,11 +15,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { call?: Record<string, string> };
+  let body: { call?: { to_number?: string } };
   try {
-    body = JSON.parse(rawBody);
+    body = JSON.parse(rawBody || "{}");
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
   const { call } = body;
 
@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
         price: s.priceCents / 100,
         price_cents: s.priceCents,
         duration_minutes: s.durationMinutes,
-        is_addon: false,
       }));
 
       const summary = services
@@ -77,7 +76,6 @@ export async function POST(req: NextRequest) {
     price: s.price,
     price_cents: Math.round(s.price * 100),
     duration_minutes: s.duration,
-    is_addon: s.isAddon,
   }));
 
   const summary = services

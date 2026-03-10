@@ -5,6 +5,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * Prevents unauthenticated users from modifying appointments by guessing IDs.
  */
 
+const APPOINTMENT_TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
+
 function getSecret(): string {
   const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
   if (!secret) {
@@ -15,9 +17,26 @@ function getSecret(): string {
 
 /** Generate an HMAC token for an appointment action */
 export function generateAppointmentToken(appointmentId: string, action: "confirm" | "cancel"): string {
-  return createHmac("sha256", getSecret())
-    .update(`${action}:${appointmentId}`)
-    .digest("hex");
+  const timestamp = Date.now();
+  const payload = `${action}:${appointmentId}:${timestamp}`;
+  const signature = createHmac("sha256", getSecret()).update(payload).digest("hex");
+  return `${timestamp}.${signature}`;
+}
+
+function parseSignedToken(token: string): { timestamp: number; signature: string } | null {
+  const [rawTimestamp, signature, ...rest] = token.split(".");
+  if (!rawTimestamp || !signature || rest.length > 0) return null;
+  if (!/^\d+$/.test(rawTimestamp)) return null;
+  if (!/^[a-f0-9]{64}$/i.test(signature)) return null;
+  const timestamp = Number(rawTimestamp);
+  if (!Number.isFinite(timestamp)) return null;
+  return { timestamp, signature };
+}
+
+function isTimestampValid(timestamp: number): boolean {
+  const now = Date.now();
+  if (timestamp > now + 60_000) return false; // reject future-skewed tokens
+  return now - timestamp <= APPOINTMENT_TOKEN_TTL_MS;
 }
 
 /** Verify an HMAC token for an appointment action */
@@ -26,8 +45,14 @@ export function verifyAppointmentToken(
   action: "confirm" | "cancel",
   token: string
 ): boolean {
-  const expected = generateAppointmentToken(appointmentId, action);
-  const tokenBuf = Buffer.from(token, "utf8");
+  const parsed = parseSignedToken(token);
+  if (!parsed) return false;
+  if (!isTimestampValid(parsed.timestamp)) return false;
+
+  const expected = createHmac("sha256", getSecret())
+    .update(`${action}:${appointmentId}:${parsed.timestamp}`)
+    .digest("hex");
+  const tokenBuf = Buffer.from(parsed.signature, "utf8");
   const expectedBuf = Buffer.from(expected, "utf8");
   if (tokenBuf.length !== expectedBuf.length) {
     return false;

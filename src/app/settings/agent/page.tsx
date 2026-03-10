@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { InfoIcon } from "@/components/ui/info-icon";
-import { toast } from "@/components/ui/toast";
 import {
   Bot,
   Volume2,
@@ -56,7 +55,6 @@ interface BusinessData {
     price: number;
     duration: number;
     isActive: boolean;
-    isAddon: boolean;
   }>;
   retellConfig: {
     greeting: string;
@@ -96,7 +94,7 @@ export default function AgentSettingsPage() {
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [saveStatus, setSaveStatus] = useState<{ ok: boolean; message: string } | null>(null);
 
   // Form state
   const [greeting, setGreeting] = useState("");
@@ -108,7 +106,7 @@ export default function AgentSettingsPage() {
   const [language, setLanguage] = useState("casual");
   const [customInstructions, setCustomInstructions] = useState("");
   const [services, setServices] = useState<
-    Array<{ id?: string; name: string; price: string; duration: string; isAddon: boolean }>
+    Array<{ id?: string; name: string; price: string; duration: string }>
   >([]);
 
   useEffect(() => {
@@ -139,19 +137,18 @@ export default function AgentSettingsPage() {
           }
           setServices(
             data.business.services.map(
-              (s: { id: string; name: string; price: number; duration: number; isAddon: boolean }) => ({
+              (s: { id: string; name: string; price: number; duration: number }) => ({
                 id: s.id,
                 name: s.name,
                 price: s.price.toString(),
                 duration: s.duration.toString(),
-                isAddon: Boolean(s.isAddon),
               })
             )
           );
         }
       }
-    } catch {
-      toast.error("Failed to load settings. Please refresh.");
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -159,7 +156,9 @@ export default function AgentSettingsPage() {
 
   async function saveSettings() {
     setSaving(true);
+    setSaveStatus(null);
     try {
+      // Single API call to save everything and sync to Retell
       const res = await fetch("/api/business/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -168,6 +167,7 @@ export default function AgentSettingsPage() {
           ownerName: business?.ownerName,
           bookingMode,
           services: services.filter((s) => s.name.trim()),
+          // Agent config fields — handled in the same request
           agentActive: isActive,
           voiceId,
           personality: { tone, style, language, customInstructions },
@@ -176,13 +176,15 @@ export default function AgentSettingsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data.error || "Failed to save settings");
+        setSaveStatus({ ok: false, message: data.error || "Failed to save settings" });
+      } else if (data.synced) {
+        setSaveStatus({ ok: true, message: "Settings saved and synced to voice agent" });
       } else {
-        toast.success(data.synced ? "Saved and synced to voice agent" : "Settings saved");
-        setLastSaved(new Date());
+        setSaveStatus({ ok: true, message: "Settings saved" });
       }
-    } catch {
-      toast.error("Network error — check your connection");
+    } catch (error) {
+      console.error("Error saving:", error);
+      setSaveStatus({ ok: false, message: "Network error — check your connection" });
     } finally {
       setSaving(false);
     }
@@ -203,21 +205,24 @@ export default function AgentSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold">AI Agent Settings</h1>
           <p className="text-muted-foreground">
-            Customize your AI's voice, personality, services, and booking behavior. Changes sync to your live agent automatically.
+            Configure how your AI receptionist handles calls.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          {lastSaved && (
-            <span className="text-xs text-muted-foreground">
-              Saved {lastSaved.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-            </span>
-          )}
-          <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
+        <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
+          <Save className="w-4 h-4 mr-2" />
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
+
+      {saveStatus && (
+        <div className={`p-3 rounded-lg text-sm ${
+          saveStatus.ok
+            ? "bg-green-50 text-green-800 border border-green-200"
+            : "bg-red-50 text-red-800 border border-red-200"
+        }`}>
+          {saveStatus.message}
+        </div>
+      )}
 
       {/* Agent Status */}
       <Card>
@@ -256,10 +261,10 @@ export default function AgentSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {VOICE_OPTIONS.map((voice) => (
-              <div
+              <button
                 key={voice.id}
                 onClick={() => setVoiceId(voice.id)}
-                className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
                   voiceId === voice.id
                     ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                     : "border-border hover:border-primary/30"
@@ -273,7 +278,7 @@ export default function AgentSettingsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">{voice.desc}</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">{voice.accent}</p>
-              </div>
+              </button>
             ))}
           </div>
         </CardContent>
@@ -294,7 +299,7 @@ export default function AgentSettingsPage() {
           <div className="space-y-3">
             <Label className="inline-flex items-center gap-1.5">
               Conversation Tone
-              <InfoIcon text="Shapes how your AI sounds to every caller. Friendly feels warm and upbeat, Professional is polished and efficient, Empathetic is gentle and patient. Pick what fits your brand." />
+              <InfoIcon text="Sets the overall vibe callers hear first." />
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {TONE_OPTIONS.map((opt) => (
@@ -321,7 +326,7 @@ export default function AgentSettingsPage() {
             <div className="space-y-2">
               <Label className="inline-flex items-center gap-1.5">
                 Conversation Style
-                <InfoIcon text="Controls how much the AI says in each turn. Concise keeps answers short and fast. Natural matches how people actually talk. Detailed gives thorough explanations — good if callers ask lots of follow-up questions." />
+                <InfoIcon text="Controls whether replies are brief, natural, or detailed." />
               </Label>
               <Select value={style} onValueChange={setStyle}>
                 <SelectTrigger>
@@ -340,7 +345,7 @@ export default function AgentSettingsPage() {
             <div className="space-y-2">
               <Label className="inline-flex items-center gap-1.5">
                 Language Style
-                <InfoIcon text="Casual uses contractions and everyday phrases (e.g. 'I'll get that booked for you!'). Formal avoids slang and is more polished (e.g. 'I will arrange that appointment.'). Most grooming clients prefer casual." />
+                <InfoIcon text="Choose casual or formal wording for the AI voice." />
               </Label>
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger>
@@ -359,7 +364,7 @@ export default function AgentSettingsPage() {
           <div className="space-y-2">
             <Label className="inline-flex items-center gap-1.5">
               Custom Instructions (optional)
-              <InfoIcon text="Rules injected into every call. Use this to handle special cases: 'Always mention we offer free nail trims with full grooms' or 'We only groom dogs, not cats.' Keep instructions clear and specific." />
+              <InfoIcon text="Business-specific rules that get injected into every call." />
             </Label>
             <textarea
               className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -389,18 +394,12 @@ export default function AgentSettingsPage() {
           <textarea
             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={greeting}
-            onChange={(e) => setGreeting(e.target.value.slice(0, 300))}
+            onChange={(e) => setGreeting(e.target.value)}
             placeholder="Hi! You&apos;ve reached [Business Name]..."
-            maxLength={300}
           />
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-muted-foreground">
-              Leave blank to use the auto-generated greeting based on your business name.
-            </p>
-            <p className={`text-xs font-medium tabular-nums ${greeting.length > 260 ? "text-orange-500" : "text-muted-foreground/50"}`}>
-              {greeting.length}/300
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Leave blank to use the auto-generated greeting based on your business name.
+          </p>
         </CardContent>
       </Card>
 
@@ -439,7 +438,7 @@ export default function AgentSettingsPage() {
         <CardHeader>
           <CardTitle>Services & Pricing</CardTitle>
           <CardDescription>
-            The AI shares these with callers when asked about services. Toggle "Add-on" to let the AI upsell that service to returning customers after confirming their primary booking.
+            The AI shares these with callers when asked about services.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -448,7 +447,7 @@ export default function AgentSettingsPage() {
               <div className="flex-1 space-y-1">
                 <Label className="inline-flex items-center gap-1.5">
                   Service
-                  <InfoIcon text="The service name spoken to callers (e.g. 'Full Groom', 'Bath & Brush', 'Nail Trim'). Keep names short and recognizable — callers will hear exactly what you type here." />
+                  <InfoIcon text="Name customers hear when asking what you offer." />
                 </Label>
                 <Input
                   value={service.name}
@@ -463,7 +462,7 @@ export default function AgentSettingsPage() {
                 <div className="flex-1 sm:w-24 sm:flex-none space-y-1">
                   <Label className="inline-flex items-center gap-1.5">
                     Price ($)
-                    <InfoIcon text="Base price quoted to callers for this service. If you have breed- or size-specific pricing, set those overrides in the Pricing tab — this is the default fallback." />
+                    <InfoIcon text="Used for quoting and estimate responses." />
                   </Label>
                   <Input
                     type="number"
@@ -478,7 +477,7 @@ export default function AgentSettingsPage() {
                 <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
                   <Label className="inline-flex items-center gap-1.5">
                     Duration (min)
-                    <InfoIcon text="How long this service takes in minutes. The AI uses this to block the right amount of time on your calendar and avoid back-to-back conflicts." />
+                    <InfoIcon text="Used to calculate available booking windows." />
                   </Label>
                   <Input
                     type="number"
@@ -486,19 +485,6 @@ export default function AgentSettingsPage() {
                     onChange={(e) => {
                       const updated = [...services];
                       updated[i] = { ...service, duration: e.target.value };
-                      setServices(updated);
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col items-center gap-1 shrink-0">
-                  <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
-                    Add-on
-                  </Label>
-                  <Switch
-                    checked={service.isAddon}
-                    onCheckedChange={(checked) => {
-                      const updated = [...services];
-                      updated[i] = { ...service, isAddon: checked };
                       setServices(updated);
                     }}
                   />
@@ -518,7 +504,7 @@ export default function AgentSettingsPage() {
           <Button
             variant="outline"
             onClick={() =>
-              setServices([...services, { name: "", price: "", duration: "60", isAddon: false }])
+              setServices([...services, { name: "", price: "", duration: "60" }])
             }
           >
             <Plus className="w-4 h-4 mr-2" /> Add Service

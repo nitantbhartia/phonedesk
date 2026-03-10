@@ -3,22 +3,6 @@
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    // Global crash handlers so Railway logs show the reason before the process dies.
-    process.on("uncaughtException", (err) => {
-      const mem = process.memoryUsage();
-      process.stderr.write(
-        `[crash] uncaughtException: ${err?.stack || err}\nheap: ${Math.round(mem.heapUsed / 1024 / 1024)}MB / ${Math.round(mem.heapTotal / 1024 / 1024)}MB rss: ${Math.round(mem.rss / 1024 / 1024)}MB\n`,
-      );
-      process.exit(1);
-    });
-    process.on("unhandledRejection", (reason) => {
-      const mem = process.memoryUsage();
-      process.stderr.write(
-        `[crash] unhandledRejection: ${reason instanceof Error ? reason.stack : String(reason)}\nheap: ${Math.round(mem.heapUsed / 1024 / 1024)}MB / ${Math.round(mem.heapTotal / 1024 / 1024)}MB rss: ${Math.round(mem.rss / 1024 / 1024)}MB\n`,
-      );
-      process.exit(1);
-    });
-
     const { validateEnv } = await import("./lib/env");
     try {
       validateEnv();

@@ -12,12 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { args?: Record<string, string>; call?: Record<string, string> };
-  try {
-    body = JSON.parse(rawBody);
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const body = JSON.parse(rawBody);
   const { args, call } = body;
   const serviceName = String(args?.service_name || "").trim();
 

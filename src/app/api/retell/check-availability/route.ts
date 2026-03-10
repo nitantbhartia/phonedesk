@@ -90,65 +90,6 @@ function formatSpokenDate(ymdDate: string, timezone: string) {
   }).format(date);
 }
 
-const NEXT_AVAILABLE_SENTINEL = "next_available";
-
-/**
- * Convert a local hour (e.g. 10 for 10am) on a specific date string (YYYY-MM-DD)
- * into a UTC Date, accounting for the timezone offset on that day.
- */
-function localHourToUtc(dateStr: string, hour: number, timezone: string): Date {
-  // Approximate: assume the hour in UTC, then measure the actual local hour
-  const approx = new Date(
-    `${dateStr}T${hour.toString().padStart(2, "0")}:00:00Z`
-  );
-  const actualLocalHour = Number(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      hour: "2-digit",
-      hour12: false,
-    })
-      .formatToParts(approx)
-      .find((p) => p.type === "hour")?.value ?? hour
-  );
-  // Shift by the difference to land on the correct local hour
-  return new Date(approx.getTime() + (hour - actualLocalHour) * 3_600_000);
-}
-
-/**
- * Find the next Monday–Friday date at or after startDate (YYYY-MM-DD).
- */
-function nextWeekday(startDate: string, timezone: string): string {
-  let candidate = startDate;
-  for (let i = 0; i < 7; i++) {
-    const probe = new Date(candidate + "T12:00:00Z");
-    const weekday = new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      weekday: "long",
-    })
-      .format(probe)
-      .toLowerCase();
-    if (weekday !== "saturday" && weekday !== "sunday") return candidate;
-    candidate = addDays(candidate, 1);
-  }
-  return candidate; // fallback: should never reach here
-}
-
-/**
- * Build guaranteed demo slots (10am, 11am, 2pm) on a given date.
- * Used when the 14-day scan finds nothing, so the booking demo always works.
- */
-function buildFallbackSlots(
-  dateStr: string,
-  timezone: string,
-  durationMins: number
-) {
-  return [10, 11, 14].map((hour) => {
-    const start = localHourToUtc(dateStr, hour, timezone);
-    const end = new Date(start.getTime() + durationMins * 60_000);
-    return { start, end };
-  });
-}
-
 function normalizeDateInput(rawDate: unknown, timezone: string) {
   const todayInTz = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
@@ -159,19 +100,6 @@ function normalizeDateInput(rawDate: unknown, timezone: string) {
   }
 
   const input = rawDate.trim();
-
-  // Detect "first available", "next available", "as soon as possible", etc.
-  if (
-    /\b(first|next|earliest|soonest|any|asap|as soon as possible|whenever|open)\b/i.test(
-      input
-    ) &&
-    !/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(
-      input
-    )
-  ) {
-    return NEXT_AVAILABLE_SENTINEL;
-  }
-
   const relativeWeekday = parseRelativeWeekday(input, timezone);
   if (relativeWeekday) return relativeWeekday;
 
@@ -315,6 +243,7 @@ export async function POST(req: NextRequest) {
   const business = phoneNum.business;
   const timezone = business.timezone || "America/Los_Angeles";
   const requestedDate = normalizeDateInput(date, timezone);
+  const spokenDate = formatSpokenDate(requestedDate, timezone);
   const preferred = normalizePreferredTime(preferredTime);
   const preferredMinutes = preferred ? timeTextToMinutes(preferred) : null;
 
@@ -324,64 +253,6 @@ export async function POST(req: NextRequest) {
       s.isActive && s.name.toLowerCase().includes((serviceName || "").toLowerCase())
   );
   const duration = service?.duration || 60;
-
-  // "First available" — scan forward up to 14 days to find the next open slot
-  if (requestedDate === NEXT_AVAILABLE_SENTINEL) {
-    const todayInTz = new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-    }).format(new Date());
-    try {
-      for (let i = 0; i < 14; i++) {
-        const tryDate = addDays(todayInTz, i);
-        const trySlots = await getAvailableSlots(business.id, tryDate, duration);
-        if (trySlots.length > 0) {
-          const spokenDate = formatSpokenDate(tryDate, timezone);
-          const slotDescriptions = describeAvailableSlots(trySlots, timezone);
-          const offered = trySlots.slice(0, 3).map((slot) => ({
-            start_time: slot.start.toISOString(),
-            end_time: slot.end.toISOString(),
-            display_time: formatSlotTime(slot.start, timezone),
-          }));
-          return NextResponse.json({
-            result: `The next available time is ${spokenDate} at ${slotDescriptions}. Would any of those work for you?`,
-            available: true,
-            available_slots: offered,
-            timezone,
-            normalized_date: tryDate,
-          });
-        }
-      }
-      // Nothing found in 14 days (no hours configured or all days disabled).
-      // Fall back to guaranteed slots on the next weekday so the demo can proceed.
-      const todayInTz2 = new Intl.DateTimeFormat("en-CA", {
-        timeZone: timezone,
-      }).format(new Date());
-      const fallbackDate = nextWeekday(addDays(todayInTz2, 1), timezone);
-      const fallbackSlots = buildFallbackSlots(fallbackDate, timezone, duration);
-      const fallbackSpoken = formatSpokenDate(fallbackDate, timezone);
-      const fallbackDescriptions = describeAvailableSlots(fallbackSlots, timezone);
-      const fallbackOffered = fallbackSlots.map((slot) => ({
-        start_time: slot.start.toISOString(),
-        end_time: slot.end.toISOString(),
-        display_time: formatSlotTime(slot.start, timezone),
-      }));
-      return NextResponse.json({
-        result: `The next available time is ${fallbackSpoken} at ${fallbackDescriptions}. Would any of those work for you?`,
-        available: true,
-        available_slots: fallbackOffered,
-        timezone,
-        normalized_date: fallbackDate,
-      });
-    } catch (error) {
-      console.error("Error scanning for next available slot:", error);
-      return NextResponse.json({
-        result:
-          "Let me check with the owner on availability. What day and time would work best for you?",
-      });
-    }
-  }
-
-  const spokenDate = formatSpokenDate(requestedDate, timezone);
 
   try {
     const slots = await getAvailableSlots(business.id, requestedDate, duration);

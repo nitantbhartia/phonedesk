@@ -50,32 +50,8 @@ export default function CallLogPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
-  const [fetchError, setFetchError] = useState("");
 
   const pageSize = 20;
-
-  function exportCSV() {
-    if (!calls.length) return;
-    const headers = ["Date", "Caller Name", "Phone", "Status", "Pet", "Service", "Duration (s)", "Summary"];
-    const rows = calls.map((c) => [
-      new Date(c.createdAt).toLocaleString(),
-      c.callerName || "",
-      c.callerPhone || "",
-      c.appointment ? "Confirmed" : c.status,
-      c.appointment?.petName || "",
-      c.appointment?.serviceName || "",
-      c.duration ?? "",
-      (c.summary || "").replace(/[\n\r,]/g, " "),
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `calls-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   const fetchCalls = useCallback(async () => {
     setLoading(true);
@@ -93,8 +69,8 @@ export default function CallLogPage() {
         setCalls(data.calls || []);
         setTotal(data.total || 0);
       }
-    } catch {
-      setFetchError("Failed to load calls. Please refresh.");
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -124,15 +100,11 @@ export default function CallLogPage() {
         <div>
           <h1 className="text-4xl font-extrabold text-paw-brown">Call Log</h1>
           <p className="text-paw-brown/60 font-medium mt-1">
-            Every call your AI handled — tap any row to read the full transcript and see what was booked.
+            Review and manage recent AI interactions
           </p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={exportCSV}
-            disabled={calls.length === 0}
-            className="px-5 py-2.5 bg-white rounded-full font-bold text-sm shadow-sm border border-paw-brown/5 flex items-center gap-2 hover:bg-paw-cream transition-colors disabled:opacity-40"
-          >
+          <button className="px-5 py-2.5 bg-white rounded-full font-bold text-sm shadow-sm border border-paw-brown/5 flex items-center gap-2 hover:bg-paw-cream transition-colors">
             <svg
               width="18"
               height="18"
@@ -145,17 +117,10 @@ export default function CallLogPage() {
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Export CSV
+            Export
           </button>
         </div>
       </div>
-
-      {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
-          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
-        </div>
-      )}
 
       {/* Search bar */}
       <form
@@ -322,10 +287,10 @@ export default function CallLogPage() {
                           </p>
                           <p className="text-sm text-paw-brown/50 truncate">
                             {call.appointment?.petName
-                              ? `${call.appointment.petName} · ${call.callerPhone ? formatPhoneNumber(call.callerPhone) : "No number"}`
+                              ? `${call.appointment.petName}`
                               : call.callerPhone
                                 ? formatPhoneNumber(call.callerPhone)
-                                : "No number"}
+                                : "No details"}
                           </p>
                         </div>
                       </div>

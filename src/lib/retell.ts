@@ -4,7 +4,7 @@ import type { Business, BreedRecommendation, RetellConfig, Service, Groomer } fr
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
 const DEFAULT_VOICE_ID = "11labs-Grace";
-const DEFAULT_VOICE_SPEED = 0.95; // slightly under 1.0 — more unhurried, natural pacing
+const DEFAULT_VOICE_SPEED = 1.0;
 const DEFAULT_VOLUME = 1.0;
 
 function getRetellApiKey() {
@@ -96,11 +96,8 @@ ${business.groomers.filter(g => g.isActive).map(g => `- ${g.name}${g.specialties
 PERSONALITY & TONE
 You are warm, unhurried, and genuinely interested in the caller and their dog. You sound like a real person — slightly casual but professional. Never robotic. Never rushed.
 VOICE RULES:
-- Speak at a calm, steady pace throughout every call. Never rush — not even when going through multiple steps.
-- Use a period or an em-dash as your default sentence-ender. Reserve exclamation marks only for genuine moments of warmth, not routine transitions. Wrong: "Perfect! Got it! Great!" Right: "Perfect — let me get that sorted for you."
 - Always acknowledge what the caller just said before moving to your next question. Never jump straight to the next item.
-- Use natural connective phrases: "Of course", "Sure thing", "Let me check that for you", "Absolutely"
-- When you need a moment before speaking (checking something, thinking), bridge the gap naturally out loud: "Let me see...", "One moment...", "Give me just a second." Never leave more than a beat of silence without a bridging phrase.
+- Use natural connective phrases: "Of course", "Absolutely", "Oh great", "Sure thing", "Let me check that for you"
 - The moment a caller mentions their dog's name, use it in your very next sentence and continue using it throughout
 - When a caller mentions a breed, add a brief warm comment: "Oh, goldens always love a full groom" or "Doodles have such beautiful coats"
 - Mirror the caller's energy — chatty caller, be chatty; brief caller, be efficient
@@ -119,16 +116,15 @@ Example: Caller says "I need a full groom, maybe Thursday"
 → "Full groom on Thursday — perfect. What time works best for you?"
 ---
 CONVERSATION FLOW
-STEP 1 — LOOKUP, SERVICES & DATE (do all three before your first response)
-As soon as the caller says anything, call get_current_datetime, lookup_customer_context, and get_services in parallel. Do NOT speak until all three tool calls complete. Always use the date from get_current_datetime — never assume today's date from prior knowledge.
-CRITICAL: If lookup_customer_context returns subscription_inactive=true, say exactly: "Hi, thanks so much for calling ${business.name}! Our booking line is temporarily unavailable right now — please reach ${business.ownerName} directly on the business number. So sorry for the inconvenience!" Then immediately call end_call. Do not continue the conversation.
+STEP 1 — LOOKUP & SERVICES (do both silently before speaking)
+Immediately call lookup_customer_context on every call. Then call get_services. Do NOT speak until both tool calls complete.
 Use the services returned by get_services for ALL price and service name references throughout the call.
 STEP 2 — GREETING
 If returning customer:
-"Hey, [Name] — so good to hear from you. How's [Dog Name] doing?"
+"Hey [Name]! So great to hear from you — how's [Dog Name] doing?"
 Skip any information already on file unless confirming a change.
 If new customer:
-"Thanks for calling ${business.name}, this is Pip. How can I help you today?"
+"Thanks for calling ${business.name}, this is Pip! How can I help you today?"
 STEP 3 — COLLECT MISSING INFORMATION
 One question per turn. Skip anything already known from lookup. Collect in this order if missing:
 - Customer name
@@ -150,19 +146,10 @@ Offer only the returned slots and ask which they prefer.
 STEP 5 — BOOK APPOINTMENT
 When caller selects a slot, call book_appointment once using the exact start_time returned by check_availability. Never invent or reformat timestamps yourself.
 Never confirm a booking until book_appointment returns success.
-STEP 5.5 — UPSELL ADD-ON (returning customers only, one offer max)
-After the caller confirms their primary service choice, check the services list from get_services for any with is_addon=true. If add-ons exist and this is a returning customer (found=true from lookup), offer exactly ONE add-on naturally before booking:
-"While I have you — we also offer [add-on name] for just $[price], which only takes an extra [duration] minutes. Want to add that on today?"
-Rules:
-- Only offer if found=true (returning customer). Never upsell new customers.
-- Only offer one add-on. Never stack multiple offers.
-- Accept any yes/sure/yeah/why not as acceptance. Accept any no/nah/skip as decline.
-- If accepted: pass addon_service_name to book_appointment. If declined: book without it. Never ask twice.
 STEP 6 — CONFIRM & CLOSE
-"Perfect — [Dog Name] is all set for a [Service] on [Day, Date] at [Time]. ${business.ownerName} will send you a confirmation text shortly. Is there anything else I can help you with?"
+"Perfect! [Dog Name] is all set for a [Service] on [Day, Date] at [Time]. ${business.ownerName} will send you a confirmation text shortly. Is there anything else I can help you with?"
 For first-time visitors add:
-"Since it's your first visit, plan to arrive a few minutes early so we can get [Dog Name]'s info on file. We're really looking forward to meeting them."
-CRITICAL — after every successful booking, always say this exact line before ending: "You're all set! You'll get a confirmation text shortly." This must follow every successful book_appointment call.
+"Since it's your first visit, plan to arrive a few minutes early so we can get [Dog Name]'s info on file. We're so excited to meet them!"
 Before ending any call, call add_call_note with the square_customer_id from lookup (if available), the outcome (booked / cancelled / inquiry_only / no_booking), and a 1-2 sentence summary of the call. Then call end_call.
 ---
 EDGE CASES
@@ -192,16 +179,6 @@ WHAT YOU NEVER DO
 - Never re-check availability for the same day unless the caller requests a different day${breedGuideSection ? "\n" + breedGuideSection : ""}`;
 }
 
-function formatTime12h(time24: string): string {
-  const [hourStr, minuteStr] = time24.split(":");
-  const hour = Number(hourStr);
-  const minute = Number(minuteStr ?? "0");
-  if (isNaN(hour) || isNaN(minute)) return time24;
-  const meridiem = hour >= 12 ? "pm" : "am";
-  const hour12 = hour % 12 || 12;
-  return minute === 0 ? `${hour12}${meridiem}` : `${hour12}:${minuteStr}${meridiem}`;
-}
-
 function formatBusinessHours(
   hours: Record<string, { open: string; close: string }>
 ): string {
@@ -218,14 +195,13 @@ function formatBusinessHours(
   return Object.entries(hours)
     .filter(([, v]) => v && v.open && v.close)
     .map(
-      ([day, { open, close }]) =>
-        `${dayNames[day] || day}: ${formatTime12h(open)}–${formatTime12h(close)}`
+      ([day, { open, close }]) => `${dayNames[day] || day}: ${open}-${close}`
     )
     .join(", ");
 }
 
 export function generateGreeting(business: Business): string {
-  return `Hi, you've reached ${business.name}! This is Pip — how can I help you today?`;
+  return `Hi, you've reached ${business.name}! Give me just one moment.`;
 }
 
 // --- Retell LLM (Response Engine) ---
@@ -240,7 +216,7 @@ export async function createRetellLLM(config: {
     start_speaker: "agent",
     general_prompt: config.generalPrompt,
     begin_message: config.beginMessage,
-    model_temperature: 0.3,
+    model_temperature: 0.1,
     tool_call_strict_mode: true,
   };
 
@@ -339,15 +315,6 @@ export async function createRetellAgent(config: {
       volume: DEFAULT_VOLUME,
       webhook_url: config.webhookUrl,
       language: "en-US",
-      // Conversational feel
-      responsiveness: 0.9,          // how quickly agent responds after caller stops — high = snappy
-      interruption_sensitivity: 0.8, // how easily caller can interrupt — natural conversation level
-      enable_backchannel: true,      // say "mm-hmm", "right", "got it" while caller is talking
-      backchannel_frequency: 0.4,    // ~40% of pauses get a backchannel — natural, not excessive
-      backchannel_words: ["mm-hmm", "right", "got it", "of course", "yeah"],
-      reminder_trigger_ms: 6000,     // after 6s of caller silence, gently prompt
-      reminder_max_count: 1,         // only one reminder per conversation
-      normalize_for_speech: true,    // convert numbers, dates, $ signs to spoken form
     }),
   });
 }
@@ -362,17 +329,7 @@ export async function updateRetellAgent(
     volume: number;
   }>
 ): Promise<void> {
-  const body: Record<string, unknown> = {
-    // Always apply conversational settings on every sync
-    responsiveness: 0.9,
-    interruption_sensitivity: 0.8,
-    enable_backchannel: true,
-    backchannel_frequency: 0.4,
-    backchannel_words: ["mm-hmm", "right", "got it", "of course", "yeah"],
-    reminder_trigger_ms: 6000,
-    reminder_max_count: 1,
-    normalize_for_speech: true,
-  };
+  const body: Record<string, unknown> = {};
   if (updates.agentName) body.agent_name = updates.agentName;
   if (updates.voiceId) body.voice_id = updates.voiceId;
   if (updates.webhookUrl) body.webhook_url = updates.webhookUrl;
@@ -391,50 +348,26 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 
 // --- Phone Number Provisioning ---
 
-const FALLBACK_AREA_CODES = [415, 212, 312, 512, 720, 206, 404, 617, 213, 303];
-
 export async function provisionRetellPhoneNumber(options: {
   agentId: string;
   areaCode?: number;
   nickname?: string;
   smsWebhookUrl?: string;
 }): Promise<{ phone_number: string }> {
-  const smsWebhook = options.smsWebhookUrl;
-
-  const tryProvision = async (areaCode: number) => {
-    const body: Record<string, unknown> = {
-      area_code: areaCode,
-      inbound_agent_id: options.agentId,
-      nickname: options.nickname || "RingPaw Line",
-    };
-    if (smsWebhook) body.inbound_sms_webhook_url = smsWebhook;
-    return retellFetch("/create-phone-number", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+  const body: Record<string, unknown> = {
+    area_code: options.areaCode || 415,
+    inbound_agent_id: options.agentId,
+    nickname: options.nickname || "RingPaw AI Line",
   };
 
-  // Try the requested area code first, then fall back to alternatives
-  const areaCodesToTry = [
-    options.areaCode ?? FALLBACK_AREA_CODES[0],
-    ...FALLBACK_AREA_CODES.filter((c) => c !== options.areaCode),
-  ];
-
-  let lastError: Error | null = null;
-  for (const areaCode of areaCodesToTry) {
-    try {
-      return await tryProvision(areaCode);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("No phone numbers of this area code")) {
-        lastError = err instanceof Error ? err : new Error(msg);
-        continue; // try next area code
-      }
-      throw err; // unrelated error, bubble up
-    }
+  if (options.smsWebhookUrl) {
+    body.inbound_sms_webhook_url = options.smsWebhookUrl;
   }
 
-  throw lastError ?? new Error("No phone numbers available for any area code");
+  return retellFetch("/create-phone-number", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
 export async function deleteRetellPhoneNumber(
@@ -443,27 +376,6 @@ export async function deleteRetellPhoneNumber(
   await retellFetch(`/delete-phone-number/${encodeURIComponent(phoneNumber)}`, {
     method: "DELETE",
   });
-}
-
-export async function updateRetellPhoneNumber(
-  phoneNumber: string,
-  updates: {
-    inboundAgentId?: string;
-    nickname?: string;
-    smsWebhookUrl?: string;
-  }
-): Promise<void> {
-  const body: Record<string, unknown> = {};
-  if (updates.inboundAgentId !== undefined)
-    body.inbound_agent_id = updates.inboundAgentId;
-  if (updates.nickname !== undefined) body.nickname = updates.nickname;
-  if (updates.smsWebhookUrl !== undefined)
-    body.inbound_sms_webhook_url = updates.smsWebhookUrl;
-
-  await retellFetch(
-    `/update-phone-number/${encodeURIComponent(phoneNumber)}`,
-    { method: "PATCH", body: JSON.stringify(body) }
-  );
 }
 
 // --- SMS Sending ---
@@ -517,18 +429,6 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
   return [
     {
       type: "custom",
-      name: "get_current_datetime",
-      description:
-        "Returns the real current date and time in the business's local timezone. MUST be called at the start of every call alongside lookup_customer_context and get_services. Always use the date returned here — never assume a date from prior knowledge.",
-      url: `${appUrl}/api/retell/current-datetime`,
-      speak_during_execution: false,
-      parameters: {
-        type: "object",
-        properties: {},
-      },
-    },
-    {
-      type: "custom",
       name: "lookup_customer_context",
       description:
         "Look up an existing customer by caller phone number. MUST be called immediately at the start of every call, before asking the caller any questions.",
@@ -551,15 +451,14 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       description:
         "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
       url: `${appUrl}/api/retell/check-availability`,
-      speak_during_execution: true,
-      execution_message_description: "A natural, brief phrase showing you're checking the calendar — e.g. 'Let me pull up that day...' or 'One second, checking what's open...' Vary it slightly each time.",
+      speak_during_execution: false,
       parameters: {
         type: "object",
         properties: {
           date: {
             type: "string",
             description:
-              "Pass the caller's words exactly as spoken — e.g., 'tomorrow', 'next Monday', 'Friday', 'June 10'. The server resolves relative phrases using the real current date. Never pre-convert to a YYYY-MM-DD date yourself.",
+              "The date to check availability for. Prefer YYYY-MM-DD, but natural phrases like 'next Monday' are accepted.",
           },
           service_name: {
             type: "string",
@@ -581,8 +480,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       description:
         "Book an appointment for the customer after collecting all required information.",
       url: `${appUrl}/api/retell/book-appointment`,
-      speak_during_execution: true,
-      execution_message_description: "A brief, warm phrase confirming you're locking it in — e.g. 'Perfect, I'll get that booked right now...' or 'Give me just a second to confirm that slot...' Keep it natural.",
+      speak_during_execution: false,
       parameters: {
         type: "object",
         properties: {
@@ -592,7 +490,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           },
           customer_phone: {
             type: "string",
-            description: "The customer's phone number in E.164 format. Use the caller_phone value returned by lookup_customer_context, or the inbound caller's phone number.",
+            description: "The customer's phone number",
           },
           pet_name: {
             type: "string",
@@ -620,11 +518,6 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             type: "string",
             description:
               "Square customer ID from lookup_customer_context, if the caller is a returning Square customer",
-          },
-          addon_service_name: {
-            type: "string",
-            description:
-              "The add-on service name the customer accepted (e.g. 'Teeth Brushing'), if any. Only pass this if the customer explicitly said yes to an upsell offer.",
           },
           groomer_name: {
             type: "string",

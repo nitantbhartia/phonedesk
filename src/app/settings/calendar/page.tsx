@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { InfoIcon } from "@/components/ui/info-icon";
-import { toast } from "@/components/ui/toast";
 
 interface CalendarConnection {
   id: string;
@@ -109,15 +108,12 @@ export default function CalendarSettingsPage() {
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
-  const [primaryConnectionId, setPrimaryConnectionId] = useState<string>("");
   const [respectBusy, setRespectBusy] = useState(true);
   const [bufferTime, setBufferTime] = useState(true);
-  const [bookingLogicSaving, setBookingLogicSaving] = useState(false);
-  const [bookingLogicSaved, setBookingLogicSaved] = useState(false);
   const [hours, setHours] = useState<HoursState>({ ...DEFAULT_HOURS });
   const [savedHoursJson, setSavedHoursJson] = useState("");
   const [saving, setSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const [conflictsLoading, setConflictsLoading] = useState(false);
   const [conflictsTz, setConflictsTz] = useState("America/Los_Angeles");
@@ -134,8 +130,8 @@ export default function CalendarSettingsPage() {
         setConflicts(data.conflicts || []);
         if (data.timezone) setConflictsTz(data.timezone);
       }
-    } catch {
-      toast.error("Failed to load calendar conflicts. Please refresh.");
+    } catch (error) {
+      console.error("Error fetching conflicts:", error);
     } finally {
       setConflictsLoading(false);
     }
@@ -162,11 +158,7 @@ export default function CalendarSettingsPage() {
       const res = await fetch("/api/business/profile");
       if (res.ok) {
         const data = await res.json();
-        const conns: CalendarConnection[] = data.business?.calendarConnections || [];
-        setConnections(conns);
-        const primary = conns.find((c) => c.isPrimary);
-        if (primary) setPrimaryConnectionId(primary.id);
-        else if (conns.length > 0) setPrimaryConnectionId(conns[0].id);
+        setConnections(data.business?.calendarConnections || []);
         const bh = data.business?.businessHours as SavedBusinessHours | undefined;
         const built = buildHoursState(bh);
         setHours(built);
@@ -179,30 +171,9 @@ export default function CalendarSettingsPage() {
     }
   }
 
-  async function saveBookingLogic() {
-    setBookingLogicSaving(true);
-    setBookingLogicSaved(false);
-    try {
-      await fetch("/api/business/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          primaryCalendarConnectionId: primaryConnectionId || null,
-          respectBusy,
-          bufferTime,
-        }),
-      });
-      setBookingLogicSaved(true);
-      setTimeout(() => setBookingLogicSaved(false), 3000);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save settings. Please try again.");
-    } finally {
-      setBookingLogicSaving(false);
-    }
-  }
-
   async function saveHours() {
     setSaving(true);
+    setSaveMessage(null);
     try {
       const businessHours = serializeHours(hours);
       const res = await fetch("/api/business/profile", {
@@ -215,10 +186,9 @@ export default function CalendarSettingsPage() {
         throw new Error(data.error || "Failed to save");
       }
       setSavedHoursJson(JSON.stringify(businessHours));
-      setLastSaved(new Date());
-      toast.success("Hours saved & synced to voice agent");
+      setSaveMessage({ type: "success", text: "Hours saved & synced to voice agent" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save hours");
+      setSaveMessage({ type: "error", text: error instanceof Error ? error.message : "Failed to save hours" });
     } finally {
       setSaving(false);
     }
@@ -230,13 +200,9 @@ export default function CalendarSettingsPage() {
       const res = await fetch(`/api/calendar/connect?provider=${provider}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        await fetchData();
-      } else {
-        toast.error("Failed to disconnect calendar. Please try again.");
-      }
-    } catch {
-      toast.error("Failed to disconnect calendar. Please try again.");
+      if (res.ok) await fetchData();
+    } catch (error) {
+      console.error("Error disconnecting calendar:", error);
     } finally {
       setDisconnecting(null);
     }
@@ -451,7 +417,7 @@ export default function CalendarSettingsPage() {
           <h2 className="text-xl font-bold text-paw-brown">
             <span className="inline-flex items-center gap-2">
               Business Hours
-              <InfoIcon text="The AI will only offer appointment slots that fall within these hours. Callers asking for times outside your hours will be told you're closed and asked to pick another time." />
+              <InfoIcon text="The AI only offers appointment times inside these hours." />
             </span>
           </h2>
           <p className="text-paw-brown/60 mt-1 text-sm font-medium">
@@ -543,15 +509,25 @@ export default function CalendarSettingsPage() {
           ))}
         </div>
 
-        <div className="mt-6 flex items-center justify-end gap-3">
-          {lastSaved && !hoursDirty && (
-            <span className="text-xs text-paw-brown/40 font-medium">
-              Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
+        {saveMessage && (
+          <div
+            className={`mt-4 p-3 rounded-2xl text-sm font-bold ${
+              saveMessage.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+          >
+            {saveMessage.text}
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end gap-3">
           {hoursDirty && (
             <button
-              onClick={fetchData}
+              onClick={() => {
+                fetchData();
+                setSaveMessage(null);
+              }}
               className="px-6 py-3 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all text-sm"
             >
               Discard
@@ -580,40 +556,27 @@ export default function CalendarSettingsPage() {
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Primary Destination
-                  <InfoIcon text="The calendar where RingPaw writes new bookings. If you have multiple connected calendars, pick the one you use for grooming appointments." />
+                  <InfoIcon text="Where confirmed appointments are written by default." />
                 </span>
               </label>
               <div className="relative">
-                {connections.filter((c) => c.isActive).length === 0 ? (
-                  <div className="w-full bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 text-paw-brown/40 font-bold text-sm">
-                    No calendars connected — connect one above
-                  </div>
-                ) : (
-                  <select
-                    value={primaryConnectionId}
-                    onChange={(e) => setPrimaryConnectionId(e.target.value)}
-                    className="w-full appearance-none bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 font-bold focus:outline-none focus:border-paw-amber transition-all"
+                <select className="w-full appearance-none bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 font-bold focus:outline-none focus:border-paw-amber transition-all">
+                  <option>Google Calendar: Appointments</option>
+                  <option>Google Calendar: Main Work</option>
+                  <option>Square Appointments Sync</option>
+                </select>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
                   >
-                    {connections.filter((c) => c.isActive).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.provider === "GOOGLE"
-                          ? `Google Calendar${c.calendarId ? `: ${c.calendarId}` : ""}`
-                          : c.provider === "SQUARE"
-                            ? "Square Appointments"
-                            : c.provider === "ACUITY"
-                              ? "Acuity Scheduling"
-                              : c.provider}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {connections.filter((c) => c.isActive).length > 0 && (
-                  <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </div>
-                )}
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </div>
               </div>
             </div>
 
@@ -621,7 +584,7 @@ export default function CalendarSettingsPage() {
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Conflict Checking
-                  <InfoIcon text="Controls how the AI checks for scheduling conflicts. Enabling 'Respect busy' blocks slots marked busy on your personal calendar. Buffer time adds a gap between appointments so you're never rushed." />
+                  <InfoIcon text="Rules the AI uses to avoid double-booking." />
                 </span>
               </label>
               <div className="space-y-3">
@@ -649,19 +612,6 @@ export default function CalendarSettingsPage() {
                 </label>
               </div>
             </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-3">
-            {bookingLogicSaved && (
-              <span className="text-xs text-green-600 font-medium">Saved</span>
-            )}
-            <button
-              onClick={() => void saveBookingLogic()}
-              disabled={bookingLogicSaving}
-              className="px-8 py-3 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50"
-            >
-              {bookingLogicSaving ? "Saving…" : "Save Settings"}
-            </button>
           </div>
         </section>
 

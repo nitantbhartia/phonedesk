@@ -13,16 +13,16 @@ export function BrandLogo({
   href = "/",
   className = "",
   priority = false,
-  mobileWidth = 144,
-  desktopWidth = 216,
+  mobileWidth = 128,
+  desktopWidth = 192,
 }: BrandLogoProps) {
   const logo = (
     <span className={`inline-flex w-full max-w-full items-center ${className}`.trim()}>
       <Image
-        src="/ringpaw-logo.png"
+        src="/ringpaw-logo.svg"
         alt="RingPaw AI"
         width={desktopWidth}
-        height={Math.round((desktopWidth * 527) / 2303)}
+        height={Math.round((desktopWidth * 1536) / 2816)}
         priority={priority}
         className="h-auto w-auto max-w-full object-contain"
         sizes={`(max-width: 640px) ${mobileWidth}px, ${desktopWidth}px`}

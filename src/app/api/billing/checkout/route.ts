@@ -65,36 +65,14 @@ export async function POST(req: NextRequest) {
 
     const priceId = getStripePriceIdForPlan(plan);
     const appUrl = getAppUrl();
-
-    const rawSuccess = typeof body.successUrl === "string" && body.successUrl.startsWith("/")
-      ? body.successUrl : null;
-    const rawCancel = typeof body.cancelUrl === "string" && body.cancelUrl.startsWith("/")
-      ? body.cancelUrl : null;
-    const successUrl = rawSuccess ? `${appUrl}${rawSuccess}` : `${appUrl}/settings/billing?checkout=success`;
-    const cancelUrl = rawCancel ? `${appUrl}${rawCancel}` : `${appUrl}/settings/billing?checkout=cancel`;
-
-    // Record billing consent before redirecting to Stripe
-    await prisma.business.update({
-      where: { id: business.id },
-      data: { billingConsentGiven: true },
-    });
-
     const checkout = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      success_url: `${appUrl}/settings/billing?checkout=success`,
+      cancel_url: `${appUrl}/settings/billing?checkout=cancel`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
-      // 30-day outcome trial: card collected upfront, only charged when Pip books first appointment
-      subscription_data: {
-        trial_period_days: 30,
-        metadata: {
-          businessId: business.id,
-          requestedPlan: plan,
-        },
-      },
       metadata: {
         businessId: business.id,
         requestedPlan: plan,
