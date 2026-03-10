@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { getCRMWithFallback } from "@/crm/withFallback";
+import { resolveBusinessFromDemo } from "@/lib/demo-session";
 
 // Retell custom tool: writes a post-call summary note to the customer's CRM record.
 // Called by the AI before end_call on every call.
@@ -29,12 +30,23 @@ export async function POST(req: NextRequest) {
   }
 
   const calledNumber = normalizePhoneNumber(call?.to_number);
-  const phoneRecord = calledNumber
+  let phoneRecord = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },
         include: { business: true },
       })
     : null;
+
+  // Demo number fallback
+  if (!phoneRecord && calledNumber) {
+    const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
+    if (demoBusinessId) {
+      const demoBusiness = await prisma.business.findUnique({ where: { id: demoBusinessId } });
+      if (demoBusiness) {
+        phoneRecord = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneRecord;
+      }
+    }
+  }
 
   if (!phoneRecord?.business) {
     return NextResponse.json({ result: "Call note skipped — business not resolved." });

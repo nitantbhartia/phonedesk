@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Service } from "@prisma/client";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 import { normalizePhoneNumber } from "@/lib/phone";
+import { resolveBusinessFromDemo } from "@/lib/demo-session";
 
 const MONTH_MAP: Record<string, number> = {
   january: 1,
@@ -298,14 +299,32 @@ export async function POST(req: NextRequest) {
 
   // Identify business from the called number (normalize to match DB format)
   const calledNumber = normalizePhoneNumber(call?.to_number);
-  const phoneNum = calledNumber
+  let phoneNum = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },
         include: { business: { include: { services: true } } },
       })
     : null;
 
+  // Demo number fallback: during onboarding, the test number is a shared demo
+  // number with no PhoneNumber record — look up via DemoSession.
+  if (!phoneNum && calledNumber) {
+    const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
+    if (demoBusinessId) {
+      const demoBusiness = await prisma.business.findUnique({
+        where: { id: demoBusinessId },
+        include: { services: true },
+      });
+      if (demoBusiness) {
+        phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+      }
+    }
+  }
+
+  console.log("[check-availability] to:", call?.to_number, "calledNumber:", calledNumber, "businessFound:", !!phoneNum?.business, "date:", date, "serviceName:", serviceName);
+
   if (!phoneNum?.business) {
+    console.error("[check-availability] Business not found for number:", calledNumber);
     return NextResponse.json({
       result:
         "I apologize, but I'm having trouble accessing the system right now. Let me take your information and have someone call you back.",
