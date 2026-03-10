@@ -62,10 +62,10 @@ export async function GET() {
   const [callsThisWeek, callsThisMonth, bookingsConfirmed, bookingsMissed, avgDuration, totalDuration] =
     await Promise.all([
       prisma.call.count({
-        where: { businessId: business.id, createdAt: { gte: weekAgo } },
+        where: { businessId: business.id, isTestCall: false, createdAt: { gte: weekAgo } },
       }),
       prisma.call.count({
-        where: { businessId: business.id, createdAt: { gte: monthAgo } },
+        where: { businessId: business.id, isTestCall: false, createdAt: { gte: monthAgo } },
       }),
       prisma.appointment.count({
         where: {
@@ -77,16 +77,17 @@ export async function GET() {
       prisma.call.count({
         where: {
           businessId: business.id,
+          isTestCall: false,
           status: "NO_BOOKING",
           createdAt: { gte: monthAgo },
         },
       }),
       prisma.call.aggregate({
-        where: { businessId: business.id, duration: { not: null } },
+        where: { businessId: business.id, isTestCall: false, duration: { not: null } },
         _avg: { duration: true },
       }),
       prisma.call.aggregate({
-        where: { businessId: business.id, duration: { not: null }, createdAt: { gte: monthAgo } },
+        where: { businessId: business.id, isTestCall: false, duration: { not: null }, createdAt: { gte: monthAgo } },
         _sum: { duration: true },
       }),
     ]);
