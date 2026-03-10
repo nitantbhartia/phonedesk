@@ -76,15 +76,31 @@ function AuthPageContent() {
       <div className="mx-auto mt-10 grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div className="space-y-6">
           <p className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-paw-surface px-4 py-2 text-sm font-semibold">
-            <span className="h-2 w-2 rounded-full bg-paw-orange" />
-            RingPaw access
+            <span className="h-2 w-2 rounded-full bg-paw-orange animate-pulse" />
+            Live in 5 minutes
           </p>
           <h1 className="text-4xl font-extrabold leading-tight sm:text-6xl">
-            Sign up or log in.
+            Stop losing bookings to missed calls.
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-paw-brown/75">
-            Use email and password or continue with Google.
+            RingPaw answers every call for your grooming business — booking appointments, collecting details, and texting confirmations while you focus on the dogs.
           </p>
+          <ul className="space-y-3">
+            {[
+              "AI receptionist picks up in seconds, 24/7",
+              "Books appointments and texts confirmations automatically",
+              "Setup takes 5 minutes, no tech skills needed",
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-paw-brown/80">
+                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-paw-orange/15 text-paw-orange">
+                  <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                    <path d="M1 4.5L4 7.5L10 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <span className="text-base font-medium">{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <AuthPanel initialMode={initialMode} />
