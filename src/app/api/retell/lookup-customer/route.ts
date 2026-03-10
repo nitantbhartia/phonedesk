@@ -8,6 +8,7 @@ import {
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { getCRMWithFallback } from "@/crm/withFallback";
+import { resolveBusinessFromDemo } from "@/lib/demo-session";
 
 export async function POST(req: NextRequest) {
   const rawBody = await getRawBody(req);
@@ -27,12 +28,26 @@ export async function POST(req: NextRequest) {
   const { args, call } = body;
 
   const calledNumber = normalizePhoneNumber(call?.to_number);
-  const phoneRecord = calledNumber
+  let phoneRecord = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },
         include: { business: true },
       })
     : null;
+
+  // Demo number fallback: during onboarding test calls, the called number is a
+  // shared demo number with no PhoneNumber record — look up via DemoSession.
+  if (!phoneRecord && calledNumber) {
+    const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
+    if (demoBusinessId) {
+      const demoBusiness = await prisma.business.findUnique({
+        where: { id: demoBusinessId },
+      });
+      if (demoBusiness) {
+        phoneRecord = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneRecord;
+      }
+    }
+  }
 
   if (!phoneRecord?.business) {
     return NextResponse.json({

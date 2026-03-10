@@ -130,6 +130,23 @@ enum PhoneProvider {
   TWILIO  // future: if owner brings own Twilio number
 }
 
+model DemoNumber {
+  id                String        @id @default(cuid())
+  number            String        @unique // E.164, e.g. +16195550100
+  retellPhoneNumber String        @unique // Retell E.164 identifier
+  sessions          DemoSession[]
+  createdAt         DateTime      @default(now())
+}
+
+model DemoSession {
+  id           String     @id @default(cuid())
+  demoNumberId String
+  demoNumber   DemoNumber @relation(fields: [demoNumberId], references: [id])
+  businessId   String     @unique // one active session per business at a time
+  expiresAt    DateTime
+  createdAt    DateTime   @default(now())
+}
+
 model Service {
   id           String   @id @default(cuid())
   businessId   String
