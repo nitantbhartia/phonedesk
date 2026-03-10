@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { DemoCallPlayer } from "@/components/demo-call-player";
 
 export default function LandingPage() {
   return (
@@ -160,42 +161,15 @@ function LandingPageContent() {
 
           </div>
 
-          {/* Right column - phone mockup */}
+          {/* Right column - demo call player */}
           <div className="relative hidden sm:block animate-fade-in-up-delay-4">
-            <div className="absolute inset-0 bg-paw-amber/20 blur-3xl rounded-full transform translate-y-12" />
-
-            <div className="animate-float relative glass-card rounded-[2.5rem] p-6 shadow-soft border-2 border-white/70">
-              <div className="flex justify-between items-center mb-8 px-2">
-                <div className="w-8 h-8 bg-paw-brown/10 rounded-full flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3E2919" strokeWidth="3">
-                    <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-                  </svg>
-                </div>
-                <span className="font-bold text-paw-brown">Incoming Call</span>
-                <div className="w-8 h-8 rounded-full bg-paw-orange/20" />
-              </div>
-
-              <div className="bg-paw-amber/20 rounded-3xl p-8 text-center relative overflow-hidden">
-                <div className="absolute -right-10 -top-10 w-32 h-32 bg-paw-orange/20 rounded-full blur-xl" />
-                <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center mb-4 shadow-sm relative">
-                  <span className="absolute inset-0 rounded-full border-4 border-paw-orange/30 animate-ping" />
-                  <span className="text-3xl">&#x1F43E;</span>
-                </div>
-                <h3 className="text-2xl font-bold text-paw-brown mb-1">Max&apos;s Mom</h3>
-                <p className="text-paw-brown/60 text-sm font-medium tracking-wide mb-6">AI AGENT ACTIVE</p>
-
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-left shadow-sm mb-4">
-                  <p className="text-xs text-paw-brown/50 font-bold mb-1">AI ASSISTANT</p>
-                  <p className="text-sm font-medium leading-snug">&quot;Hi there! This is RingPaw for Happy Paws Grooming. I can help you book an appointment for Max. What date works best?&quot;</p>
-                </div>
-
-                <div className="bg-paw-brown/5 rounded-2xl p-4 text-left shadow-sm">
-                  <p className="text-xs text-paw-brown/50 font-bold mb-1">CUSTOMER</p>
-                  <p className="text-sm font-medium leading-snug">&quot;Can we do next Thursday at 2pm?&quot;</p>
-                </div>
-              </div>
+            <div className="absolute inset-0 bg-paw-amber/20 blur-3xl rounded-full transform translate-y-12 pointer-events-none" />
+            <div className="relative">
+              <p className="text-center text-xs font-bold tracking-widest text-paw-orange uppercase mb-4">
+                Hear a real booking call
+              </p>
+              <DemoCallPlayer audioSrc="/audio/luna-call.wav" />
             </div>
-
           </div>
         </div>
       </header>
@@ -362,23 +336,6 @@ function LandingPageContent() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Listen to a Call */}
-      <section id="demo-player" className="py-12 sm:py-24 px-4 sm:px-6 relative z-10">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Hear it in action</h2>
-            <h3 className="text-4xl font-extrabold text-paw-brown">
-              Listen to a real call
-            </h3>
-            <p className="text-paw-brown/70 mt-4 max-w-lg mx-auto">
-              This is an actual recording of RingPaw booking an appointment. No scripts, no cherry-picking.
-            </p>
-          </div>
-
-          <DemoCallPlayer />
         </div>
       </section>
 
@@ -748,203 +705,3 @@ function LandingPageContent() {
   );
 }
 
-// Transcript lines with timestamps (seconds into the call)
-const CALL_TRANSCRIPT = [
-  { time: 0, speaker: "ai" as const, text: "Hi there! You've reached Happy Paws Grooming. Sarah's with a client right now, but I can help you book an appointment. What's your name?" },
-  { time: 8, speaker: "caller" as const, text: "Hey! I'm Jessica. I need to get my dog groomed." },
-  { time: 12, speaker: "ai" as const, text: "Nice to meet you, Jessica! What's your pup's name and breed?" },
-  { time: 16, speaker: "caller" as const, text: "His name is Cooper, he's a Goldendoodle." },
-  { time: 20, speaker: "ai" as const, text: "Oh I love Goldendoodles! What service were you looking for? We do full grooms, bath and brush, or just nail trims." },
-  { time: 28, speaker: "caller" as const, text: "Full groom please. He's getting pretty shaggy." },
-  { time: 32, speaker: "ai" as const, text: "Ha, totally get it! For a Goldendoodle full groom that runs about $85 and takes around two hours. When works best for you?" },
-  { time: 42, speaker: "caller" as const, text: "Do you have anything this Saturday morning?" },
-  { time: 46, speaker: "ai" as const, text: "Let me check... I've got a 9 AM or 11 AM open this Saturday. Which works better?" },
-  { time: 54, speaker: "caller" as const, text: "9 AM is perfect!" },
-  { time: 56, speaker: "ai" as const, text: "Awesome! I've got Cooper the Goldendoodle booked for a full groom this Saturday at 9 AM. You'll get a confirmation text shortly. Is there anything else I can help with?" },
-  { time: 68, speaker: "caller" as const, text: "Nope, that's it. Thanks!" },
-  { time: 71, speaker: "ai" as const, text: "You're welcome, Jessica! Cooper's going to look amazing. See you Saturday!" },
-];
-
-const TOTAL_CALL_DURATION = 78; // seconds
-
-function DemoCallPlayer() {
-  const [elapsed, setElapsed] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const intervalRef = useState<ReturnType<typeof setInterval> | null>(null);
-
-  // Generate stable random waveform bars
-  const [waveformBars] = useState(() =>
-    Array.from({ length: 60 }, () => 0.15 + Math.random() * 0.85)
-  );
-
-  useEffect(() => {
-    if (!isPlaying) return;
-
-    const id = setInterval(() => {
-      setElapsed((prev) => {
-        if (prev >= TOTAL_CALL_DURATION) {
-          setIsPlaying(false);
-          return TOTAL_CALL_DURATION;
-        }
-        return prev + 0.25;
-      });
-    }, 250);
-
-    return () => clearInterval(id);
-  }, [isPlaying]);
-
-  const progress = (elapsed / TOTAL_CALL_DURATION) * 100;
-  const currentLine = [...CALL_TRANSCRIPT].reverse().find((l) => elapsed >= l.time);
-  const isFinished = elapsed >= TOTAL_CALL_DURATION;
-
-  function formatTime(s: number) {
-    const mins = Math.floor(s / 60);
-    const secs = Math.floor(s % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  }
-
-  function handlePlayPause() {
-    if (isFinished) {
-      setElapsed(0);
-      setIsPlaying(true);
-    } else {
-      setIsPlaying(!isPlaying);
-    }
-  }
-
-  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    setElapsed(pct * TOTAL_CALL_DURATION);
-  }
-
-  return (
-    <div className="bg-white rounded-[2.5rem] shadow-soft border border-gray-100 overflow-hidden">
-      {/* Call header */}
-      <div className="bg-paw-brown px-6 sm:px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-paw-amber/20 rounded-full flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5C163" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm">Call Recording</p>
-            <p className="text-white/50 text-xs">Happy Paws Grooming &middot; Inbound call</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {isPlaying && (
-            <span className="flex items-center gap-1.5 text-red-400 text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-              REC
-            </span>
-          )}
-          <span className="text-white/50 text-xs font-mono">
-            {formatTime(elapsed)} / {formatTime(TOTAL_CALL_DURATION)}
-          </span>
-        </div>
-      </div>
-
-      {/* Waveform visualizer */}
-      <div className="px-6 sm:px-8 pt-6 pb-2">
-        <div
-          className="relative h-16 flex items-center gap-[2px] cursor-pointer group"
-          onClick={handleSeek}
-        >
-          {waveformBars.map((height, i) => {
-            const barProgress = (i / waveformBars.length) * 100;
-            const isBeforePlayhead = barProgress <= progress;
-            const isActivelySpeaking = isPlaying && isBeforePlayhead && barProgress > progress - 5;
-            return (
-              <div
-                key={i}
-                className={`flex-1 rounded-full transition-all duration-150 ${
-                  isBeforePlayhead
-                    ? isActivelySpeaking
-                      ? "bg-paw-orange"
-                      : "bg-paw-brown"
-                    : "bg-paw-brown/15 group-hover:bg-paw-brown/25"
-                }`}
-                style={{
-                  height: `${height * 100}%`,
-                  transform: isActivelySpeaking ? `scaleY(${0.8 + Math.random() * 0.4})` : undefined,
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="px-6 sm:px-8 py-4 flex items-center gap-4">
-        <button
-          onClick={handlePlayPause}
-          className="w-12 h-12 rounded-full bg-paw-brown text-white flex items-center justify-center hover:bg-paw-brown/90 transition-colors shrink-0"
-        >
-          {isFinished ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
-          ) : isPlaying ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" />
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
-          )}
-        </button>
-
-        <div className="flex-1 text-sm text-paw-brown/70 font-medium">
-          {!isPlaying && elapsed === 0
-            ? "Press play to hear a real booking call"
-            : isFinished
-              ? "Call ended \u2014 appointment booked!"
-              : "\u00A0"}
-        </div>
-      </div>
-
-      {/* Live transcript (caption-style) */}
-      <div className="px-6 sm:px-8 pb-6">
-        <div className="bg-paw-cream/50 rounded-2xl p-5 min-h-[100px] flex flex-col justify-center">
-          {elapsed === 0 && !isPlaying ? (
-            <div className="text-center">
-              <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider mb-1">Live Transcript</p>
-              <p className="text-sm text-paw-brown/50">Captions will appear here as the call plays</p>
-            </div>
-          ) : currentLine ? (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  currentLine.speaker === "ai"
-                    ? "bg-paw-orange/15 text-paw-orange"
-                    : "bg-paw-brown/10 text-paw-brown/60"
-                }`}>
-                  {currentLine.speaker === "ai" ? "RingPaw AI" : "Caller"}
-                </span>
-                <span className="text-[10px] text-paw-brown/30 font-mono">{formatTime(currentLine.time)}</span>
-              </div>
-              <p className="text-paw-brown text-[15px] leading-relaxed font-medium">
-                &ldquo;{currentLine.text}&rdquo;
-              </p>
-            </div>
-          ) : null}
-        </div>
-
-        {isFinished && (
-          <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-            <div>
-              <p className="text-sm font-bold text-green-800">Appointment booked successfully</p>
-              <p className="text-xs text-green-700">Cooper &middot; Full Groom &middot; Saturday 9:00 AM &middot; Confirmation text sent</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
