@@ -495,7 +495,11 @@ export default function OnboardingPage() {
         // Only activate live call answering when subscribed; always mark onboarding done
         body: JSON.stringify({ isActive: subscribed, onboardingComplete: true }),
       });
-      setStep(8);
+      if (subscribed) {
+        setStep(8);
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("Error going live:", error);
       router.push("/dashboard");

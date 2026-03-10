@@ -98,21 +98,18 @@ export function OnboardingLayout({
             <h1 className="text-2xl font-extrabold text-paw-brown mb-1">{title}</h1>
             <p className="text-paw-brown/55 font-medium text-sm mb-5">{subtitle}</p>
             {children}
+            {/* Pro Tip — inside card so it's never lost off-screen */}
+            {proTip && (
+              <div className="mt-5 flex items-start gap-3 p-3 bg-white/60 rounded-2xl border border-paw-brown/8">
+                <span className="text-base shrink-0">💡</span>
+                <p className="text-xs font-medium text-paw-brown/65">
+                  <span className="font-bold text-paw-brown">Pro tip: </span>{proTip}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>
-
-      {/* Pro Tip — compact inline below card */}
-      {proTip && (
-        <div className="mt-4 max-w-xl w-full relative z-10 px-1">
-          <div className="flex items-start gap-3 p-3 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50">
-            <span className="text-base shrink-0">💡</span>
-            <p className="text-xs font-medium text-paw-brown/65">
-              <span className="font-bold text-paw-brown">Pro tip: </span>{proTip}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
