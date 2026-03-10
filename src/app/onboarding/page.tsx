@@ -1254,6 +1254,11 @@ export default function OnboardingPage() {
             </div>
           </div>
 
+          {!calendarConnected && (
+            <p className="text-xs text-paw-brown/45 text-center mt-1">
+              No calendar yet? That&apos;s okay — you can connect it later from Settings. RingPaw will still take calls; it just won&apos;t write bookings automatically until you do.
+            </p>
+          )}
           <OnboardingFooter
             onBack={() => navigate(2)}
             onNext={() => navigate(4)}

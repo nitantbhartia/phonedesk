@@ -26,6 +26,7 @@ function LandingPageContent() {
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
   const [missedPerDay, setMissedPerDay] = useState(6);
   const [groomPrice, setGroomPrice] = useState(85);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -95,25 +96,60 @@ function LandingPageContent() {
 
       {/* Nav */}
       <div className="sticky top-0 z-50 flex justify-center pt-3 sm:pt-4 px-4">
-      <nav className="w-full max-w-5xl px-4 sm:px-6 py-3 flex justify-between items-center glass-card rounded-full shadow-soft">
-        <BrandLogo
-          priority
-          mobileWidth={156}
-          desktopWidth={236}
-          className="min-w-0 max-w-[156px] sm:max-w-[236px]"
-        />
-        <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
-          <a href="#how-it-works" className="hover:text-paw-brown transition-colors">How it Works</a>
-          <a href="#features" className="hover:text-paw-brown transition-colors">Features</a>
-          <a href="#pricing" className="hover:text-paw-brown transition-colors">Pricing</a>
+        <div className="w-full max-w-5xl">
+          <nav className="w-full px-4 sm:px-6 py-3 flex justify-between items-center glass-card rounded-full shadow-soft">
+            <BrandLogo
+              priority
+              mobileWidth={156}
+              desktopWidth={236}
+              className="min-w-0 max-w-[156px] sm:max-w-[236px]"
+            />
+            <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
+              <a href="#how-it-works" className="hover:text-paw-brown transition-colors">How it Works</a>
+              <a href="#features" className="hover:text-paw-brown transition-colors">Features</a>
+              <a href="#pricing" className="hover:text-paw-brown transition-colors">Pricing</a>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/auth?mode=signup"
+                className="hidden sm:block px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
+              >
+                Get Started
+              </Link>
+              {/* Mobile hamburger */}
+              <button
+                className="md:hidden p-2 rounded-full hover:bg-paw-brown/10 transition-colors"
+                onClick={() => setMobileMenuOpen((v) => !v)}
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+                  </svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="18" y2="18" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </nav>
+          {/* Mobile dropdown */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-2 glass-card rounded-3xl shadow-soft px-6 py-4 flex flex-col gap-4">
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">How it Works</a>
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Features</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Pricing</a>
+              <Link
+                href="/auth?mode=signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-1 px-6 py-3 bg-paw-brown text-paw-cream rounded-full font-bold text-center hover:bg-opacity-90 transition-all shadow-lg"
+              >
+                Get Started Free
+              </Link>
+            </div>
+          )}
         </div>
-        <Link
-          href="/auth?mode=signup"
-          className="hidden sm:block px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
-        >
-          Get Started
-        </Link>
-      </nav>
       </div>
 
       {/* Hero */}
@@ -162,7 +198,7 @@ function LandingPageContent() {
           </div>
 
           {/* Right column - demo call player */}
-          <div className="relative hidden sm:block animate-fade-in-up-delay-4">
+          <div className="relative animate-fade-in-up-delay-4">
             <div className="absolute inset-0 bg-paw-amber/20 blur-3xl rounded-full transform translate-y-12 pointer-events-none" />
             <div className="relative">
               <p className="text-center text-xs font-bold tracking-widest text-paw-orange uppercase mb-4">
@@ -610,7 +646,7 @@ function LandingPageContent() {
 
           {/* Guarantee line */}
           <p className="text-center text-sm text-paw-brown/60 mt-10 font-medium">
-            All plans include a 30-day outcome guarantee. If Pip doesn&apos;t book a single appointment, you pay nothing.
+            All plans include a 30-day outcome guarantee. If RingPaw doesn&apos;t book a single appointment, you pay nothing.
           </p>
         </div>
       </section>
@@ -686,8 +722,22 @@ function LandingPageContent() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-paw-brown text-paw-cream py-16 px-6 mt-12 rounded-t-[3rem]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <footer className="bg-paw-brown text-paw-cream pt-16 pb-10 px-6 mt-12 rounded-t-[3rem]">
+        {/* Footer CTA */}
+        <div className="max-w-2xl mx-auto text-center mb-14">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">Ready to stop missing calls?</h2>
+          <p className="text-white/60 mb-6">Set up in 5 minutes. Free for 30 days. No credit card required.</p>
+          <Link
+            href="/auth?mode=signup"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
+          >
+            Get Started Free
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+        <div className="border-t border-white/10 pt-8 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center" style={{ filter: "brightness(0) invert(1)" }}>
             <BrandLogo href="/" mobileWidth={120} desktopWidth={150} />
           </div>
