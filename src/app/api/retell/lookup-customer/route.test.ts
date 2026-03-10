@@ -20,6 +20,10 @@ vi.mock("@/crm/withFallback", () => ({
   })),
 }));
 
+vi.mock("@/lib/demo-session", () => ({
+  resolveBusinessFromDemo: vi.fn(async () => null),
+}));
+
 import { POST } from "./route";
 import { prisma } from "@/lib/prisma";
 import {
