@@ -343,6 +343,8 @@ export async function createRetellAgent(config: {
       webhook_url: config.webhookUrl,
       language: "en-US",
       max_call_duration_ms: MAX_CALL_DURATION_MS,
+      end_call_after_silence_ms: 75_000, // 75s silence → drop dead calls (phone left down, solicitor went quiet)
+      voicemail_option: { action: { type: "hangup" } }, // hang up immediately on voicemail / IVR — don't burn minutes
       // Conversational feel
       responsiveness: 0.9,          // how quickly agent responds after caller stops — high = snappy
       interruption_sensitivity: 0.8, // how easily caller can interrupt — natural conversation level
@@ -378,6 +380,8 @@ export async function updateRetellAgent(
     reminder_max_count: 1,
     normalize_for_speech: true,
     max_call_duration_ms: updates.maxCallDurationMs ?? MAX_CALL_DURATION_MS,
+    end_call_after_silence_ms: 75_000, // 75s silence → drop dead calls (phone left down, solicitor went quiet)
+    voicemail_option: { action: { type: "hangup" } }, // hang up immediately on voicemail / IVR — don't burn minutes
   };
   if (updates.agentName) body.agent_name = updates.agentName;
   if (updates.voiceId) body.voice_id = updates.voiceId;
