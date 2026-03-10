@@ -264,6 +264,14 @@ export default function OnboardingPage() {
 
         if (!cancelled) {
           if (business?.onboardingComplete) {
+            // Step 8 (call forwarding instructions) is purely informational and
+            // can be reached from the dashboard "Set up now" banner even after
+            // onboarding is complete — allow it through if a number is provisioned.
+            if (requestedStep === 8 && business?.phoneNumber?.number) {
+              setProvisionedNumber(business.phoneNumber.number);
+              setStep(8);
+              return;
+            }
             router.push("/dashboard");
             return;
           }
@@ -461,9 +469,16 @@ export default function OnboardingPage() {
         const provData = await provRes.json() as { phoneNumber?: string; alreadyProvisioned?: boolean; error?: string };
         if (provRes.ok && provData.phoneNumber) {
           setProvisionedNumber(provData.phoneNumber);
+        } else if (!provData.alreadyProvisioned) {
+          // Provisioning failed and this isn't a duplicate request — stop here.
+          // Don't mark onboarding complete without a real number.
+          console.error("[goLive] Number provisioning failed:", provData.error);
+          throw new Error(provData.error || "Failed to provision your RingPaw number. Please try again.");
         }
         // End the demo session now that we have a real number
-        await fetch("/api/demo/end", { method: "POST" });
+        await fetch("/api/demo/end", { method: "POST" }).catch(() => {
+          // Non-fatal — demo session will expire on its own
+        });
       }
 
       await fetch("/api/business/profile", {
@@ -1276,7 +1291,7 @@ export default function OnboardingPage() {
           <OnboardingFooter
             onBack={() => setStep(4)}
             onNext={() => setStep(6)}
-            nextLabel={testCallDone ? "Set Up Forwarding" : "Skip for Now"}
+            nextLabel="Choose Plan"
           />
         </div>
       )}
