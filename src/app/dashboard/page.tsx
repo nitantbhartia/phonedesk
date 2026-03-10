@@ -312,20 +312,6 @@ export default function DashboardPage() {
             </Link>
           )}
 
-          {/* User info */}
-          <div className="hidden md:flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-sm font-bold text-paw-brown">
-                {session?.user?.name || "User"}
-              </p>
-              <p className="text-xs text-paw-brown/50">
-                {session?.user?.email || ""}
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm bg-paw-amber/30 flex items-center justify-center font-bold text-paw-brown">
-              {session?.user?.name?.[0] || "U"}
-            </div>
-          </div>
         </div>
       </header>
 
@@ -469,13 +455,13 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {/* Calls Handled */}
-        <div data-tour="tour-calls" className="bg-white p-6 rounded-[2rem] shadow-card border border-white/50">
-          <div className="w-10 h-10 bg-paw-sky rounded-2xl flex items-center justify-center text-paw-brown mb-4">
+        <div data-tour="tour-calls" className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
+          <div className="w-8 h-8 bg-paw-sky rounded-xl flex items-center justify-center text-paw-brown mb-3">
             <svg
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -484,26 +470,26 @@ export default function DashboardPage() {
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
           </div>
-          <p className="text-sm font-bold text-paw-brown/50 uppercase tracking-wider">
+          <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
             Calls Handled
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-paw-brown">
+            <span className="text-2xl font-extrabold text-paw-brown">
               {stats.callsThisWeek}
             </span>
             {stats.callsThisWeek > 0 && (
-              <span className="text-green-500 text-sm font-bold">+12%</span>
+              <span className="text-green-500 text-xs font-bold">+12%</span>
             )}
           </div>
-          <p className="text-xs text-paw-brown/40 mt-1">Past 7 days</p>
+          <p className="text-xs text-paw-brown/40 mt-0.5">Past 7 days</p>
         </div>
 
         {/* Bookings */}
-        <div className="bg-white p-6 rounded-[2rem] shadow-card border border-white/50">
-          <div className="w-10 h-10 bg-paw-amber/20 rounded-2xl flex items-center justify-center text-paw-brown mb-4">
+        <div className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
+          <div className="w-8 h-8 bg-paw-amber/20 rounded-xl flex items-center justify-center text-paw-brown mb-3">
             <svg
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -512,18 +498,18 @@ export default function DashboardPage() {
               <path d="M20 6 9 17l-5-5" />
             </svg>
           </div>
-          <p className="text-sm font-bold text-paw-brown/50 uppercase tracking-wider">
+          <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
             Bookings
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-paw-brown">
+            <span className="text-2xl font-extrabold text-paw-brown">
               {stats.bookingsConfirmed}
             </span>
             <span className="text-xs font-bold text-paw-brown/40">
               vs {stats.bookingsMissed} missed
             </span>
           </div>
-          <div className="w-full bg-gray-100 h-1.5 rounded-full mt-3 flex overflow-hidden">
+          <div className="w-full bg-gray-100 h-1 rounded-full mt-2 flex overflow-hidden">
             <div
               className="bg-paw-orange h-full"
               style={{
@@ -537,11 +523,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Revenue Protected */}
-        <div data-tour="tour-revenue" className="bg-white p-6 rounded-[2rem] shadow-card border border-white/50">
-          <div className="w-10 h-10 bg-paw-orange/10 rounded-2xl flex items-center justify-center text-paw-orange mb-4">
+        <div data-tour="tour-revenue" className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
+          <div className="w-8 h-8 bg-paw-orange/10 rounded-xl flex items-center justify-center text-paw-orange mb-3">
             <svg
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -551,21 +537,21 @@ export default function DashboardPage() {
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
           </div>
-          <p className="text-sm font-bold text-paw-brown/50 uppercase tracking-wider">
+          <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
             Est. Revenue Protected
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-paw-brown">
+            <span className="text-2xl font-extrabold text-paw-brown">
               ${stats.revenueProtected.toLocaleString()}
             </span>
           </div>
-          <p className="text-xs text-paw-brown/40 mt-1">
+          <p className="text-xs text-paw-brown/40 mt-0.5">
             Based on ${avgServicePrice} average groom
           </p>
         </div>
 
         {/* Next Appointment */}
-        <div className="bg-paw-brown p-6 rounded-[2.5rem] shadow-soft relative overflow-hidden group">
+        <div className="bg-paw-brown p-4 rounded-2xl shadow-soft relative overflow-hidden group">
           <svg
             className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 opacity-10"
             fill="currentColor"
@@ -573,14 +559,14 @@ export default function DashboardPage() {
           >
             <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
           </svg>
-          <p className="text-sm font-bold text-paw-amber uppercase tracking-wider mb-2">
+          <p className="text-xs font-bold text-paw-amber uppercase tracking-wider mb-2">
             Next Appointment
           </p>
           {(() => {
             const nextAppt = recentCalls.find((c) => c.appointment)?.appointment;
             return nextAppt ? (
             <>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xl font-bold text-white">
                 {nextAppt.petName || "Upcoming"}
               </p>
               <p className="text-sm text-white/70">
@@ -595,12 +581,12 @@ export default function DashboardPage() {
             </>
           ) : (
             <>
-              <p className="text-2xl font-bold text-white">None scheduled</p>
-              <p className="text-sm text-white/70">No upcoming appointments</p>
+              <p className="text-xl font-bold text-white">None scheduled</p>
+              <p className="text-xs text-white/70">No upcoming appointments</p>
             </>
           );
           })()}
-          <button className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 transition-all rounded-xl text-xs font-bold text-white uppercase tracking-widest">
+          <button className="mt-3 px-3 py-1.5 bg-white/10 hover:bg-white/20 transition-all rounded-xl text-xs font-bold text-white uppercase tracking-widest">
             View Details
           </button>
         </div>
@@ -613,14 +599,14 @@ export default function DashboardPage() {
         const isOver = usageOverage > 0;
         const isNear = pct >= 80 && !isOver;
         return (
-          <div className="bg-white rounded-[2.5rem] shadow-card border border-white/50 p-6 sm:p-8 mb-10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="bg-white rounded-2xl shadow-card border border-white/50 p-4 sm:p-5 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-1">
                   {usagePlanName} Plan — Monthly Minutes
                 </p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-paw-brown">{usageMinutesUsed}</span>
+                  <span className="text-2xl font-extrabold text-paw-brown">{usageMinutesUsed}</span>
                   <span className="text-paw-brown/50 font-medium">/ {usageMinutesLimit} min used</span>
                   {isOver && (
                     <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
@@ -649,7 +635,7 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
-            <div className="mt-4 w-full h-2 rounded-full bg-paw-brown/10 overflow-hidden">
+            <div className="mt-3 w-full h-1.5 rounded-full bg-paw-brown/10 overflow-hidden">
               <div
                 className={`h-full transition-all rounded-full ${isOver ? "bg-red-500" : isNear ? "bg-amber-400" : "bg-paw-amber"}`}
                 style={{ width: `${pct}%` }}

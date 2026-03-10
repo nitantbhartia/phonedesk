@@ -272,6 +272,14 @@ export default function OnboardingPage() {
               setStep(8);
               return;
             }
+            // Step 7 (go-live / provision real number) can be re-entered from the
+            // dashboard "Set up now" banner when a user completed onboarding but never
+            // provisioned a real number (e.g. payment was skipped or failed).
+            if (requestedStep === 7 && !business?.phoneNumber?.number) {
+              setSubscribed(Boolean(business?.stripeSubscriptionId));
+              setStep(7);
+              return;
+            }
             router.push("/dashboard");
             return;
           }
