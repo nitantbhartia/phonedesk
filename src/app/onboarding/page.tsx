@@ -289,11 +289,7 @@ export default function OnboardingPage() {
             );
           }
           setCalendarConnected(hasCalendarConnection);
-          setProvisionedNumber(
-            business?.phoneNumber?.number ||
-            (data as { demoPhoneNumber?: string }).demoPhoneNumber ||
-            ""
-          );
+          setProvisionedNumber(business?.phoneNumber?.number || "");
           setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
 
           // If resuming mid-onboarding (step param set, or profile already has data),
