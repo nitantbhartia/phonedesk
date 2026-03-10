@@ -52,13 +52,10 @@ export function OnboardingLayout({
         <BrandLogo mobileWidth={130} desktopWidth={155} priority />
       </div>
 
-      {/* Main card — scrolls internally */}
-      <main
-        className="w-full max-w-2xl bg-paw-cream rounded-[2rem] shadow-soft border-4 border-white relative z-10 flex flex-col"
-        style={{ maxHeight: "calc(100dvh - 6.5rem)" }}
-      >
+      {/* Main card — grows with content, page scrolls */}
+      <main className="w-full max-w-2xl bg-paw-cream rounded-[2rem] shadow-soft border-4 border-white relative z-10 overflow-hidden">
         {/* Progress header */}
-        <div className="border-b border-paw-brown/8 bg-white/60 flex-none px-6 py-3">
+        <div className="border-b border-paw-brown/8 bg-white/60 px-6 py-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-paw-brown/50 uppercase tracking-widest">
               Step {currentStep} of {STEPS.length}
@@ -73,8 +70,8 @@ export function OnboardingLayout({
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto min-h-0 px-5 py-6 sm:px-8 sm:py-7">
+        {/* Content */}
+        <div className="px-5 py-6 sm:px-8 sm:py-7">
           <div className="max-w-xl mx-auto">
             <div
               key={currentStep}
