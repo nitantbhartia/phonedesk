@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { syncRetellAgent } from "@/lib/retell";
-import { updateRetellPhoneNumber } from "@/lib/retell";
-import { buildRetellWebhookUrl } from "@/lib/retell-auth";
+import { syncRetellAgent, updateRetellPhoneNumber } from "@/lib/retell";
 
 const DEMO_SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -73,11 +71,10 @@ export async function POST() {
     );
   }
 
-  // Point the demo Retell number at this business's agent
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  // Point the demo Retell number at this business's agent.
+  // smsWebhookUrl intentionally omitted — demo numbers aren't A2P-registered.
   await updateRetellPhoneNumber(available.retellPhoneNumber, {
     inboundAgentId: agentId,
-    smsWebhookUrl: buildRetellWebhookUrl(appUrl, "/api/sms/webhook"),
   });
 
   // Create or refresh the demo session
