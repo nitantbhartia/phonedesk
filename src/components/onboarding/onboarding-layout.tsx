@@ -10,9 +10,9 @@ const STEPS = [
   { number: 3, label: "Calendar Sync" },
   { number: 4, label: "Get Number" },
   { number: 5, label: "Test Call" },
-  { number: 6, label: "Call Forwarding" },
-  { number: 7, label: "Choose Plan" },
-  { number: 8, label: "Go Live" },
+  { number: 6, label: "Choose Plan" },
+  { number: 7, label: "Go Live" },
+  { number: 8, label: "Call Forwarding" },
 ];
 
 interface OnboardingLayoutProps {
