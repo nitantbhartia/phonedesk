@@ -5,22 +5,28 @@ import { useEffect, useRef, useState } from "react";
 // Transcript lines with timestamps (seconds into the call).
 // Paste your Retell transcript here — set time: to the second each line starts.
 const CALL_TRANSCRIPT = [
-  { time: 0, speaker: "ai" as const, text: "Hi there! You've reached Happy Paws Grooming. Sarah's with a client right now, but I can help you book an appointment. What's your name?" },
-  { time: 8, speaker: "caller" as const, text: "Hey! I'm Jessica. I need to get my dog groomed." },
-  { time: 12, speaker: "ai" as const, text: "Nice to meet you, Jessica! What's your pup's name and breed?" },
-  { time: 16, speaker: "caller" as const, text: "His name is Cooper, he's a Goldendoodle." },
-  { time: 20, speaker: "ai" as const, text: "Oh I love Goldendoodles! What service were you looking for? We do full grooms, bath and brush, or just nail trims." },
-  { time: 28, speaker: "caller" as const, text: "Full groom please. He's getting pretty shaggy." },
-  { time: 32, speaker: "ai" as const, text: "Ha, totally get it! For a Goldendoodle full groom that runs about $85 and takes around two hours. When works best for you?" },
-  { time: 42, speaker: "caller" as const, text: "Do you have anything this Saturday morning?" },
-  { time: 46, speaker: "ai" as const, text: "Let me check... I've got a 9 AM or 11 AM open this Saturday. Which works better?" },
-  { time: 54, speaker: "caller" as const, text: "9 AM is perfect!" },
-  { time: 56, speaker: "ai" as const, text: "Awesome! I've got Cooper the Goldendoodle booked for a full groom this Saturday at 9 AM. You'll get a confirmation text shortly. Is there anything else I can help with?" },
-  { time: 68, speaker: "caller" as const, text: "Nope, that's it. Thanks!" },
-  { time: 71, speaker: "ai" as const, text: "You're welcome, Jessica! Cooper's going to look amazing. See you Saturday!" },
+  { time: 0, speaker: "ai" as const, text: "Hi, you've reached Happy Paws! This is Pip — how can I help you today?" },
+  { time: 5, speaker: "caller" as const, text: "Hey. I'm calling to make an appointment for my dog." },
+  { time: 10, speaker: "ai" as const, text: "Of course! What's your dog's name?" },
+  { time: 14, speaker: "caller" as const, text: "Luna." },
+  { time: 17, speaker: "ai" as const, text: "Luna — what a lovely name. What breed is Luna?" },
+  { time: 21, speaker: "caller" as const, text: "She's a golden retriever." },
+  { time: 24, speaker: "ai" as const, text: "Golden retrievers are such sweethearts. For a golden retriever, a bath and brush is usually perfect — their coats really shine after a good wash and brush-out. What size is Luna — would you say she's small, medium, large, or extra large?" },
+  { time: 38, speaker: "caller" as const, text: "She's about eighty pounds." },
+  { time: 41, speaker: "ai" as const, text: "Thanks for letting me know — that would make Luna a large. What were you thinking for her today? We offer a full groom, bath & brush, and nail trim." },
+  { time: 51, speaker: "caller" as const, text: "Can I get a full groom for Monday at three PM?" },
+  { time: 55, speaker: "ai" as const, text: "Let me check what's open for Luna on Monday at three...Luna can get a full groom on Monday at 3:00 pm. Should I go ahead and book that slot for you?" },
+  { time: 63, speaker: "caller" as const, text: "Yes, please." },
+  { time: 66, speaker: "ai" as const, text: "Perfect, I'll get that booked right now...I just need your name to finish booking Luna's appointment. What should I put down for you?" },
+  { time: 74, speaker: "caller" as const, text: "It's Nitant, N-I-T-A-N-T." },
+  { time: 78, speaker: "ai" as const, text: "Thanks for spelling that out, Nitant. Is this Luna's first visit with us?" },
+  { time: 83, speaker: "caller" as const, text: "Yes." },
+  { time: 87, speaker: "ai" as const, text: "Give me just a second to confirm that slot for you...Perfect — Luna is all set for a full groom on Monday, March 16 at 3:00 pm. Since it's her first visit, plan to arrive a few minutes early so we can get Luna's info on file. We're really looking forward to meeting her. You're all set! You'll get a confirmation text shortly. Is there anything else I can help you with?" },
+  { time: 109, speaker: "caller" as const, text: "No. That'll be all. Thank you so much." },
+  { time: 114, speaker: "ai" as const, text: "Thanks so much for calling, Nitant. Have a great day — we can't wait to meet Luna!" },
 ];
 
-const TOTAL_CALL_DURATION = 78; // seconds — update if your audio file is a different length
+const TOTAL_CALL_DURATION = 119; // seconds
 
 function formatTime(s: number) {
   const mins = Math.floor(s / 60);
@@ -262,7 +268,7 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
               </svg>
               <div>
                 <p className="text-[12px] font-bold text-green-800">Appointment booked successfully</p>
-                <p className="text-[11px] text-green-700">Cooper &middot; Full Groom &middot; Saturday 9:00 AM &middot; Confirmation text sent</p>
+                <p className="text-[11px] text-green-700">Luna &middot; Full Groom &middot; Monday 3:00 PM &middot; Confirmation text sent</p>
               </div>
             </div>
           )}
