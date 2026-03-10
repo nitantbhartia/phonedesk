@@ -128,6 +128,7 @@ export default function DashboardPage() {
   const [agentToggling, setAgentToggling] = useState(false);
   const [confirmOff, setConfirmOff] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(true);
   const [justSubscribed, setJustSubscribed] = useState(false);
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
   const [fetchError, setFetchError] = useState("");
@@ -167,6 +168,7 @@ export default function DashboardPage() {
         }
         const subStatus = data.business?.stripeSubscriptionStatus;
         setSubscriptionActive(["active", "trialing"].includes(subStatus ?? ""));
+        setOnboardingComplete(data.business?.onboardingComplete ?? true);
       }
 
       if (callsRes.ok) {
@@ -343,8 +345,25 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Agent-off banner */}
-      {!subscriptionActive && (
+      {/* Agent-off banner — preview mode (still in onboarding) */}
+      {!subscriptionActive && !onboardingComplete && (
+        <div className="mb-6 flex items-center gap-4 bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4">
+          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-blue-800 text-sm">You&apos;re previewing your dashboard</p>
+            <p className="text-blue-700/70 text-sm">This is what your calls and bookings will look like. Finish setup to go live.</p>
+          </div>
+          <Link href="/onboarding" className="shrink-0 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">
+            Finish Setup
+          </Link>
+        </div>
+      )}
+      {/* Agent-off banner — onboarding done but no subscription */}
+      {!subscriptionActive && onboardingComplete && (
         <div className="mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
           <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
@@ -356,10 +375,7 @@ export default function DashboardPage() {
             <p className="font-bold text-amber-800 text-sm">No active subscription</p>
             <p className="text-amber-700/70 text-sm">Your AI receptionist is paused. Subscribe to start taking calls.</p>
           </div>
-          <Link
-            href="/settings/billing"
-            className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors"
-          >
+          <Link href="/settings/billing" className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
             Subscribe
           </Link>
         </div>
