@@ -7,6 +7,7 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
 import { refreshRetellLLMForCall } from "@/lib/retell";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
+import { resolveBusinessFromDemo } from "@/lib/demo-session";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
@@ -58,12 +59,26 @@ async function handleCallStarted(call: RetellCallPayload) {
   try {
     const calledNumber = normalizePhoneNumber(call.to_number);
 
-    const phoneNum = calledNumber
+    let phoneNum = calledNumber
       ? await prisma.phoneNumber.findFirst({
           where: { number: calledNumber },
           include: { business: { include: { retellConfig: true } } },
         })
       : null;
+
+    // Demo number fallback
+    if (!phoneNum && calledNumber) {
+      const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
+      if (demoBusinessId) {
+        const demoBusiness = await prisma.business.findUnique({
+          where: { id: demoBusinessId },
+          include: { retellConfig: true },
+        });
+        if (demoBusiness) {
+          phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+        }
+      }
+    }
 
     if (phoneNum) {
       // Look up known customer by phone number to pre-fill callerName
@@ -110,12 +125,26 @@ async function handleCallEnded(call: RetellCallPayload) {
   try {
     const calledNumber = normalizePhoneNumber(call.to_number);
 
-    const phoneNum = calledNumber
+    let phoneNum = calledNumber
       ? await prisma.phoneNumber.findFirst({
           where: { number: calledNumber },
           include: { business: { include: { phoneNumber: true } } },
         })
       : null;
+
+    // Demo number fallback
+    if (!phoneNum && calledNumber) {
+      const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
+      if (demoBusinessId) {
+        const demoBusiness = await prisma.business.findUnique({
+          where: { id: demoBusinessId },
+          include: { phoneNumber: true },
+        });
+        if (demoBusiness) {
+          phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+        }
+      }
+    }
 
     if (!phoneNum?.business) return new NextResponse(null, { status: 204 });
 

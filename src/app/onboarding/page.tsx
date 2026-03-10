@@ -289,7 +289,11 @@ export default function OnboardingPage() {
             );
           }
           setCalendarConnected(hasCalendarConnection);
-          setProvisionedNumber(business?.phoneNumber?.number || "");
+          setProvisionedNumber(
+            business?.phoneNumber?.number ||
+            (data as { demoPhoneNumber?: string }).demoPhoneNumber ||
+            ""
+          );
           setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
 
           // If resuming mid-onboarding (step param set, or profile already has data),
@@ -402,30 +406,21 @@ export default function OnboardingPage() {
     setLoading(true);
     setProvisionError("");
     try {
-      // Derive area code from the user's phone number
-      const phoneDigits = phone.replace(/\D/g, "");
-      if (phoneDigits.length < 10) {
-        setProvisionError("Please go back and enter a valid 10-digit phone number so we can assign you a local area code.");
-        setLoading(false);
-        return;
-      }
-      const areaCode = phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3);
-      const res = await fetch("/api/provision-number", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ areaCode }),
-      });
+      const res = await fetch("/api/demo/start", { method: "POST" });
+      const data = await res.json() as { demoNumber?: string; error?: string };
 
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to provision number");
+        if (data.error === "demo_unavailable") {
+          throw new Error("All demo lines are busy right now. Please try again in a moment.");
+        }
+        throw new Error(data.error || "Failed to get your test number");
       }
 
-      setProvisionedNumber(data.phoneNumber);
+      setProvisionedNumber(data.demoNumber || "");
     } catch (error) {
-      console.error("Error provisioning number:", error);
+      console.error("Error starting demo session:", error);
       setProvisionError(
-        error instanceof Error ? error.message : "Failed to provision number"
+        error instanceof Error ? error.message : "Failed to get your test number"
       );
     } finally {
       setLoading(false);
@@ -456,6 +451,25 @@ export default function OnboardingPage() {
   async function goLive() {
     setLoading(true);
     try {
+      // Provision the real dedicated number (payment-gated on the server)
+      if (subscribed) {
+        const phoneDigits = phone.replace(/\D/g, "");
+        const areaCode = phoneDigits.length >= 10
+          ? phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3)
+          : undefined;
+        const provRes = await fetch("/api/provision-number", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ areaCode }),
+        });
+        const provData = await provRes.json() as { phoneNumber?: string; alreadyProvisioned?: boolean; error?: string };
+        if (provRes.ok && provData.phoneNumber) {
+          setProvisionedNumber(provData.phoneNumber);
+        }
+        // End the demo session now that we have a real number
+        await fetch("/api/demo/end", { method: "POST" });
+      }
+
       await fetch("/api/business/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -1175,27 +1189,27 @@ export default function OnboardingPage() {
                 </svg>
               </div>
               <h3 className="text-lg font-bold text-paw-brown mb-2">
-                Let&apos;s get your RingPaw number
+                Let&apos;s set up your test number
               </h3>
               <p className="text-paw-brown/50 font-medium mb-6 max-w-sm mx-auto text-sm">
-                We&apos;ll provision a local number in your area code. Your existing business number stays the same.
+                We&apos;ll give you a test line so you can hear your AI receptionist in action. Your dedicated number is assigned when you go live.
               </p>
               <button
                 onClick={provisionNumber}
                 disabled={loading}
                 className="px-8 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
               >
-                {loading ? "Provisioning..." : "Get My Number"}
+                {loading ? "Setting up..." : "Get My Test Number"}
               </button>
             </div>
           ) : (
             <div className="text-center py-4">
               <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-bold px-4 py-2 rounded-full mb-4">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
-                Number provisioned!
+                Test number ready!
               </div>
               <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-5">
-                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-1">Your RingPaw Number</p>
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-1">Your RingPaw Test Number</p>
                 <p className="text-3xl font-extrabold text-paw-brown">{formattedProvisionedNumber}</p>
                 <p className="text-sm text-paw-brown/50 mt-2">Next step: call this number to test your AI receptionist.</p>
               </div>

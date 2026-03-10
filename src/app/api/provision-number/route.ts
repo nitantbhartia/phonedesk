@@ -82,6 +82,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
+  // Require payment before provisioning a real number
+  const stripeBypass = process.env.STRIPE_BYPASS === "true";
+  const hasPaid =
+    stripeBypass ||
+    business.billingConsentGiven ||
+    !!business.stripeSubscriptionId;
+  if (!hasPaid) {
+    return NextResponse.json(
+      { error: "subscription_required" },
+      { status: 402 }
+    );
+  }
+
   // Return existing number if already provisioned
   if (business.phoneNumber) {
     return NextResponse.json({

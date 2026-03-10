@@ -115,7 +115,17 @@ export async function GET() {
     (business as Record<string, unknown>).stripeSubscriptionStatus = "active";
   }
 
-  return NextResponse.json({ business, stats });
+  // Include active demo session number so the onboarding UI can restore it on resume
+  const demoSession = await prisma.demoSession.findUnique({
+    where: { businessId: business.id },
+    include: { demoNumber: true },
+  });
+  const demoPhoneNumber =
+    demoSession && demoSession.expiresAt > new Date()
+      ? demoSession.demoNumber.number
+      : null;
+
+  return NextResponse.json({ business, stats, demoPhoneNumber });
 }
 
 export async function POST(req: NextRequest) {

@@ -12,6 +12,7 @@ import { sendSms } from "@/lib/sms";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { getCRMWithFallback } from "@/crm/withFallback";
 import { getStripeClient } from "@/lib/stripe";
+import { resolveBusinessFromDemo } from "@/lib/demo-session";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -35,12 +36,27 @@ export async function POST(req: NextRequest) {
 
   // Identify business from the called number
   const calledNumber = normalizePhoneNumber(call?.to_number);
-  const phoneNum = calledNumber
+  let phoneNum = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },
         include: { business: { include: { services: true } } },
       })
     : null;
+
+  // Demo number fallback: during onboarding test calls, the called number is a
+  // shared demo number with no PhoneNumber record — look up via DemoSession.
+  if (!phoneNum && calledNumber) {
+    const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
+    if (demoBusinessId) {
+      const demoBusiness = await prisma.business.findUnique({
+        where: { id: demoBusinessId },
+        include: { services: true },
+      });
+      if (demoBusiness) {
+        phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+      }
+    }
+  }
 
   if (!phoneNum?.business) {
     return NextResponse.json({
