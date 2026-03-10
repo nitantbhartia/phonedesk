@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
 
   // Demo number fallback: during onboarding test calls, the called number is a
   // shared demo number with no PhoneNumber record — look up via DemoSession.
+  // Track whether this is a test/demo call so billing is not triggered.
+  let isTestBooking = false;
   if (!phoneNum && calledNumber) {
     const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
     if (demoBusinessId) {
@@ -54,6 +56,7 @@ export async function POST(req: NextRequest) {
       });
       if (demoBusiness) {
         phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+        isTestBooking = true;
       }
     }
   }
@@ -191,6 +194,7 @@ export async function POST(req: NextRequest) {
       startTime: start,
       endTime: end,
       groomerId: groomer?.id,
+      isTestBooking,
     });
 
     // Save groomer preference on customer record
@@ -261,40 +265,46 @@ export async function POST(req: NextRequest) {
       include: { phoneNumber: true },
     });
 
-    // Increment bookingsCount. If this is the very first booking during a trial,
-    // end the trial immediately so the groomer is charged their plan price right now.
-    try {
-      const updatedBiz = await prisma.business.update({
-        where: { id: business.id },
-        data: { bookingsCount: { increment: 1 } },
-        select: { bookingsCount: true, stripeSubscriptionId: true, stripeSubscriptionStatus: true, phone: true },
-      });
-
-      if (
-        updatedBiz.bookingsCount === 1 &&
-        updatedBiz.stripeSubscriptionId &&
-        updatedBiz.stripeSubscriptionStatus === "trialing"
-      ) {
-        // First booking ever — end the trial now so the groomer is charged immediately
-        const stripe = getStripeClient();
-        await stripe.subscriptions.update(updatedBiz.stripeSubscriptionId, {
-          trial_end: "now",
+    // Increment bookingsCount for real bookings only. Test/demo bookings are excluded
+    // so that a groomer trialling the agent during onboarding isn't charged prematurely.
+    // If this is the very first *real* booking during a trial, end the trial immediately
+    // so the groomer is charged their plan price right now.
+    if (!isTestBooking) {
+      try {
+        const updatedBiz = await prisma.business.update({
+          where: { id: business.id },
+          data: { bookingsCount: { increment: 1 } },
+          select: { bookingsCount: true, stripeSubscriptionId: true, stripeSubscriptionStatus: true, phone: true },
         });
-        console.log(`[book-appointment] Trial ended for business ${business.id} — first booking triggered immediate charge`);
 
-        // Notify the owner via SMS that their plan is now active
-        const smsFrom = process.env.TWILIO_PHONE_NUMBER || fullBusiness?.phoneNumber?.number;
-        if (smsFrom && updatedBiz.phone) {
-          sendSms(
-            updatedBiz.phone,
-            `Pip just booked your first appointment — your ${business.name} plan is now active! You're all set.`,
-            smsFrom
-          ).catch((e) => console.error("[book-appointment] Trial activation SMS failed:", e));
+        if (
+          updatedBiz.bookingsCount === 1 &&
+          updatedBiz.stripeSubscriptionId &&
+          updatedBiz.stripeSubscriptionStatus === "trialing"
+        ) {
+          // First real booking ever — end the trial now so the groomer is charged immediately
+          const stripe = getStripeClient();
+          await stripe.subscriptions.update(updatedBiz.stripeSubscriptionId, {
+            trial_end: "now",
+          });
+          console.log(`[book-appointment] Trial ended for business ${business.id} — first real booking triggered immediate charge`);
+
+          // Notify the owner via SMS that their plan is now active
+          const smsFrom = process.env.TWILIO_PHONE_NUMBER || fullBusiness?.phoneNumber?.number;
+          if (smsFrom && updatedBiz.phone) {
+            sendSms(
+              updatedBiz.phone,
+              `Pip just booked your first appointment — your ${business.name} plan is now active! You're all set.`,
+              smsFrom
+            ).catch((e) => console.error("[book-appointment] Trial activation SMS failed:", e));
+          }
         }
+      } catch (countErr) {
+        // Non-blocking — booking is already confirmed; billing is a side-effect
+        console.error("[book-appointment] bookingsCount increment failed (non-fatal):", countErr);
       }
-    } catch (countErr) {
-      // Non-blocking — booking is already confirmed; billing is a side-effect
-      console.error("[book-appointment] bookingsCount increment failed (non-fatal):", countErr);
+    } else {
+      console.log(`[book-appointment] Test/demo booking for business ${business.id} — skipping bookingsCount increment and billing`);
     }
 
     if (fullBusiness) {
