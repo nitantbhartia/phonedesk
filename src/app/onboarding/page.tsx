@@ -139,11 +139,6 @@ const STEP_CONFIG = [
     proTip: "Try asking about pricing, availability, or booking an appointment to see the full experience.",
   },
   {
-    title: "Set up call forwarding",
-    subtitle: "Route unanswered calls from your business phone to your RingPaw number.",
-    proTip: "Conditional forwarding means your AI only picks up when you don't — callers never know the difference.",
-  },
-  {
     title: "Choose your plan",
     subtitle: "Pick the plan that fits your shop. You can upgrade or downgrade anytime.",
     proTip: "Most solo groomers start on Solo Groomer and upgrade when they get busier.",
@@ -152,6 +147,11 @@ const STEP_CONFIG = [
     title: "You're all set!",
     subtitle: "Review your setup and go live when you're ready.",
     proTip: "You can always fine-tune your AI assistant's personality and responses in Settings.",
+  },
+  {
+    title: "Set up call forwarding",
+    subtitle: "Route unanswered calls from your business phone to your RingPaw number.",
+    proTip: "Conditional forwarding means your AI only picks up when you don't — callers never know the difference.",
   },
 ];
 
@@ -431,7 +431,7 @@ export default function OnboardingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan: planId,
-          successUrl: "/onboarding?step=6&subscribed=true",
+          successUrl: "/onboarding?step=7&subscribed=true",
           cancelUrl: "/onboarding?step=6",
         }),
       });
@@ -472,7 +472,7 @@ export default function OnboardingPage() {
         // Only activate live call answering when subscribed; always mark onboarding done
         body: JSON.stringify({ isActive: subscribed, onboardingComplete: true }),
       });
-      router.push("/dashboard");
+      setStep(8);
     } catch (error) {
       console.error("Error going live:", error);
       router.push("/dashboard");
@@ -1274,8 +1274,8 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 6: Call Forwarding */}
-      {step === 6 && (
+      {/* Step 8: Call Forwarding */}
+      {step === 8 && (
         <div className="space-y-5">
           {provisionedNumber && (
             <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-4 flex items-center justify-between">
@@ -1342,15 +1342,15 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => setStep(5)}
-            onNext={() => setStep(7)}
-            nextLabel="Continue"
+            onBack={() => setStep(7)}
+            onNext={() => router.push("/dashboard")}
+            nextLabel="Go to Dashboard"
           />
         </div>
       )}
 
-      {/* Step 7: Choose Plan */}
-      {step === 7 && (
+      {/* Step 6: Choose Plan */}
+      {step === 6 && (
         <div className="space-y-6">
           {subscribed ? (
             <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-6 py-4">
@@ -1423,15 +1423,15 @@ export default function OnboardingPage() {
           )}
 
           <OnboardingFooter
-            onBack={() => setStep(6)}
-            onNext={() => setStep(8)}
+            onBack={() => setStep(5)}
+            onNext={() => setStep(7)}
             nextLabel={subscribed ? "Continue" : "Skip for Now"}
           />
         </div>
       )}
 
-      {/* Step 8: Go Live */}
-      {step === 8 && (
+      {/* Step 7: Go Live */}
+      {step === 7 && (
         <div className="space-y-8">
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1520,7 +1520,7 @@ export default function OnboardingPage() {
               </svg>
               <p className="text-sm font-bold text-amber-800">
                 Live call answering requires a subscription.{" "}
-                <button onClick={() => setStep(7)} className="underline hover:no-underline">
+                <button onClick={() => setStep(6)} className="underline hover:no-underline">
                   Choose a plan
                 </button>{" "}
                 to activate it — or explore the dashboard first.
@@ -1531,7 +1531,7 @@ export default function OnboardingPage() {
           <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setStep(7)}
+              onClick={() => setStep(6)}
               className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
             >
               Back
