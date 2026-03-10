@@ -236,9 +236,12 @@ export function DashboardTour({ open, onClose }: Props) {
 
       {/* Tooltip card */}
       <div
-        style={{ ...tooltipPosition, pointerEvents: "auto" }}
+        style={{
+          ...tooltipPosition,
+          pointerEvents: "auto",
+          maxHeight: typeof window !== "undefined" ? window.innerHeight - 32 : "90vh",
+        }}
         className="bg-white rounded-3xl shadow-2xl overflow-y-auto"
-        style={{ maxHeight: typeof window !== "undefined" ? window.innerHeight - 32 : "90vh" }}
       >
         {/* Progress bar */}
         <div className="h-1 bg-gray-100">
