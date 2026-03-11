@@ -40,8 +40,25 @@ export default function DemoPage() {
       }
       setSessionToken(token);
       setNumber(num);
-      setPhase("waiting");
-      startPolling(token);
+      // Check current status immediately rather than assuming "waiting"
+      fetch(`/api/demo/public/status?token=${token}`)
+        .then((r) => r.json())
+        .then((data: { phase: string; summary: string | null }) => {
+          if (data.phase === "completed") {
+            setSummary(data.summary);
+            setPhase("completed");
+          } else if (data.phase === "in_progress") {
+            setPhase("in_progress");
+            startPolling(token);
+          } else {
+            setPhase("waiting");
+            startPolling(token);
+          }
+        })
+        .catch(() => {
+          setPhase("waiting");
+          startPolling(token);
+        });
     } catch {
       localStorage.removeItem("demoSession");
     }

@@ -7,11 +7,12 @@ import { BrandLogo } from "@/components/brand-logo";
 const STEPS = [
   { number: 1, label: "Business Profile" },
   { number: 2, label: "Services" },
-  { number: 3, label: "Calendar Sync" },
-  { number: 4, label: "Test Number" },
-  { number: 5, label: "Choose Plan" },
-  { number: 6, label: "Go Live" },
-  { number: 7, label: "Call Forwarding" },
+  { number: 3, label: "Create Account" },
+  { number: 4, label: "Calendar Sync" },
+  { number: 5, label: "Test Number" },
+  { number: 6, label: "Choose Plan" },
+  { number: 7, label: "Go Live" },
+  { number: 8, label: "Call Forwarding" },
 ];
 
 interface OnboardingLayoutProps {

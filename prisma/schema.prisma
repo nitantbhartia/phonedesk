@@ -147,16 +147,18 @@ model DemoSession {
   createdAt    DateTime   @default(now())
 }
 
-// Tracks public (unauthenticated) demo attempts for IP-based rate limiting
+// Tracks public (unauthenticated) demo attempts for IP-based and phone-based rate limiting
 model PublicDemoAttempt {
   id           String   @id @default(cuid())
   ip           String
   sessionToken String   @unique @default(cuid())
   demoNumberId String?  // which demo number was assigned
+  callerPhone  String?  // set when call_started webhook fires; used for phone-based rate limiting
   startedAt    DateTime @default(now())
   expiresAt    DateTime // session expires after 30 min
 
   @@index([ip])
+  @@index([callerPhone])
 }
 
 model Service {

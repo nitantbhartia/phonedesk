@@ -124,6 +124,11 @@ const STEP_CONFIG = [
     proTip: "Adding duration estimates lets the AI block the correct amount of time and avoid back-to-back conflicts on your calendar.",
   },
   {
+    title: "Create your account",
+    subtitle: "Save your setup and unlock your test number — takes 10 seconds.",
+    proTip: "Your business info is already filled in. Once you sign up, we'll save everything and move you straight to the next step.",
+  },
+  {
     title: "Connect your calendar",
     subtitle: "Link your calendar and your AI checks real availability, books appointments, and never double-books.",
     proTip: "Square Appointments is the most popular choice for groomers — RingPaw syncs instantly and keeps your schedule clean.",
@@ -228,9 +233,9 @@ export default function OnboardingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [billingConsent, setBillingConsent] = useState(false);
 
-  // Deferred signup gate (shown at step 2 → 3 transition for guests)
+  // Auth step (step 3) state — shown inline for guests at step 2→3 transition
   const [profileError, setProfileError] = useState("");
-  const [showSignupGate, setShowSignupGate] = useState(false);
+  const [signupModalTab, setSignupModalTab] = useState<"signup" | "signin">("signup");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -254,6 +259,7 @@ export default function OnboardingPage() {
           : new URLSearchParams(window.location.search);
       const requestedStep = Number(params.get("step") || "0");
       const subscribedParam = params.get("subscribed") === "true";
+      const restoreDraft = params.get("restoreDraft") === "1";
 
       try {
         const response = await fetch("/api/business/profile");
@@ -274,17 +280,17 @@ export default function OnboardingPage() {
             // Step 7 (call forwarding instructions) is purely informational and
             // can be reached from the dashboard "Set up now" banner even after
             // onboarding is complete — allow it through if a number is provisioned.
-            if (requestedStep === 7 && business?.phoneNumber?.number) {
+            if (requestedStep === 8 && business?.phoneNumber?.number) {
               setProvisionedNumber(business.phoneNumber.number);
-              setStep(7);
+              setStep(8);
               return;
             }
-            // Step 6 (go-live / provision real number) can be re-entered from the
+            // Step 7 (go-live / provision real number) can be re-entered from the
             // dashboard "Set up now" banner when a user completed onboarding but never
             // provisioned a real number (e.g. payment was skipped or failed).
-            if (requestedStep === 6 && !business?.phoneNumber?.number) {
+            if (requestedStep === 7 && !business?.phoneNumber?.number) {
               setSubscribed(Boolean(business?.stripeSubscriptionId));
-              setStep(6);
+              setStep(7);
               return;
             }
             router.push("/dashboard");
@@ -315,6 +321,64 @@ export default function OnboardingPage() {
           setProvisionedNumber(business?.phoneNumber?.number || "");
           setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
 
+          // Restore draft saved before Google OAuth redirect and auto-save
+          if (restoreDraft && !business?.name) {
+            try {
+              const raw = localStorage.getItem("onboardingDraft");
+              if (raw) {
+                const draft = JSON.parse(raw) as {
+                  businessName?: string; ownerName?: string; city?: string; state?: string;
+                  phone?: string; address?: string; timezone?: string;
+                  hours?: Record<string, { open: string; close: string; enabled: boolean }>;
+                  services?: ServiceEntry[]; bookingMode?: "SOFT" | "HARD";
+                  groomers?: Array<{ name: string; specialties: string }>;
+                };
+                localStorage.removeItem("onboardingDraft");
+                // Directly POST the draft to the API — React state updates are async
+                // and we can't rely on them being visible to doSaveProfile() yet.
+                await fetch("/api/business/profile", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    name: draft.businessName || "",
+                    ownerName: draft.ownerName || "",
+                    city: draft.city || "",
+                    state: draft.state || "",
+                    phone: draft.phone || "",
+                    address: draft.address || "",
+                    timezone: draft.timezone || "America/Los_Angeles",
+                    businessHours: draft.hours
+                      ? Object.fromEntries(
+                          Object.entries(draft.hours)
+                            .filter(([, v]) => v.enabled)
+                            .map(([day, v]) => [day, { open: v.open, close: v.close }])
+                        )
+                      : {},
+                    bookingMode: draft.bookingMode || "SOFT",
+                    services: (draft.services || []).map((s) => ({
+                      name: s.name,
+                      price: parseFloat(s.price) || 0,
+                      duration: parseInt(s.duration) || 60,
+                      isAddon: false,
+                    })),
+                  }),
+                }).catch(() => { /* non-fatal */ });
+                // Restore state for display
+                if (draft.businessName) setBusinessName(draft.businessName);
+                if (draft.ownerName) setOwnerName(draft.ownerName);
+                if (draft.city) setCity(draft.city);
+                if (draft.state) setState(draft.state);
+                if (draft.phone) setPhone(draft.phone);
+                if (draft.address) setAddress(draft.address);
+                if (draft.timezone) setTimezone(draft.timezone);
+                if (draft.hours) setHours(draft.hours);
+                if (draft.services?.length) setServices(draft.services);
+                if (draft.bookingMode) setBookingMode(draft.bookingMode);
+                if (draft.groomers?.length) setGroomers(draft.groomers);
+              }
+            } catch { /* ignore */ }
+          }
+
           // If resuming mid-onboarding (step param set, or profile already has data),
           // skip the welcome screen and go directly to the requested/first step.
           const hasExistingProfile = Boolean(business?.name);
@@ -337,6 +401,14 @@ export default function OnboardingPage() {
       cancelled = true;
     };
   }, [router, status]);
+
+  // Skip the "Create Account" step (3) for already-authenticated users
+  useEffect(() => {
+    if (step === 3 && status === "authenticated") {
+      navigate(4);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, status]);
 
   // Keep ref in sync with callPhase so the polling closure always sees the latest value
   useEffect(() => { callPhaseRef.current = callPhase; }, [callPhase]);
@@ -479,7 +551,7 @@ export default function OnboardingPage() {
         });
       }
 
-      navigate(3);
+      navigate(4);
     } catch (error) {
       console.error("Error saving profile:", error);
     } finally {
@@ -491,10 +563,27 @@ export default function OnboardingPage() {
   async function saveBusinessProfile() {
     if (status !== "authenticated") {
       setSignupName(ownerName); // pre-fill name from business profile
-      setShowSignupGate(true);
+      setSignupModalTab("signup");
+      navigate(3);
       return;
     }
     await doSaveProfile();
+  }
+
+  // Persist form draft to localStorage before Google OAuth redirect
+  function saveDraftToStorage() {
+    try {
+      localStorage.setItem("onboardingDraft", JSON.stringify({
+        businessName, ownerName, city, state, phone, address, timezone,
+        hours, services, bookingMode, groomers,
+      }));
+    } catch { /* ignore */ }
+  }
+
+  // Trigger Google OAuth — saves draft first so state survives the redirect
+  function handleGoogleSignup() {
+    saveDraftToStorage();
+    signIn("google", { callbackUrl: "/onboarding?step=4&restoreDraft=1" });
   }
 
   // Signup + flush buffered data for guests
@@ -524,7 +613,29 @@ export default function OnboardingPage() {
         return;
       }
 
-      setShowSignupGate(false);
+      await doSaveProfile();
+    } catch {
+      setSignupError("Something went wrong. Please try again.");
+    } finally {
+      setSignupLoading(false);
+    }
+  }
+
+  // Inline sign-in within the signup step
+  async function handleSigninAndContinue(e: React.FormEvent) {
+    e.preventDefault();
+    setSignupError("");
+    setSignupLoading(true);
+    try {
+      const result = await signIn("credentials", {
+        email: signupEmail,
+        password: signupPassword,
+        redirect: false,
+      });
+      if (result?.error) {
+        setSignupError("Invalid email or password.");
+        return;
+      }
       await doSaveProfile();
     } catch {
       setSignupError("Something went wrong. Please try again.");
@@ -536,7 +647,7 @@ export default function OnboardingPage() {
   function connectProvider(provider: string) {
     const params = new URLSearchParams({
       provider,
-      redirect: "/onboarding?step=4",
+      redirect: "/onboarding?step=5",
     });
     window.location.href = `/api/calendar/connect?${params}`;
   }
@@ -580,8 +691,8 @@ export default function OnboardingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan: planId,
-          successUrl: "/onboarding?step=6&subscribed=true",
-          cancelUrl: "/onboarding?step=5",
+          successUrl: "/onboarding?step=7&subscribed=true",
+          cancelUrl: "/onboarding?step=6",
         }),
       });
       const data = await res.json() as { url?: string };
@@ -629,7 +740,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({ isActive: subscribed, onboardingComplete: true }),
       });
       if (subscribed) {
-        navigate(7);
+        navigate(8);
       } else {
         router.push("/dashboard");
       }
@@ -735,67 +846,126 @@ export default function OnboardingPage() {
       proTip={config.proTip}
       direction={direction}
     >
-      {/* Inline signup gate — shown at step 2 → 3 transition for guests */}
-      {showSignupGate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-paw-cream rounded-[2rem] shadow-soft border-4 border-white p-8">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-4">
-                Almost there!
-              </div>
-              <h2 className="text-2xl font-extrabold text-paw-brown mb-2">Create your account</h2>
-              <p className="text-sm text-paw-brown/55">Save your setup and get your test number — takes 10 seconds.</p>
-            </div>
-            <form onSubmit={handleSignupAndContinue} className="space-y-4">
+      {/* Step 3: Create Account (seamless onboarding step for guests) */}
+      {step === 3 && (
+        <div className="space-y-5">
+          {/* Tab toggle */}
+          <div className="flex rounded-2xl bg-paw-sky/60 p-1">
+            <button
+              type="button"
+              onClick={() => { setSignupModalTab("signup"); setSignupError(""); }}
+              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signup" ? "bg-white shadow-sm text-paw-brown" : "text-paw-brown/50 hover:text-paw-brown"}`}
+            >
+              Create account
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSignupModalTab("signin"); setSignupError(""); }}
+              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signin" ? "bg-white shadow-sm text-paw-brown" : "text-paw-brown/50 hover:text-paw-brown"}`}
+            >
+              Sign in
+            </button>
+          </div>
+
+          {/* Google button */}
+          <button
+            type="button"
+            onClick={handleGoogleSignup}
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border-2 border-paw-brown/10 bg-white font-semibold text-paw-brown hover:bg-paw-sky/40 transition-all"
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
+              <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.2-2.7-.5-4z" fill="#FFC107"/>
+              <path d="M6.3 14.7l7 5.1C15.1 16.5 19.2 14 24 14c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.6 0-14.2 4.3-17.7 10.7z" fill="#FF3D00"/>
+              <path d="M24 45c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.5C29.6 36 26.9 37 24 37c-6.1 0-10.7-3.1-11.8-8.5l-7 5.4C8.2 40.8 15.5 45 24 45z" fill="#4CAF50"/>
+              <path d="M44.5 20H24v8.5h11.8c-.8 2.4-2.3 4.4-4.3 5.9l6.6 5.5C41.5 37.1 45 31 45 24c0-1.4-.2-2.7-.5-4z" fill="#1976D2"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-paw-brown/10" />
+            <span className="text-xs text-paw-brown/30 font-semibold">or</span>
+            <div className="flex-1 h-px bg-paw-brown/10" />
+          </div>
+
+          {signupModalTab === "signup" ? (
+            <form onSubmit={handleSignupAndContinue} className="space-y-3">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Your name</label>
-                <input
+                <OnboardingInput
                   type="text"
                   required
                   autoComplete="name"
                   placeholder="Jane Smith"
                   value={signupName}
                   onChange={(e) => setSignupName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
-                <input
+                <OnboardingInput
                   type="email"
                   required
                   autoComplete="email"
                   placeholder="you@example.com"
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
-                <input
+                <OnboardingInput
                   type="password"
                   required
                   autoComplete="new-password"
                   placeholder="8+ characters"
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
                 />
               </div>
-              {signupError && (
-                <p className="text-sm font-medium text-red-500 text-center">{signupError}</p>
-              )}
-              <button
-                type="submit"
-                disabled={signupLoading}
-                className="w-full py-3.5 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
-              >
-                {signupLoading ? "Creating account…" : "Create account & continue"}
-              </button>
-              <p className="text-xs text-paw-brown/35 text-center">Already have an account? <a href="/auth" className="underline">Sign in</a></p>
+              {signupError && <p className="text-sm font-medium text-red-500">{signupError}</p>}
+              <div className="pt-4 border-t border-paw-brown/5 flex items-center justify-between mt-2">
+                <button type="button" onClick={() => navigate(2)} className="text-sm text-paw-brown/60 font-bold hover:text-paw-brown transition-colors">Back</button>
+                <button type="submit" disabled={signupLoading} className="px-7 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50">
+                  {signupLoading ? "Creating account…" : "Create account & continue"}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
+              </div>
             </form>
-          </div>
+          ) : (
+            <form onSubmit={handleSigninAndContinue} className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
+                <OnboardingInput
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={signupEmail}
+                  onChange={(e) => setSignupEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
+                <OnboardingInput
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  placeholder="Your password"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                />
+              </div>
+              {signupError && <p className="text-sm font-medium text-red-500">{signupError}</p>}
+              <div className="pt-4 border-t border-paw-brown/5 flex items-center justify-between mt-2">
+                <button type="button" onClick={() => navigate(2)} className="text-sm text-paw-brown/60 font-bold hover:text-paw-brown transition-colors">Back</button>
+                <button type="submit" disabled={signupLoading} className="px-7 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50">
+                  {signupLoading ? "Signing in…" : "Sign in & continue"}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       )}
 
@@ -1216,8 +1386,8 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 3: Calendar Sync */}
-      {step === 3 && (
+      {/* Step 4: Calendar Sync */}
+      {step === 4 && (
         <div className="space-y-8">
           <div className="space-y-4">
             <OnboardingLabel info="Connect the calendar or booking tool you already use. RingPaw reads your live availability before offering any time slot and writes confirmed bookings directly — no double-booking, no manual entry.">
@@ -1403,14 +1573,14 @@ export default function OnboardingPage() {
           )}
           <OnboardingFooter
             onBack={() => navigate(2)}
-            onNext={() => navigate(4)}
+            onNext={() => navigate(5)}
             nextLabel={calendarConnected ? "Continue Setup" : "Skip for Now"}
           />
         </div>
       )}
 
-      {/* Step 4: Get Number + Test Call (merged) */}
-      {step === 4 && (
+      {/* Step 5: Get Number + Test Call (merged) */}
+      {step === 5 && (
         <div className="space-y-5">
           {!provisionedNumber ? (
             <div className="text-center py-6">
@@ -1553,16 +1723,16 @@ export default function OnboardingPage() {
           ) : null}
 
           <OnboardingFooter
-            onBack={() => navigate(3)}
-            onNext={() => navigate(5)}
+            onBack={() => navigate(4)}
+            onNext={() => navigate(6)}
             nextLabel={provisionedNumber ? "Choose Plan" : "Continue Setup"}
             nextDisabled={!provisionedNumber || callPhase === "waiting"}
           />
         </div>
       )}
 
-      {/* Step 7: Call Forwarding */}
-      {step === 7 && (
+      {/* Step 8: Call Forwarding */}
+      {step === 8 && (
         <div className="space-y-5">
           {provisionedNumber && (
             <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-4 flex items-center justify-between">
@@ -1629,15 +1799,15 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => navigate(6)}
+            onBack={() => navigate(7)}
             onNext={() => router.push("/dashboard")}
             nextLabel="Go to Dashboard"
           />
         </div>
       )}
 
-      {/* Step 5: Choose Plan */}
-      {step === 5 && (
+      {/* Step 6: Choose Plan */}
+      {step === 6 && (
         <div className="space-y-6">
           {subscribed ? (
             <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-6 py-4">
@@ -1710,15 +1880,15 @@ export default function OnboardingPage() {
           )}
 
           <OnboardingFooter
-            onBack={() => navigate(4)}
-            onNext={() => navigate(6)}
+            onBack={() => navigate(5)}
+            onNext={() => navigate(7)}
             nextLabel={subscribed ? "Continue" : "Skip for Now"}
           />
         </div>
       )}
 
-      {/* Step 6: Go Live */}
-      {step === 6 && (
+      {/* Step 7: Go Live */}
+      {step === 7 && (
         <div className="space-y-8">
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1807,7 +1977,7 @@ export default function OnboardingPage() {
               </svg>
               <p className="text-sm font-bold text-amber-800">
                 Live call answering requires a subscription.{" "}
-                <button onClick={() => navigate(5)} className="underline hover:no-underline">
+                <button onClick={() => navigate(6)} className="underline hover:no-underline">
                   Choose a plan
                 </button>{" "}
                 to activate it — or explore the dashboard first.
@@ -1818,7 +1988,7 @@ export default function OnboardingPage() {
           <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => navigate(5)}
+              onClick={() => navigate(6)}
               className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
             >
               Back
