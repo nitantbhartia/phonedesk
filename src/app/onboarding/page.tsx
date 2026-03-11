@@ -231,6 +231,7 @@ export default function OnboardingPage() {
   // Deferred signup gate (shown at step 2 → 3 transition for guests)
   const [profileError, setProfileError] = useState("");
   const [showSignupGate, setShowSignupGate] = useState(false);
+  const [signupModalTab, setSignupModalTab] = useState<"signup" | "signin">("signup");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -254,6 +255,7 @@ export default function OnboardingPage() {
           : new URLSearchParams(window.location.search);
       const requestedStep = Number(params.get("step") || "0");
       const subscribedParam = params.get("subscribed") === "true";
+      const restoreDraft = params.get("restoreDraft") === "1";
 
       try {
         const response = await fetch("/api/business/profile");
@@ -314,6 +316,64 @@ export default function OnboardingPage() {
           setCalendarConnected(hasCalendarConnection);
           setProvisionedNumber(business?.phoneNumber?.number || "");
           setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
+
+          // Restore draft saved before Google OAuth redirect and auto-save
+          if (restoreDraft && !business?.name) {
+            try {
+              const raw = localStorage.getItem("onboardingDraft");
+              if (raw) {
+                const draft = JSON.parse(raw) as {
+                  businessName?: string; ownerName?: string; city?: string; state?: string;
+                  phone?: string; address?: string; timezone?: string;
+                  hours?: Record<string, { open: string; close: string; enabled: boolean }>;
+                  services?: ServiceEntry[]; bookingMode?: "SOFT" | "HARD";
+                  groomers?: Array<{ name: string; specialties: string }>;
+                };
+                localStorage.removeItem("onboardingDraft");
+                // Directly POST the draft to the API — React state updates are async
+                // and we can't rely on them being visible to doSaveProfile() yet.
+                await fetch("/api/business/profile", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    name: draft.businessName || "",
+                    ownerName: draft.ownerName || "",
+                    city: draft.city || "",
+                    state: draft.state || "",
+                    phone: draft.phone || "",
+                    address: draft.address || "",
+                    timezone: draft.timezone || "America/Los_Angeles",
+                    businessHours: draft.hours
+                      ? Object.fromEntries(
+                          Object.entries(draft.hours)
+                            .filter(([, v]) => v.enabled)
+                            .map(([day, v]) => [day, { open: v.open, close: v.close }])
+                        )
+                      : {},
+                    bookingMode: draft.bookingMode || "SOFT",
+                    services: (draft.services || []).map((s) => ({
+                      name: s.name,
+                      price: parseFloat(s.price) || 0,
+                      duration: parseInt(s.duration) || 60,
+                      isAddon: false,
+                    })),
+                  }),
+                }).catch(() => { /* non-fatal */ });
+                // Restore state for display
+                if (draft.businessName) setBusinessName(draft.businessName);
+                if (draft.ownerName) setOwnerName(draft.ownerName);
+                if (draft.city) setCity(draft.city);
+                if (draft.state) setState(draft.state);
+                if (draft.phone) setPhone(draft.phone);
+                if (draft.address) setAddress(draft.address);
+                if (draft.timezone) setTimezone(draft.timezone);
+                if (draft.hours) setHours(draft.hours);
+                if (draft.services?.length) setServices(draft.services);
+                if (draft.bookingMode) setBookingMode(draft.bookingMode);
+                if (draft.groomers?.length) setGroomers(draft.groomers);
+              }
+            } catch { /* ignore */ }
+          }
 
           // If resuming mid-onboarding (step param set, or profile already has data),
           // skip the welcome screen and go directly to the requested/first step.
@@ -491,10 +551,27 @@ export default function OnboardingPage() {
   async function saveBusinessProfile() {
     if (status !== "authenticated") {
       setSignupName(ownerName); // pre-fill name from business profile
+      setSignupModalTab("signup");
       setShowSignupGate(true);
       return;
     }
     await doSaveProfile();
+  }
+
+  // Persist form draft to localStorage before Google OAuth redirect
+  function saveDraftToStorage() {
+    try {
+      localStorage.setItem("onboardingDraft", JSON.stringify({
+        businessName, ownerName, city, state, phone, address, timezone,
+        hours, services, bookingMode, groomers,
+      }));
+    } catch { /* ignore */ }
+  }
+
+  // Trigger Google OAuth — saves draft first so state survives the redirect
+  function handleGoogleSignup() {
+    saveDraftToStorage();
+    signIn("google", { callbackUrl: "/onboarding?step=3&restoreDraft=1" });
   }
 
   // Signup + flush buffered data for guests
@@ -524,6 +601,30 @@ export default function OnboardingPage() {
         return;
       }
 
+      setShowSignupGate(false);
+      await doSaveProfile();
+    } catch {
+      setSignupError("Something went wrong. Please try again.");
+    } finally {
+      setSignupLoading(false);
+    }
+  }
+
+  // Inline sign-in within the signup gate modal
+  async function handleSigninAndContinue(e: React.FormEvent) {
+    e.preventDefault();
+    setSignupError("");
+    setSignupLoading(true);
+    try {
+      const result = await signIn("credentials", {
+        email: signupEmail,
+        password: signupPassword,
+        redirect: false,
+      });
+      if (result?.error) {
+        setSignupError("Invalid email or password.");
+        return;
+      }
       setShowSignupGate(false);
       await doSaveProfile();
     } catch {
@@ -735,66 +836,146 @@ export default function OnboardingPage() {
       proTip={config.proTip}
       direction={direction}
     >
-      {/* Inline signup gate — shown at step 2 → 3 transition for guests */}
+      {/* Inline signup/signin gate — shown at step 2 → 3 transition for guests */}
       {showSignupGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md bg-paw-cream rounded-[2rem] shadow-soft border-4 border-white p-8">
-            <div className="text-center mb-6">
+            <div className="text-center mb-5">
               <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-4">
                 Almost there!
               </div>
-              <h2 className="text-2xl font-extrabold text-paw-brown mb-2">Create your account</h2>
-              <p className="text-sm text-paw-brown/55">Save your setup and get your test number — takes 10 seconds.</p>
+              <h2 className="text-2xl font-extrabold text-paw-brown mb-1">
+                {signupModalTab === "signup" ? "Create your account" : "Sign in to continue"}
+              </h2>
+              <p className="text-sm text-paw-brown/55">
+                {signupModalTab === "signup"
+                  ? "Save your setup and get your test number — takes 10 seconds."
+                  : "Sign in to save your setup and continue."}
+              </p>
             </div>
-            <form onSubmit={handleSignupAndContinue} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Your name</label>
-                <input
-                  type="text"
-                  required
-                  autoComplete="name"
-                  placeholder="Jane Smith"
-                  value={signupName}
-                  onChange={(e) => setSignupName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={signupEmail}
-                  onChange={(e) => setSignupEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
-                <input
-                  type="password"
-                  required
-                  autoComplete="new-password"
-                  placeholder="8+ characters"
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
-                />
-              </div>
-              {signupError && (
-                <p className="text-sm font-medium text-red-500 text-center">{signupError}</p>
-              )}
+
+            {/* Tab toggle */}
+            <div className="flex rounded-2xl bg-paw-sky/60 p-1 mb-5">
               <button
-                type="submit"
-                disabled={signupLoading}
-                className="w-full py-3.5 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                type="button"
+                onClick={() => { setSignupModalTab("signup"); setSignupError(""); }}
+                className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signup" ? "bg-white shadow-sm text-paw-brown" : "text-paw-brown/50 hover:text-paw-brown"}`}
               >
-                {signupLoading ? "Creating account…" : "Create account & continue"}
+                Create account
               </button>
-              <p className="text-xs text-paw-brown/35 text-center">Already have an account? <a href="/auth" className="underline">Sign in</a></p>
-            </form>
+              <button
+                type="button"
+                onClick={() => { setSignupModalTab("signin"); setSignupError(""); }}
+                className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signin" ? "bg-white shadow-sm text-paw-brown" : "text-paw-brown/50 hover:text-paw-brown"}`}
+              >
+                Sign in
+              </button>
+            </div>
+
+            {/* Google button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignup}
+              className="w-full mb-4 flex items-center justify-center gap-3 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-semibold text-paw-brown hover:bg-paw-sky/40 transition-all"
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
+                <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.2-2.7-.5-4z" fill="#FFC107"/>
+                <path d="M6.3 14.7l7 5.1C15.1 16.5 19.2 14 24 14c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.6 0-14.2 4.3-17.7 10.7z" fill="#FF3D00"/>
+                <path d="M24 45c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.5C29.6 36 26.9 37 24 37c-6.1 0-10.7-3.1-11.8-8.5l-7 5.4C8.2 40.8 15.5 45 24 45z" fill="#4CAF50"/>
+                <path d="M44.5 20H24v8.5h11.8c-.8 2.4-2.3 4.4-4.3 5.9l6.6 5.5C41.5 37.1 45 31 45 24c0-1.4-.2-2.7-.5-4z" fill="#1976D2"/>
+              </svg>
+              Continue with Google
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-paw-brown/10" />
+              <span className="text-xs text-paw-brown/30 font-semibold">or</span>
+              <div className="flex-1 h-px bg-paw-brown/10" />
+            </div>
+
+            {signupModalTab === "signup" ? (
+              <form onSubmit={handleSignupAndContinue} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Your name</label>
+                  <input
+                    type="text"
+                    required
+                    autoComplete="name"
+                    placeholder="Jane Smith"
+                    value={signupName}
+                    onChange={(e) => setSignupName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
+                  <input
+                    type="password"
+                    required
+                    autoComplete="new-password"
+                    placeholder="8+ characters"
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                  />
+                </div>
+                {signupError && <p className="text-sm font-medium text-red-500 text-center">{signupError}</p>}
+                <button
+                  type="submit"
+                  disabled={signupLoading}
+                  className="w-full py-3.5 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                >
+                  {signupLoading ? "Creating account…" : "Create account & continue"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleSigninAndContinue} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
+                  <input
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    placeholder="Your password"
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                  />
+                </div>
+                {signupError && <p className="text-sm font-medium text-red-500 text-center">{signupError}</p>}
+                <button
+                  type="submit"
+                  disabled={signupLoading}
+                  className="w-full py-3.5 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                >
+                  {signupLoading ? "Signing in…" : "Sign in & continue"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}

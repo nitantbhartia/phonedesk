@@ -406,6 +406,10 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
   await retellFetch(`/delete-agent/${agentId}`, { method: "DELETE" });
 }
 
+export async function endRetellCall(callId: string): Promise<void> {
+  await retellFetch(`/v2/call/${callId}`, { method: "DELETE" });
+}
+
 // --- Phone Number Provisioning ---
 
 const FALLBACK_AREA_CODES = [415, 212, 312, 512, 720, 206, 404, 617, 213, 303];

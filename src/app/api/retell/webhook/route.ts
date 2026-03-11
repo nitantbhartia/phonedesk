@@ -8,6 +8,7 @@ import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/custo
 import { refreshRetellLLMForCall } from "@/lib/retell";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { resolveBusinessFromDemo } from "@/lib/demo-session";
+import { endRetellCall } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
@@ -76,6 +77,40 @@ async function handleCallStarted(call: RetellCallPayload) {
         });
         if (demoBusiness) {
           phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+        }
+      }
+    }
+
+    // Public demo phone-number rate limit: detect repeat callers by phone
+    if (!phoneNum && calledNumber && call.from_number && call.call_id) {
+      const demoNum = await prisma.demoNumber.findFirst({ where: { number: calledNumber } });
+      if (demoNum) {
+        const normalizedCaller = normalizePhoneNumber(call.from_number);
+        const now = new Date();
+        const activeAttempt = await prisma.publicDemoAttempt.findFirst({
+          where: { demoNumberId: demoNum.id, expiresAt: { gt: now } },
+        });
+        if (activeAttempt) {
+          if (normalizedCaller) {
+            const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const repeat = await prisma.publicDemoAttempt.findFirst({
+              where: { callerPhone: normalizedCaller, startedAt: { gte: windowStart }, id: { not: activeAttempt.id } },
+            });
+            if (repeat) {
+              // Same phone already used a demo in the past 24 hours — terminate the call
+              await endRetellCall(call.call_id).catch((e) => {
+                console.error("[webhook] Failed to end repeat demo call:", e);
+              });
+              return new NextResponse(null, { status: 204 });
+            }
+            // Record callerPhone for future checks
+            if (!activeAttempt.callerPhone) {
+              await prisma.publicDemoAttempt.update({
+                where: { id: activeAttempt.id },
+                data: { callerPhone: normalizedCaller },
+              });
+            }
+          }
         }
       }
     }
