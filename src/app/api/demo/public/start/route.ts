@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { updateRetellPhoneNumber, updateRetellAgent, DEMO_CALL_DURATION_MS } from "@/lib/retell";
+import { verifyDemoToken } from "@/lib/demo-token";
 
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -22,18 +22,62 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ip = getClientIp(req);
-  const now = new Date();
-  const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
+  // --- Lead token verification ---
+  const body = await req.json().catch(() => ({})) as { ldt?: string };
+  const ldt = body?.ldt;
 
-  // Check if this IP has an existing active session — return it (idempotent)
+  if (!ldt) {
+    return NextResponse.json(
+      { error: "verification_required", message: "Please verify your email to access the live demo." },
+      { status: 401 }
+    );
+  }
+
+  const tokenPayload = verifyDemoToken(ldt);
+  if (!tokenPayload) {
+    return NextResponse.json(
+      { error: "invalid_token", message: "Your demo link has expired. Please request a new one." },
+      { status: 401 }
+    );
+  }
+
+  const now = new Date();
+
+  // Load and validate the lead from DB (server-side enforcement)
+  const lead = await prisma.demoLead.findUnique({
+    where: { id: tokenPayload.leadId },
+  });
+
+  if (!lead || !lead.verifiedAt) {
+    return NextResponse.json(
+      { error: "not_verified", message: "Email verification required." },
+      { status: 401 }
+    );
+  }
+
+  if (lead.cooldownUntil && lead.cooldownUntil > now) {
+    const daysLeft = Math.ceil(
+      (lead.cooldownUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return NextResponse.json(
+      {
+        error: "cooldown_active",
+        message: `You've already tried the live demo recently. Come back in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`,
+        cooldownUntil: lead.cooldownUntil.toISOString(),
+      },
+      { status: 429 }
+    );
+  }
+
+  const ip = getClientIp(req);
+
+  // Check if this lead already has an active session — return it (idempotent)
   const existing = await prisma.publicDemoAttempt.findFirst({
-    where: { ip, expiresAt: { gt: now } },
+    where: { leadId: lead.id, expiresAt: { gt: now } },
     orderBy: { startedAt: "desc" },
   });
 
   if (existing) {
-    // Fetch the demo number for this session
     const demoNum = existing.demoNumberId
       ? await prisma.demoNumber.findUnique({ where: { id: existing.demoNumberId } })
       : null;
@@ -42,20 +86,6 @@ export async function POST(req: NextRequest) {
       number: demoNum?.number ?? null,
       startedAt: existing.startedAt.toISOString(),
     });
-  }
-
-  // Check 24h rate limit — has this IP already *called* a demo today?
-  // We only count attempts where a call was actually placed (callerPhone set by webhook).
-  // Getting a number but never calling does not consume the daily quota.
-  const recentAttempt = await prisma.publicDemoAttempt.findFirst({
-    where: { ip, startedAt: { gte: windowStart }, callerPhone: { not: null } },
-  });
-
-  if (recentAttempt) {
-    return NextResponse.json(
-      { error: "rate_limited", message: "You've already tried the demo in the last 24 hours." },
-      { status: 429 }
-    );
   }
 
   // Verify the demo business has a Retell agent
@@ -81,6 +111,9 @@ export async function POST(req: NextRequest) {
   try {
     const result = await prisma.$transaction(
       async (tx) => {
+        // Collect IDs of numbers already assigned to an active publicDemoAttempt.
+        // These are not reflected in the demoSession relation, so we exclude them
+        // explicitly to prevent two verified leads from sharing the same number.
         const activePublicAttempts = await tx.publicDemoAttempt.findMany({
           where: {
             expiresAt: { gt: now },
@@ -89,10 +122,8 @@ export async function POST(req: NextRequest) {
           select: { demoNumberId: true },
         });
         const occupiedPublicDemoNumberIds = activePublicAttempts
-          .map((activeAttempt) => activeAttempt.demoNumberId)
-          .filter((demoNumberId): demoNumberId is string =>
-            Boolean(demoNumberId)
-          );
+          .map((a) => a.demoNumberId)
+          .filter((id): id is string => Boolean(id));
 
         const available = await tx.demoNumber.findFirst({
           where: {
@@ -104,7 +135,7 @@ export async function POST(req: NextRequest) {
         });
         if (!available) throw new Error("demo_unavailable");
         const created = await tx.publicDemoAttempt.create({
-          data: { ip, demoNumberId: available.id, expiresAt },
+          data: { ip, demoNumberId: available.id, leadId: lead.id, expiresAt },
         });
         return { demoNumber: available, attempt: created };
       },
@@ -129,6 +160,14 @@ export async function POST(req: NextRequest) {
     maxCallDurationMs: DEMO_CALL_DURATION_MS,
   }).catch((e) => {
     console.error("[demo/public/start] Failed to set call duration limit:", e);
+  });
+
+  // Record that this lead has started a demo session.
+  // Cooldown is set only when a real call begins (call_started webhook),
+  // so a page reload or link preview cannot burn the lead's weekly quota.
+  await prisma.demoLead.update({
+    where: { id: lead.id },
+    data: { lastDemoAt: now },
   });
 
   return NextResponse.json({
