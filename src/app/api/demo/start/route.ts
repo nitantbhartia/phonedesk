@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,10 +6,45 @@ import { syncRetellAgent, updateRetellPhoneNumber, updateRetellAgent, DEMO_CALL_
 
 const DEMO_SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
-export async function POST() {
+// Max test call sessions provisioned per business (cumulative, across all time)
+const MAX_TEST_SESSIONS_PER_BUSINESS = 5;
+
+// In-memory IP rate limiter: max 3 demo starts per IP per 24 hours.
+// Resets on deploy — intentionally lightweight, just adds friction for scripted abuse.
+const ipAttempts = new Map<string, number[]>();
+const IP_WINDOW_MS = 24 * 60 * 60 * 1000;
+const IP_MAX_ATTEMPTS = 3;
+
+function checkIpRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowStart = now - IP_WINDOW_MS;
+  const recent = (ipAttempts.get(ip) ?? []).filter((t) => t > windowStart);
+  if (recent.length >= IP_MAX_ATTEMPTS) return false;
+  ipAttempts.set(ip, [...recent, now]);
+  return true;
+}
+
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // IP rate limit — soft abuse prevention
+  const ip = getClientIp(req);
+  if (!checkIpRateLimit(ip)) {
+    return NextResponse.json(
+      { error: "rate_limited", message: "Too many test requests. Please try again tomorrow." },
+      { status: 429 }
+    );
   }
 
   const user = await prisma.user.findUnique({
@@ -32,6 +67,17 @@ export async function POST() {
 
   const business = user.business;
   const now = new Date();
+
+  // Per-account cap: count actual test calls made for this business
+  const testCallCount = await prisma.call.count({
+    where: { businessId: business.id, isTestCall: true },
+  });
+  if (testCallCount >= MAX_TEST_SESSIONS_PER_BUSINESS) {
+    return NextResponse.json(
+      { error: "test_limit_reached", message: "Maximum test calls reached. Please go live to continue." },
+      { status: 429 }
+    );
+  }
 
   // Idempotent: return existing active session if any
   const existing = await prisma.demoSession.findUnique({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
@@ -227,15 +227,18 @@ export default function OnboardingPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [billingConsent, setBillingConsent] = useState(false);
+
+  // Deferred signup gate (shown at step 2 → 3 transition for guests)
+  const [profileError, setProfileError] = useState("");
+  const [showSignupGate, setShowSignupGate] = useState(false);
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupError, setSignupError] = useState("");
+  const [signupLoading, setSignupLoading] = useState(false);
   const formattedProvisionedNumber = provisionedNumber
     ? formatPhoneNumber(provisionedNumber)
     : "";
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -396,7 +399,30 @@ export default function OnboardingPage() {
     );
   }
 
-  async function saveBusinessProfile() {
+  // Validates step 1 fields and advances to step 2
+  function validateStep1AndContinue() {
+    setProfileError("");
+    const phoneDigits = phone.replace(/\D/g, "");
+    const trimmedName = businessName.trim().toLowerCase();
+    const BLOCKED_NAMES = new Set(["test", "asdf", "aaa", "bbb", "abc", "123", "fake", "demo", "example", "qwerty", "xxx"]);
+
+    if (trimmedName.length < 2 || BLOCKED_NAMES.has(trimmedName)) {
+      setProfileError("Please enter your real business name.");
+      return;
+    }
+    if (!ownerName.trim() || ownerName.trim().length < 2) {
+      setProfileError("Please enter the owner's name.");
+      return;
+    }
+    if (phoneDigits.length < 10) {
+      setProfileError("Please enter a valid 10-digit US phone number.");
+      return;
+    }
+    navigate(2);
+  }
+
+  // Core save logic — only called when authenticated
+  async function doSaveProfile() {
     setLoading(true);
     try {
       const businessHours: Record<string, { open: string; close: string }> = {};
@@ -461,6 +487,52 @@ export default function OnboardingPage() {
     }
   }
 
+  // Called from step 2 "Save Services" — gates on auth for guests
+  async function saveBusinessProfile() {
+    if (status !== "authenticated") {
+      setSignupName(ownerName); // pre-fill name from business profile
+      setShowSignupGate(true);
+      return;
+    }
+    await doSaveProfile();
+  }
+
+  // Signup + flush buffered data for guests
+  async function handleSignupAndContinue(e: React.FormEvent) {
+    e.preventDefault();
+    setSignupError("");
+    setSignupLoading(true);
+    try {
+      const regRes = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: signupName, email: signupEmail, password: signupPassword }),
+      });
+      const regData = await regRes.json() as { error?: string };
+      if (!regRes.ok) {
+        setSignupError(regData.error || "Failed to create account.");
+        return;
+      }
+
+      const result = await signIn("credentials", {
+        email: signupEmail,
+        password: signupPassword,
+        redirect: false,
+      });
+      if (result?.error) {
+        setSignupError("Account created but sign-in failed. Please reload and try again.");
+        return;
+      }
+
+      setShowSignupGate(false);
+      await doSaveProfile();
+    } catch {
+      setSignupError("Something went wrong. Please try again.");
+    } finally {
+      setSignupLoading(false);
+    }
+  }
+
   function connectProvider(provider: string) {
     const params = new URLSearchParams({
       provider,
@@ -479,6 +551,12 @@ export default function OnboardingPage() {
       if (!res.ok) {
         if (data.error === "demo_unavailable") {
           throw new Error("All demo lines are busy right now. Please try again in a moment.");
+        }
+        if (data.error === "rate_limited") {
+          throw new Error("Too many test requests from your network. Please try again tomorrow.");
+        }
+        if (data.error === "test_limit_reached") {
+          throw new Error("You've reached the maximum number of test calls. Choose a plan to go live.");
         }
         throw new Error(data.error || "Failed to get your test number");
       }
@@ -657,6 +735,70 @@ export default function OnboardingPage() {
       proTip={config.proTip}
       direction={direction}
     >
+      {/* Inline signup gate — shown at step 2 → 3 transition for guests */}
+      {showSignupGate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-paw-cream rounded-[2rem] shadow-soft border-4 border-white p-8">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-4">
+                Almost there!
+              </div>
+              <h2 className="text-2xl font-extrabold text-paw-brown mb-2">Create your account</h2>
+              <p className="text-sm text-paw-brown/55">Save your setup and get your test number — takes 10 seconds.</p>
+            </div>
+            <form onSubmit={handleSignupAndContinue} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Your name</label>
+                <input
+                  type="text"
+                  required
+                  autoComplete="name"
+                  placeholder="Jane Smith"
+                  value={signupName}
+                  onChange={(e) => setSignupName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={signupEmail}
+                  onChange={(e) => setSignupEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
+                <input
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  placeholder="8+ characters"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-orange/50"
+                />
+              </div>
+              {signupError && (
+                <p className="text-sm font-medium text-red-500 text-center">{signupError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={signupLoading}
+                className="w-full py-3.5 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+              >
+                {signupLoading ? "Creating account…" : "Create account & continue"}
+              </button>
+              <p className="text-xs text-paw-brown/35 text-center">Already have an account? <a href="/auth" className="underline">Sign in</a></p>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Step 1: Business Profile */}
       {step === 1 && (
         <form
@@ -866,11 +1008,14 @@ export default function OnboardingPage() {
             </div>
           </div>
 
+          {profileError && (
+            <p className="text-sm font-medium text-red-500 text-center -mb-2">{profileError}</p>
+          )}
           <OnboardingFooter
             showBack={true}
             backLabel="Cancel"
             onBack={() => router.push("/")}
-            onNext={() => navigate(2)}
+            onNext={validateStep1AndContinue}
             nextLabel="Save & Continue"
             nextDisabled={!businessName || !ownerName}
           />
