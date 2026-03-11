@@ -88,7 +88,8 @@ export async function POST(req: NextRequest) {
     data: updateData,
   });
 
-  // Send SMS to customer
+  // Send SMS to customer — fire-and-forget so an SMS failure doesn't
+  // roll back the already-committed status update.
   if (appointment.customerPhone && fromNumber) {
     let smsBody: string;
 
@@ -109,7 +110,9 @@ export async function POST(req: NextRequest) {
         smsBody = `${petName}'s status has been updated.`;
     }
 
-    await sendSms(appointment.customerPhone, smsBody, fromNumber);
+    await sendSms(appointment.customerPhone, smsBody, fromNumber).catch((e) => {
+      console.error("[appointments/status] SMS failed for appointment", appointmentId, e);
+    });
   }
 
   return NextResponse.json({ ok: true, status });

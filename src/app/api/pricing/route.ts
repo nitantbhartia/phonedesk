@@ -128,7 +128,7 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
-  await prisma.pricingRule.delete({ where: { id } });
+  await prisma.pricingRule.deleteMany({ where: { id, businessId: business.id } });
 
   return NextResponse.json({ ok: true });
 }

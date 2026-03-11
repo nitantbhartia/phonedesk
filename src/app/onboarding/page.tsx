@@ -928,7 +928,7 @@ export default function OnboardingPage() {
                   type="password"
                   required
                   autoComplete="new-password"
-                  placeholder="8+ characters"
+                  placeholder="12+ chars, upper, lower, number"
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
                 />
