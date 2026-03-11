@@ -115,38 +115,38 @@ function formatPhoneNumber(value: string) {
 const STEP_CONFIG = [
   {
     title: "Tell us about your shop",
-    subtitle: "This helps your AI assistant speak naturally to your clients.",
-    proTip: "Providing accurate pricing helps your AI assistant qualify leads and book higher-value appointments.",
+    subtitle: "Your AI learns your business name, hours, and location — so it sounds like part of your team from the very first call.",
+    proTip: "Accurate hours matter most: your AI will tell callers 'we're closed right now' and offer to take a message if they call after hours.",
   },
   {
-    title: "Add your services & pricing",
-    subtitle: "Your AI will share these details with callers and use them for booking.",
-    proTip: "Adding duration estimates helps the AI schedule appointments without overlaps.",
+    title: "What services do you offer?",
+    subtitle: "Add your services and prices — your AI will quote these to callers, recommend the right service, and book the right slot.",
+    proTip: "Adding duration estimates lets the AI block the correct amount of time and avoid back-to-back conflicts on your calendar.",
   },
   {
-    title: "Connect your booking system",
-    subtitle: "Works with Google Calendar, Square Appointments, and Acuity Scheduling.",
-    proTip: "Square is the most popular choice for groomers \u2014 RingPaw syncs bookings and avoids double-booking.",
+    title: "Connect your calendar",
+    subtitle: "Link your calendar and your AI checks real availability, books appointments, and never double-books.",
+    proTip: "Square Appointments is the most popular choice for groomers — RingPaw syncs instantly and keeps your schedule clean.",
   },
   {
-    title: "Get your test number & try it",
-    subtitle: "We'll give you a number to call right now and hear your AI receptionist live.",
-    proTip: "Try asking about pricing, availability, or booking — the AI handles it all in real time.",
+    title: "Try your AI live",
+    subtitle: "Call the number below and have a real conversation. Ask about pricing, availability, or try to book — your AI is ready.",
+    proTip: "The more naturally you talk, the better. Say your dog's name, ask follow-up questions, be a real caller — your AI can handle it.",
   },
   {
     title: "Choose your plan",
-    subtitle: "Pick the plan that fits your shop. You can upgrade or downgrade anytime.",
-    proTip: "Most solo groomers start on Solo Groomer and upgrade when they get busier.",
+    subtitle: "RingPaw pays for itself with just one extra booking a month. You can change plans anytime.",
+    proTip: "Most solo groomers start on the Solo plan and upgrade to Studio once they see how many calls they were missing.",
   },
   {
-    title: "You're all set!",
-    subtitle: "Review your setup and go live when you're ready.",
-    proTip: "You can always fine-tune your AI assistant's personality and responses in Settings.",
+    title: "Ready to launch!",
+    subtitle: "Everything's configured. Hit Go Live and your AI starts answering calls immediately.",
+    proTip: "You can adjust your greeting, services, and hours anytime from Settings — no need to get it perfect on day one.",
   },
   {
     title: "Set up call forwarding",
-    subtitle: "Route unanswered calls from your business phone to your RingPaw number.",
-    proTip: "Conditional forwarding means your AI only picks up when you don't — callers never know the difference.",
+    subtitle: "Forward unanswered calls from your business phone to RingPaw — your clients never hear voicemail again.",
+    proTip: "Conditional forwarding only kicks in when you don't answer, so you still take calls normally when you're free.",
   },
 ];
 
@@ -605,31 +605,31 @@ export default function OnboardingPage() {
 
         {/* Welcome card */}
         <main className="w-full max-w-lg bg-paw-cream rounded-[2.5rem] shadow-soft border-4 border-white relative z-10 p-10 sm:p-14 text-center">
-          <div className="w-16 h-16 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-            👋
+          <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-6">
+            ⏱ About 5 minutes to set up
           </div>
           <h1 className="text-3xl font-extrabold text-paw-brown mb-3">
-            Hey, {firstName}!
+            Hey, {firstName}! 👋
           </h1>
           <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
-            Let&apos;s get your AI receptionist set up. It only takes a few minutes — we&apos;ll walk you through it one step at a time.
+            You&apos;re about to set up an AI receptionist that answers calls, books appointments, and texts you summaries — all while you&apos;re busy with clients.
           </p>
 
           {/* What they'll set up */}
           <ul className="text-left space-y-3 mb-10">
             {[
-              { icon: "🏪", text: "Your business details & hours" },
-              { icon: "✂️", text: "Services, pricing & groomers" },
-              { icon: "📅", text: "Calendar sync" },
-              { icon: "📞", text: "Call forwarding to your new number" },
-              { icon: "💳", text: "Choose a plan (from $99/mo)" },
-              { icon: "🚀", text: "A quick test call, then go live" },
+              { icon: "🏪", label: "Business info", desc: "Name, hours, location" },
+              { icon: "✂️", label: "Services & pricing", desc: "So your AI quotes correctly" },
+              { icon: "📅", label: "Calendar sync", desc: "Real availability, no double-books" },
+              { icon: "📞", label: "Live test call", desc: "Hear your AI answer right now" },
+              { icon: "🚀", label: "Go live", desc: "Calls start routing in minutes" },
             ].map((item) => (
-              <li key={item.text} className="flex items-center gap-3 text-sm font-medium text-paw-brown/80">
-                <span className="w-8 h-8 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm text-base">
+              <li key={item.label} className="flex items-center gap-3">
+                <span className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm text-base">
                   {item.icon}
                 </span>
-                {item.text}
+                <span className="text-sm font-bold text-paw-brown">{item.label}</span>
+                <span className="text-sm text-paw-brown/45 ml-auto">{item.desc}</span>
               </li>
             ))}
           </ul>
@@ -638,11 +638,12 @@ export default function OnboardingPage() {
             onClick={() => navigate(1)}
             className="w-full px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2"
           >
-            Let&apos;s get started
+            Let&apos;s do this
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
             </svg>
           </button>
+          <p className="text-xs text-paw-brown/35 mt-4">No credit card until you go live</p>
         </main>
       </div>
     );
@@ -870,6 +871,7 @@ export default function OnboardingPage() {
             backLabel="Cancel"
             onBack={() => router.push("/")}
             onNext={() => navigate(2)}
+            nextLabel="Save & Continue"
             nextDisabled={!businessName || !ownerName}
           />
         </form>
@@ -1063,7 +1065,7 @@ export default function OnboardingPage() {
           <OnboardingFooter
             onBack={() => navigate(1)}
             onNext={saveBusinessProfile}
-            nextLabel="Continue Setup"
+            nextLabel="Save Services"
             loading={loading}
           />
         </div>
@@ -1341,8 +1343,8 @@ export default function OnboardingPage() {
 
                 {callPhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-sm font-bold text-green-700 mb-1">{detectedCallSummary ? "Call complete — your AI handled it!" : "Test call marked as done!"}</p>
-                    <p className="text-xs text-paw-brown/40">Your AI is ready for real calls.</p>
+                    <p className="text-xl font-extrabold text-green-700 mb-1">🎉 Your AI nailed it!</p>
+                    <p className="text-sm text-paw-brown/50">Ready to take real calls 24/7.</p>
                   </div>
                 )}
               </div>
