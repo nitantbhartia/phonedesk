@@ -149,16 +149,50 @@ model DemoSession {
 
 // Tracks public (unauthenticated) demo attempts for IP-based and phone-based rate limiting
 model PublicDemoAttempt {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   ip           String
-  sessionToken String   @unique @default(cuid())
-  demoNumberId String?  // which demo number was assigned
-  callerPhone  String?  // set when call_started webhook fires; used for phone-based rate limiting
-  startedAt    DateTime @default(now())
-  expiresAt    DateTime // session expires after 30 min
+  sessionToken String    @unique @default(cuid())
+  demoNumberId String?   // which demo number was assigned
+  callerPhone  String?   // set when call_started webhook fires; used for phone-based rate limiting
+  leadId       String?   // verified DemoLead that unlocked this attempt
+  lead         DemoLead? @relation(fields: [leadId], references: [id])
+  startedAt    DateTime  @default(now())
+  expiresAt    DateTime  // session expires after 30 min
 
   @@index([ip])
   @@index([callerPhone])
+  @@index([leadId])
+}
+
+// A qualified prospect who has verified their email to access the live demo
+model DemoLead {
+  id            String               @id @default(cuid())
+  email         String               @unique
+  businessName  String?
+  ipAtCreation  String
+  verifiedAt    DateTime?            // set when magic link is clicked
+  lastDemoAt    DateTime?            // set when they successfully start a live demo
+  cooldownUntil DateTime?            // they cannot start another demo until this time
+  attempts      PublicDemoAttempt[]
+  tokens        DemoMagicToken[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([email])
+  @@index([cooldownUntil])
+}
+
+// Single-use email magic link token for verifying a DemoLead
+model DemoMagicToken {
+  id        String    @id @default(cuid())
+  leadId    String
+  lead      DemoLead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  token     String    @unique @default(cuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
 }
 
 model Service {
