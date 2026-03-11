@@ -127,6 +127,7 @@ export default function DashboardPage() {
   const [agentLive, setAgentLive] = useState(true);
   const [agentToggling, setAgentToggling] = useState(false);
   const [confirmOff, setConfirmOff] = useState(false);
+  const [subscribePromptOpen, setSubscribePromptOpen] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(true);
   const [justSubscribed, setJustSubscribed] = useState(false);
@@ -263,54 +264,42 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-6">
           {/* Agent Status Toggle */}
-          {subscriptionActive ? (
-            <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-sm border border-paw-brown/5">
-              <span className="text-sm font-bold text-paw-brown/70">
-                Agent Status
-              </span>
-              <label className="flex items-center cursor-pointer">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={agentLive}
-                    disabled={agentToggling}
-                    onChange={(e) => {
-                      if (!e.target.checked) {
-                        setConfirmOff(true);
-                      } else {
-                        void toggleAgent(true);
-                      }
-                    }}
-                  />
-                  <div
-                    className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
-                      agentLive ? "bg-paw-orange" : "bg-gray-200"
-                    }`}
-                  />
-                  <div
-                    className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${
-                      agentLive ? "translate-x-6" : ""
-                    }`}
-                  />
-                </div>
-                <div className="ml-3 text-paw-brown font-bold text-sm">
-                  {agentLive ? "Live" : "Off"}
-                </div>
-              </label>
-            </div>
-          ) : (
-            <Link
-              href="/settings/billing"
-              className="flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/40 text-paw-brown px-5 py-3 rounded-full text-sm font-bold hover:bg-paw-amber/30 transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              Subscribe to go live
-            </Link>
-          )}
+          <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-sm border border-paw-brown/5">
+            <span className="text-sm font-bold text-paw-brown/70">
+              Agent Status
+            </span>
+            <label className={`flex items-center ${subscriptionActive ? "cursor-pointer" : "cursor-not-allowed"}`}>
+              <div className="relative" onClick={!subscriptionActive ? () => setSubscribePromptOpen(true) : undefined}>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={subscriptionActive && agentLive}
+                  disabled={agentToggling || !subscriptionActive}
+                  onChange={(e) => {
+                    if (!subscriptionActive) return;
+                    if (!e.target.checked) {
+                      setConfirmOff(true);
+                    } else {
+                      void toggleAgent(true);
+                    }
+                  }}
+                />
+                <div
+                  className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
+                    subscriptionActive && agentLive ? "bg-paw-orange" : "bg-gray-200"
+                  }`}
+                />
+                <div
+                  className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${
+                    subscriptionActive && agentLive ? "translate-x-6" : ""
+                  }`}
+                />
+              </div>
+              <div className="ml-3 text-paw-brown font-bold text-sm">
+                {subscriptionActive && agentLive ? "Live" : "Off"}
+              </div>
+            </label>
+          </div>
 
         </div>
       </header>
@@ -412,6 +401,39 @@ export default function DashboardPage() {
                 className="flex-1 py-3 rounded-2xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
               >
                 Turn off
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Subscribe prompt modal — shown when unsubscribed user tries to enable agent */}
+      {subscribePromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setSubscribePromptOpen(false)}>
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-paw-brown mb-2">Subscription required</h3>
+            <p className="text-paw-brown/60 text-sm mb-6">
+              Your AI receptionist is ready to go — you just need an active plan to turn it on and start taking calls.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/settings/billing"
+                onClick={() => setSubscribePromptOpen(false)}
+                className="w-full py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-colors shadow-soft"
+              >
+                Choose a Plan
+              </Link>
+              <button
+                onClick={() => setSubscribePromptOpen(false)}
+                className="w-full py-3 rounded-full border-2 border-paw-brown/10 font-bold text-paw-brown hover:bg-paw-sky transition-colors"
+              >
+                Not now
               </button>
             </div>
           </div>
