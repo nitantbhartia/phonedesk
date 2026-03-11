@@ -55,34 +55,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Service not found" }, { status: 404 });
   }
 
-  const pricingRule = await prisma.pricingRule.upsert({
+  const normalizedBreed = breed || null;
+  const normalizedSize = size || null;
+  const normalizedNotes = notes || null;
+
+  const existingRule = await prisma.pricingRule.findFirst({
     where: {
-      businessId_serviceId_breed_size: {
-        businessId: business.id,
-        serviceId,
-        breed: breed || null,
-        size: size || null,
-      },
-    },
-    create: {
       businessId: business.id,
       serviceId,
-      breed: breed || null,
-      size: size || null,
-      price,
-      notes: notes || null,
-    },
-    update: {
-      price,
-      notes: notes || null,
-      isActive: true,
-    },
-    include: {
-      service: {
-        select: { id: true, name: true, price: true },
-      },
+      breed: normalizedBreed,
+      size: normalizedSize,
     },
   });
+
+  const pricingRule = existingRule
+    ? await prisma.pricingRule.update({
+        where: { id: existingRule.id },
+        data: {
+          price,
+          notes: normalizedNotes,
+          isActive: true,
+        },
+        include: {
+          service: {
+            select: { id: true, name: true, price: true },
+          },
+        },
+      })
+    : await prisma.pricingRule.create({
+        data: {
+          businessId: business.id,
+          serviceId,
+          breed: normalizedBreed,
+          size: normalizedSize,
+          price,
+          notes: normalizedNotes,
+        },
+        include: {
+          service: {
+            select: { id: true, name: true, price: true },
+          },
+        },
+      });
 
   return NextResponse.json({ ok: true, pricingRule });
 }
