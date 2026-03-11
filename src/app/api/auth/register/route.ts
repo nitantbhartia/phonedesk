@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, isPasswordStrongEnough } from "@/lib/password";
+import { hashPassword, isPasswordStrongEnough, PASSWORD_REQUIREMENTS } from "@/lib/password";
 
 function normalizeEmail(email?: string | null): string | null {
   const normalized = email?.trim().toLowerCase();
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   if (!isPasswordStrongEnough(password)) {
     return NextResponse.json(
-      { error: "Password must be at least 8 characters." },
+      { error: `Password too weak. ${PASSWORD_REQUIREMENTS}` },
       { status: 400 },
     );
   }

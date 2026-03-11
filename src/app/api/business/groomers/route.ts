@@ -68,11 +68,15 @@ export async function POST(req: NextRequest) {
     };
 
     if (g.id) {
-      const updated = await prisma.groomer.update({
-        where: { id: g.id },
+      // updateMany lets us include businessId in WHERE, preventing cross-business writes
+      const { count } = await prisma.groomer.updateMany({
+        where: { id: g.id, businessId },
         data,
       });
-      results.push(updated);
+      if (count > 0) {
+        const updated = await prisma.groomer.findUnique({ where: { id: g.id } });
+        if (updated) results.push(updated);
+      }
     } else {
       const created = await prisma.groomer.upsert({
         where: {

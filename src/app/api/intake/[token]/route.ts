@@ -65,22 +65,21 @@ export async function POST(
 ) {
   const { token } = await params;
 
-  const form = await prisma.intakeForm.findUnique({
+  // Verify the form exists before reading the body
+  const exists = await prisma.intakeForm.findUnique({
     where: { token },
+    select: { id: true },
   });
 
-  if (!form) {
+  if (!exists) {
     return NextResponse.json({ error: "Form not found" }, { status: 404 });
-  }
-
-  if (form.completed) {
-    return NextResponse.json({ error: "Form already submitted" }, { status: 400 });
   }
 
   const data = await req.json();
 
-  await prisma.intakeForm.update({
-    where: { token },
+  // Atomic: update only if not yet completed — prevents double-submit race condition
+  const result = await prisma.intakeForm.updateMany({
+    where: { token, completed: false },
     data: {
       petName: sanitizeString(data.petName, 100),
       petBreed: sanitizeString(data.petBreed, 100),
@@ -98,6 +97,10 @@ export async function POST(
       completed: true,
     },
   });
+
+  if (result.count === 0) {
+    return NextResponse.json({ error: "Form already submitted" }, { status: 400 });
+  }
 
   return NextResponse.json({ ok: true });
 }

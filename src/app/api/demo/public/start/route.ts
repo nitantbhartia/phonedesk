@@ -72,21 +72,39 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Find an available demo number
-  const available = await prisma.demoNumber.findFirst({
-    where: {
-      sessions: { none: { expiresAt: { gt: now } } },
-    },
-  });
+  const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
 
-  if (!available) {
-    return NextResponse.json({ error: "demo_unavailable" }, { status: 503 });
+  // Atomically claim a free demo number. Serializable isolation prevents two
+  // concurrent requests from selecting the same available number.
+  let claimedNumber: string;
+  let attempt: { sessionToken: string; startedAt: Date };
+  try {
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const available = await tx.demoNumber.findFirst({
+          where: { sessions: { none: { expiresAt: { gt: now } } } },
+        });
+        if (!available) throw new Error("demo_unavailable");
+        const created = await tx.publicDemoAttempt.create({
+          data: { ip, demoNumberId: available.id, expiresAt },
+        });
+        return { demoNumber: available, attempt: created };
+      },
+      { isolationLevel: "Serializable" }
+    );
+    claimedNumber = result.demoNumber.number;
+    attempt = result.attempt;
+
+    // Point the demo number at the demo business agent (outside tx — external call)
+    await updateRetellPhoneNumber(result.demoNumber.retellPhoneNumber, {
+      inboundAgentId: agentId,
+    });
+  } catch (e) {
+    if (e instanceof Error && e.message === "demo_unavailable") {
+      return NextResponse.json({ error: "demo_unavailable" }, { status: 503 });
+    }
+    throw e;
   }
-
-  // Point the demo number at the demo business agent
-  await updateRetellPhoneNumber(available.retellPhoneNumber, {
-    inboundAgentId: agentId,
-  });
 
   // Cap at 4-minute calls
   await updateRetellAgent(agentId, {
@@ -95,15 +113,9 @@ export async function POST(req: NextRequest) {
     console.error("[demo/public/start] Failed to set call duration limit:", e);
   });
 
-  const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
-
-  const attempt = await prisma.publicDemoAttempt.create({
-    data: { ip, demoNumberId: available.id, expiresAt },
-  });
-
   return NextResponse.json({
     sessionToken: attempt.sessionToken,
-    number: available.number,
+    number: claimedNumber,
     startedAt: attempt.startedAt.toISOString(),
   });
 }

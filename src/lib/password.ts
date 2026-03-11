@@ -30,5 +30,12 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 }
 
 export function isPasswordStrongEnough(password: string): boolean {
-  return password.length >= 8;
+  if (password.length < 12) return false;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  return hasUpper && hasLower && hasDigit;
 }
+
+export const PASSWORD_REQUIREMENTS =
+  "At least 12 characters with one uppercase letter, one lowercase letter, and one number.";

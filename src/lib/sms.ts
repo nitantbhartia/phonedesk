@@ -31,7 +31,7 @@ export async function sendSms(
     throw new Error("From number is required for Twilio SMS (set TWILIO_PHONE_NUMBER as fallback)");
   }
 
-  let lastError: Error | undefined;
+  let lastError: Error = new Error("Failed to send SMS");
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       await getClient().messages.create({ to, from: fromNumber, body });
