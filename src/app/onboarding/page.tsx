@@ -273,8 +273,8 @@ export default function OnboardingPage() {
           throw new Error("Failed to load business profile");
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = await response.json() as any;
+        const data = await response.json();
+        const demoLeadHint = (data as { demoLeadHint?: { businessName: string } | null }).demoLeadHint;
         const business = data.business;
         const hasCalendarConnection = Boolean(
           business?.calendarConnections?.some(
@@ -304,7 +304,7 @@ export default function OnboardingPage() {
             return;
           }
 
-          setBusinessName((business?.name as string | undefined) || data.demoLeadHint?.businessName || "");
+          setBusinessName(business?.name || demoLeadHint?.businessName || "");
           setOwnerName(business?.ownerName || "");
           setCity(business?.city || "");
           setState(business?.state || "");
