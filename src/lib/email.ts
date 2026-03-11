@@ -1,31 +1,17 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT ?? "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+const FROM_ADDRESS = process.env.RESEND_FROM ?? "RingPaw <noreply@ringpaw.com>";
 
-  if (!host || !user || !pass) {
-    // In development without SMTP config, log to console instead
-    if (process.env.NODE_ENV !== "production") {
-      return null;
+function getResend(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("RESEND_API_KEY is not set.");
     }
-    throw new Error(
-      "Email not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables."
-    );
+    return null; // dev fallback
   }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+  return new Resend(apiKey);
 }
-
-const FROM_ADDRESS =
-  process.env.SMTP_FROM ?? `RingPaw <noreply@ringpaw.com>`;
 
 export async function sendEmail({
   to,
@@ -38,21 +24,12 @@ export async function sendEmail({
   html: string;
   text: string;
 }) {
-  const transporter = getTransporter();
-
-  if (!transporter) {
-    // Dev fallback — print to console
+  const resend = getResend();
+  if (!resend) {
     console.log(`\n[EMAIL DEV] To: ${to}\nSubject: ${subject}\n${text}\n`);
     return;
   }
-
-  await transporter.sendMail({
-    from: FROM_ADDRESS,
-    to,
-    subject,
-    html,
-    text,
-  });
+  await resend.emails.send({ from: FROM_ADDRESS, to, subject, html, text });
 }
 
 export async function sendDemoMagicLink({
@@ -67,17 +44,17 @@ export async function sendDemoMagicLink({
   const greeting = businessName ? `Hi ${businessName}!` : "Hi there!";
 
   const text = [
-    `${greeting}`,
-    ``,
-    `Here's your magic link to unlock the RingPaw live AI demo:`,
-    ``,
+    greeting,
+    "",
+    "Here's your magic link to unlock the RingPaw live AI demo:",
+    "",
     magicLink,
-    ``,
-    `This link expires in 1 hour and can only be used once.`,
-    ``,
-    `If you didn't request this, you can safely ignore it.`,
-    ``,
-    `— The RingPaw team`,
+    "",
+    "This link expires in 1 hour and can only be used once.",
+    "",
+    "If you didn't request this, you can safely ignore it.",
+    "",
+    "— The RingPaw team",
   ].join("\n");
 
   const html = `
@@ -94,11 +71,9 @@ export async function sendDemoMagicLink({
       <h1 style="color: #3d2b1a; font-size: 22px; font-weight: 800; margin: 12px 0 4px;">Your demo is ready</h1>
       <p style="color: #7a5c42; font-size: 14px; margin: 0;">${greeting} Click below to try the live AI demo.</p>
     </div>
-
     <a href="${magicLink}" style="display: block; background: #3d2b1a; color: #fffdf7; text-align: center; padding: 16px 24px; border-radius: 50px; font-weight: 700; font-size: 16px; text-decoration: none; margin-bottom: 24px;">
       Launch live demo →
     </a>
-
     <p style="color: #a08060; font-size: 12px; text-align: center; margin: 0;">
       Link expires in 1 hour · one-time use<br>
       If you didn't request this, ignore this email.
