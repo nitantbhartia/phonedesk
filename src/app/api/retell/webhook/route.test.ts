@@ -5,6 +5,9 @@ vi.mock("@/lib/prisma", () => ({
     phoneNumber: {
       findFirst: vi.fn(),
     },
+    business: {
+      findUnique: vi.fn(),
+    },
     call: {
       upsert: vi.fn(),
       findUnique: vi.fn(),
@@ -53,6 +56,7 @@ describe("POST /api/retell/webhook", () => {
   beforeEach(() => {
     vi.mocked(isRetellWebhookValid).mockReturnValue(true);
     vi.mocked(prisma.phoneNumber.findFirst).mockReset();
+    vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(prisma.call.upsert).mockReset();
     vi.mocked(prisma.call.findUnique).mockReset();
     vi.mocked(prisma.call.update).mockReset();
@@ -82,6 +86,9 @@ describe("POST /api/retell/webhook", () => {
         retellConfig: { llmId: "llm_123" },
       },
     } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      onboardingComplete: true,
+    } as never);
     vi.mocked(lookupCustomerContext).mockResolvedValue({
       customer: { name: "Sarah" },
     } as never);
@@ -107,6 +114,7 @@ describe("POST /api/retell/webhook", () => {
         callerPhone: "(619) 555-0100",
         callerName: "Sarah",
         status: "IN_PROGRESS",
+        isTestCall: false,
       },
       update: { status: "IN_PROGRESS", callerName: "Sarah" },
     });

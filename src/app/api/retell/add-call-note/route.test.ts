@@ -5,6 +5,12 @@ vi.mock("@/lib/prisma", () => ({
     phoneNumber: {
       findFirst: vi.fn(),
     },
+    demoSession: {
+      findFirst: vi.fn(),
+    },
+    business: {
+      findUnique: vi.fn(),
+    },
     customer: {
       updateMany: vi.fn(),
     },
@@ -36,6 +42,8 @@ describe("POST /api/retell/add-call-note", () => {
   beforeEach(() => {
     vi.mocked(isRetellWebhookValid).mockReturnValue(true);
     vi.mocked(prisma.phoneNumber.findFirst).mockReset();
+    vi.mocked(prisma.demoSession.findFirst).mockReset();
+    vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(prisma.customer.updateMany).mockReset();
     vi.mocked(getCRMWithFallback).mockReset();
   });

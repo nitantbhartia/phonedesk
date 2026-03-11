@@ -5,6 +5,12 @@ vi.mock("@/lib/prisma", () => ({
     phoneNumber: {
       findFirst: vi.fn(),
     },
+    demoSession: {
+      findFirst: vi.fn(),
+    },
+    business: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -28,6 +34,8 @@ function makeRequest(body: unknown) {
 describe("POST /api/retell/check-availability", () => {
   beforeEach(() => {
     vi.mocked(prisma.phoneNumber.findFirst).mockReset();
+    vi.mocked(prisma.demoSession.findFirst).mockReset();
+    vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(getAvailableSlots).mockReset();
     vi.mocked(describeAvailableSlots).mockReset();
   });
