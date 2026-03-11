@@ -88,11 +88,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const parsedDate = new Date(preferredDate);
-  if (isNaN(parsedDate.getTime())) {
-    return NextResponse.json({ error: "preferredDate is not a valid date" }, { status: 400 });
-  }
-
   const entry = await prisma.waitlistEntry.create({
     data: {
       businessId: business.id,
