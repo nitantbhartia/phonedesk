@@ -11,14 +11,7 @@ const calendarSettingsSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
-  const businessResult = await requireCurrentBusiness({
-    include: {
-      calendarConnections: {
-        where: { isActive: true },
-        select: { id: true },
-      },
-    },
-  });
+  const businessResult = await requireCurrentBusiness();
   if ("response" in businessResult) {
     return businessResult.response;
   }
@@ -31,7 +24,12 @@ export async function PATCH(req: NextRequest) {
   const { business } = businessResult;
   const { primaryConnectionId } = bodyResult.data;
 
-  const ownsConnection = business.calendarConnections.some(
+  const activeConnections = await prisma.calendarConnection.findMany({
+    where: { businessId: business.id, isActive: true },
+    select: { id: true },
+  });
+
+  const ownsConnection = activeConnections.some(
     (connection) => connection.id === primaryConnectionId
   );
 

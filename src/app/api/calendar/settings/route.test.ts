@@ -14,6 +14,7 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
     },
     calendarConnection: {
+      findMany: vi.fn(),
       updateMany: vi.fn(),
       update: vi.fn(),
     },
@@ -31,6 +32,7 @@ describe("calendar/settings", () => {
   beforeEach(() => {
     vi.mocked(getServerSession).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
+    vi.mocked(prisma.calendarConnection.findMany).mockReset();
     vi.mocked(prisma.calendarConnection.updateMany).mockReset();
     vi.mocked(prisma.calendarConnection.update).mockReset();
   });
@@ -41,8 +43,11 @@ describe("calendar/settings", () => {
     } as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       id: "biz_1",
-      calendarConnections: [{ id: "conn_1" }, { id: "conn_2" }],
     } as never);
+    vi.mocked(prisma.calendarConnection.findMany).mockResolvedValue([
+      { id: "conn_1" },
+      { id: "conn_2" },
+    ] as never);
 
     const response = await PATCH(
       new Request("http://localhost/api/calendar/settings", {
@@ -53,6 +58,10 @@ describe("calendar/settings", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
+    expect(prisma.calendarConnection.findMany).toHaveBeenCalledWith({
+      where: { businessId: "biz_1", isActive: true },
+      select: { id: true },
+    });
     expect(prisma.calendarConnection.updateMany).toHaveBeenCalledWith({
       where: { businessId: "biz_1" },
       data: { isPrimary: false },
