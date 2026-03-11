@@ -44,9 +44,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Check 24h rate limit — has this IP already done a demo today?
+  // Check 24h rate limit — has this IP already *called* a demo today?
+  // We only count attempts where a call was actually placed (callerPhone set by webhook).
+  // Getting a number but never calling does not consume the daily quota.
   const recentAttempt = await prisma.publicDemoAttempt.findFirst({
-    where: { ip, startedAt: { gte: windowStart } },
+    where: { ip, startedAt: { gte: windowStart }, callerPhone: { not: null } },
   });
 
   if (recentAttempt) {

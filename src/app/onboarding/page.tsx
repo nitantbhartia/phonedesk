@@ -227,6 +227,8 @@ export default function OnboardingPage() {
   const [detectedCallSummary, setDetectedCallSummary] = useState<string | null>(null);
   const baselineCallCount = useRef<number | null>(null);
   const callPhaseRef = useRef(callPhase);
+  // Prevents the resumeOnboarding effect from resetting step during inline auth (step 3).
+  const skipNextResumeRef = useRef(false);
 
   // Step 6: Subscription
   const [subscribed, setSubscribed] = useState(false);
@@ -253,6 +255,10 @@ export default function OnboardingPage() {
     let cancelled = false;
 
     const resumeOnboarding = async () => {
+      if (skipNextResumeRef.current) {
+        skipNextResumeRef.current = false;
+        return;
+      }
       const params =
         typeof window === "undefined"
           ? new URLSearchParams()
@@ -603,12 +609,14 @@ export default function OnboardingPage() {
         return;
       }
 
+      skipNextResumeRef.current = true;
       const result = await signIn("credentials", {
         email: signupEmail,
         password: signupPassword,
         redirect: false,
       });
       if (result?.error) {
+        skipNextResumeRef.current = false;
         setSignupError("Account created but sign-in failed. Please reload and try again.");
         return;
       }
@@ -627,12 +635,14 @@ export default function OnboardingPage() {
     setSignupError("");
     setSignupLoading(true);
     try {
+      skipNextResumeRef.current = true;
       const result = await signIn("credentials", {
         email: signupEmail,
         password: signupPassword,
         redirect: false,
       });
       if (result?.error) {
+        skipNextResumeRef.current = false;
         setSignupError("Invalid email or password.");
         return;
       }
