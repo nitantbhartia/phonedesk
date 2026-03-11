@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { parseJsonBody, requireCurrentBusiness } from "@/lib/route-helpers";
+
+const pricingRuleSchema = z.object({
+  serviceId: z.string().trim().min(1, "serviceId is required"),
+  breed: z.string().trim().max(100).optional().nullable(),
+  size: z.enum(["SMALL", "MEDIUM", "LARGE", "XLARGE"]).optional().nullable(),
+  price: z.number().min(0, "Price must be between $0 and $9,999").max(9999, "Price must be between $0 and $9,999"),
+  notes: z.string().trim().max(300).optional().nullable(),
+});
 
 // GET: List pricing rules for business (include service name)
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const businessResult = await requireCurrentBusiness();
+  if ("response" in businessResult) {
+    return businessResult.response;
   }
-
-  const business = await prisma.business.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!business) {
-    return NextResponse.json({ error: "No business" }, { status: 404 });
-  }
+  const { business } = businessResult;
 
   const pricingRules = await prisma.pricingRule.findMany({
     where: { businessId: business.id },
@@ -33,42 +34,17 @@ export async function GET() {
 
 // POST: Create or update a pricing rule
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const businessResult = await requireCurrentBusiness();
+  if ("response" in businessResult) {
+    return businessResult.response;
   }
+  const { business } = businessResult;
 
-  const business = await prisma.business.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!business) {
-    return NextResponse.json({ error: "No business" }, { status: 404 });
+  const bodyResult = await parseJsonBody(req, pricingRuleSchema);
+  if ("response" in bodyResult) {
+    return bodyResult.response;
   }
-
-  const body = await req.json();
-  const { serviceId, breed, size, price, notes } = body;
-
-  if (!serviceId || price === undefined) {
-    return NextResponse.json(
-      { error: "serviceId and price are required" },
-      { status: 400 }
-    );
-  }
-
-  if (typeof price !== "number" || price < 0 || price > 9999) {
-    return NextResponse.json(
-      { error: "Price must be between $0 and $9,999" },
-      { status: 400 }
-    );
-  }
-
-  if (breed && (typeof breed !== "string" || breed.length > 100)) {
-    return NextResponse.json(
-      { error: "Breed must be 100 characters or less" },
-      { status: 400 }
-    );
-  }
+  const { serviceId, breed, size, price, notes } = bodyResult.data;
 
   // Verify the service belongs to this business
   const service = await prisma.service.findFirst({
@@ -79,52 +55,59 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Service not found" }, { status: 404 });
   }
 
-  const pricingRule = await prisma.pricingRule.upsert({
+  const normalizedBreed = breed || null;
+  const normalizedSize = size || null;
+  const normalizedNotes = notes || null;
+
+  const existingRule = await prisma.pricingRule.findFirst({
     where: {
-      businessId_serviceId_breed_size: {
-        businessId: business.id,
-        serviceId,
-        breed: breed || null,
-        size: size || null,
-      },
-    },
-    create: {
       businessId: business.id,
       serviceId,
-      breed: breed || null,
-      size: size || null,
-      price,
-      notes: notes || null,
-    },
-    update: {
-      price,
-      notes: notes || null,
-      isActive: true,
-    },
-    include: {
-      service: {
-        select: { id: true, name: true, price: true },
-      },
+      breed: normalizedBreed,
+      size: normalizedSize,
     },
   });
+
+  const pricingRule = existingRule
+    ? await prisma.pricingRule.update({
+        where: { id: existingRule.id },
+        data: {
+          price,
+          notes: normalizedNotes,
+          isActive: true,
+        },
+        include: {
+          service: {
+            select: { id: true, name: true, price: true },
+          },
+        },
+      })
+    : await prisma.pricingRule.create({
+        data: {
+          businessId: business.id,
+          serviceId,
+          breed: normalizedBreed,
+          size: normalizedSize,
+          price,
+          notes: normalizedNotes,
+        },
+        include: {
+          service: {
+            select: { id: true, name: true, price: true },
+          },
+        },
+      });
 
   return NextResponse.json({ ok: true, pricingRule });
 }
 
 // DELETE: Delete a pricing rule by id
 export async function DELETE(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const businessResult = await requireCurrentBusiness();
+  if ("response" in businessResult) {
+    return businessResult.response;
   }
-
-  const business = await prisma.business.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!business) {
-    return NextResponse.json({ error: "No business" }, { status: 404 });
-  }
+  const { business } = businessResult;
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { readApiError } from "@/lib/client-api";
 import { InfoIcon } from "@/components/ui/info-icon";
 import { toast } from "@/components/ui/toast";
 
@@ -104,10 +105,27 @@ function serializeHours(hours: HoursState): SavedBusinessHours {
 }
 
 export default function CalendarSettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-paw-cream">
+          <div className="animate-pulse text-paw-brown/60">Loading...</div>
+        </div>
+      }
+    >
+      <CalendarSettingsPageContent />
+    </Suspense>
+  );
+}
+
+function CalendarSettingsPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
+  const [pageNotice, setPageNotice] = useState("");
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [primaryConnectionId, setPrimaryConnectionId] = useState<string>("");
   const [respectBusy, setRespectBusy] = useState(true);
@@ -124,6 +142,12 @@ export default function CalendarSettingsPage() {
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const hoursDirty = JSON.stringify(serializeHours(hours)) !== savedHoursJson;
+
+  useEffect(() => {
+    if (searchParams.get("error") === "calendar_connect_failed") {
+      setPageError("Calendar connection failed. Please reconnect and try again.");
+    }
+  }, [searchParams]);
 
   const fetchConflicts = useCallback(async () => {
     setConflictsLoading(true);
@@ -158,44 +182,63 @@ export default function CalendarSettingsPage() {
   }, [status, router, fetchConflicts]);
 
   async function fetchData() {
+    setPageError("");
     try {
       const res = await fetch("/api/business/profile");
-      if (res.ok) {
-        const data = await res.json();
-        const conns: CalendarConnection[] = data.business?.calendarConnections || [];
-        setConnections(conns);
-        const primary = conns.find((c) => c.isPrimary);
-        if (primary) setPrimaryConnectionId(primary.id);
-        else if (conns.length > 0) setPrimaryConnectionId(conns[0].id);
-        const bh = data.business?.businessHours as SavedBusinessHours | undefined;
-        const built = buildHoursState(bh);
-        setHours(built);
-        setSavedHoursJson(JSON.stringify(serializeHours(built)));
+      if (!res.ok) {
+        setPageError(await readApiError(res, "Failed to load calendar settings."));
+        return;
       }
+      const data = await res.json();
+      const conns: CalendarConnection[] = data.business?.calendarConnections || [];
+      setConnections(conns);
+      const primary = conns.find((c) => c.isPrimary);
+      if (primary) setPrimaryConnectionId(primary.id);
+      else if (conns.length > 0) setPrimaryConnectionId(conns[0].id);
+      const bh = data.business?.businessHours as SavedBusinessHours | undefined;
+      const built = buildHoursState(bh);
+      setHours(built);
+      setSavedHoursJson(JSON.stringify(serializeHours(built)));
     } catch (error) {
       console.error("Error fetching calendar settings:", error);
+      setPageError("Failed to load calendar settings. Please refresh.");
     } finally {
       setLoading(false);
     }
   }
 
   async function saveBookingLogic() {
+    if (!primaryConnectionId) {
+      setPageError("Connect a calendar before choosing a primary destination.");
+      return;
+    }
+
     setBookingLogicSaving(true);
     setBookingLogicSaved(false);
+    setPageError("");
+    setPageNotice("");
     try {
-      await fetch("/api/business/profile", {
-        method: "POST",
+      const res = await fetch("/api/calendar/settings", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          primaryCalendarConnectionId: primaryConnectionId || null,
-          respectBusy,
-          bufferTime,
+          primaryConnectionId,
         }),
       });
+      if (!res.ok) {
+        throw new Error(
+          await readApiError(res, "Failed to save primary destination.")
+        );
+      }
       setBookingLogicSaved(true);
+      setPageNotice("Primary booking destination saved.");
       setTimeout(() => setBookingLogicSaved(false), 3000);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save settings. Please try again.");
+      setPageError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save settings. Please try again."
+      );
     } finally {
       setBookingLogicSaving(false);
     }
@@ -232,11 +275,14 @@ export default function CalendarSettingsPage() {
       });
       if (res.ok) {
         await fetchData();
+        setPageNotice(`${provider} calendar disconnected.`);
       } else {
-        toast.error("Failed to disconnect calendar. Please try again.");
+        setPageError(
+          await readApiError(res, "Failed to disconnect calendar. Please try again.")
+        );
       }
     } catch {
-      toast.error("Failed to disconnect calendar. Please try again.");
+      setPageError("Failed to disconnect calendar. Please try again.");
     } finally {
       setDisconnecting(null);
     }
@@ -274,6 +320,17 @@ export default function CalendarSettingsPage() {
 
   return (
     <div className="space-y-8">
+      {pageError && (
+        <div className="rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+          {pageError}
+        </div>
+      )}
+      {pageNotice && (
+        <div className="rounded-3xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-700">
+          {pageNotice}
+        </div>
+      )}
+
       {/* Calendar Integration Section */}
       <section className="bg-white rounded-4xl p-6 sm:p-10 shadow-soft border border-white">
         <div className="mb-8">
@@ -621,32 +678,35 @@ export default function CalendarSettingsPage() {
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Conflict Checking
-                  <InfoIcon text="Controls how the AI checks for scheduling conflicts. Enabling 'Respect busy' blocks slots marked busy on your personal calendar. Buffer time adds a gap between appointments so you're never rushed." />
+                  <InfoIcon text="Advanced conflict controls are not editable yet. RingPaw already respects conflicts from your connected calendar data." />
                 </span>
               </label>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl cursor-pointer hover:bg-paw-cream transition-colors border border-transparent hover:border-paw-brown/5">
+                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl border border-transparent opacity-60">
                   <input
                     type="checkbox"
                     checked={respectBusy}
-                    onChange={(e) => setRespectBusy(e.target.checked)}
+                    disabled
                     className="w-5 h-5 rounded-md accent-paw-orange"
                   />
                   <span className="font-bold text-paw-brown/80">
                     Respect &quot;Busy&quot; events on personal calendar
                   </span>
                 </label>
-                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl cursor-pointer hover:bg-paw-cream transition-colors border border-transparent hover:border-paw-brown/5">
+                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl border border-transparent opacity-60">
                   <input
                     type="checkbox"
                     checked={bufferTime}
-                    onChange={(e) => setBufferTime(e.target.checked)}
+                    disabled
                     className="w-5 h-5 rounded-md accent-paw-orange"
                   />
                   <span className="font-bold text-paw-brown/80">
                     Block 15m buffer before &amp; after each dog
                   </span>
                 </label>
+                <p className="text-xs font-medium text-paw-brown/55">
+                  These advanced controls are coming soon. Right now you can save the primary booking destination above.
+                </p>
               </div>
             </div>
           </div>
@@ -657,10 +717,10 @@ export default function CalendarSettingsPage() {
             )}
             <button
               onClick={() => void saveBookingLogic()}
-              disabled={bookingLogicSaving}
+              disabled={bookingLogicSaving || !primaryConnectionId}
               className="px-8 py-3 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50"
             >
-              {bookingLogicSaving ? "Saving…" : "Save Settings"}
+              {bookingLogicSaving ? "Saving…" : "Save Primary Destination"}
             </button>
           </div>
         </section>

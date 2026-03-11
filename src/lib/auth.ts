@@ -1,8 +1,9 @@
-import { type NextAuthOptions, type CookieOption } from "next-auth";
+import { type NextAuthOptions, type CookieOption, type RequestInternal } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import { verifyPassword } from "./password";
+import { rateLimit } from "./rate-limit";
 
 const authSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
 const isSecure =
@@ -57,6 +58,43 @@ function normalizeEmail(email?: string | null): string | null {
   return normalized || null;
 }
 
+type AuthRequestLike =
+  | Request
+  | Pick<RequestInternal, "headers" | "body" | "query" | "method">
+  | { headers?: Headers };
+
+function getHeaderValue(
+  request: AuthRequestLike | undefined,
+  key: string
+): string {
+  const headers = request?.headers;
+  if (!headers) return "";
+
+  if (headers instanceof Headers) {
+    return headers.get(key) || "";
+  }
+
+  const value = headers[key] ?? headers[key.toLowerCase()];
+  return typeof value === "string" ? value : "";
+}
+
+function getAuthRateLimitKey(email: string, request?: AuthRequestLike) {
+  const forwardedFor = getHeaderValue(request, "x-forwarded-for");
+  const realIp = getHeaderValue(request, "x-real-ip");
+  const ip = forwardedFor.split(",")[0]?.trim() || realIp.trim() || "unknown";
+  return `auth:credentials:${email}:${ip}`;
+}
+
+export function checkCredentialRateLimit(
+  email: string,
+  request?: AuthRequestLike
+) {
+  return rateLimit(getAuthRateLimitKey(email, request), {
+    limit: 5,
+    windowMs: 15 * 60_000,
+  });
+}
+
 export const authOptions: NextAuthOptions = {
   // No adapter — the PrismaAdapter crashes during the OAuth callback with
   // Prisma v6, producing error=Callback. We persist user/account data manually
@@ -69,11 +107,16 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email = normalizeEmail(credentials?.email);
         const password = credentials?.password;
 
         if (!email || !password) {
+          return null;
+        }
+
+        const rateLimitResult = checkCredentialRateLimit(email, request);
+        if (!rateLimitResult.allowed) {
           return null;
         }
 
