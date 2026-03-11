@@ -19,25 +19,39 @@ vi.mock("@/lib/calendar", () => ({
   getAvailableSlots: vi.fn(),
 }));
 
+vi.mock("@/lib/retell-auth", () => ({
+  isRetellWebhookValid: vi.fn(),
+}));
+
 import { POST } from "./route";
 import { prisma } from "@/lib/prisma";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
+import { isRetellWebhookValid } from "@/lib/retell-auth";
 
-function makeRequest(body: unknown) {
+function makeRequest(body: unknown, signature = "sig") {
   return new Request("http://localhost/api/retell/check-availability", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "x-retell-signature": signature },
     body: JSON.stringify(body),
   });
 }
 
 describe("POST /api/retell/check-availability", () => {
   beforeEach(() => {
+    vi.mocked(isRetellWebhookValid).mockReturnValue(true);
     vi.mocked(prisma.phoneNumber.findFirst).mockReset();
     vi.mocked(prisma.demoSession.findFirst).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(getAvailableSlots).mockReset();
     vi.mocked(describeAvailableSlots).mockReset();
+  });
+
+  it("rejects unauthorized requests", async () => {
+    vi.mocked(isRetellWebhookValid).mockReturnValue(false);
+
+    const response = await POST(makeRequest({ args: {}, call: {} }) as never);
+
+    expect(response.status).toBe(401);
   });
 
   it("returns a fallback message when the business cannot be resolved", async () => {

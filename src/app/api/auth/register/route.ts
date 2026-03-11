@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     where: { email },
   });
 
-  if (existingUser?.passwordHash) {
+  if (existingUser) {
     return NextResponse.json(
       { error: "An account with that email already exists." },
       { status: 409 },
@@ -44,21 +44,13 @@ export async function POST(req: Request) {
 
   const passwordHash = hashPassword(password);
 
-  const user = existingUser
-    ? await prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          name: name ?? existingUser.name,
-          passwordHash,
-        },
-      })
-    : await prisma.user.create({
-        data: {
-          name: name ?? undefined,
-          email,
-          passwordHash,
-        },
-      });
+  const user = await prisma.user.create({
+    data: {
+      name: name ?? undefined,
+      email,
+      passwordHash,
+    },
+  });
 
   return NextResponse.json({
     ok: true,

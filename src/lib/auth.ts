@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import { verifyPassword } from "./password";
+import { rateLimit } from "./rate-limit";
 
 const authSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
 const isSecure =
@@ -57,6 +58,23 @@ function normalizeEmail(email?: string | null): string | null {
   return normalized || null;
 }
 
+function getAuthRateLimitKey(email: string, request?: Request | { headers?: Headers }) {
+  const forwardedFor = request?.headers?.get("x-forwarded-for") || "";
+  const realIp = request?.headers?.get("x-real-ip") || "";
+  const ip = forwardedFor.split(",")[0]?.trim() || realIp.trim() || "unknown";
+  return `auth:credentials:${email}:${ip}`;
+}
+
+export function checkCredentialRateLimit(
+  email: string,
+  request?: Request | { headers?: Headers }
+) {
+  return rateLimit(getAuthRateLimitKey(email, request), {
+    limit: 5,
+    windowMs: 15 * 60_000,
+  });
+}
+
 export const authOptions: NextAuthOptions = {
   // No adapter — the PrismaAdapter crashes during the OAuth callback with
   // Prisma v6, producing error=Callback. We persist user/account data manually
@@ -69,11 +87,16 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email = normalizeEmail(credentials?.email);
         const password = credentials?.password;
 
         if (!email || !password) {
+          return null;
+        }
+
+        const rateLimitResult = checkCredentialRateLimit(email, request);
+        if (!rateLimitResult.allowed) {
           return null;
         }
 

@@ -27,3 +27,7 @@ export function rateLimit(
   const allowed = entry.count <= limit;
   return { allowed, remaining: Math.max(0, limit - entry.count) };
 }
+
+export function resetRateLimits() {
+  hits.clear();
+}

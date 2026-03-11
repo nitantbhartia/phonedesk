@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { google } from "googleapis";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+const OAUTH_STATE_TTL_MS = 10 * 60_000;
+
+type OAuthStatePayload = {
+  redirect: string;
+  provider: "google" | "square" | "acuity";
+  nonce: string;
+  issuedAt: number;
+};
 
 function getBaseAppUrl(req: NextRequest) {
   return (
@@ -10,6 +20,67 @@ function getBaseAppUrl(req: NextRequest) {
     process.env.NEXT_PUBLIC_APP_URL ||
     req.nextUrl.origin
   );
+}
+
+function getOAuthStateSecret() {
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error("Missing NEXTAUTH_SECRET or AUTH_SECRET for OAuth state signing");
+  }
+  return secret;
+}
+
+function encodeOAuthState(payload: OAuthStatePayload) {
+  const serialized = JSON.stringify(payload);
+  const encoded = Buffer.from(serialized).toString("base64url");
+  const signature = createHmac("sha256", getOAuthStateSecret())
+    .update(encoded)
+    .digest("base64url");
+
+  return `${encoded}.${signature}`;
+}
+
+function decodeOAuthState(value: string | null): OAuthStatePayload | null {
+  if (!value) return null;
+
+  const [encoded, signature] = value.split(".");
+  if (!encoded || !signature) return null;
+
+  const expected = createHmac("sha256", getOAuthStateSecret())
+    .update(encoded)
+    .digest("base64url");
+  const signatureBuf = Buffer.from(signature, "utf8");
+  const expectedBuf = Buffer.from(expected, "utf8");
+  if (signatureBuf.length !== expectedBuf.length) return null;
+  if (!timingSafeEqual(signatureBuf, expectedBuf)) return null;
+
+  try {
+    const payload = JSON.parse(
+      Buffer.from(encoded, "base64url").toString("utf8")
+    ) as OAuthStatePayload;
+
+    if (
+      !payload ||
+      typeof payload.redirect !== "string" ||
+      typeof payload.provider !== "string" ||
+      typeof payload.nonce !== "string" ||
+      typeof payload.issuedAt !== "number"
+    ) {
+      return null;
+    }
+
+    if (Date.now() - payload.issuedAt > OAUTH_STATE_TTL_MS) {
+      return null;
+    }
+
+    if (!["google", "square", "acuity"].includes(payload.provider)) {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -45,6 +116,12 @@ export async function GET(req: NextRequest) {
   // If no code, redirect to OAuth
   if (!code) {
     if (provider === "google") {
+      const state = encodeOAuthState({
+        redirect,
+        provider: "google",
+        nonce: randomBytes(16).toString("hex"),
+        issuedAt: Date.now(),
+      });
       const authUrl = oauth2Client.generateAuthUrl({
         access_type: "offline",
         prompt: "consent",
@@ -52,7 +129,7 @@ export async function GET(req: NextRequest) {
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events",
         ],
-        state: JSON.stringify({ redirect, provider }),
+        state,
       });
       return NextResponse.redirect(authUrl);
     }
@@ -67,7 +144,12 @@ export async function GET(req: NextRequest) {
       squareAuthUrl.searchParams.set("session", "false");
       squareAuthUrl.searchParams.set(
         "state",
-        JSON.stringify({ redirect, provider: "square" })
+        encodeOAuthState({
+          redirect,
+          provider: "square",
+          nonce: randomBytes(16).toString("hex"),
+          issuedAt: Date.now(),
+        })
       );
       squareAuthUrl.searchParams.set(
         "redirect_uri",
@@ -84,7 +166,12 @@ export async function GET(req: NextRequest) {
       acuityAuthUrl.searchParams.set("scope", "api-v1");
       acuityAuthUrl.searchParams.set(
         "state",
-        JSON.stringify({ redirect, provider: "acuity" })
+        encodeOAuthState({
+          redirect,
+          provider: "acuity",
+          nonce: randomBytes(16).toString("hex"),
+          issuedAt: Date.now(),
+        })
       );
       return NextResponse.redirect(acuityAuthUrl.toString());
     }
@@ -109,14 +196,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(buildRedirectUrl("/onboarding"));
   }
 
-  let parsedState: { redirect?: string; provider?: string } = {};
-  try {
-    if (stateParam) parsedState = JSON.parse(stateParam);
-  } catch {
-    // ignore
+  const parsedState = decodeOAuthState(stateParam);
+  if (!parsedState) {
+    return NextResponse.redirect(
+      buildRedirectUrl(redirect, { error: "invalid_oauth_state" })
+    );
   }
 
-  const calendarProvider = parsedState.provider || "google";
+  const calendarProvider = parsedState.provider;
   const redirectPath = parsedState.redirect || redirect;
 
   if (calendarProvider === "google") {
