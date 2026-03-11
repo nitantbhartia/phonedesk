@@ -111,7 +111,7 @@ function LandingPageContent() {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/auth?mode=signup"
+                href="/demo"
                 className="hidden sm:block px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
               >
                 Get Started
@@ -141,7 +141,7 @@ function LandingPageContent() {
               <a href="#features" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Features</a>
               <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Pricing</a>
               <Link
-                href="/auth?mode=signup"
+                href="/demo"
                 onClick={() => setMobileMenuOpen(false)}
                 className="mt-1 px-6 py-3 bg-paw-brown text-paw-cream rounded-full font-bold text-center hover:bg-opacity-90 transition-all shadow-lg"
               >
@@ -179,7 +179,7 @@ function LandingPageContent() {
 
             <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
               <Link
-                href="/auth?mode=signup"
+                href="/demo"
                 className="relative overflow-hidden px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50 btn-shimmer"
               >
                 Get Started Today
@@ -728,7 +728,7 @@ function LandingPageContent() {
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">Ready to stop missing calls?</h2>
           <p className="text-white/60 mb-6">Set up in 5 minutes. Card required · only charged after your first booking.</p>
           <Link
-            href="/auth?mode=signup"
+            href="/demo"
             className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
           >
             Get Started Free
