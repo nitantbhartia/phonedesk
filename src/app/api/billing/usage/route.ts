@@ -42,6 +42,7 @@ export async function GET() {
       businessId: business.id,
       createdAt: { gte: periodStart },
       duration: { not: null },
+      isTestCall: false,
     },
     _sum: { duration: true },
   });
