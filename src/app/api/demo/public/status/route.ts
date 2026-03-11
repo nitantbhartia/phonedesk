@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePhoneNumber } from "@/lib/phone";
 
+export const dynamic = "force-dynamic";
+
+function jsonNoStore(body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  return response;
+}
+
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {
-    return NextResponse.json({ error: "Missing token" }, { status: 400 });
+    return jsonNoStore({ error: "Missing token" }, { status: 400 });
   }
 
   const attempt = await prisma.publicDemoAttempt.findUnique({
@@ -13,12 +21,12 @@ export async function GET(req: NextRequest) {
   });
 
   if (!attempt) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return jsonNoStore({ error: "Session not found" }, { status: 404 });
   }
 
   const demoBizId = process.env.DEMO_BUSINESS_ID;
   if (!demoBizId) {
-    return NextResponse.json({ phase: "waiting", summary: null });
+    return jsonNoStore({ phase: "waiting", summary: null });
   }
 
   const callerPhone = normalizePhoneNumber(attempt.callerPhone);
@@ -42,11 +50,11 @@ export async function GET(req: NextRequest) {
   });
 
   if (!call) {
-    return NextResponse.json({ phase: "waiting", summary: null });
+    return jsonNoStore({ phase: "waiting", summary: null });
   }
 
   const terminal = ["COMPLETED", "NO_BOOKING", "MISSED"].includes(call.status);
-  return NextResponse.json({
+  return jsonNoStore({
     phase: terminal ? "completed" : "in_progress",
     summary: call.summary ?? null,
   });
