@@ -1,4 +1,4 @@
-import { type NextAuthOptions, type CookieOption } from "next-auth";
+import { type NextAuthOptions, type CookieOption, type RequestInternal } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
@@ -58,16 +58,36 @@ function normalizeEmail(email?: string | null): string | null {
   return normalized || null;
 }
 
-function getAuthRateLimitKey(email: string, request?: Request | { headers?: Headers }) {
-  const forwardedFor = request?.headers?.get("x-forwarded-for") || "";
-  const realIp = request?.headers?.get("x-real-ip") || "";
+type AuthRequestLike =
+  | Request
+  | Pick<RequestInternal, "headers" | "body" | "query" | "method">
+  | { headers?: Headers };
+
+function getHeaderValue(
+  request: AuthRequestLike | undefined,
+  key: string
+): string {
+  const headers = request?.headers;
+  if (!headers) return "";
+
+  if (headers instanceof Headers) {
+    return headers.get(key) || "";
+  }
+
+  const value = headers[key] ?? headers[key.toLowerCase()];
+  return typeof value === "string" ? value : "";
+}
+
+function getAuthRateLimitKey(email: string, request?: AuthRequestLike) {
+  const forwardedFor = getHeaderValue(request, "x-forwarded-for");
+  const realIp = getHeaderValue(request, "x-real-ip");
   const ip = forwardedFor.split(",")[0]?.trim() || realIp.trim() || "unknown";
   return `auth:credentials:${email}:${ip}`;
 }
 
 export function checkCredentialRateLimit(
   email: string,
-  request?: Request | { headers?: Headers }
+  request?: AuthRequestLike
 ) {
   return rateLimit(getAuthRateLimitKey(email, request), {
     limit: 5,
