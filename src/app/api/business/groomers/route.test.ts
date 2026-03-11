@@ -15,7 +15,7 @@ vi.mock("@/lib/retell", () => ({
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
-      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
     groomer: {
       updateMany: vi.fn(),
@@ -36,7 +36,7 @@ import { POST } from "./route";
 describe("POST /api/business/groomers", () => {
   beforeEach(() => {
     vi.mocked(getServerSession).mockReset();
-    vi.mocked(prisma.user.findUnique).mockReset();
+    vi.mocked(prisma.user.upsert).mockReset();
     vi.mocked(prisma.groomer.updateMany).mockReset();
     vi.mocked(prisma.groomer.findFirst).mockReset();
     vi.mocked(prisma.groomer.update).mockReset();
@@ -46,10 +46,10 @@ describe("POST /api/business/groomers", () => {
 
   it("rejects updates for groomers outside the current business", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
-      user: { email: "owner@example.com" },
+      user: { id: "user_1" },
     } as never);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      business: { id: "biz_1" },
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
     } as never);
     vi.mocked(prisma.groomer.findFirst).mockResolvedValue(null);
 

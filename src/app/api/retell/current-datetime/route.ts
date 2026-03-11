@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePhoneNumber } from "@/lib/phone";
+import { isRetellWebhookValid } from "@/lib/retell-auth";
 
 /**
  * Retell custom tool: get_current_datetime
@@ -9,7 +10,19 @@ import { normalizePhoneNumber } from "@/lib/phone";
  * on a stale date embedded in the system prompt.
  */
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-retell-signature") || "";
+
+  if (!isRetellWebhookValid(rawBody, signature, req.headers)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: { call?: Record<string, string> };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const { call } = body;
 
   // Resolve the business timezone from the called number

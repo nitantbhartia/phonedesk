@@ -4,6 +4,7 @@ import type { Service } from "@prisma/client";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { resolveBusinessFromDemo } from "@/lib/demo-session";
+import { isRetellWebhookValid } from "@/lib/retell-auth";
 
 const MONTH_MAP: Record<string, number> = {
   january: 1,
@@ -290,7 +291,19 @@ function getSlotMinutes(date: Date, timezone: string) {
 // Retell custom tool endpoint: called by the voice agent during a call
 // to check calendar availability for a given date.
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-retell-signature") || "";
+
+  if (!isRetellWebhookValid(rawBody, signature, req.headers)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: { args?: Record<string, string>; call?: Record<string, string> };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const { args, call } = body;
 
   const date = args?.date;

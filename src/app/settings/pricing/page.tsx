@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { readApiError } from "@/lib/client-api";
 import { formatCurrency } from "@/lib/utils";
 import { InfoIcon } from "@/components/ui/info-icon";
 import { toast } from "@/components/ui/toast";
@@ -28,9 +29,11 @@ export default function PricingPage() {
   const [rules, setRules] = useState<PricingRule[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState("");
   const [form, setForm] = useState({
     serviceId: "",
     breed: "",
@@ -50,6 +53,7 @@ export default function PricingPage() {
   }, [authStatus, router]);
 
   async function fetchData() {
+    setPageError("");
     try {
       const [rulesRes, profileRes] = await Promise.all([
         fetch("/api/pricing"),
@@ -59,6 +63,8 @@ export default function PricingPage() {
       if (rulesRes.ok) {
         const data = await rulesRes.json();
         setRules(data.pricingRules || []);
+      } else {
+        setPageError(await readApiError(rulesRes, "Failed to load pricing rules."));
       }
 
       if (profileRes.ok) {
@@ -66,18 +72,31 @@ export default function PricingPage() {
         if (data.business?.services) {
           setServices(data.business.services.filter((s: Service & { isActive: boolean }) => s.isActive));
         }
+      } else {
+        setPageError((current) => current || "Failed to load active services.");
       }
     } catch {
-      toast.error("Failed to load pricing data. Please refresh.");
+      setPageError("Failed to load pricing data. Please refresh.");
     } finally {
       setLoading(false);
     }
   }
 
   async function addRule() {
-    if (!form.serviceId || !form.price) return;
+    setFormError("");
+    if (services.length === 0) {
+      setFormError("Add an active service before creating pricing rules.");
+      return;
+    }
+    if (!form.serviceId || !form.price) {
+      setFormError("Service and price are required.");
+      return;
+    }
     const price = parseFloat(form.price);
-    if (isNaN(price) || price < 0 || price > 9999) return;
+    if (isNaN(price) || price < 0 || price > 9999) {
+      setFormError("Price must be between $0 and $9,999.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -94,14 +113,15 @@ export default function PricingPage() {
       });
       if (res.ok) {
         setShowForm(false);
+        setFormError("");
         setForm({ serviceId: "", breed: "", size: "", price: "", notes: "" });
-        fetchData();
+        await fetchData();
         toast.success("Pricing rule added");
       } else {
-        toast.error("Failed to add rule");
+        setFormError(await readApiError(res, "Failed to add rule."));
       }
     } catch {
-      toast.error("Failed to add rule");
+      setFormError("Failed to add rule. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -112,10 +132,10 @@ export default function PricingPage() {
     try {
       const res = await fetch(`/api/pricing?id=${id}`, { method: "DELETE" });
       if (res.ok) {
-        fetchData();
+        await fetchData();
         toast.success("Rule removed");
       } else {
-        toast.error("Failed to remove rule");
+        toast.error(await readApiError(res, "Failed to remove rule."));
       }
     } catch {
       toast.error("Failed to remove rule");
@@ -144,6 +164,18 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-8">
+      {pageError && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-3xl border border-red-200 bg-red-50 px-5 py-4">
+          <p className="flex-1 text-sm font-medium text-red-700">{pageError}</p>
+          <button
+            onClick={() => void fetchData()}
+            className="rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-4xl font-extrabold text-paw-brown">Pricing Matrix</h1>
@@ -152,8 +184,12 @@ export default function PricingPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
-          className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft flex items-center gap-2 hover:bg-opacity-90 transition-colors"
+          onClick={() => {
+            setFormError("");
+            setShowForm(true);
+          }}
+          disabled={services.length === 0}
+          className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft flex items-center gap-2 hover:bg-opacity-90 transition-colors disabled:opacity-50"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -166,6 +202,11 @@ export default function PricingPage() {
       {/* Base service prices */}
       <div className="bg-white rounded-3xl shadow-card border border-white p-6">
         <h2 className="font-bold text-paw-brown mb-4">Base Service Prices</h2>
+        {services.length === 0 && (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            No active services found. Add services in Agent Settings before creating pricing rules.
+          </div>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
           {services.map((service) => (
             <div key={service.id} className="bg-paw-cream/50 rounded-2xl p-4">
@@ -330,9 +371,17 @@ export default function PricingPage() {
                   className="w-full px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
                 />
               </div>
+              {formError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {formError}
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-2">
                 <button
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setFormError("");
+                  }}
                   className="px-5 py-2.5 bg-white rounded-full font-bold text-sm border border-paw-brown/10 hover:bg-paw-cream transition-colors"
                 >
                   Cancel
