@@ -325,7 +325,7 @@ export default function DemoPage() {
                     Set this up for my shop →
                   </Link>
                   <p className="text-xs text-paw-brown/40 text-center">
-                    Free 30-day trial · no charge until your first booking
+                    Card required · only charged after your first booking
                   </p>
                   <button
                     onClick={reset}

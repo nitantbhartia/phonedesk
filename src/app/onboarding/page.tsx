@@ -643,7 +643,7 @@ export default function OnboardingPage() {
               <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
             </svg>
           </button>
-          <p className="text-xs text-paw-brown/35 mt-4">No credit card until you go live</p>
+          <p className="text-xs text-paw-brown/35 mt-4">Card saved at checkout · only charged after your first booking</p>
         </main>
       </div>
     );
