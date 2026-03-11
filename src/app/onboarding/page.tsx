@@ -129,14 +129,9 @@ const STEP_CONFIG = [
     proTip: "Square is the most popular choice for groomers \u2014 RingPaw syncs bookings and avoids double-booking.",
   },
   {
-    title: "Get your RingPaw number",
-    subtitle: "We'll provision a local number so your AI receptionist can start taking calls.",
-    proTip: "Your existing business number stays the same — callers still dial it as usual.",
-  },
-  {
-    title: "Make a test call",
-    subtitle: "Call your RingPaw number to hear your AI receptionist in action.",
-    proTip: "Try asking about pricing, availability, or booking an appointment to see the full experience.",
+    title: "Get your test number & try it",
+    subtitle: "We'll give you a number to call right now and hear your AI receptionist live.",
+    proTip: "Try asking about pricing, availability, or booking — the AI handles it all in real time.",
   },
   {
     title: "Choose your plan",
@@ -273,20 +268,20 @@ export default function OnboardingPage() {
 
         if (!cancelled) {
           if (business?.onboardingComplete) {
-            // Step 8 (call forwarding instructions) is purely informational and
+            // Step 7 (call forwarding instructions) is purely informational and
             // can be reached from the dashboard "Set up now" banner even after
             // onboarding is complete — allow it through if a number is provisioned.
-            if (requestedStep === 8 && business?.phoneNumber?.number) {
+            if (requestedStep === 7 && business?.phoneNumber?.number) {
               setProvisionedNumber(business.phoneNumber.number);
-              setStep(8);
+              setStep(7);
               return;
             }
-            // Step 7 (go-live / provision real number) can be re-entered from the
+            // Step 6 (go-live / provision real number) can be re-entered from the
             // dashboard "Set up now" banner when a user completed onboarding but never
             // provisioned a real number (e.g. payment was skipped or failed).
-            if (requestedStep === 7 && !business?.phoneNumber?.number) {
+            if (requestedStep === 6 && !business?.phoneNumber?.number) {
               setSubscribed(Boolean(business?.stripeSubscriptionId));
-              setStep(7);
+              setStep(6);
               return;
             }
             router.push("/dashboard");
@@ -343,9 +338,9 @@ export default function OnboardingPage() {
   // Keep ref in sync with callPhase so the polling closure always sees the latest value
   useEffect(() => { callPhaseRef.current = callPhase; }, [callPhase]);
 
-  // Poll for test call on step 5 — detects calls via Retell webhooks writing to DB
+  // Poll for test call as soon as the number is provisioned — detects calls via Retell webhooks writing to DB
   useEffect(() => {
-    if (step !== 5) return;
+    if (!provisionedNumber) return;
 
     let pollInterval: ReturnType<typeof setInterval>;
 
@@ -389,7 +384,7 @@ export default function OnboardingPage() {
 
     void startPolling();
     return () => clearInterval(pollInterval);
-  }, [step]);
+  }, [provisionedNumber]);
 
   if (status === "loading") {
     return (
@@ -507,8 +502,8 @@ export default function OnboardingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan: planId,
-          successUrl: "/onboarding?step=7&subscribed=true",
-          cancelUrl: "/onboarding?step=6",
+          successUrl: "/onboarding?step=6&subscribed=true",
+          cancelUrl: "/onboarding?step=5",
         }),
       });
       const data = await res.json() as { url?: string };
@@ -556,7 +551,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({ isActive: subscribed, onboardingComplete: true }),
       });
       if (subscribed) {
-        navigate(8);
+        navigate(7);
       } else {
         router.push("/dashboard");
       }
@@ -1267,9 +1262,9 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 4: Get Number */}
+      {/* Step 4: Get Number + Test Call (merged) */}
       {step === 4 && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {!provisionedNumber ? (
             <div className="text-center py-6">
               <div className="w-16 h-16 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1292,17 +1287,116 @@ export default function OnboardingPage() {
               </button>
             </div>
           ) : (
-            <div className="text-center py-4">
-              <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-bold px-4 py-2 rounded-full mb-4">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
-                Test number ready!
+            <>
+              {/* Number display */}
+              <div className="text-center py-2">
+                <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-5">
+                  {callPhase === "waiting" && (
+                    <>
+                      <div className="absolute inset-0 rounded-full bg-paw-orange/20 animate-ping" style={{ animationDuration: "1.8s" }} />
+                      <div className="absolute inset-3 rounded-full bg-paw-orange/15 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
+                    </>
+                  )}
+                  {callPhase === "in_progress" && (
+                    <>
+                      <div className="absolute inset-0 rounded-full bg-amber-400/25 animate-ping" style={{ animationDuration: "1.2s" }} />
+                      <div className="absolute inset-3 rounded-full bg-amber-400/20 animate-ping" style={{ animationDuration: "1.2s", animationDelay: "0.3s" }} />
+                    </>
+                  )}
+                  {callPhase === "completed" && (
+                    <div className="absolute inset-0 rounded-full bg-green-400/20" />
+                  )}
+                  <div className={`relative w-20 h-20 rounded-full flex items-center justify-center shadow-soft transition-colors duration-500 ${callPhase === "completed" ? "bg-green-500" : callPhase === "in_progress" ? "bg-amber-500" : "bg-paw-brown"}`}>
+                    {callPhase === "completed" ? (
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                {callPhase === "waiting" && (
+                  <>
+                    <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
+                    <a
+                      href={`tel:${provisionedNumber}`}
+                      className="block text-4xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
+                    >
+                      {formattedProvisionedNumber}
+                    </a>
+                    <p className="text-xs text-paw-brown/40 mt-1">Tap to dial · or enter manually</p>
+                  </>
+                )}
+
+                {callPhase === "in_progress" && (
+                  <div className="animate-in fade-in duration-300">
+                    <p className="text-sm font-bold text-amber-600 mb-1">Your AI is on the call right now</p>
+                    <p className="text-xs text-paw-brown/40">Stay on the line — we&apos;ll detect when it&apos;s done.</p>
+                  </div>
+                )}
+
+                {callPhase === "completed" && (
+                  <div className="animate-in fade-in duration-300">
+                    <p className="text-sm font-bold text-green-700 mb-1">{detectedCallSummary ? "Call complete — your AI handled it!" : "Test call marked as done!"}</p>
+                    <p className="text-xs text-paw-brown/40">Your AI is ready for real calls.</p>
+                  </div>
+                )}
               </div>
-              <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-5">
-                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-1">Your RingPaw Test Number</p>
-                <p className="text-3xl font-extrabold text-paw-brown">{formattedProvisionedNumber}</p>
-                <p className="text-sm text-paw-brown/50 mt-2">Next step: call this number to test your AI receptionist.</p>
-              </div>
-            </div>
+
+              {/* Sample script — only while waiting */}
+              {callPhase === "waiting" && (
+                <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8">
+                  <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try saying this →</p>
+                  <p className="text-sm text-paw-brown/80 italic leading-relaxed">
+                    &ldquo;Hi, I&apos;m calling to book a grooming appointment for my golden retriever. He needs a full groom — do you have anything available next week?&rdquo;
+                  </p>
+                </div>
+              )}
+
+              {/* In-progress banner */}
+              {callPhase === "in_progress" && (
+                <div className="animate-in fade-in duration-300 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="text-sm font-bold text-amber-700">Listening to your call live</span>
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  </div>
+                  <p className="text-xs text-amber-600/70 mt-1">We&apos;ll automatically move forward when the call ends.</p>
+                </div>
+              )}
+
+              {/* AI call summary — after completion */}
+              {callPhase === "completed" && detectedCallSummary && (
+                <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">AI Call Summary</p>
+                  <p className="text-sm text-paw-brown/80 leading-relaxed">{detectedCallSummary}</p>
+                </div>
+              )}
+
+              {/* Waiting indicator / manual fallback */}
+              {callPhase === "waiting" && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center gap-3 py-1 text-paw-brown/40 text-xs font-bold">
+                    <span className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "120ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "240ms" }} />
+                    </span>
+                    Waiting for your call
+                  </div>
+                  <button
+                    onClick={() => setCallPhase("completed")}
+                    className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
+                  >
+                    I&apos;ve already called ✓
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {provisionError ? (
@@ -1314,134 +1408,14 @@ export default function OnboardingPage() {
           <OnboardingFooter
             onBack={() => navigate(3)}
             onNext={() => navigate(5)}
-            nextDisabled={!provisionedNumber}
+            nextLabel={provisionedNumber ? "Choose Plan" : "Continue Setup"}
+            nextDisabled={!provisionedNumber || callPhase === "waiting"}
           />
         </div>
       )}
 
-      {/* Step 5: Test Call */}
-      {step === 5 && (
-        <div className="space-y-5">
-          {/* Phone icon — changes based on phase */}
-          <div className="text-center py-2">
-            <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-5">
-              {callPhase === "waiting" && (
-                <>
-                  <div className="absolute inset-0 rounded-full bg-paw-orange/20 animate-ping" style={{ animationDuration: "1.8s" }} />
-                  <div className="absolute inset-3 rounded-full bg-paw-orange/15 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
-                </>
-              )}
-              {callPhase === "in_progress" && (
-                <>
-                  <div className="absolute inset-0 rounded-full bg-amber-400/25 animate-ping" style={{ animationDuration: "1.2s" }} />
-                  <div className="absolute inset-3 rounded-full bg-amber-400/20 animate-ping" style={{ animationDuration: "1.2s", animationDelay: "0.3s" }} />
-                </>
-              )}
-              {callPhase === "completed" && (
-                <div className="absolute inset-0 rounded-full bg-green-400/20" />
-              )}
-              <div className={`relative w-20 h-20 rounded-full flex items-center justify-center shadow-soft transition-colors duration-500 ${callPhase === "completed" ? "bg-green-500" : callPhase === "in_progress" ? "bg-amber-500" : "bg-paw-brown"}`}>
-                {callPhase === "completed" ? (
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                )}
-              </div>
-            </div>
-
-            {callPhase === "waiting" && (
-              <>
-                <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
-                <a
-                  href={`tel:${provisionedNumber}`}
-                  className="block text-4xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
-                >
-                  {formattedProvisionedNumber || "—"}
-                </a>
-                <p className="text-xs text-paw-brown/40 mt-1">Tap to dial · or enter manually</p>
-              </>
-            )}
-
-            {callPhase === "in_progress" && (
-              <div className="animate-in fade-in duration-300">
-                <p className="text-sm font-bold text-amber-600 mb-1">Your AI is on the call right now</p>
-                <p className="text-xs text-paw-brown/40">Stay on the line — we&apos;ll detect when it&apos;s done.</p>
-              </div>
-            )}
-
-            {callPhase === "completed" && (
-              <div className="animate-in fade-in duration-300">
-                <p className="text-sm font-bold text-green-700 mb-1">{detectedCallSummary ? "Call complete — your AI handled it!" : "Test call marked as done!"}</p>
-                <p className="text-xs text-paw-brown/40">Your AI is ready for real calls.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Sample script — only while waiting */}
-          {callPhase === "waiting" && (
-            <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8">
-              <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try saying this →</p>
-              <p className="text-sm text-paw-brown/80 italic leading-relaxed">
-                &ldquo;Hi, I&apos;m calling to book a grooming appointment for my golden retriever. He needs a full groom — do you have anything available next week?&rdquo;
-              </p>
-            </div>
-          )}
-
-          {/* In-progress banner */}
-          {callPhase === "in_progress" && (
-            <div className="animate-in fade-in duration-300 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center">
-              <div className="flex items-center justify-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-sm font-bold text-amber-700">Listening to your call live</span>
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              </div>
-              <p className="text-xs text-amber-600/70 mt-1">We&apos;ll automatically move forward when the call ends.</p>
-            </div>
-          )}
-
-          {/* AI call summary — after completion */}
-          {callPhase === "completed" && detectedCallSummary && (
-            <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
-              <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">AI Call Summary</p>
-              <p className="text-sm text-paw-brown/80 leading-relaxed">{detectedCallSummary}</p>
-            </div>
-          )}
-
-          {/* Status indicator / manual fallback */}
-          {callPhase === "waiting" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-center gap-3 py-1 text-paw-brown/40 text-xs font-bold">
-                <span className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "120ms" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "240ms" }} />
-                </span>
-                Waiting for your call
-              </div>
-              <button
-                onClick={() => setCallPhase("completed")}
-                className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
-              >
-                I&apos;ve already called ✓
-              </button>
-            </div>
-          )}
-
-          <OnboardingFooter
-            onBack={() => navigate(4)}
-            onNext={() => navigate(6)}
-            nextLabel="Choose Plan"
-            nextDisabled={callPhase === "waiting"}
-          />
-        </div>
-      )}
-
-      {/* Step 8: Call Forwarding */}
-      {step === 8 && (
+      {/* Step 7: Call Forwarding */}
+      {step === 7 && (
         <div className="space-y-5">
           {provisionedNumber && (
             <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-4 flex items-center justify-between">
@@ -1508,15 +1482,15 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => navigate(7)}
+            onBack={() => navigate(6)}
             onNext={() => router.push("/dashboard")}
             nextLabel="Go to Dashboard"
           />
         </div>
       )}
 
-      {/* Step 6: Choose Plan */}
-      {step === 6 && (
+      {/* Step 5: Choose Plan */}
+      {step === 5 && (
         <div className="space-y-6">
           {subscribed ? (
             <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-6 py-4">
@@ -1589,15 +1563,15 @@ export default function OnboardingPage() {
           )}
 
           <OnboardingFooter
-            onBack={() => navigate(5)}
-            onNext={() => navigate(7)}
+            onBack={() => navigate(4)}
+            onNext={() => navigate(6)}
             nextLabel={subscribed ? "Continue" : "Skip for Now"}
           />
         </div>
       )}
 
-      {/* Step 7: Go Live */}
-      {step === 7 && (
+      {/* Step 6: Go Live */}
+      {step === 6 && (
         <div className="space-y-8">
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1686,7 +1660,7 @@ export default function OnboardingPage() {
               </svg>
               <p className="text-sm font-bold text-amber-800">
                 Live call answering requires a subscription.{" "}
-                <button onClick={() => navigate(6)} className="underline hover:no-underline">
+                <button onClick={() => navigate(5)} className="underline hover:no-underline">
                   Choose a plan
                 </button>{" "}
                 to activate it — or explore the dashboard first.
@@ -1697,7 +1671,7 @@ export default function OnboardingPage() {
           <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => navigate(6)}
+              onClick={() => navigate(5)}
               className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
             >
               Back
