@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { readApiError } from "@/lib/client-api";
@@ -105,6 +105,20 @@ function serializeHours(hours: HoursState): SavedBusinessHours {
 }
 
 export default function CalendarSettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-paw-cream">
+          <div className="animate-pulse text-paw-brown/60">Loading...</div>
+        </div>
+      }
+    >
+      <CalendarSettingsPageContent />
+    </Suspense>
+  );
+}
+
+function CalendarSettingsPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
