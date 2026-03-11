@@ -51,7 +51,19 @@ export async function GET() {
   });
 
   if (!business) {
-    return NextResponse.json({ business: null, stats: null });
+    // Check if this user came through the demo gate — pre-fill what we know
+    const email = session?.user?.email?.toLowerCase();
+    const demoLead = email
+      ? await prisma.demoLead.findUnique({
+          where: { email },
+          select: { businessName: true },
+        })
+      : null;
+    return NextResponse.json({
+      business: null,
+      stats: null,
+      demoLeadHint: demoLead?.businessName ? { businessName: demoLead.businessName } : null,
+    });
   }
 
   // Compute dashboard stats
