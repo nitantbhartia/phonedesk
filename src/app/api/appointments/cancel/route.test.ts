@@ -8,6 +8,19 @@ vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 
+vi.mock("@/lib/appointment-token", () => ({
+  verifyAppointmentToken: vi.fn(),
+}));
+
+vi.mock("@/lib/notifications", () => ({
+  sendCancellationWithWaitlistNotification: vi.fn(),
+  sendWaitlistOpeningNotification: vi.fn(),
+}));
+
+vi.mock("@/lib/utils", () => ({
+  formatDateTime: vi.fn(() => "Thu, May 21, 9:00 AM"),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     appointment: {
@@ -23,19 +36,6 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
     },
   },
-}));
-
-vi.mock("@/lib/appointment-token", () => ({
-  verifyAppointmentToken: vi.fn(),
-}));
-
-vi.mock("@/lib/notifications", () => ({
-  sendCancellationWithWaitlistNotification: vi.fn(),
-  sendWaitlistOpeningNotification: vi.fn(),
-}));
-
-vi.mock("@/lib/utils", () => ({
-  formatDateTime: vi.fn(() => "Thu, May 21, 9:00 AM"),
 }));
 
 import { POST } from "./route";
@@ -81,6 +81,8 @@ describe("appointments/cancel", () => {
       businessId: "biz_1",
       startTime: new Date("2026-05-21T16:00:00.000Z"),
       serviceName: "Full Groom",
+      customerName: "Jamie",
+      status: "CONFIRMED",
       business: {
         name: "Paw House",
         phone: "+16195550000",
@@ -150,5 +152,40 @@ describe("appointments/cancel", () => {
     );
 
     expect(response.status).toBe(401);
+  });
+
+  it("returns a stable success response for an already-cancelled appointment", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "user_1" },
+    } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+    } as never);
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_1",
+      businessId: "biz_1",
+    } as never);
+    vi.mocked(prisma.appointment.findUnique).mockResolvedValue({
+      id: "appt_1",
+      status: "CANCELLED",
+      business: {
+        phoneNumber: null,
+      },
+    } as never);
+
+    const req = {
+      json: async () => ({ appointmentId: "appt_1" }),
+    } as Request;
+
+    const response = await POST(req as never);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({
+      cancelled: true,
+      waitlistNotified: null,
+    });
+    expect(prisma.appointment.update).not.toHaveBeenCalled();
+    expect(sendCancellationWithWaitlistNotification).not.toHaveBeenCalled();
   });
 });

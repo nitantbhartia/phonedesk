@@ -49,6 +49,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
   }
 
+  if (appointment.status === "CANCELLED") {
+    return NextResponse.json({
+      cancelled: true,
+      waitlistNotified: null,
+    });
+  }
+
+  if (appointment.status === "COMPLETED" || appointment.status === "NO_SHOW") {
+    return NextResponse.json(
+      { error: "Completed appointments cannot be cancelled" },
+      { status: 400 }
+    );
+  }
+
   // Cancel the appointment
   await prisma.appointment.update({
     where: { id: appointmentId },

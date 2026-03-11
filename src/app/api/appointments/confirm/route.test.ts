@@ -8,6 +8,18 @@ vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 
+vi.mock("@/lib/appointment-token", () => ({
+  verifyAppointmentToken: vi.fn(),
+}));
+
+vi.mock("@/lib/sms", () => ({
+  sendSms: vi.fn(),
+}));
+
+vi.mock("@/lib/utils", () => ({
+  formatDateTime: vi.fn(() => "Thu, May 21, 9:00 AM"),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     appointment: {
@@ -19,18 +31,6 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
     },
   },
-}));
-
-vi.mock("@/lib/appointment-token", () => ({
-  verifyAppointmentToken: vi.fn(),
-}));
-
-vi.mock("@/lib/sms", () => ({
-  sendSms: vi.fn(),
-}));
-
-vi.mock("@/lib/utils", () => ({
-  formatDateTime: vi.fn(() => "Thu, May 21, 9:00 AM"),
 }));
 
 import { GET, POST } from "./route";
@@ -118,6 +118,10 @@ describe("appointments/confirm", () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user_1" } } as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({ id: "biz_1" } as never);
     vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ id: "appt_1" } as never);
+    vi.mocked(prisma.appointment.findUnique).mockResolvedValue({
+      id: "appt_1",
+      status: "PENDING",
+    } as never);
     vi.mocked(prisma.appointment.update).mockResolvedValue({
       id: "appt_1",
       status: "CONFIRMED",
@@ -132,5 +136,33 @@ describe("appointments/confirm", () => {
     const payload = await response.json();
 
     expect(payload.appointment).toEqual({ id: "appt_1", status: "CONFIRMED" });
+  });
+
+  it("does not reconfirm a cancelled appointment", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "user_1" },
+    } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+    } as never);
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_1",
+      businessId: "biz_1",
+    } as never);
+    vi.mocked(prisma.appointment.findUnique).mockResolvedValue({
+      id: "appt_1",
+      status: "CANCELLED",
+    } as never);
+
+    const req = {
+      json: async () => ({ appointmentId: "appt_1" }),
+    } as Request;
+
+    const response = await POST(req as never);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe("This appointment was already cancelled");
+    expect(prisma.appointment.update).not.toHaveBeenCalled();
   });
 });

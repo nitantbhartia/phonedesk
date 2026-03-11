@@ -68,6 +68,17 @@ export async function POST(req: NextRequest) {
     };
 
     if (g.id) {
+      const existingGroomer = await prisma.groomer.findFirst({
+        where: { id: g.id, businessId },
+      });
+
+      if (!existingGroomer) {
+        return NextResponse.json(
+          { error: `Groomer not found: ${g.id}` },
+          { status: 404 }
+        );
+      }
+
       const updated = await prisma.groomer.update({
         where: { id: g.id },
         data,

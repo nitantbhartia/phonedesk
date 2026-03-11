@@ -96,6 +96,32 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+
+  if (!appointment) {
+    return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+  }
+
+  if (appointment.status === "CANCELLED") {
+    return NextResponse.json(
+      { error: "This appointment was already cancelled" },
+      { status: 400 }
+    );
+  }
+
+  if (appointment.status === "COMPLETED" || appointment.status === "NO_SHOW") {
+    return NextResponse.json(
+      { error: "Only active appointments can be confirmed" },
+      { status: 400 }
+    );
+  }
+
+  if (appointment.status === "CONFIRMED") {
+    return NextResponse.json({ appointment });
+  }
+
   const updated = await prisma.appointment.update({
     where: { id: appointmentId },
     data: {
