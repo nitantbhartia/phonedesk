@@ -114,16 +114,23 @@ export async function POST(req: NextRequest) {
         // Collect IDs of numbers already assigned to an active publicDemoAttempt.
         // These are not reflected in the demoSession relation, so we exclude them
         // explicitly to prevent two verified leads from sharing the same number.
-        const activeAttemptNumbers = await tx.publicDemoAttempt.findMany({
-          where: { demoNumberId: { not: null }, expiresAt: { gt: now } },
+        const activePublicAttempts = await tx.publicDemoAttempt.findMany({
+          where: {
+            expiresAt: { gt: now },
+            demoNumberId: { not: null },
+          },
           select: { demoNumberId: true },
         });
-        const occupiedIds = activeAttemptNumbers.map((a) => a.demoNumberId!);
+        const occupiedPublicDemoNumberIds = activePublicAttempts
+          .map((a) => a.demoNumberId)
+          .filter((id): id is string => Boolean(id));
 
         const available = await tx.demoNumber.findFirst({
           where: {
             sessions: { none: { expiresAt: { gt: now } } },
-            ...(occupiedIds.length > 0 && { id: { notIn: occupiedIds } }),
+            ...(occupiedPublicDemoNumberIds.length > 0
+              ? { id: { notIn: occupiedPublicDemoNumberIds } }
+              : {}),
           },
         });
         if (!available) throw new Error("demo_unavailable");
