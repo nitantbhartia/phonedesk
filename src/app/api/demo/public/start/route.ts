@@ -81,8 +81,26 @@ export async function POST(req: NextRequest) {
   try {
     const result = await prisma.$transaction(
       async (tx) => {
+        const activePublicAttempts = await tx.publicDemoAttempt.findMany({
+          where: {
+            expiresAt: { gt: now },
+            demoNumberId: { not: null },
+          },
+          select: { demoNumberId: true },
+        });
+        const occupiedPublicDemoNumberIds = activePublicAttempts
+          .map((activeAttempt) => activeAttempt.demoNumberId)
+          .filter((demoNumberId): demoNumberId is string =>
+            Boolean(demoNumberId)
+          );
+
         const available = await tx.demoNumber.findFirst({
-          where: { sessions: { none: { expiresAt: { gt: now } } } },
+          where: {
+            sessions: { none: { expiresAt: { gt: now } } },
+            ...(occupiedPublicDemoNumberIds.length > 0
+              ? { id: { notIn: occupiedPublicDemoNumberIds } }
+              : {}),
+          },
         });
         if (!available) throw new Error("demo_unavailable");
         const created = await tx.publicDemoAttempt.create({

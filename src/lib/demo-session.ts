@@ -10,14 +10,41 @@ export async function resolveBusinessFromDemo(
 ): Promise<string | null> {
   const normalized = normalizePhoneNumber(toNumber);
   if (!normalized) return null;
+  const now = new Date();
 
   const session = await prisma.demoSession.findFirst({
     where: {
-      expiresAt: { gt: new Date() },
+      expiresAt: { gt: now },
       demoNumber: { number: normalized },
     },
     select: { businessId: true },
   });
 
-  return session?.businessId ?? null;
+  if (session?.businessId) {
+    return session.businessId;
+  }
+
+  const publicDemoBusinessId = process.env.DEMO_BUSINESS_ID;
+  if (!publicDemoBusinessId) {
+    return null;
+  }
+
+  const demoNumber = await prisma.demoNumber.findUnique({
+    where: { number: normalized },
+    select: { id: true },
+  });
+
+  if (!demoNumber) {
+    return null;
+  }
+
+  const publicAttempt = await prisma.publicDemoAttempt.findFirst({
+    where: {
+      demoNumberId: demoNumber.id,
+      expiresAt: { gt: now },
+    },
+    select: { id: true },
+  });
+
+  return publicAttempt ? publicDemoBusinessId : null;
 }
