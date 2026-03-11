@@ -56,7 +56,7 @@ function AuthPageContent() {
     };
   }, [session, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || !!session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paw-sky">
         <div className="animate-pulse text-paw-brown/60">Loading...</div>
