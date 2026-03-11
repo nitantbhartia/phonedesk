@@ -103,12 +103,23 @@ async function handleCallStarted(call: RetellCallPayload) {
               });
               return new NextResponse(null, { status: 204 });
             }
-            // Record callerPhone for future checks
+            // Record callerPhone and start the 7-day cooldown on first real call.
+            // Cooldown is intentionally set here — not at number provisioning — so
+            // that a page reload or email link preview cannot burn the lead's quota.
             if (!activeAttempt.callerPhone) {
+              const cooldownUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
               await prisma.publicDemoAttempt.update({
                 where: { id: activeAttempt.id },
                 data: { callerPhone: normalizedCaller },
               });
+              if (activeAttempt.leadId) {
+                await prisma.demoLead.update({
+                  where: { id: activeAttempt.leadId },
+                  data: { cooldownUntil },
+                }).catch((e) => {
+                  console.error("[webhook] Failed to set demo lead cooldown:", e);
+                });
+              }
             }
           }
         }

@@ -4,7 +4,6 @@ import { updateRetellPhoneNumber, updateRetellAgent, DEMO_CALL_DURATION_MS } fro
 import { verifyDemoToken } from "@/lib/demo-token";
 
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const COOLDOWN_DAYS = 7;
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -112,8 +111,20 @@ export async function POST(req: NextRequest) {
   try {
     const result = await prisma.$transaction(
       async (tx) => {
+        // Collect IDs of numbers already assigned to an active publicDemoAttempt.
+        // These are not reflected in the demoSession relation, so we exclude them
+        // explicitly to prevent two verified leads from sharing the same number.
+        const activeAttemptNumbers = await tx.publicDemoAttempt.findMany({
+          where: { demoNumberId: { not: null }, expiresAt: { gt: now } },
+          select: { demoNumberId: true },
+        });
+        const occupiedIds = activeAttemptNumbers.map((a) => a.demoNumberId!);
+
         const available = await tx.demoNumber.findFirst({
-          where: { sessions: { none: { expiresAt: { gt: now } } } },
+          where: {
+            sessions: { none: { expiresAt: { gt: now } } },
+            ...(occupiedIds.length > 0 && { id: { notIn: occupiedIds } }),
+          },
         });
         if (!available) throw new Error("demo_unavailable");
         const created = await tx.publicDemoAttempt.create({
@@ -144,11 +155,12 @@ export async function POST(req: NextRequest) {
     console.error("[demo/public/start] Failed to set call duration limit:", e);
   });
 
-  // Start cooldown so this lead can't immediately start another live demo
-  const cooldownUntil = new Date(now.getTime() + COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+  // Record that this lead has started a demo session.
+  // Cooldown is set only when a real call begins (call_started webhook),
+  // so a page reload or link preview cannot burn the lead's weekly quota.
   await prisma.demoLead.update({
     where: { id: lead.id },
-    data: { lastDemoAt: now, cooldownUntil },
+    data: { lastDemoAt: now },
   });
 
   return NextResponse.json({
