@@ -137,7 +137,7 @@ export default function DemoPage() {
           <BrandLogo mobileWidth={120} desktopWidth={140} priority />
         </Link>
         <Link
-          href="/auth?mode=signup"
+          href="/onboarding"
           className="px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
         >
           Start Free Trial
@@ -319,7 +319,7 @@ export default function DemoPage() {
               {phase === "completed" && (
                 <div className="mt-2 space-y-3 animate-in fade-in duration-400">
                   <Link
-                    href="/auth?mode=signup"
+                    href="/onboarding"
                     className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-center text-lg hover:bg-opacity-90 transition-all shadow-soft"
                   >
                     Set this up for my shop →
@@ -347,7 +347,7 @@ export default function DemoPage() {
                 Demos are limited to once per day. Ready to set it up for your own grooming shop?
               </p>
               <Link
-                href="/auth?mode=signup"
+                href="/onboarding"
                 className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft mb-3"
               >
                 Start my free trial →
@@ -374,7 +374,7 @@ export default function DemoPage() {
                   Try again
                 </button>
                 <Link
-                  href="/auth?mode=signup"
+                  href="/onboarding"
                   className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors"
                 >
                   Sign up instead
