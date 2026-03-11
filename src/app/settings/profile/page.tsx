@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { readApiError } from "@/lib/client-api";
 import {
   Card,
   CardContent,
@@ -30,6 +31,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import { toast } from "@/components/ui/toast";
 
 const US_TIMEZONES = [
   { value: "America/New_York", label: "Eastern Time" },
@@ -159,6 +161,7 @@ export default function BusinessProfilePage() {
   }, [status, router]);
 
   async function fetchBusiness() {
+    setFetchError("");
     try {
       const [profileRes, groomersRes] = await Promise.all([
         fetch("/api/business/profile"),
@@ -176,6 +179,8 @@ export default function BusinessProfilePage() {
           setTimezone(data.business.timezone || "America/Los_Angeles");
           setHours(savedHoursToForm(data.business.businessHours));
         }
+      } else {
+        setFetchError(await readApiError(profileRes, "Failed to load profile data."));
       }
       if (groomersRes.ok) {
         const data = await groomersRes.json();
@@ -188,6 +193,8 @@ export default function BusinessProfilePage() {
             }))
           );
         }
+      } else {
+        setFetchError((current) => current || "Failed to load groomers.");
       }
     } catch {
       setFetchError("Failed to load profile data. Please refresh.");
@@ -197,6 +204,13 @@ export default function BusinessProfilePage() {
   }
 
   async function saveProfile() {
+    if (!name.trim() || !ownerName.trim()) {
+      const message = "Business name and owner name are required.";
+      setSaveStatus({ ok: false, message });
+      toast.error(message);
+      return;
+    }
+
     setSaving(true);
     setSaveStatus(null);
     try {
@@ -275,6 +289,12 @@ export default function BusinessProfilePage() {
       {fetchError && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
           <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
+          <button
+            onClick={() => void fetchBusiness()}
+            className="text-red-700 hover:text-red-900 text-xs font-bold"
+          >
+            Retry
+          </button>
           <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
         </div>
       )}

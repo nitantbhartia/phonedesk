@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { syncRetellAgent } from "@/lib/retell";
+import { parseJsonBody, requireCurrentBusiness } from "@/lib/route-helpers";
 
-async function getBusinessId() {
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email;
-  if (!email) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: { business: { select: { id: true } } },
-  });
-
-  return user?.business?.id ?? null;
-}
+const groomersSchema = z.object({
+  groomers: z.array(
+    z.object({
+      id: z.string().trim().optional(),
+      name: z.string().trim().min(1, "Groomer name is required").max(100),
+      specialties: z.array(z.string().trim().min(1).max(100)).optional(),
+    })
+  ),
+});
 
 export async function GET() {
-  const businessId = await getBusinessId();
-  if (!businessId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const businessResult = await requireCurrentBusiness();
+  if ("response" in businessResult) {
+    return businessResult.response;
   }
+  const { business } = businessResult;
 
   const groomers = await prisma.groomer.findMany({
-    where: { businessId, isActive: true },
+    where: { businessId: business.id, isActive: true },
     orderBy: { createdAt: "asc" },
   });
 
@@ -32,25 +30,23 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const businessId = await getBusinessId();
-  if (!businessId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const businessResult = await requireCurrentBusiness();
+  if ("response" in businessResult) {
+    return businessResult.response;
   }
+  const { business } = businessResult;
 
-  const body = await req.json();
-  const { groomers } = body as {
-    groomers: Array<{ id?: string; name: string; specialties?: string[] }>;
-  };
-
-  if (!Array.isArray(groomers)) {
-    return NextResponse.json({ error: "groomers must be an array" }, { status: 400 });
+  const bodyResult = await parseJsonBody(req, groomersSchema);
+  if ("response" in bodyResult) {
+    return bodyResult.response;
   }
+  const { groomers } = bodyResult.data;
 
   // Deactivate all existing groomers not in the new list
   const incomingIds = groomers.filter((g) => g.id).map((g) => g.id!);
   await prisma.groomer.updateMany({
     where: {
-      businessId,
+      businessId: business.id,
       id: { notIn: incomingIds },
     },
     data: { isActive: false },
@@ -69,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     if (g.id) {
       const existingGroomer = await prisma.groomer.findFirst({
-        where: { id: g.id, businessId },
+        where: { id: g.id, businessId: business.id },
       });
 
       if (!existingGroomer) {
@@ -88,11 +84,11 @@ export async function POST(req: NextRequest) {
       const created = await prisma.groomer.upsert({
         where: {
           businessId_name: {
-            businessId,
+            businessId: business.id,
             name: data.name,
           },
         },
-        create: { businessId, ...data },
+        create: { businessId: business.id, ...data },
         update: data,
       });
       results.push(created);
@@ -101,8 +97,8 @@ export async function POST(req: NextRequest) {
 
   // Sync Retell so the AI knows about the groomers
   try {
-    const business = await prisma.business.findUnique({
-      where: { id: businessId },
+    const businessForSync = await prisma.business.findUnique({
+      where: { id: business.id },
       include: {
         services: { where: { isActive: true } },
         retellConfig: true,
@@ -110,8 +106,8 @@ export async function POST(req: NextRequest) {
         breedRecommendations: { orderBy: { priority: "desc" } },
       },
     });
-    if (business?.retellConfig) {
-      await syncRetellAgent(business);
+    if (businessForSync?.retellConfig) {
+      await syncRetellAgent(businessForSync);
     }
   } catch (err) {
     console.error("[groomers] Failed to sync Retell:", err);
@@ -121,10 +117,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const businessId = await getBusinessId();
-  if (!businessId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const businessResult = await requireCurrentBusiness();
+  if ("response" in businessResult) {
+    return businessResult.response;
   }
+  const { business } = businessResult;
 
   const { searchParams } = new URL(req.url);
   const groomerId = searchParams.get("id");
@@ -133,7 +130,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   await prisma.groomer.updateMany({
-    where: { id: groomerId, businessId },
+    where: { id: groomerId, businessId: business.id },
     data: { isActive: false },
   });
 

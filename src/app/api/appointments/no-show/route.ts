@@ -1,29 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { canMarkAppointmentNoShow } from "@/lib/appointment-state";
+import { parseJsonBody, requireCurrentBusiness } from "@/lib/route-helpers";
+
+const noShowSchema = z.object({
+  appointmentId: z.string().trim().min(1, "appointmentId is required"),
+});
 
 // Mark an appointment as no-show (from dashboard)
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const businessResult = await requireCurrentBusiness();
+  if ("response" in businessResult) {
+    return businessResult.response;
   }
+  const { business } = businessResult;
 
-  const business = await prisma.business.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!business) {
-    return NextResponse.json({ error: "No business" }, { status: 404 });
+  const bodyResult = await parseJsonBody(req, noShowSchema);
+  if ("response" in bodyResult) {
+    return bodyResult.response;
   }
-
-  const body = await req.json();
-  const { appointmentId } = body;
-
-  if (!appointmentId) {
-    return NextResponse.json({ error: "Missing appointmentId" }, { status: 400 });
-  }
+  const { appointmentId } = bodyResult.data;
 
   const appointment = await prisma.appointment.findFirst({
     where: { id: appointmentId, businessId: business.id },
@@ -31,6 +28,13 @@ export async function POST(req: NextRequest) {
 
   if (!appointment) {
     return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+  }
+
+  if (!canMarkAppointmentNoShow(appointment.status)) {
+    return NextResponse.json(
+      { error: "Only active appointments can be marked as no-show" },
+      { status: 400 }
+    );
   }
 
   await prisma.appointment.update({

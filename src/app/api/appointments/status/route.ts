@@ -1,31 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendSms } from "@/lib/sms";
+import { canApplyGroomingStatus } from "@/lib/appointment-state";
+import { parseJsonBody, requireCurrentUserId } from "@/lib/route-helpers";
+
+const appointmentStatusSchema = z.object({
+  appointmentId: z.string().trim().min(1, "appointmentId is required"),
+  status: z.enum(["CHECKED_IN", "IN_PROGRESS", "READY_FOR_PICKUP", "PICKED_UP"]),
+});
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userResult = await requireCurrentUserId();
+  if ("response" in userResult) {
+    return userResult.response;
   }
 
-  const { appointmentId, status } = await req.json();
-
-  if (!appointmentId || !status) {
-    return NextResponse.json(
-      { error: "appointmentId and status are required" },
-      { status: 400 }
-    );
+  const bodyResult = await parseJsonBody(req, appointmentStatusSchema);
+  if ("response" in bodyResult) {
+    return bodyResult.response;
   }
-
-  const validStatuses = ["CHECKED_IN", "IN_PROGRESS", "READY_FOR_PICKUP", "PICKED_UP"];
-  if (!validStatuses.includes(status)) {
-    return NextResponse.json(
-      { error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` },
-      { status: 400 }
-    );
-  }
+  const { appointmentId, status } = bodyResult.data;
 
   // Find appointment and verify ownership
   const appointment = await prisma.appointment.findUnique({
@@ -45,10 +40,26 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify the user owns this business
-  if (appointment.business.userId !== session.user.id) {
+  if (appointment.business.userId !== userResult.userId) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 403 }
+    );
+  }
+
+  if (
+    !canApplyGroomingStatus({
+      appointmentStatus: appointment.status,
+      currentGroomingStatus: appointment.groomingStatus,
+      nextGroomingStatus: status,
+    })
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "This status update is not allowed for the appointment's current state",
+      },
+      { status: 400 }
     );
   }
 

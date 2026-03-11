@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyAppointmentToken } from "@/lib/appointment-token";
+import { canConfirmAppointment } from "@/lib/appointment-state";
+import { parseJsonBody, requireCurrentBusiness } from "@/lib/route-helpers";
+
+const confirmSchema = z.object({
+  appointmentId: z.string().trim().min(1, "appointmentId is required"),
+  token: z.string().trim().optional(),
+});
 
 // One-tap confirm endpoint (linked from SMS) — requires signed token
 export async function GET(req: NextRequest) {
@@ -64,12 +70,11 @@ export async function GET(req: NextRequest) {
 
 // POST: Confirm from dashboard (requires auth) or with signed token
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { appointmentId, token } = body;
-
-  if (!appointmentId) {
-    return NextResponse.json({ error: "Missing appointmentId" }, { status: 400 });
+  const bodyResult = await parseJsonBody(req, confirmSchema);
+  if ("response" in bodyResult) {
+    return bodyResult.response;
   }
+  const { appointmentId, token } = bodyResult.data;
 
   // Allow either: (1) signed token, or (2) authenticated dashboard session
   if (token) {
@@ -77,19 +82,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 403 });
     }
   } else {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const businessResult = await requireCurrentBusiness();
+    if ("response" in businessResult) {
+      return businessResult.response;
     }
     // Verify the appointment belongs to the user's business
-    const business = await prisma.business.findUnique({
-      where: { userId: session.user.id },
-    });
-    if (!business) {
-      return NextResponse.json({ error: "No business" }, { status: 404 });
-    }
     const appointment = await prisma.appointment.findFirst({
-      where: { id: appointmentId, businessId: business.id },
+      where: { id: appointmentId, businessId: businessResult.business.id },
     });
     if (!appointment) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
@@ -111,7 +110,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (appointment.status === "COMPLETED" || appointment.status === "NO_SHOW") {
+  if (!canConfirmAppointment(appointment.status)) {
     return NextResponse.json(
       { error: "Only active appointments can be confirmed" },
       { status: 400 }
