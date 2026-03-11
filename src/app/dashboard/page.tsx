@@ -138,6 +138,7 @@ export default function DashboardPage() {
   const [usageOverage, setUsageOverage] = useState(0);
   const [usagePlanName, setUsagePlanName] = useState("");
   const [tourOpen, setTourOpen] = useState(false);
+  const [smsHintDismissed, setSmsHintDismissed] = useState(true); // default true to avoid flash
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -150,6 +151,8 @@ export default function DashboardPage() {
       if (params.get("subscribed") === "true") setJustSubscribed(true);
       // Show tour automatically for first-time visitors
       if (shouldShowTour()) setTourOpen(true);
+      // Show SMS hint banner until dismissed
+      setSmsHintDismissed(localStorage.getItem("smsHintDismissed") === "1");
     }
   }, [status, router]);
 
@@ -355,6 +358,32 @@ export default function DashboardPage() {
           </Link>
         </div>
       )}
+      {/* SMS commands discovery banner — shown once until dismissed */}
+      {!smsHintDismissed && (
+        <div className="mb-6 flex items-start gap-4 bg-paw-sky/60 border border-paw-brown/10 rounded-2xl px-5 py-4">
+          <div className="w-9 h-9 rounded-full bg-paw-brown/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-paw-brown">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-paw-brown text-sm">Manage RingPaw by text</p>
+            <p className="text-paw-brown/60 text-sm mt-0.5">
+              Text your RingPaw number to block time, pause bookings, or update services — no app needed.
+              Try <code className="bg-white/60 px-1 py-0.5 rounded text-xs font-bold">&quot;Block tomorrow&quot;</code> or <code className="bg-white/60 px-1 py-0.5 rounded text-xs font-bold">&quot;Pause bookings&quot;</code>.{" "}
+              <Link href="/settings/agent" className="underline underline-offset-2 hover:text-paw-brown transition-colors font-semibold">See all commands →</Link>
+            </p>
+          </div>
+          <button
+            onClick={() => { setSmsHintDismissed(true); localStorage.setItem("smsHintDismissed", "1"); }}
+            className="text-paw-brown/40 hover:text-paw-brown transition-colors shrink-0 mt-0.5"
+            aria-label="Dismiss"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+
       {subscriptionActive && !agentLive && (
         <div className="mb-6 flex items-center gap-4 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
           <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
@@ -666,6 +695,34 @@ export default function DashboardPage() {
           </div>
         );
       })()}
+
+      {/* SMS Quick Commands card */}
+      <div className="bg-white rounded-2xl shadow-card border border-white/50 px-5 py-4 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-paw-brown/50">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">SMS Quick Commands</span>
+          </div>
+          <Link href="/settings/agent" className="text-xs font-bold text-paw-orange hover:underline">All commands →</Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5">
+          {[
+            { cmd: "Block tomorrow", desc: "Mark yourself unavailable all day" },
+            { cmd: "Block Thu 2-4pm", desc: "Block a specific time slot" },
+            { cmd: "Pause bookings", desc: "Switch to message-only mode" },
+            { cmd: "Resume bookings", desc: "Turn booking back on" },
+            { cmd: "Show today's schedule", desc: "See today's appointments" },
+            { cmd: "Price list", desc: "View current services & pricing" },
+          ].map((item) => (
+            <div key={item.cmd} className="flex items-baseline gap-2 py-1">
+              <code className="text-xs font-bold text-paw-brown shrink-0">&quot;{item.cmd}&quot;</code>
+              <span className="text-xs text-paw-brown/45 truncate">— {item.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Recent Call Log */}
       <div data-tour="tour-calllog" className="bg-white rounded-[2.5rem] shadow-card border border-white/50 overflow-hidden">
