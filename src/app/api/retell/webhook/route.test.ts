@@ -5,6 +5,13 @@ vi.mock("@/lib/prisma", () => ({
     phoneNumber: {
       findFirst: vi.fn(),
     },
+    publicDemoAttempt: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    demoLead: {
+      update: vi.fn(),
+    },
     business: {
       findUnique: vi.fn(),
     },
@@ -34,6 +41,11 @@ vi.mock("@/lib/retell-auth", () => ({
   isRetellWebhookValid: vi.fn(),
 }));
 
+vi.mock("@/lib/demo-session", () => ({
+  resolveBusinessFromDemo: vi.fn(async () => null),
+  resolveDemoSession: vi.fn(async () => null),
+}));
+
 import { POST } from "./route";
 import { prisma } from "@/lib/prisma";
 import {
@@ -43,6 +55,7 @@ import {
 import { refreshRetellLLMForCall } from "@/lib/retell";
 import { sendMissedCallNotification } from "@/lib/notifications";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
+import { resolveDemoSession } from "@/lib/demo-session";
 
 function makeRequest(body: unknown, signature = "sig") {
   return new Request("http://localhost/api/retell/webhook", {
@@ -56,6 +69,9 @@ describe("POST /api/retell/webhook", () => {
   beforeEach(() => {
     vi.mocked(isRetellWebhookValid).mockReturnValue(true);
     vi.mocked(prisma.phoneNumber.findFirst).mockReset();
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockReset();
+    vi.mocked(prisma.publicDemoAttempt.update).mockReset();
+    vi.mocked(prisma.demoLead.update).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(prisma.call.upsert).mockReset();
     vi.mocked(prisma.call.findUnique).mockReset();
@@ -65,6 +81,7 @@ describe("POST /api/retell/webhook", () => {
     vi.mocked(upsertCustomerMemoryFromCall).mockReset();
     vi.mocked(refreshRetellLLMForCall).mockReset();
     vi.mocked(sendMissedCallNotification).mockReset();
+    vi.mocked(resolveDemoSession).mockReset();
   });
 
   it("rejects unauthorized webhook requests", async () => {
@@ -105,23 +122,91 @@ describe("POST /api/retell/webhook", () => {
     );
 
     expect(response.status).toBe(204);
-    expect(lookupCustomerContext).toHaveBeenCalledWith("biz_1", "(619) 555-0100");
+    expect(lookupCustomerContext).toHaveBeenCalledWith("biz_1", "+16195550100");
     expect(prisma.call.upsert).toHaveBeenCalledWith({
       where: { retellCallId: "call_1" },
       create: {
         businessId: "biz_1",
         retellCallId: "call_1",
-        callerPhone: "(619) 555-0100",
+        callerPhone: "+16195550100",
         callerName: "Sarah",
         status: "IN_PROGRESS",
         isTestCall: false,
       },
-      update: { status: "IN_PROGRESS", callerName: "Sarah" },
+      update: {
+        status: "IN_PROGRESS",
+        callerName: "Sarah",
+        callerPhone: "+16195550100",
+        isTestCall: false,
+      },
     });
     expect(refreshRetellLLMForCall).toHaveBeenCalledWith(
       "llm_123",
       "America/Los_Angeles"
     );
+  });
+
+  it("treats public demo callers as new, records the caller phone, and starts cooldown on call_started", async () => {
+    vi.mocked(resolveDemoSession).mockResolvedValue({
+      businessId: "demo_biz",
+      source: "public",
+      demoNumberId: "demo_num_1",
+      publicAttemptId: "attempt_1",
+      leadId: "lead_1",
+      callerPhone: null,
+    });
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({
+        id: "demo_biz",
+        timezone: "America/Los_Angeles",
+        retellConfig: { llmId: "llm_demo" },
+      } as never)
+      .mockResolvedValueOnce({
+        onboardingComplete: true,
+      } as never);
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.publicDemoAttempt.update).mockResolvedValue({ id: "attempt_1" } as never);
+    vi.mocked(prisma.demoLead.update).mockResolvedValue({ id: "lead_1" } as never);
+
+    const response = await POST(
+      makeRequest({
+        event: "call_started",
+        call: {
+          call_id: "call_demo_1",
+          from_number: "(619) 555-0100",
+          to_number: "+1 (716) 576-3523",
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(204);
+    expect(lookupCustomerContext).not.toHaveBeenCalled();
+    expect(prisma.publicDemoAttempt.update).toHaveBeenCalledWith({
+      where: { id: "attempt_1" },
+      data: { callerPhone: "+16195550100" },
+    });
+    expect(prisma.demoLead.update).toHaveBeenCalledWith({
+      where: { id: "lead_1" },
+      data: { cooldownUntil: expect.any(Date) },
+    });
+    expect(prisma.call.upsert).toHaveBeenCalledWith({
+      where: { retellCallId: "call_demo_1" },
+      create: {
+        businessId: "demo_biz",
+        retellCallId: "call_demo_1",
+        callerPhone: "+16195550100",
+        callerName: null,
+        status: "IN_PROGRESS",
+        isTestCall: true,
+      },
+      update: {
+        status: "IN_PROGRESS",
+        callerName: null,
+        callerPhone: "+16195550100",
+        isTestCall: true,
+      },
+    });
   });
 
   it("creates a completed call with computed duration on call_ended when no record exists", async () => {
@@ -300,6 +385,56 @@ describe("POST /api/retell/webhook", () => {
         outcome: "BOOKED",
       })
     );
+    expect(sendMissedCallNotification).not.toHaveBeenCalled();
+  });
+
+  it("does not write customer memory for analyzed demo/test calls", async () => {
+    vi.mocked(prisma.call.findUnique)
+      .mockResolvedValueOnce({
+        id: "db_call_demo",
+        businessId: "demo_biz",
+        retellCallId: "call_demo_2",
+        callerName: null,
+        callerPhone: "+16195550100",
+        appointmentId: null,
+        status: "COMPLETED",
+        isTestCall: true,
+      } as never)
+      .mockResolvedValueOnce({
+        id: "db_call_demo",
+        businessId: "demo_biz",
+        retellCallId: "call_demo_2",
+        callerName: "Jamie",
+        callerPhone: "+16195550100",
+        appointmentId: null,
+        status: "COMPLETED",
+        isTestCall: true,
+        business: {
+          id: "demo_biz",
+          name: "Demo Biz",
+          phone: "+16195550000",
+          phoneNumber: { number: "+17165763523" },
+        },
+      } as never);
+
+    const response = await POST(
+      makeRequest({
+        event: "call_analyzed",
+        call: {
+          call_id: "call_demo_2",
+          from_number: "+16195550100",
+          call_analysis: {
+            call_summary: "Demo caller asked for a bath.",
+            custom_analysis_data: {
+              customer_name: "Jamie",
+            },
+          },
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(204);
+    expect(upsertCustomerMemoryFromCall).not.toHaveBeenCalled();
     expect(sendMissedCallNotification).not.toHaveBeenCalled();
   });
 });

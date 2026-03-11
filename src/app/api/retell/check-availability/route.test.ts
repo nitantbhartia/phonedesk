@@ -5,9 +5,6 @@ vi.mock("@/lib/prisma", () => ({
     phoneNumber: {
       findFirst: vi.fn(),
     },
-    demoSession: {
-      findFirst: vi.fn(),
-    },
     business: {
       findUnique: vi.fn(),
     },
@@ -21,6 +18,10 @@ vi.mock("@/lib/calendar", () => ({
 
 vi.mock("@/lib/retell-auth", () => ({
   isRetellWebhookValid: vi.fn(),
+}));
+
+vi.mock("@/lib/demo-session", () => ({
+  resolveBusinessFromDemo: vi.fn(async () => null),
 }));
 
 import { POST } from "./route";
@@ -40,7 +41,6 @@ describe("POST /api/retell/check-availability", () => {
   beforeEach(() => {
     vi.mocked(isRetellWebhookValid).mockReturnValue(true);
     vi.mocked(prisma.phoneNumber.findFirst).mockReset();
-    vi.mocked(prisma.demoSession.findFirst).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(getAvailableSlots).mockReset();
     vi.mocked(describeAvailableSlots).mockReset();
@@ -144,6 +144,58 @@ describe("POST /api/retell/check-availability", () => {
     expect(payload.available_slots).toHaveLength(1);
     expect(payload.result).toContain("2 PM isn't available");
     expect(payload.result).toContain("10:00 am");
+  });
+
+  it("understands 'tomorrow' and suggests the nearest slots for off-grid times", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-11T22:20:00.000Z"));
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+      business: {
+        id: "biz_1",
+        timezone: "America/Los_Angeles",
+        services: [{ name: "Full Groom", duration: 60, isActive: true }],
+      },
+    } as never);
+    vi.mocked(getAvailableSlots).mockResolvedValue([
+      {
+        start: new Date("2026-03-12T17:00:00.000Z"),
+        end: new Date("2026-03-12T18:00:00.000Z"),
+      },
+      {
+        start: new Date("2026-03-12T17:30:00.000Z"),
+        end: new Date("2026-03-12T18:30:00.000Z"),
+      },
+      {
+        start: new Date("2026-03-12T18:00:00.000Z"),
+        end: new Date("2026-03-12T19:00:00.000Z"),
+      },
+    ] as never);
+    vi.mocked(describeAvailableSlots).mockReturnValue(
+      "10:00 am, 10:30 am, or 11:00 am"
+    );
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          date: "tomorrow",
+          service_name: "Full Groom",
+          preferred_time: "10:10 am",
+        },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-12", 60);
+    expect(payload.available).toBe(true);
+    expect(payload.requested_time_available).toBe(false);
+    expect(payload.available_slots.map((slot: { display_time: string }) => slot.display_time)).toEqual([
+      "10:00 am",
+      "10:30 am",
+      "11:00 am",
+    ]);
+    expect(payload.result).toContain("10:00 am or 10:30 am");
+    vi.useRealTimers();
   });
 
   it("returns a no-openings message when the calendar is full", async () => {
