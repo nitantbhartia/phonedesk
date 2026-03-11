@@ -726,7 +726,7 @@ function LandingPageContent() {
         {/* Footer CTA */}
         <div className="max-w-2xl mx-auto text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">Ready to stop missing calls?</h2>
-          <p className="text-white/60 mb-6">Set up in 5 minutes. Free for 30 days. No credit card required.</p>
+          <p className="text-white/60 mb-6">Set up in 5 minutes. Card required · only charged after your first booking.</p>
           <Link
             href="/auth?mode=signup"
             className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
