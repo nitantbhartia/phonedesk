@@ -694,9 +694,9 @@ export default function DashboardPage() {
                 {recentCalls.map((call) => {
                   const displayName =
                     call.callerName || call.callerPhone || "Unknown";
-                  const initials = getInitials(
-                    call.callerName || call.callerPhone?.slice(-4) || "UN"
-                  );
+                  const initials = call.callerName
+                    ? getInitials(call.callerName)
+                    : "?";
                   const bgColors = [
                     "bg-paw-sky",
                     "bg-paw-amber/30",
