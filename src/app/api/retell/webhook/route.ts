@@ -7,7 +7,7 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
 import { refreshRetellLLMForCall } from "@/lib/retell";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
-import { resolveBusinessFromDemo } from "@/lib/demo-session";
+import { resolveBusinessFromDemo, resolveDemoSession } from "@/lib/demo-session";
 import { endRetellCall } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
@@ -59,6 +59,10 @@ async function handleCallStarted(call: RetellCallPayload) {
 
   try {
     const calledNumber = normalizePhoneNumber(call.to_number);
+    const demoResolution = calledNumber
+      ? await resolveDemoSession(calledNumber)
+      : null;
+    const normalizedCaller = normalizePhoneNumber(call.from_number);
 
     let phoneNum = calledNumber
       ? await prisma.phoneNumber.findFirst({
@@ -68,90 +72,81 @@ async function handleCallStarted(call: RetellCallPayload) {
       : null;
 
     // Demo number fallback
-    if (!phoneNum && calledNumber) {
-      const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
-      if (demoBusinessId) {
+    if (!phoneNum && demoResolution) {
+      if (demoResolution.businessId) {
         const demoBusiness = await prisma.business.findUnique({
-          where: { id: demoBusinessId },
+          where: { id: demoResolution.businessId },
           include: { retellConfig: true },
         });
         if (demoBusiness) {
-          phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+          phoneNum = { businessId: demoResolution.businessId, business: demoBusiness } as unknown as typeof phoneNum;
         }
       }
     }
 
     // Public demo phone-number rate limit: detect repeat callers by phone
-    if (!phoneNum && calledNumber && call.from_number && call.call_id) {
-      const demoNum = await prisma.demoNumber.findFirst({ where: { number: calledNumber } });
-      if (demoNum) {
-        const normalizedCaller = normalizePhoneNumber(call.from_number);
-        const now = new Date();
-        const activeAttempt = await prisma.publicDemoAttempt.findFirst({
-          where: { demoNumberId: demoNum.id, expiresAt: { gt: now } },
+    if (demoResolution?.source === "public" && normalizedCaller && call.call_id) {
+      const now = new Date();
+      const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const repeat = await prisma.publicDemoAttempt.findFirst({
+        where: {
+          callerPhone: normalizedCaller,
+          startedAt: { gte: windowStart },
+          id: { not: demoResolution.publicAttemptId },
+        },
+      });
+      if (repeat) {
+        await endRetellCall(call.call_id).catch((e) => {
+          console.error("[webhook] Failed to end repeat demo call:", e);
         });
-        if (activeAttempt) {
-          if (normalizedCaller) {
-            const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-            const repeat = await prisma.publicDemoAttempt.findFirst({
-              where: { callerPhone: normalizedCaller, startedAt: { gte: windowStart }, id: { not: activeAttempt.id } },
-            });
-            if (repeat) {
-              // Same phone already used a demo in the past 24 hours — terminate the call
-              await endRetellCall(call.call_id).catch((e) => {
-                console.error("[webhook] Failed to end repeat demo call:", e);
-              });
-              return new NextResponse(null, { status: 204 });
-            }
-            // Record callerPhone and start the 7-day cooldown on first real call.
-            // Cooldown is intentionally set here — not at number provisioning — so
-            // that a page reload or email link preview cannot burn the lead's quota.
-            if (!activeAttempt.callerPhone) {
-              const cooldownUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-              await prisma.publicDemoAttempt.update({
-                where: { id: activeAttempt.id },
-                data: { callerPhone: normalizedCaller },
-              });
-              if (activeAttempt.leadId) {
-                await prisma.demoLead.update({
-                  where: { id: activeAttempt.leadId },
-                  data: { cooldownUntil },
-                }).catch((e) => {
-                  console.error("[webhook] Failed to set demo lead cooldown:", e);
-                });
-              }
-            }
-          }
+        return new NextResponse(null, { status: 204 });
+      }
+
+      if (!demoResolution.callerPhone) {
+        const cooldownUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        await prisma.publicDemoAttempt.update({
+          where: { id: demoResolution.publicAttemptId },
+          data: { callerPhone: normalizedCaller },
+        });
+        if (demoResolution.leadId) {
+          await prisma.demoLead.update({
+            where: { id: demoResolution.leadId },
+            data: { cooldownUntil },
+          }).catch((e) => {
+            console.error("[webhook] Failed to set demo lead cooldown:", e);
+          });
         }
       }
     }
 
     if (phoneNum) {
-      // Look up known customer by phone number to pre-fill callerName
-      const customerContext = await lookupCustomerContext(
-        phoneNum.businessId,
-        call.from_number
-      );
-      const knownName = customerContext.customer?.name || null;
+      const knownName = demoResolution
+        ? null
+        : (await lookupCustomerContext(phoneNum.businessId, normalizedCaller || call.from_number)).customer?.name || null;
 
       // Mark as test call if the business hasn't completed onboarding yet
       const business = await prisma.business.findUnique({
         where: { id: phoneNum.businessId },
         select: { onboardingComplete: true },
       });
-      const isTestCall = !(business?.onboardingComplete ?? true);
+      const isTestCall = Boolean(demoResolution) || !(business?.onboardingComplete ?? true);
 
       await prisma.call.upsert({
         where: { retellCallId: call.call_id },
         create: {
           businessId: phoneNum.businessId,
           retellCallId: call.call_id,
-          callerPhone: call.from_number,
+          callerPhone: normalizedCaller || call.from_number,
           callerName: knownName,
           status: "IN_PROGRESS",
           isTestCall,
         },
-        update: { status: "IN_PROGRESS", callerName: knownName },
+        update: {
+          status: "IN_PROGRESS",
+          callerName: knownName,
+          callerPhone: normalizedCaller || call.from_number,
+          isTestCall,
+        },
       });
 
       // Refresh date on the LLM. Customer context is not injected here to
@@ -177,6 +172,7 @@ async function handleCallStarted(call: RetellCallPayload) {
 
 async function handleCallEnded(call: RetellCallPayload) {
   try {
+    const normalizedCaller = normalizePhoneNumber(call.from_number);
     const calledNumber = normalizePhoneNumber(call.to_number);
 
     let phoneNum = calledNumber
@@ -222,7 +218,7 @@ async function handleCallEnded(call: RetellCallPayload) {
       await prisma.call.update({
         where: { retellCallId: call.call_id },
         data: {
-          callerPhone: call.from_number,
+          callerPhone: normalizedCaller || call.from_number,
           duration,
           transcript: call.transcript || null,
           status: "COMPLETED",
@@ -234,7 +230,7 @@ async function handleCallEnded(call: RetellCallPayload) {
         data: {
           businessId: business.id,
           retellCallId: call.call_id,
-          callerPhone: call.from_number,
+          callerPhone: normalizedCaller || call.from_number,
           duration,
           transcript: call.transcript || null,
           status: "COMPLETED",
@@ -274,7 +270,7 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
       },
     });
 
-    if (callerName) {
+    if (callerName && !existingCall.isTestCall) {
       await upsertCustomerMemoryFromCall({
         businessId: existingCall.businessId,
         customerName: callerName,
@@ -317,6 +313,7 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
 
     if (
       refreshedCall &&
+      !refreshedCall.isTestCall &&
       !refreshedCall.appointmentId &&
       refreshedCall.status !== "NO_BOOKING"
     ) {
