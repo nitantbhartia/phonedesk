@@ -137,10 +137,11 @@ One question per turn. Skip anything already known from lookup. Collect in this 
 - Dog's breed
 - Dog's size (Small, Medium, Large, or Extra Large)
 - Service — ask naturally using names from get_services: "What were we thinking for [dog name] today? We do [service names from get_services]."
-- Special handling needs or notes
+- Special handling needs or notes — skip if the pet already has grooming_notes or behavior notes on file; reference them instead: "Last time we noted [note] — still the same?"
 - Whether this is their first visit${business.groomers && business.groomers.filter(g => g.isActive).length > 0 ? `
 - Groomer preference — ask naturally: "Do you have a preferred groomer, or is anyone fine?" If they mention a name, confirm it matches one of your groomers.` : ""}
 - Preferred day and time
+If the caller mentions a grooming preference or style during the conversation (cut name, coat length, anything specific), note it — you will call save_pet_notes silently after the booking is confirmed.
 DATE AMBIGUITY: If the caller says a day name that matches today (e.g. caller says "Monday" and today is Monday), ask: "Did you mean this Monday — today — or next Monday?" before checking availability. One question, wait for the answer.
 STEP 4 — CHECK AVAILABILITY
 After caller gives a preferred date and time, call check_availability once using date, service_name, and preferred_time in the same tool call.
@@ -166,13 +167,24 @@ After book_appointment succeeds, say EXACTLY this (filling in the real details):
 "Perfect — [Dog Name]'s all set for a [Service] on [Day, Date] at [Time]. You'll get a confirmation text shortly."
 For first-time visitors, also add:
 "Since it's [Dog Name]'s first visit, plan to arrive a few minutes early so we can get everything on file. We're really looking forward to meeting [them]."
+REBOOK REMINDER: If lookup_customer_context returned rebook_suggestion_days, after confirming the booking add:
+"Based on [Dog Name]'s last visit, they'll be due again in about [rebook_suggestion_days] days — want me to pencil that in now while I have you?"
+If yes, go back to STEP 4 with the suggested date. If no, continue to close.
+SAVE GROOMING NOTES: If the caller mentioned any grooming style, cut preference, or behavioral observation during the call, call save_pet_notes silently (do not speak) immediately after book_appointment succeeds.
 Then ask: "Is there anything else I can help with today?"
 STOP and wait silently for the caller to respond. Do NOT say another word until they reply.
 — If the caller says no, nothing, or anything that sounds like a farewell, respond with a brief warm goodbye ("Wonderful — have a great one!") and then immediately call add_call_note and end_call.
-— If the caller has another question or request, address it fully, then close the same way.
-Before ending ANY call, call add_call_note with the square_customer_id from lookup (if available), the outcome (booked / cancelled / inquiry_only / no_booking), and a 1-2 sentence summary of the call. Then call end_call.
+— If the caller has another question or request, address it directly without restarting the booking flow, then close the same way.
+Before ending ANY call, call add_call_note with the square_customer_id from lookup (if available), the outcome (booked / cancelled / rescheduled / inquiry_only / no_booking), and a 1-2 sentence summary of the call. Then call end_call.
 ---
 EDGE CASES
+RESCHEDULING:
+"Of course, let's find a better time."
+1. Use the pet name or appointment detail the caller gives to identify which booking. If multiple bookings exist, ask which one before proceeding.
+2. Ask for their preferred new day and time, then call check_availability to confirm the slot.
+3. Once you have a confirmed slot, call reschedule_appointment with new_start_time (exact ISO value from check_availability) and appointment_id or pet_name.
+If reschedule_appointment returns rescheduled=true: confirm the new time to the caller.
+If reschedule_appointment returns rescheduled=false AND multiple_appointments: read the list, wait for their choice, then call reschedule_appointment again with the specific appointment_id.
 CANCELLATIONS:
 "Of course, no problem at all!" — then immediately call cancel_appointment (it finds their appointment automatically by phone number).
 If cancel_appointment returns cancelled=true: confirm the cancellation to the caller using the details in the result, then ask "Would you like to rebook for another time?"
@@ -717,7 +729,81 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             type: "string",
             description: "The customer's name, used as a fallback if their phone number is unavailable.",
           },
+          pet_name: {
+            type: "string",
+            description: "Pet name to narrow the search when the caller has multiple upcoming bookings.",
+          },
+          appointment_id: {
+            type: "string",
+            description: "Specific appointment ID to cancel, obtained from a prior multiple_appointments disambiguation response.",
+          },
         },
+      },
+    },
+    {
+      type: "custom",
+      name: "reschedule_appointment",
+      description:
+        "Move an existing upcoming appointment to a new date and time. Call check_availability first to confirm the new slot, then call this with the new_start_time. Handles multiple-booking disambiguation the same way as cancel_appointment.",
+      url: `${appUrl}/api/retell/reschedule-appointment`,
+      speak_during_execution: true,
+      execution_message_description: "A brief phrase while looking up the booking — e.g. 'One sec, let me find that for you...'",
+      parameters: {
+        type: "object",
+        properties: {
+          new_start_time: {
+            type: "string",
+            description: "The new appointment start time in ISO 8601 format, taken directly from check_availability. Never invent this value.",
+          },
+          appointment_id: {
+            type: "string",
+            description: "Specific appointment ID to reschedule, from a prior multiple_appointments disambiguation response.",
+          },
+          pet_name: {
+            type: "string",
+            description: "Pet name to narrow the search when the caller has multiple upcoming bookings.",
+          },
+          customer_name: {
+            type: "string",
+            description: "Customer name, used as a fallback if their phone number is unavailable.",
+          },
+        },
+        required: ["new_start_time"],
+      },
+    },
+    {
+      type: "custom",
+      name: "save_pet_notes",
+      description:
+        "Save grooming style preferences or behavior observations for a pet. Call this silently (no spoken output) after a booking is confirmed when the caller mentions cut style, coat length, behavioral needs, or special handling. Never announce this to the caller.",
+      url: `${appUrl}/api/retell/save-pet-notes`,
+      speak_during_execution: false,
+      parameters: {
+        type: "object",
+        properties: {
+          pet_name: {
+            type: "string",
+            description: "The pet's name.",
+          },
+          grooming_notes: {
+            type: "string",
+            description: "Grooming style or preference notes — e.g. 'puppy cut, leave ears long', 'teddy bear face', 'trim nails short'.",
+          },
+          behavior_note: {
+            type: "string",
+            description: "A brief behavioral observation — e.g. 'anxious around clippers', 'needs muzzle for nail trim', 'very wiggly'.",
+          },
+          behavior_tags: {
+            type: "string",
+            description: "Comma-separated behavior tags — e.g. 'anxious,muzzle_required' or 'senior,gentle_handling'.",
+          },
+          behavior_severity: {
+            type: "string",
+            description: "Severity of the behavior note.",
+            enum: ["NOTE", "CAUTION", "HIGH_RISK"],
+          },
+        },
+        required: ["pet_name"],
       },
     },
     {
