@@ -13,6 +13,7 @@ import { prisma } from "./prisma";
 import {
   buildAgentConfig,
   buildAgentTools,
+  generateSystemPrompt,
   refreshRetellLLMForCall,
   syncRetellAgent,
 } from "./retell";
@@ -38,6 +39,101 @@ describe("buildAgentTools", () => {
     expect(toolNames).toContain("get_services");
     expect(toolNames).toContain("add_call_note");
     expect(toolNames).toContain("end_call");
+  });
+
+  it("strengthens availability and booking tool guidance", () => {
+    const tools = buildAgentTools("https://phonedesk.up.railway.app");
+    const availabilityTool = tools.find((tool) => tool.name === "check_availability");
+    const bookingTool = tools.find((tool) => tool.name === "book_appointment");
+
+    expect(
+      availabilityTool?.parameters?.properties.service_name.description
+    ).toContain("defaults slot duration to 60 minutes");
+    expect(
+      bookingTool?.parameters?.properties.start_time.description
+    ).toContain("Use the exact start_time returned by check_availability");
+  });
+});
+
+describe("generateSystemPrompt", () => {
+  it("keeps the booking sequence linear and adds repair guidance", () => {
+    const prompt = generateSystemPrompt({
+      id: "biz_1",
+      name: "Paw House",
+      ownerName: "Taylor",
+      address: "123 Main St",
+      city: "San Diego",
+      bookingMode: "SOFT",
+      businessHours: { mon: { open: "9:00 AM", close: "5:00 PM" } },
+      services: [
+        {
+          id: "svc_1",
+          businessId: "biz_1",
+          name: "Full Groom",
+          price: 95,
+          duration: 90,
+          isActive: true,
+          isAddon: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: "svc_2",
+          businessId: "biz_1",
+          name: "Teeth Brushing",
+          price: 20,
+          duration: 10,
+          isActive: true,
+          isAddon: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      breedRecommendations: [],
+      groomers: [],
+    } as never);
+
+    expect(prompt.indexOf("STEP 5 — UPSELL ADD-ON")).toBeLessThan(
+      prompt.indexOf("STEP 6 — BOOK APPOINTMENT")
+    );
+    expect(prompt).toContain("Never guess the service");
+    expect(prompt).toContain("If availability or service matching comes back unclear");
+    expect(prompt).toContain("address it directly without restarting the booking flow");
+  });
+
+  it("adds ambiguity, latency, and booking-mode guidance", () => {
+    const hardPrompt = generateSystemPrompt({
+      id: "biz_2",
+      name: "Clip Joint",
+      ownerName: "Morgan",
+      address: null,
+      city: "Los Angeles",
+      bookingMode: "HARD",
+      businessHours: null,
+      services: [],
+      breedRecommendations: [],
+      groomers: [],
+    } as never);
+
+    const softPrompt = generateSystemPrompt({
+      id: "biz_3",
+      name: "Bath Club",
+      ownerName: "Jordan",
+      address: null,
+      city: "San Francisco",
+      bookingMode: "SOFT",
+      businessHours: null,
+      services: [],
+      breedRecommendations: [],
+      groomers: [],
+    } as never);
+
+    expect(hardPrompt).toContain('Thanks for holding —');
+    expect(hardPrompt).toContain('Did you mean today, or next Monday?');
+    expect(hardPrompt).toContain('Let me get that booked for you right now.');
+    expect(softPrompt).toContain("owner will send you a confirmation shortly");
+    expect(hardPrompt).toContain("If you are not fully sure which appointment they mean");
+    expect(hardPrompt).toContain("prioritize speed over rapport");
   });
 });
 
