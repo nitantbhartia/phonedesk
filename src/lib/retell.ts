@@ -141,6 +141,7 @@ One question per turn. Skip anything already known from lookup. Collect in this 
 - Whether this is their first visit${business.groomers && business.groomers.filter(g => g.isActive).length > 0 ? `
 - Groomer preference — ask naturally: "Do you have a preferred groomer, or is anyone fine?" If they mention a name, confirm it matches one of your groomers.` : ""}
 - Preferred day and time
+DATE AMBIGUITY: If the caller says a day name that matches today (e.g. caller says "Monday" and today is Monday), ask: "Did you mean this Monday — today — or next Monday?" before checking availability. One question, wait for the answer.
 STEP 4 — CHECK AVAILABILITY
 After caller gives a preferred date and time, call check_availability once using date, service_name, and preferred_time in the same tool call.
 Do not run check_availability again for the same date unless the caller asks for a different day.

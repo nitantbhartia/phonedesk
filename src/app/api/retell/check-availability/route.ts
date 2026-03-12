@@ -68,8 +68,11 @@ function parseRelativeWeekday(input: string, timezone: string) {
   const lowered = input.toLowerCase();
 
   // "next Monday" always means 7 days out even if today is Monday.
-  // Bare "Monday" on Monday means today — don't push it to next week.
+  // Bare "Monday" with no qualifier on the same day defaults to next week —
+  // the agent prompt asks the caller to clarify before reaching this point.
   if (lowered.includes("next ")) {
+    if (deltaDays === 0) deltaDays = 7;
+  } else if (!lowered.includes("this ")) {
     if (deltaDays === 0) deltaDays = 7;
   }
 

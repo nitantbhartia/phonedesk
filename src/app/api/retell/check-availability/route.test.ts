@@ -203,12 +203,12 @@ describe("POST /api/retell/check-availability", () => {
       expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-10", expect.any(Number));
     });
 
-    // Fix #10 — bare weekday on same day must not roll to next week
-    it("resolves bare 'monday' on a Monday to today, not 7 days later", async () => {
+    // #10 — bare weekday on same day rolls to next week; agent prompt asks caller to clarify
+    it("resolves bare 'monday' on a Monday to next week (agent handles same-day clarification)", async () => {
       await POST(
         makeRequest({ args: { date: "monday" }, call: { to_number: "+16195559999" } }) as never
       );
-      expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-09", expect.any(Number));
+      expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-16", expect.any(Number));
     });
 
     it("resolves 'next monday' on a Monday to 7 days later", async () => {
