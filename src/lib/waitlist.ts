@@ -1,12 +1,11 @@
 import { prisma } from "./prisma";
 import { sendWaitlistOpeningNotification } from "./notifications";
 import { formatDateTime } from "./utils";
-import type { PhoneNumber } from "@prisma/client";
 
 type BusinessForWaitlist = {
   name: string;
   phone: string | null;
-  phoneNumber: PhoneNumber | null;
+  phoneNumber: { number: string } | null;
 };
 
 type AppointmentForWaitlist = {
