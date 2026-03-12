@@ -103,6 +103,19 @@ export async function POST(req: NextRequest) {
       )
     : null;
 
+  // Reject if a service name was passed but didn't match anything on file — prevents
+  // bookings with wrong duration, null price, and unrecognised service name.
+  if (svcName && !service) {
+    const activeNames = business.services
+      .filter((s: Service) => s.isActive)
+      .map((s: Service) => s.name)
+      .join(", ");
+    return NextResponse.json({
+      result: `I wasn't able to match "${svcName}" to a service on file. Available services are: ${activeNames || "none"}. Can you clarify which service the customer wants?`,
+      booked: false,
+    });
+  }
+
   // Look up add-on service if the AI offered one
   const addonService = addonSvcName
     ? business.services.find(
@@ -123,6 +136,20 @@ export async function POST(req: NextRequest) {
         },
       })
     : null;
+
+  // If a specific groomer was requested but not found, tell the AI so it can correct itself
+  if (groomerName && !groomer) {
+    const activeGroomers = await prisma.groomer.findMany({
+      where: { businessId: business.id, isActive: true },
+      select: { name: true },
+    });
+    const names = activeGroomers.map((g) => g.name).join(", ");
+    return NextResponse.json({
+      result: `I couldn't find a groomer named "${groomerName}" on file. Available groomers are: ${names || "none"}. Please confirm the correct name with the customer or book without a groomer preference.`,
+      booked: false,
+      groomer_not_found: true,
+    });
+  }
 
   const timezone = business.timezone || "America/Los_Angeles";
 
@@ -340,7 +367,11 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        if (!existingCustomer || existingCustomer.visitCount === 0) {
+        const alreadySentIntake = await prisma.intakeForm.findFirst({
+          where: { businessId: business.id, customerPhone: custPhone },
+        });
+
+        if ((!existingCustomer || existingCustomer.visitCount === 0) && !alreadySentIntake) {
           const intakeForm = await prisma.intakeForm.create({
             data: {
               businessId: business.id,

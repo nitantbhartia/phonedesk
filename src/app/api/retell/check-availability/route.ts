@@ -67,9 +67,9 @@ function parseRelativeWeekday(input: string, timezone: string) {
   let deltaDays = (targetWeekday - currentWeekday + 7) % 7;
   const lowered = input.toLowerCase();
 
+  // "next Monday" always means 7 days out even if today is Monday.
+  // Bare "Monday" on Monday means today — don't push it to next week.
   if (lowered.includes("next ")) {
-    if (deltaDays === 0) deltaDays = 7;
-  } else if (!lowered.includes("this ")) {
     if (deltaDays === 0) deltaDays = 7;
   }
 
@@ -161,6 +161,10 @@ function normalizeDateInput(rawDate: unknown, timezone: string) {
   }
 
   const input = rawDate.trim();
+
+  // Handle "today" and "tomorrow" before anything else
+  if (/\btoday\b/i.test(input)) return todayInTz;
+  if (/\btomorrow\b/i.test(input)) return addDays(todayInTz, 1);
 
   // Detect "first available", "next available", "as soon as possible", etc.
   if (
@@ -257,9 +261,12 @@ function timeTextToMinutes(rawTime: string) {
     if (hour === 12) hour = 0;
   } else if (meridiem === "pm") {
     if (hour !== 12) hour += 12;
+  } else {
+    // No meridiem — grooming businesses are never open 1am–7am, so treat those as PM
+    if (hour >= 1 && hour <= 7) hour += 12;
   }
 
-  if (!meridiem && hour > 23) return null;
+  if (hour > 23) return null;
   return hour * 60 + minute;
 }
 
@@ -368,8 +375,9 @@ export async function POST(req: NextRequest) {
         const trySlots = await getAvailableSlots(business.id, tryDate, duration);
         if (trySlots.length > 0) {
           const spokenDate = formatSpokenDate(tryDate, timezone);
-          const slotDescriptions = describeAvailableSlots(trySlots, timezone);
-          const offered = trySlots.slice(0, 3).map((slot) => ({
+          const offeredSlots = trySlots.slice(0, 3);
+          const slotDescriptions = describeAvailableSlots(offeredSlots, timezone);
+          const offered = offeredSlots.map((slot) => ({
             start_time: slot.start.toISOString(),
             end_time: slot.end.toISOString(),
             display_time: formatSlotTime(slot.start, timezone),
@@ -428,12 +436,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const offered = slots.slice(0, 3).map((slot) => ({
+    const offeredSlots = slots.slice(0, 3);
+    const offered = offeredSlots.map((slot) => ({
       start_time: slot.start.toISOString(),
       end_time: slot.end.toISOString(),
       display_time: formatSlotTime(slot.start, timezone),
     }));
-    const slotDescriptions = describeAvailableSlots(slots, timezone);
+    const slotDescriptions = describeAvailableSlots(offeredSlots, timezone);
     const preferredSlot =
       preferred.length > 0
         ? slots.find((slot) => {
