@@ -25,6 +25,10 @@ vi.mock("@/crm/withFallback", () => ({
   getCRMWithFallback: vi.fn(),
 }));
 
+vi.mock("@/lib/demo-session", () => ({
+  resolveBusinessFromDemo: vi.fn(),
+}));
+
 import { POST } from "./route";
 import { prisma } from "@/lib/prisma";
 import { isRetellWebhookValid } from "@/lib/retell-auth";

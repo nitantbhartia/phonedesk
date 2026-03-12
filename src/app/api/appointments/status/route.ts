@@ -110,9 +110,11 @@ export async function POST(req: NextRequest) {
         smsBody = `${petName}'s status has been updated.`;
     }
 
-    await sendSms(appointment.customerPhone, smsBody, fromNumber).catch((e) => {
+    try {
+      await sendSms(appointment.customerPhone, smsBody, fromNumber);
+    } catch (e) {
       console.error("[appointments/status] SMS failed for appointment", appointmentId, e);
-    });
+    }
   }
 
   return NextResponse.json({ ok: true, status });
