@@ -164,6 +164,39 @@ describe("POST /api/retell/check-availability", () => {
     expect(payload.result).toContain("10 AM is available");
   });
 
+  it("prefers service_id over a stale service_name when both are present", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+      business: {
+        id: "biz_1",
+        timezone: "America/Los_Angeles",
+        services: [
+          { id: "svc_1", name: "Full Groom", duration: 90, isActive: true },
+          { id: "svc_2", name: "Bath", duration: 60, isActive: true },
+        ],
+      },
+    } as never);
+    vi.mocked(getAvailableSlots).mockResolvedValue([
+      {
+        start: new Date("2026-05-21T17:00:00.000Z"),
+        end: new Date("2026-05-21T18:30:00.000Z"),
+      },
+    ] as never);
+    vi.mocked(describeAvailableSlots).mockReturnValue("10:00 am");
+
+    await POST(
+      makeRequest({
+        args: {
+          date: "2026-05-21",
+          service_id: "svc_1",
+          service_name: "Bath",
+        },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+
+    expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-05-21", 90);
+  });
+
   it("offers alternate slots when the preferred time is unavailable", async () => {
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
       business: {

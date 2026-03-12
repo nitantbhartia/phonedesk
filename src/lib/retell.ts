@@ -124,6 +124,7 @@ STEP 1 — LOOKUP, SERVICES & DATE (do all three before your first response)
 As soon as the caller says anything, call get_current_datetime, lookup_customer_context, and get_services in parallel. Do NOT speak until all three tool calls complete. Always use the date from get_current_datetime — never assume today's date from prior knowledge.
 CRITICAL: If lookup_customer_context returns subscription_inactive=true, say exactly: "Hi, thanks so much for calling ${business.name}! Our booking line is temporarily unavailable right now — please reach ${business.ownerName} directly on the business number. So sorry for the inconvenience!" Then immediately call end_call. Do not continue the conversation.
 Use the services returned by get_services for ALL price and service name references throughout the call.
+When get_services returns a service_id, carry that exact service_id into later tool calls. Never invent or rewrite service IDs yourself.
 STEP 2 — FIRST RESPONSE (after tools complete)
 IMPORTANT: Never re-introduce yourself. You already greeted the caller. The begin_message handled that. Pick up exactly where the conversation left off.
 If the tool calls took a noticeable beat, begin your first spoken turn with a brief bridge such as: "Thanks for holding —" or "Perfect, I've got that up now —"
@@ -155,7 +156,7 @@ One question per turn. Skip anything already known from lookup. Collect in this 
 DATE AMBIGUITY: If the caller says a day name that matches today (for example they say "Monday" and today is Monday), ask: "Did you mean today, or next Monday?" Then wait for the answer before checking availability.
 STEP 4 — CHECK AVAILABILITY
 Do not call check_availability until you know which service they want. If the service is still unclear, ask one clarifying question first.
-After caller gives a preferred date and time, call check_availability once using date, service_name, and preferred_time in the same tool call.
+After caller gives a preferred date and time, call check_availability once using date, service_id, service_name, and preferred_time in the same tool call.
 Pass the caller's date words exactly as spoken. Never pre-convert the date yourself.
 Do not run check_availability again for the same date unless the caller asks for a different day.
 If requested_time_available=true:
@@ -170,10 +171,10 @@ Rules:
 - Only offer if found=true (returning customer). Never upsell new customers.
 - Only offer one add-on. Never stack multiple offers.
 - Accept any yes/sure/yeah/why not as acceptance. Accept any no/nah/skip as decline.
-- If accepted: pass addon_service_name to book_appointment. If declined: book without it. Never ask twice.
+- If accepted: pass addon_service_id and addon_service_name to book_appointment. If declined: book without it. Never ask twice.
 - If no add-ons exist or the caller is not a returning customer, skip this step and go straight to STEP 6.
 STEP 6 — BOOK APPOINTMENT
-Once the upsell step is resolved (accepted, declined, or skipped), call book_appointment once using the exact start_time returned by check_availability. Never invent or reformat timestamps yourself.
+Once the upsell step is resolved (accepted, declined, or skipped), call book_appointment once using the exact start_time returned by check_availability and the matching service_id from get_services. Never invent or reformat timestamps or service IDs yourself.
 Never confirm a booking until book_appointment returns success.
 STEP 7 — CONFIRM & CLOSE
 After book_appointment succeeds, say EXACTLY this (filling in the real details):
@@ -616,7 +617,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "check_availability",
       description:
-        "Check available appointment time slots for a given date and known service. Call this only after you know which service the caller wants.",
+        "Check available appointment time slots for a given date and known service. Call this only after you know which service the caller wants, and prefer the exact service_id returned by get_services.",
       url: `${appUrl}/api/retell/check-availability`,
       speak_during_execution: true,
       execution_message_description: "A natural, brief phrase showing you're checking the calendar — e.g. 'Let me pull up that day...' or 'One second, checking what's open...' Vary it slightly each time.",
@@ -631,7 +632,12 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           service_name: {
             type: "string",
             description:
-              "The name of the service the customer is interested in. This is required so availability uses the real appointment length instead of guessing.",
+              "The human-readable service name from get_services. Include this alongside service_id so the tool can safely fall back if needed.",
+          },
+          service_id: {
+            type: "string",
+            description:
+              "The exact service_id returned by get_services for the selected service. Prefer this over fuzzy name matching.",
           },
           preferred_time: {
             type: "string",
@@ -639,7 +645,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
               "The caller's requested time on that date (for example: '10 AM').",
           },
         },
-        required: ["date", "service_name"],
+        required: ["date", "service_id"],
       },
     },
     {
@@ -674,10 +680,15 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             description: "The pet's size",
             enum: ["SMALL", "MEDIUM", "LARGE", "XLARGE"],
           },
+          service_id: {
+            type: "string",
+            description:
+              "The exact service_id returned by get_services for the booked service.",
+          },
           service_name: {
             type: "string",
             description:
-              "The service being booked. This must match the confirmed service before you call the tool.",
+              "The service being booked. Include this with service_id so confirmations stay natural.",
           },
           start_time: {
             type: "string",
@@ -694,20 +705,25 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             description:
               "The add-on service name the customer accepted (e.g. 'Teeth Brushing'), if any. Only pass this if the customer explicitly said yes to an upsell offer.",
           },
+          addon_service_id: {
+            type: "string",
+            description:
+              "The exact service_id for the accepted add-on from get_services, if any.",
+          },
           groomer_name: {
             type: "string",
             description:
               "The name of the preferred groomer, if the customer requested one.",
           },
         },
-        required: ["customer_name", "service_name", "start_time"],
+        required: ["customer_name", "service_id", "start_time"],
       },
     },
     {
       type: "custom",
       name: "get_services",
       description:
-        "Fetch current service names, prices, and durations from the groomer's catalog. Call this silently after lookup_customer_context, before greeting the caller.",
+        "Fetch current service IDs, names, prices, and durations from the groomer's catalog. Call this silently after lookup_customer_context, before greeting the caller.",
       url: `${appUrl}/api/retell/get-services`,
       speak_during_execution: false,
       parameters: {

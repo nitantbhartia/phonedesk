@@ -5,7 +5,7 @@ import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { resolveBusinessFromDemo } from "@/lib/demo-session";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
-import { matchActiveService } from "@/lib/retell-tool-helpers";
+import { resolveActiveService } from "@/lib/retell-tool-helpers";
 
 const MONTH_MAP: Record<string, number> = {
   january: 1,
@@ -353,6 +353,7 @@ export async function POST(req: NextRequest) {
   const { args, call } = body;
 
   const date = args?.date;
+  const serviceId = args?.service_id;
   const serviceName = args?.service_name;
   const preferredTime = args?.preferred_time;
 
@@ -398,7 +399,7 @@ export async function POST(req: NextRequest) {
   const preferred = normalizePreferredTime(preferredTime);
   const preferredMinutes = preferred ? timeTextToMinutes(preferred) : null;
 
-  if (!serviceName?.trim()) {
+  if (!serviceId?.trim() && !serviceName?.trim()) {
     return NextResponse.json({
       result:
         "I need to know which service they want before I can check availability accurately.",
@@ -407,7 +408,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const service = matchActiveService<Service>(business.services, serviceName);
+  const service = resolveActiveService<Service>(business.services, {
+    serviceId,
+    serviceName,
+  });
   if (!service) {
     const activeNames = business.services
       .filter((entry: Service) => entry.isActive)

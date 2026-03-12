@@ -13,7 +13,7 @@ import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { getCRMWithFallback } from "@/crm/withFallback";
 import { getStripeClient } from "@/lib/stripe";
 import { resolveBusinessFromDemo } from "@/lib/demo-session";
-import { matchActiveService } from "@/lib/retell-tool-helpers";
+import { resolveActiveService } from "@/lib/retell-tool-helpers";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -76,14 +76,16 @@ export async function POST(req: NextRequest) {
     pet_name: petName,
     pet_breed: petBreed,
     pet_size: petSize,
+    service_id: serviceId,
     service_name: svcName,
+    addon_service_id: addonServiceId,
     addon_service_name: addonSvcName,
     start_time: startTime,
     square_customer_id: squareCustomerId,
     groomer_name: groomerName,
   } = args || {};
 
-  if (!customerName || !startTime || !svcName?.trim()) {
+  if (!customerName || !startTime || (!serviceId?.trim() && !svcName?.trim())) {
     return NextResponse.json({
       result:
         "I still need the customer's name, service, and appointment time before I can book this.",
@@ -97,7 +99,10 @@ export async function POST(req: NextRequest) {
     ? (normalizedPetSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE")
     : undefined;
 
-  const service = matchActiveService<Service>(business.services, svcName);
+  const service = resolveActiveService<Service>(business.services, {
+    serviceId,
+    serviceName: svcName,
+  });
 
   // Reject if the requested service didn't match anything on file — prevents
   // bookings with wrong duration, null price, and unrecognised service name.
@@ -114,20 +119,24 @@ export async function POST(req: NextRequest) {
 
   // Look up add-on service if the AI offered one
   const addonService = addonSvcName
-    ? matchActiveService<Service>(
+    || addonServiceId
+    ? resolveActiveService<Service>(
         business.services.filter((entry: Service) => entry.isAddon),
-        addonSvcName
+        {
+          serviceId: addonServiceId,
+          serviceName: addonSvcName,
+        }
       )
     : null;
 
-  if (addonSvcName && !addonService) {
+  if ((addonSvcName || addonServiceId) && !addonService) {
     const addonNames = business.services
       .filter((entry: Service) => entry.isActive && entry.isAddon)
       .map((entry: Service) => entry.name)
       .join(", ");
 
     return NextResponse.json({
-      result: `I wasn't able to match "${addonSvcName}" to an add-on on file. Available add-ons are: ${addonNames || "none"}. Can you confirm whether they want an add-on?`,
+      result: `I wasn't able to match "${addonSvcName || addonServiceId}" to an add-on on file. Available add-ons are: ${addonNames || "none"}. Can you confirm whether they want an add-on?`,
       booked: false,
       addon_not_found: true,
     });

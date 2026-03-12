@@ -52,9 +52,25 @@ describe("POST /api/retell/get-services", () => {
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
       business: { id: "biz_1" },
     } as never);
+    vi.mocked(prisma.service.findMany).mockResolvedValue([
+      {
+        id: "svc_local_1",
+        name: "Full Groom",
+        price: 95,
+        duration: 90,
+        isActive: true,
+        isAddon: false,
+      },
+    ] as never);
     vi.mocked(getCRMWithFallback).mockResolvedValue({
       getServices: vi.fn(async () => [
-        { name: "Full Groom", priceCents: 9500, durationMinutes: 90 },
+        {
+          id: "crm_svc_1",
+          name: "Full Groom",
+          priceCents: 9500,
+          durationMinutes: 90,
+          active: true,
+        },
       ]),
     } as never);
 
@@ -63,6 +79,8 @@ describe("POST /api/retell/get-services", () => {
 
     expect(payload.services).toEqual([
       {
+        service_id: "svc_local_1",
+        catalog_service_id: "crm_svc_1",
         name: "Full Groom",
         price: 95,
         price_cents: 9500,
@@ -71,7 +89,6 @@ describe("POST /api/retell/get-services", () => {
       },
     ]);
     expect(payload.result).toContain("Full Groom $95");
-    expect(prisma.service.findMany).not.toHaveBeenCalled();
   });
 
   it("falls back to database services when CRM lookup fails", async () => {
@@ -84,7 +101,7 @@ describe("POST /api/retell/get-services", () => {
       }),
     } as never);
     vi.mocked(prisma.service.findMany).mockResolvedValue([
-      { name: "Bath", price: 45, duration: 60 },
+      { id: "svc_1", name: "Bath", price: 45, duration: 60, isAddon: false },
     ] as never);
 
     const response = await POST(makeRequest({ call: { to_number: "+16195559999" } }) as never);
@@ -95,11 +112,12 @@ describe("POST /api/retell/get-services", () => {
       orderBy: { name: "asc" },
     });
     expect(payload.services[0]).toEqual({
+      service_id: "svc_1",
       name: "Bath",
       price: 45,
       price_cents: 4500,
       duration_minutes: 60,
-      is_addon: undefined,
+      is_addon: false,
     });
   });
 

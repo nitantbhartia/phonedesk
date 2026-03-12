@@ -224,6 +224,29 @@ describe("POST /api/retell/book-appointment", () => {
     expect(payload.booked).toBe(true);
   });
 
+  it("books successfully with service_id even when service_name is omitted", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          service_id: "svc_1",
+          start_time: "2026-05-21T09:00:00",
+        },
+        call: { from_number: "+16195550100", to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(true);
+    expect(bookAppointment).toHaveBeenCalledWith(
+      "biz_1",
+      expect.objectContaining({
+        serviceName: "Full Groom",
+        servicePrice: 95,
+      })
+    );
+  });
+
   it("returns an alternate-time prompt when the slot is no longer available", async () => {
     vi.mocked(isSlotAvailable).mockResolvedValue(false);
 

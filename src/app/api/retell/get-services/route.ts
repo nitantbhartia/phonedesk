@@ -5,6 +5,17 @@ import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { getCRMWithFallback } from "@/crm/withFallback";
 import { resolveBusinessFromDemo } from "@/lib/demo-session";
+import { matchActiveService } from "@/lib/retell-tool-helpers";
+
+type RetellServicePayload = {
+  service_id: string;
+  catalog_service_id?: string;
+  name: string;
+  price: number;
+  price_cents: number;
+  duration_minutes: number;
+  is_addon: boolean;
+};
 
 // Retell custom tool: fetches live service names, prices, and durations.
 // Called silently after lookup_customer_context, before the agent speaks.
@@ -51,46 +62,56 @@ export async function POST(req: NextRequest) {
   }
 
   const businessId = phoneRecord.business.id;
+  const dbServices = await prisma.service.findMany({
+    where: { businessId, isActive: true },
+    orderBy: { name: "asc" },
+  });
 
   try {
     const crm = await getCRMWithFallback(businessId);
     const crmServices = await crm.getServices();
 
     if (crmServices.length > 0) {
-      const services = crmServices.map((s) => ({
-        name: s.name,
-        price: s.priceCents / 100,
-        price_cents: s.priceCents,
-        duration_minutes: s.durationMinutes,
-        is_addon: false,
-      }));
+      const services = crmServices.flatMap((service) => {
+          const matchedLocalService = matchActiveService(dbServices, service.name);
+          if (!matchedLocalService) {
+            return [];
+          }
 
-      const summary = services
-        .map((s) => `${s.name} $${s.price} (${s.duration_minutes} min)`)
-        .join(", ");
+          return [{
+            service_id: matchedLocalService.id,
+            catalog_service_id: service.id,
+            name: service.name,
+            price: service.priceCents / 100,
+            price_cents: service.priceCents,
+            duration_minutes: service.durationMinutes,
+            is_addon: matchedLocalService.isAddon,
+          } satisfies RetellServicePayload];
+        });
 
-      return NextResponse.json({
-        result: `Services loaded: ${summary}`,
-        services,
-      });
+      if (services.length > 0) {
+        const summary = services
+          .map((s) => `${s.name} $${s.price} (${s.duration_minutes} min)`)
+          .join(", ");
+
+        return NextResponse.json({
+          result: `Services loaded: ${summary}`,
+          services,
+        });
+      }
     }
   } catch (err) {
     console.error("[get-services] CRM fetch failed, falling back to DB services:", err);
   }
 
-  // Final fallback: use services from the business DB record
-  const dbServices = await prisma.service.findMany({
-    where: { businessId, isActive: true },
-    orderBy: { name: "asc" },
-  });
-
   const services = dbServices.map((s: Service) => ({
+    service_id: s.id,
     name: s.name,
     price: s.price,
     price_cents: Math.round(s.price * 100),
     duration_minutes: s.duration,
     is_addon: s.isAddon,
-  }));
+  })) satisfies RetellServicePayload[];
 
   const summary = services
     .map((s: { name: string; price: number; duration_minutes: number }) => `${s.name} $${s.price} (${s.duration_minutes} min)`)

@@ -194,6 +194,26 @@ export function matchActiveService<T extends { isActive: boolean; name: string }
   );
 }
 
+export function resolveActiveService<T extends { id: string; isActive: boolean; name: string }>(
+  services: T[],
+  input: {
+    serviceId?: string | null;
+    serviceName?: string | null;
+  }
+): T | null {
+  const activeServices = services.filter((service) => service.isActive);
+
+  if (input.serviceId) {
+    const exactIdMatch =
+      activeServices.find((service) => service.id === input.serviceId) || null;
+    if (exactIdMatch) {
+      return exactIdMatch;
+    }
+  }
+
+  return matchActiveService(activeServices, input.serviceName);
+}
+
 function parseLocalTimeToMinutes(time: string) {
   const match = time.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) {

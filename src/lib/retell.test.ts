@@ -54,13 +54,13 @@ describe("buildAgentTools", () => {
     const statusTool = tools.find((tool) => tool.name === "appointment_status");
 
     expect(
-      availabilityTool?.parameters?.properties.service_name.description
-    ).toContain("required");
-    expect(availabilityTool?.parameters?.required).toContain("service_name");
+      availabilityTool?.parameters?.properties.service_id.description
+    ).toContain("exact service_id");
+    expect(availabilityTool?.parameters?.required).toContain("service_id");
     expect(
       bookingTool?.parameters?.properties.start_time.description
     ).toContain("Use the exact start_time returned by check_availability");
-    expect(bookingTool?.parameters?.required).toContain("service_name");
+    expect(bookingTool?.parameters?.required).toContain("service_id");
     expect(cancelTool?.parameters?.properties).toHaveProperty("appointment_id");
     expect(callNoteTool?.parameters?.properties.outcome.enum).toContain("rescheduled");
     expect(statusTool?.description).toContain("never be used to guess from a future appointment");
@@ -110,6 +110,7 @@ describe("generateSystemPrompt", () => {
     );
     expect(prompt).toContain("STEP 2A — IDENTIFY THE CALLER'S INTENT BEFORE BOOKING");
     expect(prompt).toContain("Never guess the service");
+    expect(prompt).toContain("carry that exact service_id into later tool calls");
     expect(prompt).toContain("If availability or service matching comes back unclear");
     expect(prompt).toContain("address it directly without restarting the booking flow");
     expect(prompt).toContain("Never handle a reschedule by separately calling cancel_appointment and then book_appointment");
