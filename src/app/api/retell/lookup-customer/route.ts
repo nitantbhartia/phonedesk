@@ -110,13 +110,28 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Run internal DB lookup and Square CRM lookup concurrently
-  const [internalContext, squareCustomer] = await Promise.allSettled([
+  // Run internal DB lookup, Square CRM lookup, and rebook interval concurrently
+  const [internalContext, squareCustomer, lastApptWithRebook] = await Promise.allSettled([
     lookupCustomerContext(businessId, callerPhone),
     getCRMWithFallback(businessId).then((crm) => {
       const normalized = normalizePhoneNumber(callerPhone);
       return normalized ? crm.getCustomer(normalized) : null;
     }),
+    // Fetch the most recent completed appointment with a rebookInterval set
+    (async () => {
+      const normalized = normalizePhoneNumber(callerPhone);
+      if (!normalized) return null;
+      return prisma.appointment.findFirst({
+        where: {
+          businessId,
+          customerPhone: normalized,
+          status: "COMPLETED",
+          rebookInterval: { not: null },
+        },
+        orderBy: { startTime: "desc" },
+        select: { startTime: true, rebookInterval: true },
+      });
+    })(),
   ]);
 
   const context =
@@ -129,6 +144,21 @@ export async function POST(req: NextRequest) {
 
   if (squareCustomer.status === "rejected") {
     console.error("[lookup-customer] Square lookup failed:", squareCustomer.reason);
+  }
+
+  // Derive rebook suggestion: use last appointment's rebookInterval, or fall back to
+  // the business's RebookingConfig.defaultInterval if enabled.
+  let rebookSuggestionDays: number | null = null;
+  const lastAppt = lastApptWithRebook.status === "fulfilled" ? lastApptWithRebook.value : null;
+  if (lastAppt?.rebookInterval) {
+    rebookSuggestionDays = lastAppt.rebookInterval;
+  } else {
+    const rebookConfig = await prisma.rebookingConfig.findUnique({
+      where: { businessId },
+    });
+    if (rebookConfig?.enabled) {
+      rebookSuggestionDays = rebookConfig.defaultInterval;
+    }
   }
 
   const squareCustomerId = squareCust?.id || context.customer?.squareCustomerId || null;
@@ -173,8 +203,10 @@ export async function POST(req: NextRequest) {
       name: pet.name,
       breed: pet.breed,
       size: pet.size,
+      grooming_notes: (pet as { notes?: string | null }).notes || null,
     })),
     preferred_groomer: (context.customer as { preferredGroomer?: { name: string } | null })?.preferredGroomer?.name || null,
+    rebook_suggestion_days: rebookSuggestionDays,
     current_date: todayStr,
   });
 }
