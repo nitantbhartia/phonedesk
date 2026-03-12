@@ -241,8 +241,7 @@ export function buildCustomerContextSummary(context: Awaited<ReturnType<typeof l
       ? deduplicatePets(context.pets)
           .map((pet) => {
             const details = [pet.name, pet.breed, pet.size].filter(Boolean).join(", ");
-            const notePart = pet.notes ? ` [grooming notes: ${pet.notes}]` : "";
-            return (details || pet.name) + notePart;
+            return details || pet.name;
           })
           .join("; ")
       : "No pets saved yet.";
