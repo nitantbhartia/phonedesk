@@ -7,6 +7,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     groomer: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     customer: {
       updateMany: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     intakeForm: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -114,6 +116,8 @@ describe("POST /api/retell/book-appointment", () => {
     vi.mocked(prisma.call.updateMany).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(prisma.intakeForm.create).mockReset();
+    vi.mocked(prisma.intakeForm.findFirst).mockReset();
+    vi.mocked(prisma.groomer.findMany).mockReset();
     vi.mocked(bookAppointment).mockReset();
     vi.mocked(isSlotAvailable).mockReset();
     vi.mocked(parseLocalDatetime).mockReset();
@@ -315,6 +319,82 @@ describe("POST /api/retell/book-appointment", () => {
       expect.stringContaining("https://app.example.com/intake/intake_123"),
       "+16195559999"
     );
+  });
+
+  // Fix #5 — service name not found should block booking
+  it("returns an error and does not book when service_name does not match any active service", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          start_time: "2026-05-21T09:00:00",
+          service_name: "Invisible Cut",
+        },
+        call: { from_number: "+16195550100", to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(false);
+    expect(payload.result).toContain("Invisible Cut");
+    expect(payload.result).toContain("Full Groom");
+    expect(bookAppointment).not.toHaveBeenCalled();
+  });
+
+  // Fix #7 — groomer not found should return structured feedback
+  it("returns groomer_not_found and a corrective prompt when the groomer name doesn't match", async () => {
+    vi.mocked(prisma.groomer.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.groomer.findMany).mockResolvedValue([
+      { name: "Taylor" },
+      { name: "Riley" },
+    ] as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          start_time: "2026-05-21T09:00:00",
+          service_name: "Full Groom",
+          groomer_name: "Jessica",
+        },
+        call: { from_number: "+16195550100", to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(false);
+    expect(payload.groomer_not_found).toBe(true);
+    expect(payload.result).toContain("Jessica");
+    expect(payload.result).toContain("Taylor");
+    expect(bookAppointment).not.toHaveBeenCalled();
+  });
+
+  // Fix #11 — intake form should not be sent twice for the same customer
+  it("does not send a second intake form if one was already sent for this customer", async () => {
+    vi.mocked(prisma.intakeForm.findFirst).mockResolvedValue({
+      id: "existing_form",
+    } as never);
+    vi.mocked(prisma.customer.findUnique).mockResolvedValue(null);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          customer_phone: "+16195550100",
+          pet_name: "Buddy",
+          service_name: "Full Groom",
+          start_time: "2026-05-21T09:00:00",
+        },
+        call: {
+          from_number: "+16195550100",
+          to_number: "+16195559999",
+        },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(true);
+    expect(prisma.intakeForm.create).not.toHaveBeenCalled();
   });
 
   it("keeps the booking successful when downstream notifications or crm sync fail", async () => {

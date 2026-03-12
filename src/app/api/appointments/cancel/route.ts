@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { sendCancellationWithWaitlistNotification, sendWaitlistOpeningNotification } from "@/lib/notifications";
-import { formatDateTime } from "@/lib/utils";
+import { sendCancellationWithWaitlistNotification } from "@/lib/notifications";
+import { tryFillFromWaitlist } from "@/lib/waitlist";
 import { verifyAppointmentToken } from "@/lib/appointment-token";
 import { canCancelAppointment } from "@/lib/appointment-state";
 import { parseJsonBody, requireCurrentBusiness } from "@/lib/route-helpers";
@@ -85,49 +85,3 @@ export async function POST(req: NextRequest) {
   });
 }
 
-async function tryFillFromWaitlist(appointment: {
-  id: string;
-  businessId: string;
-  startTime: Date;
-  serviceName: string | null;
-  business: { name: string; phone: string | null; phoneNumber: { number: string } | null };
-}) {
-  // Find matching waitlist entries for the same date
-  const startOfDay = new Date(appointment.startTime);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(appointment.startTime);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  const entries = await prisma.waitlistEntry.findMany({
-    where: {
-      businessId: appointment.businessId,
-      status: "WAITING",
-      preferredDate: { gte: startOfDay, lte: endOfDay },
-    },
-    orderBy: { createdAt: "asc" }, // first come, first served
-  });
-
-  if (entries.length === 0) return null;
-
-  const entry = entries[0];
-
-  // Mark as notified
-  await prisma.waitlistEntry.update({
-    where: { id: entry.id },
-    data: {
-      status: "NOTIFIED",
-      notifiedAt: new Date(),
-    },
-  });
-
-  // Send notification
-  if (appointment.business.phoneNumber) {
-    await sendWaitlistOpeningNotification(
-      appointment.business as Parameters<typeof sendWaitlistOpeningNotification>[0],
-      entry,
-      formatDateTime(appointment.startTime)
-    );
-  }
-
-  return entry;
-}
