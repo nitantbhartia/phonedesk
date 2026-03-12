@@ -259,3 +259,60 @@ export async function sendCancellationWithWaitlistNotification(
 
   await sendSms(ownerPhone, message, fromNumber);
 }
+
+export async function sendRescheduleNotificationToOwner(
+  business: BusinessWithPhone,
+  originalAppt: Appointment,
+  newAppt: Appointment,
+  waitlistCustomerName?: string
+) {
+  const ownerPhone = normalizePhoneNumber(business.phone);
+  if (!ownerPhone || !business.phoneNumber) return;
+
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
+  const oldTime = formatDateTime(originalAppt.startTime, business.timezone);
+  const newTime = formatDateTime(newAppt.startTime, business.timezone);
+
+  const message = [
+    `[RingPaw] ${originalAppt.customerName} rescheduled their appointment.`,
+    `${originalAppt.petName || "Pet"}: ${oldTime} -> ${newTime}`,
+    waitlistCustomerName
+      ? `Waitlist auto-fill: contacting ${waitlistCustomerName} for the old opening.`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  await sendSms(ownerPhone, message, fromNumber);
+}
+
+export async function sendRescheduleConfirmationToCustomer(
+  business: BusinessWithPhone,
+  originalAppt: Appointment,
+  newAppt: Appointment
+) {
+  const customerPhone = normalizePhoneNumber(newAppt.customerPhone);
+  if (!customerPhone || !business.phoneNumber) return;
+
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
+  const oldTime = formatDateTime(originalAppt.startTime, business.timezone);
+  const newTime = formatDateTime(newAppt.startTime, business.timezone);
+
+  const message = [
+    `Hi ${newAppt.customerName}! Your appointment at ${business.name} has been moved.`,
+    "",
+    `${newAppt.petName || "Your pet"} - ${newAppt.serviceName || "Grooming"}`,
+    `Was: ${oldTime}`,
+    `Now: ${newTime}`,
+    business.address || "",
+    "",
+    newAppt.status === "PENDING" && newAppt.confirmLink
+      ? `Please confirm the updated time: ${newAppt.confirmLink}`
+      : "",
+    "Reply CANCEL if you need to change it again.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  await sendSms(customerPhone, message, fromNumber);
+}

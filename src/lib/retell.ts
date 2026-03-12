@@ -176,7 +176,7 @@ Then ask: "Is there anything else I can help with today?"
 STOP and wait silently for the caller to respond. Do NOT say another word until they reply.
 — If the caller says no, nothing, or anything that sounds like a farewell, respond with a brief warm goodbye ("Wonderful — have a great one!") and then immediately call add_call_note and end_call.
 — If the caller has another question or request, address it directly without restarting the booking flow, then close the same way.
-Before ending ANY call, call add_call_note with the square_customer_id from lookup (if available), the outcome (booked / cancelled / inquiry_only / no_booking), and a 1-2 sentence summary of the call. Then call end_call.
+Before ending ANY call, call add_call_note with the square_customer_id from lookup (if available), the outcome (booked / cancelled / rescheduled / inquiry_only / no_booking), and a 1-2 sentence summary of the call. Then call end_call.
 ---
 EDGE CASES
 CANCELLATIONS:
@@ -189,6 +189,21 @@ Examples:
 If cancel_appointment returns cancelled=true: confirm the cancellation to the caller using the returned details, then ask "Would you like to rebook for another time?"
 If cancel_appointment returns cancelled=false AND the response contains multiple_appointments: read the options naturally, wait for their answer, then call cancel_appointment again with the matching appointment_id.
 If cancel_appointment returns cancelled=false for any other reason: relay the result message naturally. If it still sounds unclear, tell them ${business.ownerName} will confirm the remaining details directly and offer to help rebook.
+RESCHEDULES:
+If the caller wants to move an appointment, identify which booking they mean first. If you have enough detail, call reschedule_appointment. If not, ask ONE clarifying question or let reschedule_appointment return the options.
+Once the caller tells you the new day and time, use check_availability for that same service before you move anything.
+If check_availability returns a specific slot the caller accepts, call reschedule_appointment with the appointment_id and the exact new_start_time returned by check_availability.
+Never handle a reschedule by separately calling cancel_appointment and then book_appointment when reschedule_appointment can do it in one flow.
+WAITLIST:
+If the caller wants a time you do not have, offer the waitlist.
+If they say yes, call join_waitlist with their preferred day, preferred time if given, and callback number.
+Confirm naturally that they're on the waitlist and will get a text if something opens up.
+APPOINTMENT STATUS:
+If the caller asks whether their dog is ready, how grooming is going, or when pickup might be, call appointment_status.
+Relay the returned status exactly. Never guess based on the clock or how long the appointment usually takes.
+FAQ / POLICIES:
+For hours, location, first-visit prep, intake forms, or policy questions, call business_faq with the caller's exact question.
+If business_faq says the policy is not on file, say you'll have ${business.ownerName} confirm the exact details directly.
 OUT-OF-SCOPE QUESTIONS:
 "Great question — I want to make sure you get the right answer on that. I'll have ${business.ownerName} call you back shortly."
 AFTER-HOURS:
@@ -703,7 +718,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           outcome: {
             type: "string",
             description: "The outcome of the call",
-            enum: ["booked", "cancelled", "inquiry_only", "no_booking"],
+            enum: ["booked", "cancelled", "rescheduled", "inquiry_only", "no_booking"],
           },
           note: {
             type: "string",
@@ -727,6 +742,159 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           customer_name: {
             type: "string",
             description: "The customer's name, used as a fallback if their phone number is unavailable.",
+          },
+          pet_name: {
+            type: "string",
+            description:
+              "The pet name to narrow the search when the caller has multiple upcoming bookings.",
+          },
+          appointment_id: {
+            type: "string",
+            description:
+              "The exact appointment_id returned by a previous cancel_appointment disambiguation response.",
+          },
+        },
+      },
+    },
+    {
+      type: "custom",
+      name: "reschedule_appointment",
+      description:
+        "Move an existing upcoming appointment to a new slot. Use this when the caller wants to reschedule instead of cancel. If you do not yet know which appointment they mean, call it first without appointment_id so it can look up or disambiguate the booking.",
+      url: `${appUrl}/api/retell/reschedule-appointment`,
+      speak_during_execution: true,
+      execution_message_description:
+        "A brief, natural phrase while you pull up the appointment or move it — e.g. 'Let me pull that up...' or 'One second while I move that over...'",
+      parameters: {
+        type: "object",
+        properties: {
+          appointment_id: {
+            type: "string",
+            description:
+              "The exact appointment_id returned by a prior reschedule_appointment lookup when disambiguation was needed.",
+          },
+          customer_name: {
+            type: "string",
+            description:
+              "The customer's name, used as a fallback if the caller phone number is unavailable.",
+          },
+          pet_name: {
+            type: "string",
+            description:
+              "The pet name if the caller specified which appointment they want to move.",
+          },
+          new_start_time: {
+            type: "string",
+            description:
+              "The new appointment start time in ISO 8601 format. Use the exact start_time returned by check_availability once the caller accepts a new slot.",
+          },
+        },
+      },
+    },
+    {
+      type: "custom",
+      name: "join_waitlist",
+      description:
+        "Add the caller to the business waitlist when no available slot works for them.",
+      url: `${appUrl}/api/retell/join-waitlist`,
+      speak_during_execution: true,
+      execution_message_description:
+        "A short, warm phrase while you add them — e.g. 'Absolutely, let me add you to the waitlist...' or 'One moment and I'll put that in...'",
+      parameters: {
+        type: "object",
+        properties: {
+          customer_name: {
+            type: "string",
+            description: "The customer's full name.",
+          },
+          customer_phone: {
+            type: "string",
+            description:
+              "The customer's callback number in E.164 format. If omitted, the inbound caller number will be used.",
+          },
+          pet_name: {
+            type: "string",
+            description: "The pet's name, if known.",
+          },
+          pet_breed: {
+            type: "string",
+            description: "The pet's breed, if known.",
+          },
+          pet_size: {
+            type: "string",
+            description: "The pet's size, if known.",
+            enum: ["SMALL", "MEDIUM", "LARGE", "XLARGE"],
+          },
+          service_name: {
+            type: "string",
+            description: "The service they want, if known.",
+          },
+          preferred_date: {
+            type: "string",
+            description:
+              "The desired date for the opening. Prefer the normalized_date returned by check_availability or a clear YYYY-MM-DD date.",
+          },
+          preferred_time: {
+            type: "string",
+            description:
+              "The preferred part of day or time window, e.g. 'morning', 'after 2pm', or '3 PM'.",
+          },
+          notes: {
+            type: "string",
+            description:
+              "Any extra context the owner should see, such as flexibility or special handling notes.",
+          },
+        },
+        required: ["customer_name", "preferred_date"],
+      },
+    },
+    {
+      type: "custom",
+      name: "business_faq",
+      description:
+        "Answer business FAQ and policy questions like hours, address, first-visit prep, intake forms, or whether a custom policy is on file.",
+      url: `${appUrl}/api/retell/business-faq`,
+      speak_during_execution: true,
+      execution_message_description:
+        "A very short phrase while you check the business info — e.g. 'Let me check that for you...' or 'One moment while I pull that up...'",
+      parameters: {
+        type: "object",
+        properties: {
+          question: {
+            type: "string",
+            description:
+              "The caller's question in their own words. Pass the question exactly as asked.",
+          },
+        },
+        required: ["question"],
+      },
+    },
+    {
+      type: "custom",
+      name: "appointment_status",
+      description:
+        "Check the current status of today's appointment when the caller asks whether their dog is ready or how the visit is going.",
+      url: `${appUrl}/api/retell/appointment-status`,
+      speak_during_execution: true,
+      execution_message_description:
+        "A short phrase while you look up the status — e.g. 'Let me check on that...' or 'One moment while I pull up today's appointment...'",
+      parameters: {
+        type: "object",
+        properties: {
+          appointment_id: {
+            type: "string",
+            description:
+              "The exact appointment_id returned by a previous appointment_status lookup if the caller had multiple appointments.",
+          },
+          customer_name: {
+            type: "string",
+            description:
+              "The customer's name, used as a fallback if the caller phone number is unavailable.",
+          },
+          pet_name: {
+            type: "string",
+            description:
+              "The pet name if the caller specified which appointment to check.",
           },
         },
       },

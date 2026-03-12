@@ -36,6 +36,10 @@ describe("buildAgentTools", () => {
 
     expect(toolNames).toContain("check_availability");
     expect(toolNames).toContain("book_appointment");
+    expect(toolNames).toContain("reschedule_appointment");
+    expect(toolNames).toContain("join_waitlist");
+    expect(toolNames).toContain("business_faq");
+    expect(toolNames).toContain("appointment_status");
     expect(toolNames).toContain("get_services");
     expect(toolNames).toContain("add_call_note");
     expect(toolNames).toContain("end_call");
@@ -45,6 +49,8 @@ describe("buildAgentTools", () => {
     const tools = buildAgentTools("https://phonedesk.up.railway.app");
     const availabilityTool = tools.find((tool) => tool.name === "check_availability");
     const bookingTool = tools.find((tool) => tool.name === "book_appointment");
+    const cancelTool = tools.find((tool) => tool.name === "cancel_appointment");
+    const callNoteTool = tools.find((tool) => tool.name === "add_call_note");
 
     expect(
       availabilityTool?.parameters?.properties.service_name.description
@@ -52,6 +58,8 @@ describe("buildAgentTools", () => {
     expect(
       bookingTool?.parameters?.properties.start_time.description
     ).toContain("Use the exact start_time returned by check_availability");
+    expect(cancelTool?.parameters?.properties).toHaveProperty("appointment_id");
+    expect(callNoteTool?.parameters?.properties.outcome.enum).toContain("rescheduled");
   });
 });
 
@@ -99,6 +107,7 @@ describe("generateSystemPrompt", () => {
     expect(prompt).toContain("Never guess the service");
     expect(prompt).toContain("If availability or service matching comes back unclear");
     expect(prompt).toContain("address it directly without restarting the booking flow");
+    expect(prompt).toContain("Never handle a reschedule by separately calling cancel_appointment and then book_appointment");
   });
 
   it("adds ambiguity, latency, and booking-mode guidance", () => {
@@ -134,6 +143,9 @@ describe("generateSystemPrompt", () => {
     expect(softPrompt).toContain("owner will send you a confirmation shortly");
     expect(hardPrompt).toContain("If you are not fully sure which appointment they mean");
     expect(hardPrompt).toContain("prioritize speed over rapport");
+    expect(hardPrompt).toContain("call appointment_status");
+    expect(hardPrompt).toContain("call business_faq");
+    expect(hardPrompt).toContain("call join_waitlist");
   });
 });
 
