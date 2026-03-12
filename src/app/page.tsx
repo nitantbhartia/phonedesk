@@ -289,7 +289,7 @@ function LandingPageContent() {
                   {missedPerDay} calls/day × ${groomPrice} × 5 days × 4 weeks
                 </p>
                 <div className="mt-4 pt-4 border-t border-white/10 text-sm font-semibold text-white/70">
-                  RingPaw costs <span className="text-paw-amber font-bold">$49/mo</span> — it pays for itself the first call it answers.
+                  RingPaw starts at <span className="text-paw-amber font-bold">$99/mo</span> — it pays for itself the first call it answers.
                 </div>
               </div>
 
@@ -754,4 +754,3 @@ function LandingPageContent() {
     </div>
   );
 }
-
