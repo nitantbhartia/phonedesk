@@ -13,6 +13,7 @@ import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { getCRMWithFallback } from "@/crm/withFallback";
 import { getStripeClient } from "@/lib/stripe";
 import { resolveBusinessFromDemo } from "@/lib/demo-session";
+import { matchActiveService } from "@/lib/retell-tool-helpers";
 
 // Retell custom tool endpoint: called by the voice agent during a call
 // to book an appointment with the collected customer/pet details.
@@ -82,9 +83,10 @@ export async function POST(req: NextRequest) {
     groomer_name: groomerName,
   } = args || {};
 
-  if (!customerName || !startTime) {
+  if (!customerName || !startTime || !svcName?.trim()) {
     return NextResponse.json({
-      result: "I still need the customer's name and appointment time before I can book this.",
+      result:
+        "I still need the customer's name, service, and appointment time before I can book this.",
       booked: false,
     });
   }
@@ -95,17 +97,11 @@ export async function POST(req: NextRequest) {
     ? (normalizedPetSize as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE")
     : undefined;
 
-  const service = svcName
-    ? business.services.find(
-        (s: Service) =>
-          s.isActive &&
-          s.name.toLowerCase().includes(svcName.toLowerCase())
-      )
-    : null;
+  const service = matchActiveService<Service>(business.services, svcName);
 
-  // Reject if a service name was passed but didn't match anything on file — prevents
+  // Reject if the requested service didn't match anything on file — prevents
   // bookings with wrong duration, null price, and unrecognised service name.
-  if (svcName && !service) {
+  if (!service) {
     const activeNames = business.services
       .filter((s: Service) => s.isActive)
       .map((s: Service) => s.name)
@@ -118,13 +114,24 @@ export async function POST(req: NextRequest) {
 
   // Look up add-on service if the AI offered one
   const addonService = addonSvcName
-    ? business.services.find(
-        (s: Service) =>
-          s.isActive &&
-          s.isAddon &&
-          s.name.toLowerCase().includes(addonSvcName.toLowerCase())
+    ? matchActiveService<Service>(
+        business.services.filter((entry: Service) => entry.isAddon),
+        addonSvcName
       )
     : null;
+
+  if (addonSvcName && !addonService) {
+    const addonNames = business.services
+      .filter((entry: Service) => entry.isActive && entry.isAddon)
+      .map((entry: Service) => entry.name)
+      .join(", ");
+
+    return NextResponse.json({
+      result: `I wasn't able to match "${addonSvcName}" to an add-on on file. Available add-ons are: ${addonNames || "none"}. Can you confirm whether they want an add-on?`,
+      booked: false,
+      addon_not_found: true,
+    });
+  }
 
   // Match groomer by name if requested
   const groomer = groomerName
@@ -178,7 +185,7 @@ export async function POST(req: NextRequest) {
   }
 
   const start = parseLocalDatetime(correctedStartTime, timezone);
-  const totalDuration = (service?.duration || 60) + (addonService?.duration || 0);
+  const totalDuration = service.duration + (addonService?.duration || 0);
   const end = new Date(start.getTime() + totalDuration * 60000);
 
   if (Number.isNaN(start.getTime())) {
@@ -204,11 +211,11 @@ export async function POST(req: NextRequest) {
 
     // Combine service name and price if add-on was accepted
     const combinedServiceName = addonService
-      ? `${service?.name || svcName} + ${addonService.name}`
-      : (service?.name || svcName);
+      ? `${service.name} + ${addonService.name}`
+      : service.name;
     const combinedServicePrice = addonService
-      ? (service?.price || 0) + addonService.price
-      : service?.price;
+      ? service.price + addonService.price
+      : service.price;
 
     const appointment = await bookAppointment(business.id, {
       customerName,
@@ -249,7 +256,7 @@ export async function POST(req: NextRequest) {
           petName,
           petBreed,
           petSize: validatedPetSize,
-          serviceName: service?.name || svcName,
+          serviceName: service.name,
           appointmentStart: start,
         });
       } catch (memErr) {

@@ -51,15 +51,19 @@ describe("buildAgentTools", () => {
     const bookingTool = tools.find((tool) => tool.name === "book_appointment");
     const cancelTool = tools.find((tool) => tool.name === "cancel_appointment");
     const callNoteTool = tools.find((tool) => tool.name === "add_call_note");
+    const statusTool = tools.find((tool) => tool.name === "appointment_status");
 
     expect(
       availabilityTool?.parameters?.properties.service_name.description
-    ).toContain("defaults slot duration to 60 minutes");
+    ).toContain("required");
+    expect(availabilityTool?.parameters?.required).toContain("service_name");
     expect(
       bookingTool?.parameters?.properties.start_time.description
     ).toContain("Use the exact start_time returned by check_availability");
+    expect(bookingTool?.parameters?.required).toContain("service_name");
     expect(cancelTool?.parameters?.properties).toHaveProperty("appointment_id");
     expect(callNoteTool?.parameters?.properties.outcome.enum).toContain("rescheduled");
+    expect(statusTool?.description).toContain("never be used to guess from a future appointment");
   });
 });
 
@@ -104,6 +108,7 @@ describe("generateSystemPrompt", () => {
     expect(prompt.indexOf("STEP 5 — UPSELL ADD-ON")).toBeLessThan(
       prompt.indexOf("STEP 6 — BOOK APPOINTMENT")
     );
+    expect(prompt).toContain("STEP 2A — IDENTIFY THE CALLER'S INTENT BEFORE BOOKING");
     expect(prompt).toContain("Never guess the service");
     expect(prompt).toContain("If availability or service matching comes back unclear");
     expect(prompt).toContain("address it directly without restarting the booking flow");
@@ -141,9 +146,13 @@ describe("generateSystemPrompt", () => {
     expect(hardPrompt).toContain('Did you mean today, or next Monday?');
     expect(hardPrompt).toContain('Let me get that booked for you right now.');
     expect(softPrompt).toContain("owner will send you a confirmation shortly");
+    expect(softPrompt).toContain("Jordan will confirm it with you");
+    expect(softPrompt).not.toContain("fully booked right now");
     expect(hardPrompt).toContain("If you are not fully sure which appointment they mean");
+    expect(hardPrompt).toContain("If you do not have enough detail to ask a useful clarifying question yet");
     expect(hardPrompt).toContain("prioritize speed over rapport");
     expect(hardPrompt).toContain("call appointment_status");
+    expect(hardPrompt).toContain("Do not switch to a future appointment");
     expect(hardPrompt).toContain("call business_faq");
     expect(hardPrompt).toContain("call join_waitlist");
   });

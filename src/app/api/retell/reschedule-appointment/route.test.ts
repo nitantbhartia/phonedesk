@@ -12,6 +12,7 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: vi.fn(),
       findMany: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     calendarConnection: {
       findFirst: vi.fn(),
@@ -139,6 +140,7 @@ describe("POST /api/retell/reschedule-appointment", () => {
     vi.mocked(prisma.appointment.findFirst).mockReset();
     vi.mocked(prisma.appointment.findMany).mockReset();
     vi.mocked(prisma.appointment.update).mockReset();
+    vi.mocked(prisma.appointment.delete).mockReset();
     vi.mocked(prisma.calendarConnection.findFirst).mockReset();
     vi.mocked(bookAppointment).mockReset();
     vi.mocked(isSlotAvailable).mockReset();
@@ -231,6 +233,76 @@ describe("POST /api/retell/reschedule-appointment", () => {
       where: { id: "appt_1" },
       data: { status: "CANCELLED" },
     });
+    expect(sendRescheduleNotificationToOwner).toHaveBeenCalled();
+    expect(sendRescheduleConfirmationToCustomer).toHaveBeenCalled();
+  });
+
+  it("rolls back the replacement appointment if cancelling the original one fails", async () => {
+    const newAppointment = {
+      ...currentAppointment,
+      id: "appt_new",
+      startTime: new Date("2026-05-23T17:00:00Z"),
+      endTime: new Date("2026-05-23T18:30:00Z"),
+      status: "PENDING",
+      confirmLink: "https://confirm.example.com/new",
+    };
+    vi.mocked(bookAppointment).mockResolvedValue(newAppointment as never);
+    vi.mocked(prisma.appointment.update)
+      .mockResolvedValueOnce({
+        ...newAppointment,
+        status: "CONFIRMED",
+        bookingMode: "SOFT",
+        confirmLink: null,
+      } as never)
+      .mockRejectedValueOnce(new Error("cancel failed"));
+    vi.mocked(prisma.appointment.delete).mockResolvedValue(newAppointment as never);
+
+    const response = await POST(
+      makeRequest({
+        args: { new_start_time: "2026-05-23T10:00:00" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(false);
+    expect(prisma.appointment.delete).toHaveBeenCalledWith({
+      where: { id: "appt_new" },
+    });
+  });
+
+  it("still succeeds when waitlist refill throws after the move is completed", async () => {
+    const newAppointment = {
+      ...currentAppointment,
+      id: "appt_new",
+      startTime: new Date("2026-05-23T17:00:00Z"),
+      endTime: new Date("2026-05-23T18:30:00Z"),
+      status: "PENDING",
+      confirmLink: "https://confirm.example.com/new",
+    };
+    vi.mocked(bookAppointment).mockResolvedValue(newAppointment as never);
+    vi.mocked(prisma.appointment.update)
+      .mockResolvedValueOnce({
+        ...newAppointment,
+        status: "CONFIRMED",
+        bookingMode: "SOFT",
+        confirmLink: null,
+      } as never)
+      .mockResolvedValueOnce({
+        ...currentAppointment,
+        status: "CANCELLED",
+      } as never);
+    vi.mocked(tryFillFromWaitlist).mockRejectedValue(new Error("waitlist down"));
+
+    const response = await POST(
+      makeRequest({
+        args: { new_start_time: "2026-05-23T10:00:00" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(true);
     expect(sendRescheduleNotificationToOwner).toHaveBeenCalled();
     expect(sendRescheduleConfirmationToCustomer).toHaveBeenCalled();
   });

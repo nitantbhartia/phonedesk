@@ -28,6 +28,7 @@ import { POST } from "./route";
 import { prisma } from "@/lib/prisma";
 import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
+import { resolveBusinessFromDemo } from "@/lib/demo-session";
 
 function makeRequest(body: unknown, signature = "sig") {
   return new Request("http://localhost/api/retell/check-availability", {
@@ -44,6 +45,8 @@ describe("POST /api/retell/check-availability", () => {
     vi.mocked(prisma.business.findUnique).mockReset();
     vi.mocked(getAvailableSlots).mockReset();
     vi.mocked(describeAvailableSlots).mockReset();
+    vi.mocked(resolveBusinessFromDemo).mockReset();
+    vi.mocked(resolveBusinessFromDemo).mockResolvedValue(null as never);
   });
 
   it("rejects unauthorized requests", async () => {
@@ -66,6 +69,56 @@ describe("POST /api/retell/check-availability", () => {
     const payload = await response.json();
 
     expect(payload.result).toContain("having trouble accessing the system");
+  });
+
+  it("asks for the service before checking availability", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+      business: {
+        id: "biz_1",
+        timezone: "America/Los_Angeles",
+        services: [{ name: "Full Groom", duration: 90, isActive: true }],
+      },
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: { date: "2026-05-21" },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.available).toBe(false);
+    expect(payload.needs_service).toBe(true);
+    expect(payload.result).toContain("which service");
+    expect(getAvailableSlots).not.toHaveBeenCalled();
+  });
+
+  it("returns a clarification prompt when the service does not match", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+      business: {
+        id: "biz_1",
+        timezone: "America/Los_Angeles",
+        services: [{ name: "Full Groom", duration: 90, isActive: true }],
+      },
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          date: "2026-05-21",
+          service_name: "Invisible Cut",
+        },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.available).toBe(false);
+    expect(payload.service_not_found).toBe(true);
+    expect(payload.result).toContain("Invisible Cut");
+    expect(payload.result).toContain("Full Groom");
+    expect(getAvailableSlots).not.toHaveBeenCalled();
   });
 
   it("confirms the requested slot when the preferred time is available", async () => {
@@ -203,14 +256,14 @@ describe("POST /api/retell/check-availability", () => {
       business: {
         id: "biz_1",
         timezone: "America/Los_Angeles",
-        services: [],
+        services: [{ name: "Full Groom", duration: 60, isActive: true }],
       },
     } as never);
     vi.mocked(getAvailableSlots).mockResolvedValue([]);
 
     const response = await POST(
       makeRequest({
-        args: { date: "2026-05-21" },
+        args: { date: "2026-05-21", service_name: "Full Groom" },
         call: { to_number: "+16195559999" },
       }) as never
     );
@@ -221,6 +274,59 @@ describe("POST /api/retell/check-availability", () => {
     expect(payload.result).toContain("don't have any openings");
   });
 
+  it("does not fabricate live availability when the next-available scan finds nothing", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+      business: {
+        id: "biz_live",
+        timezone: "America/Los_Angeles",
+        services: [{ name: "Full Groom", duration: 90, isActive: true }],
+      },
+    } as never);
+    vi.mocked(getAvailableSlots).mockResolvedValue([] as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          date: "next available",
+          service_name: "Full Groom",
+        },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.available).toBe(false);
+    expect(payload.available_slots).toEqual([]);
+    expect(payload.result).toContain("join the waitlist");
+  });
+
+  it("keeps fallback slots for demo-session lookups only", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(resolveBusinessFromDemo).mockResolvedValue("biz_demo" as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_demo",
+      timezone: "America/Los_Angeles",
+      services: [{ name: "Full Groom", duration: 90, isActive: true }],
+    } as never);
+    vi.mocked(getAvailableSlots).mockResolvedValue([] as never);
+    vi.mocked(describeAvailableSlots).mockReturnValue("10:00 am, 11:00 am, or 2:00 pm");
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          date: "first available",
+          service_name: "Full Groom",
+        },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.available).toBe(true);
+    expect(payload.available_slots).toHaveLength(3);
+    expect(payload.result).toContain("next available time");
+  });
+
   // Fix #1 — "tomorrow" / "today" regression
   describe("normalizeDateInput date-word regressions", () => {
     beforeEach(() => {
@@ -228,7 +334,7 @@ describe("POST /api/retell/check-availability", () => {
         business: {
           id: "biz_1",
           timezone: "America/Los_Angeles",
-          services: [],
+          services: [{ name: "Full Groom", duration: 60, isActive: true }],
         },
       } as never);
       vi.mocked(getAvailableSlots).mockResolvedValue([]);
@@ -243,14 +349,20 @@ describe("POST /api/retell/check-availability", () => {
 
     it("resolves 'today' to today's date", async () => {
       await POST(
-        makeRequest({ args: { date: "today" }, call: { to_number: "+16195559999" } }) as never
+        makeRequest({
+          args: { date: "today", service_name: "Full Groom" },
+          call: { to_number: "+16195559999" },
+        }) as never
       );
       expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-09", expect.any(Number));
     });
 
     it("resolves 'tomorrow' to tomorrow's date", async () => {
       await POST(
-        makeRequest({ args: { date: "tomorrow" }, call: { to_number: "+16195559999" } }) as never
+        makeRequest({
+          args: { date: "tomorrow", service_name: "Full Groom" },
+          call: { to_number: "+16195559999" },
+        }) as never
       );
       expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-10", expect.any(Number));
     });
@@ -258,21 +370,30 @@ describe("POST /api/retell/check-availability", () => {
     // #10 — bare weekday on same day rolls to next week; agent prompt asks caller to clarify
     it("resolves bare 'monday' on a Monday to next week (agent handles same-day clarification)", async () => {
       await POST(
-        makeRequest({ args: { date: "monday" }, call: { to_number: "+16195559999" } }) as never
+        makeRequest({
+          args: { date: "monday", service_name: "Full Groom" },
+          call: { to_number: "+16195559999" },
+        }) as never
       );
       expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-16", expect.any(Number));
     });
 
     it("resolves 'next monday' on a Monday to 7 days later", async () => {
       await POST(
-        makeRequest({ args: { date: "next monday" }, call: { to_number: "+16195559999" } }) as never
+        makeRequest({
+          args: { date: "next monday", service_name: "Full Groom" },
+          call: { to_number: "+16195559999" },
+        }) as never
       );
       expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-16", expect.any(Number));
     });
 
     it("resolves 'this monday' on a Monday to today", async () => {
       await POST(
-        makeRequest({ args: { date: "this monday" }, call: { to_number: "+16195559999" } }) as never
+        makeRequest({
+          args: { date: "this monday", service_name: "Full Groom" },
+          call: { to_number: "+16195559999" },
+        }) as never
       );
       expect(getAvailableSlots).toHaveBeenCalledWith("biz_1", "2026-03-09", expect.any(Number));
     });
@@ -285,7 +406,7 @@ describe("POST /api/retell/check-availability", () => {
         business: {
           id: "biz_1",
           timezone: "America/Los_Angeles",
-          services: [],
+          services: [{ name: "Full Groom", duration: 90, isActive: true }],
         },
       } as never);
       vi.mocked(describeAvailableSlots).mockReturnValue("2:00 pm");
@@ -299,7 +420,11 @@ describe("POST /api/retell/check-availability", () => {
 
       const res = await POST(
         makeRequest({
-          args: { date: "2026-12-15", preferred_time: "2" },
+          args: {
+            date: "2026-12-15",
+            preferred_time: "2",
+            service_name: "Full Groom",
+          },
           call: { to_number: "+16195559999" },
         }) as never
       );
@@ -316,7 +441,7 @@ describe("POST /api/retell/check-availability", () => {
 
       const res = await POST(
         makeRequest({
-          args: { date: "2026-12-15", preferred_time: "2:30" },
+          args: { date: "2026-12-15", preferred_time: "2:30", service_name: "Full Groom" },
           call: { to_number: "+16195559999" },
         }) as never
       );
@@ -333,7 +458,7 @@ describe("POST /api/retell/check-availability", () => {
 
       const res = await POST(
         makeRequest({
-          args: { date: "2026-12-15", preferred_time: "9" },
+          args: { date: "2026-12-15", preferred_time: "9", service_name: "Full Groom" },
           call: { to_number: "+16195559999" },
         }) as never
       );
@@ -349,7 +474,7 @@ describe("POST /api/retell/check-availability", () => {
       business: {
         id: "biz_1",
         timezone: "America/Los_Angeles",
-        services: [],
+        services: [{ name: "Full Groom", duration: 60, isActive: true }],
       },
     } as never);
 
@@ -364,7 +489,7 @@ describe("POST /api/retell/check-availability", () => {
 
     const res = await POST(
       makeRequest({
-        args: { date: "2026-12-15" },
+        args: { date: "2026-12-15", service_name: "Full Groom" },
         call: { to_number: "+16195559999" },
       }) as never
     );
@@ -380,14 +505,14 @@ describe("POST /api/retell/check-availability", () => {
       business: {
         id: "biz_1",
         timezone: "America/Los_Angeles",
-        services: [],
+        services: [{ name: "Full Groom", duration: 60, isActive: true }],
       },
     } as never);
     vi.mocked(getAvailableSlots).mockRejectedValue(new Error("calendar down"));
 
     const response = await POST(
       makeRequest({
-        args: { date: "2026-05-21" },
+        args: { date: "2026-05-21", service_name: "Full Groom" },
         call: { to_number: "+16195559999" },
       }) as never
     );

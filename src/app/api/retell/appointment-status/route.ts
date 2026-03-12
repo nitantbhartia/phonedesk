@@ -135,21 +135,7 @@ async function findStatusCandidates(input: {
     return todaysAppointments;
   }
 
-  const nextAppointment = await prisma.appointment.findMany({
-    where: {
-      businessId,
-      startTime: { gte: now },
-      status: { in: ["PENDING", "CONFIRMED"] },
-      ...(callerPhone
-        ? { customerPhone: callerPhone }
-        : { customerName: { contains: customerName!, mode: "insensitive" } }),
-      ...(petName ? { petName: { contains: petName, mode: "insensitive" } } : {}),
-    },
-    orderBy: { startTime: "asc" },
-    take: 1,
-  });
-
-  return nextAppointment;
+  return [];
 }
 
 function buildStatusMessage(

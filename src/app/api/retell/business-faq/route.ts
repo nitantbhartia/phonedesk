@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   formatBusinessHours,
+  getBusinessOpenState,
   parseRetellRequest,
   resolveRetellBusiness,
 } from "@/lib/retell-tool-helpers";
@@ -34,16 +35,24 @@ export async function POST(req: NextRequest) {
   const lower = question.toLowerCase();
   const calledNumber = normalizePhoneNumber(call.to_number);
   const hours = formatBusinessHours(business.businessHours);
+  const timezone = business.timezone || "America/Los_Angeles";
+  const openState = getBusinessOpenState(business.businessHours, timezone);
   const location = [business.address, business.city, business.state]
     .filter(Boolean)
     .join(", ");
 
   if (/(hours|open|close|closing|opening|when are you)/.test(lower)) {
+    const hoursLead = openState
+      ? openState.hasHoursToday
+        ? `${business.name} is ${openState.isOpenNow ? "open" : "closed"} right now.`
+        : `${business.name} is closed today.`
+      : `${business.name}'s hours are listed as follows.`;
+
     return NextResponse.json({
       topic: "hours",
       answerable: Boolean(hours),
       result: hours
-        ? `${business.name} is currently open ${hours}.`
+        ? `${hoursLead} Our hours are ${hours}.`
         : `I don't have custom business hours on file for ${business.name}, so I'll have ${business.ownerName} confirm the exact hours for you.`,
     });
   }

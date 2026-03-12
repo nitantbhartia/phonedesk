@@ -31,6 +31,7 @@ const businessRecord = {
   city: "San Diego",
   state: "CA",
   address: "123 Main St",
+  timezone: "America/Los_Angeles",
   businessHours: {
     mon: { open: "09:00", close: "17:00" },
     tue: { open: "09:00", close: "17:00" },
@@ -70,6 +71,9 @@ describe("POST /api/retell/business-faq", () => {
   });
 
   it("answers hours questions from the business profile", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-09T17:00:00.000Z"));
+
     const response = await POST(
       makeRequest({
         args: { question: "What time are you open on Monday?" },
@@ -80,8 +84,27 @@ describe("POST /api/retell/business-faq", () => {
 
     expect(payload.topic).toBe("hours");
     expect(payload.answerable).toBe(true);
-    expect(payload.result).toContain("Paw House is currently open");
+    expect(payload.result).toContain("Paw House is open right now");
     expect(payload.result).toContain("Monday");
+    vi.useRealTimers();
+  });
+
+  it("marks the business closed when the caller asks after hours", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-10T03:30:00.000Z"));
+
+    const response = await POST(
+      makeRequest({
+        args: { question: "Are you open right now?" },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.topic).toBe("hours");
+    expect(payload.answerable).toBe(true);
+    expect(payload.result).toContain("closed right now");
+    vi.useRealTimers();
   });
 
   it("falls back safely when a custom cancellation policy is not on file", async () => {

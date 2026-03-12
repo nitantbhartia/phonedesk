@@ -183,8 +183,25 @@ describe("POST /api/retell/book-appointment", () => {
     const payload = await response.json();
 
     expect(payload.booked).toBe(false);
-    expect(payload.result).toContain("customer's name and appointment time");
+    expect(payload.result).toContain("customer's name, service, and appointment time");
     expect(isSlotAvailable).not.toHaveBeenCalled();
+  });
+
+  it("does not book when the service is missing even if the time is present", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          start_time: "2026-05-21T09:00:00",
+        },
+        call: { from_number: "+16195550100", to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(false);
+    expect(payload.result).toContain("service");
+    expect(bookAppointment).not.toHaveBeenCalled();
   });
 
   it("auto-corrects hallucinated past years before checking availability", async () => {
@@ -366,6 +383,26 @@ describe("POST /api/retell/book-appointment", () => {
     expect(payload.groomer_not_found).toBe(true);
     expect(payload.result).toContain("Jessica");
     expect(payload.result).toContain("Taylor");
+    expect(bookAppointment).not.toHaveBeenCalled();
+  });
+
+  it("returns addon_not_found and does not book when the add-on name does not match", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          start_time: "2026-05-21T09:00:00",
+          service_name: "Full Groom",
+          addon_service_name: "Blueberry Facial",
+        },
+        call: { from_number: "+16195550100", to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(false);
+    expect(payload.addon_not_found).toBe(true);
+    expect(payload.result).toContain("Blueberry Facial");
     expect(bookAppointment).not.toHaveBeenCalled();
   });
 

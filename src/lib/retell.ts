@@ -132,6 +132,14 @@ Skip any information already on file unless confirming a change.
 If new customer: Acknowledge what they said and go straight to STEP 3. Do not say your name or "thanks for calling" again.
 Example: caller said "I'd like to book a groom" → "Of course! What's your pup's name?"
 Example: caller said "I want to make a booking" → "Happy to help — what's your dog's name?"
+STEP 2A — IDENTIFY THE CALLER'S INTENT BEFORE BOOKING
+Before you start collecting booking details, identify what the caller actually needs.
+- If they want to cancel, follow CANCELLATIONS.
+- If they want to move an appointment, follow RESCHEDULES.
+- If they want to know whether their dog is ready, how grooming is going, or pickup timing, follow APPOINTMENT STATUS.
+- If they are asking about hours, location, first-visit prep, forms, or policies, follow FAQ / POLICIES.
+- If they want a new appointment or are asking what is available, continue to STEP 3.
+Do not default into booking questions for a non-booking call.
 STEP 3 — COLLECT MISSING INFORMATION
 One question per turn. Skip anything already known from lookup. Collect in this order if missing:
 - Customer name
@@ -182,6 +190,7 @@ EDGE CASES
 CANCELLATIONS:
 "Of course, no problem at all."
 If the caller already gave enough detail to identify the appointment, call cancel_appointment.
+If you do not have enough detail to ask a useful clarifying question yet, call cancel_appointment and use the returned options.
 If you are not fully sure which appointment they mean, ask ONE clarifying question before promising the cancellation. Use the pet name, service, or date if the caller gave one.
 Examples:
 - "Was that Bella's full groom on Thursday, or Coco's bath on Saturday?"
@@ -201,6 +210,7 @@ Confirm naturally that they're on the waitlist and will get a text if something 
 APPOINTMENT STATUS:
 If the caller asks whether their dog is ready, how grooming is going, or when pickup might be, call appointment_status.
 Relay the returned status exactly. Never guess based on the clock or how long the appointment usually takes.
+If appointment_status says there is no active appointment for today or no live status update yet, say that clearly. Do not switch to a future appointment unless the caller specifically asks about a future booking.
 FAQ / POLICIES:
 For hours, location, first-visit prep, intake forms, or policy questions, call business_faq with the caller's exact question.
 If business_faq says the policy is not on file, say you'll have ${business.ownerName} confirm the exact details directly.
@@ -213,7 +223,10 @@ ${business.bookingMode === "HARD"
   : 'Then collect their details and proceed to book. The appointment will be sent to the owner for confirmation — say: "I\'ll get that on the calendar and the owner will send you a confirmation shortly."'
 }
 CALLER ASKS IF THIS IS AI:
-"I'm Pip, ${business.ownerName}'s receptionist — I make sure no call goes to voicemail while they're with a client. I can get you fully booked right now if you'd like!"
+${business.bookingMode === "HARD"
+  ? `"I'm Pip, ${business.ownerName}'s receptionist — I make sure no call goes to voicemail while they're with a client. I can get you fully booked right now if you'd like!"`
+  : `"I'm Pip, ${business.ownerName}'s receptionist — I make sure no call goes to voicemail while they're with a client. I can get the details on the calendar right now and ${business.ownerName} will confirm it with you."`
+}
 PRICING:
 Do not mention pricing unless the caller asks. If asked, use the prices returned by get_services. Never quote a price that didn't come from get_services.
 NAME SPELLING:
@@ -603,7 +616,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "check_availability",
       description:
-        "Check available appointment time slots for a given date and optional service. Call this when the customer asks about availability or wants to book.",
+        "Check available appointment time slots for a given date and known service. Call this only after you know which service the caller wants.",
       url: `${appUrl}/api/retell/check-availability`,
       speak_during_execution: true,
       execution_message_description: "A natural, brief phrase showing you're checking the calendar — e.g. 'Let me pull up that day...' or 'One second, checking what's open...' Vary it slightly each time.",
@@ -618,7 +631,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           service_name: {
             type: "string",
             description:
-              "The name of the service the customer is interested in. Always pass this once the service is known — omitting it defaults slot duration to 60 minutes which may not match the actual service and can offer slots that are too short.",
+              "The name of the service the customer is interested in. This is required so availability uses the real appointment length instead of guessing.",
           },
           preferred_time: {
             type: "string",
@@ -626,7 +639,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
               "The caller's requested time on that date (for example: '10 AM').",
           },
         },
-        required: ["date"],
+        required: ["date", "service_name"],
       },
     },
     {
@@ -663,7 +676,8 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
           },
           service_name: {
             type: "string",
-            description: "The service being booked",
+            description:
+              "The service being booked. This must match the confirmed service before you call the tool.",
           },
           start_time: {
             type: "string",
@@ -686,7 +700,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
               "The name of the preferred groomer, if the customer requested one.",
           },
         },
-        required: ["customer_name", "start_time"],
+        required: ["customer_name", "service_name", "start_time"],
       },
     },
     {
@@ -873,7 +887,7 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
       type: "custom",
       name: "appointment_status",
       description:
-        "Check the current status of today's appointment when the caller asks whether their dog is ready or how the visit is going.",
+        "Check the current status of today's appointment when the caller asks whether their dog is ready or how the visit is going. This relies on live team updates and should never be used to guess from a future appointment.",
       url: `${appUrl}/api/retell/appointment-status`,
       speak_during_execution: true,
       execution_message_description:

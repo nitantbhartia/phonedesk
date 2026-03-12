@@ -13,6 +13,7 @@ import { canCancelAppointment } from "@/lib/appointment-state";
 import { buildConfirmLink } from "@/lib/appointment-token";
 import {
   formatRetellDateTime,
+  matchActiveService,
   parseRetellRequest,
   resolveRetellBusiness,
 } from "@/lib/retell-tool-helpers";
@@ -147,12 +148,19 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const matchedService = business.services.find(
-    (service) =>
-      service.isActive &&
-      service.name.toLowerCase().includes((currentAppointment.serviceName || "").toLowerCase())
+  const matchedService = matchActiveService(
+    business.services,
+    currentAppointment.serviceName
   );
-  const durationMinutes = matchedService?.duration || 60;
+  const originalDurationMinutes = Math.max(
+    15,
+    Math.round(
+      (currentAppointment.endTime.getTime() -
+        currentAppointment.startTime.getTime()) /
+        60_000
+    )
+  );
+  const durationMinutes = matchedService?.duration || originalDurationMinutes;
   const newEnd = new Date(newStart.getTime() + durationMinutes * 60_000);
 
   const slotOpen = await isSlotAvailable(business.id, newStart, newEnd);
@@ -166,8 +174,12 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  let replacementAppointment:
+    | Awaited<ReturnType<typeof bookAppointment>>
+    | null = null;
+
   try {
-    const replacementAppointment = await bookAppointment(business.id, {
+    replacementAppointment = await bookAppointment(business.id, {
       customerName: currentAppointment.customerName,
       customerPhone: currentAppointment.customerPhone || undefined,
       petName: currentAppointment.petName || undefined,
@@ -182,26 +194,40 @@ export async function POST(req: NextRequest) {
       isTestBooking: currentAppointment.isTestBooking,
     });
 
-    const normalizedReplacement = await preserveAppointmentState(
-      replacementAppointment.id,
-      currentAppointment.status as AppointmentStatus,
-      currentAppointment.bookingMode as BookingMode
-    );
+    let normalizedReplacement = replacementAppointment;
+    try {
+      normalizedReplacement = await preserveAppointmentState(
+        replacementAppointment.id,
+        currentAppointment.status as AppointmentStatus,
+        currentAppointment.bookingMode as BookingMode
+      );
 
-    await prisma.appointment.update({
-      where: { id: currentAppointment.id },
-      data: { status: "CANCELLED" },
-    });
+      await prisma.appointment.update({
+        where: { id: currentAppointment.id },
+        data: { status: "CANCELLED" },
+      });
+    } catch (error) {
+      await rollbackReplacementAppointment(replacementAppointment);
+      throw error;
+    }
 
     await deleteExternalEvent(currentAppointment);
 
-    const waitlistMatch = await tryFillFromWaitlist({
-      id: currentAppointment.id,
-      businessId: business.id,
-      startTime: currentAppointment.startTime,
-      serviceName: currentAppointment.serviceName,
-      business,
-    });
+    let waitlistMatch: Awaited<ReturnType<typeof tryFillFromWaitlist>> = null;
+    try {
+      waitlistMatch = await tryFillFromWaitlist({
+        id: currentAppointment.id,
+        businessId: business.id,
+        startTime: currentAppointment.startTime,
+        serviceName: currentAppointment.serviceName,
+        business,
+      });
+    } catch (error) {
+      console.error(
+        "[reschedule-appointment] Waitlist refill failed (non-fatal):",
+        error
+      );
+    }
 
     try {
       await sendRescheduleNotificationToOwner(
@@ -328,5 +354,36 @@ async function deleteExternalEvent(appointment: {
     }
   } catch (error) {
     console.error("[reschedule-appointment] External calendar cleanup failed:", error);
+  }
+}
+
+async function rollbackReplacementAppointment(appointment: {
+  id: string;
+  businessId: string;
+  calendarEventId: string | null;
+}) {
+  await deleteExternalEvent(appointment);
+
+  try {
+    await prisma.appointment.delete({
+      where: { id: appointment.id },
+    });
+  } catch (error) {
+    console.error(
+      "[reschedule-appointment] Failed to delete replacement appointment during rollback:",
+      error
+    );
+
+    try {
+      await prisma.appointment.update({
+        where: { id: appointment.id },
+        data: { status: "CANCELLED" },
+      });
+    } catch (updateError) {
+      console.error(
+        "[reschedule-appointment] Failed to cancel replacement appointment during rollback:",
+        updateError
+      );
+    }
   }
 }

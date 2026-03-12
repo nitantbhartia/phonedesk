@@ -130,4 +130,19 @@ describe("POST /api/retell/appointment-status", () => {
     expect(payload.multiple_appointments).toHaveLength(2);
     expect(payload.result).toContain("Which pet");
   });
+
+  it("does not guess from a future appointment when there is nothing active today", async () => {
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([] as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.found).toBe(false);
+    expect(payload.result).toContain("active appointment for today");
+  });
 });

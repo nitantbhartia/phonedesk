@@ -5,6 +5,7 @@ import { describeAvailableSlots, getAvailableSlots } from "@/lib/calendar";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { resolveBusinessFromDemo } from "@/lib/demo-session";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
+import { matchActiveService } from "@/lib/retell-tool-helpers";
 
 const MONTH_MAP: Record<string, number> = {
   january: 1,
@@ -366,6 +367,7 @@ export async function POST(req: NextRequest) {
 
   // Demo number fallback: during onboarding, the test number is a shared demo
   // number with no PhoneNumber record — look up via DemoSession.
+  let isDemoLookup = false;
   if (!phoneNum && calledNumber) {
     const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
     if (demoBusinessId) {
@@ -375,6 +377,7 @@ export async function POST(req: NextRequest) {
       });
       if (demoBusiness) {
         phoneNum = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneNum;
+        isDemoLookup = true;
       }
     }
   }
@@ -395,12 +398,30 @@ export async function POST(req: NextRequest) {
   const preferred = normalizePreferredTime(preferredTime);
   const preferredMinutes = preferred ? timeTextToMinutes(preferred) : null;
 
-  // Find service duration
-  const service = business.services.find(
-    (s: Service) =>
-      s.isActive && s.name.toLowerCase().includes((serviceName || "").toLowerCase())
-  );
-  const duration = service?.duration || 60;
+  if (!serviceName?.trim()) {
+    return NextResponse.json({
+      result:
+        "I need to know which service they want before I can check availability accurately.",
+      available: false,
+      needs_service: true,
+    });
+  }
+
+  const service = matchActiveService<Service>(business.services, serviceName);
+  if (!service) {
+    const activeNames = business.services
+      .filter((entry: Service) => entry.isActive)
+      .map((entry: Service) => entry.name)
+      .join(", ");
+
+    return NextResponse.json({
+      result: `I wasn't able to match "${serviceName}" to a service on file. Available services are: ${activeNames || "none"}. Which service would they like?`,
+      available: false,
+      service_not_found: true,
+    });
+  }
+
+  const duration = service.duration;
 
   // "First available" — scan forward up to 14 days to find the next open slot
   if (requestedDate === NEXT_AVAILABLE_SENTINEL) {
@@ -429,26 +450,36 @@ export async function POST(req: NextRequest) {
           });
         }
       }
-      // Nothing found in 14 days (no hours configured or all days disabled).
-      // Fall back to guaranteed slots on the next weekday so the demo can proceed.
-      const todayInTz2 = new Intl.DateTimeFormat("en-CA", {
-        timeZone: timezone,
-      }).format(new Date());
-      const fallbackDate = nextWeekday(addDays(todayInTz2, 1), timezone);
-      const fallbackSlots = buildFallbackSlots(fallbackDate, timezone, duration);
-      const fallbackSpoken = formatSpokenDate(fallbackDate, timezone);
-      const fallbackDescriptions = describeAvailableSlots(fallbackSlots, timezone);
-      const fallbackOffered = fallbackSlots.map((slot) => ({
-        start_time: slot.start.toISOString(),
-        end_time: slot.end.toISOString(),
-        display_time: formatSlotTime(slot.start, timezone),
-      }));
+      if (isDemoLookup) {
+        // Demo sessions can keep a guaranteed happy-path so the prospect can hear
+        // the full flow without relying on a configured live calendar.
+        const todayInTz2 = new Intl.DateTimeFormat("en-CA", {
+          timeZone: timezone,
+        }).format(new Date());
+        const fallbackDate = nextWeekday(addDays(todayInTz2, 1), timezone);
+        const fallbackSlots = buildFallbackSlots(fallbackDate, timezone, duration);
+        const fallbackSpoken = formatSpokenDate(fallbackDate, timezone);
+        const fallbackDescriptions = describeAvailableSlots(fallbackSlots, timezone);
+        const fallbackOffered = fallbackSlots.map((slot) => ({
+          start_time: slot.start.toISOString(),
+          end_time: slot.end.toISOString(),
+          display_time: formatSlotTime(slot.start, timezone),
+        }));
+        return NextResponse.json({
+          result: `The next available time is ${fallbackSpoken} at ${fallbackDescriptions}. Would any of those work for you?`,
+          available: true,
+          available_slots: fallbackOffered,
+          timezone,
+          normalized_date: fallbackDate,
+        });
+      }
+
       return NextResponse.json({
-        result: `The next available time is ${fallbackSpoken} at ${fallbackDescriptions}. Would any of those work for you?`,
-        available: true,
-        available_slots: fallbackOffered,
+        result:
+          "I don't have a confirmed opening on the calendar in the next couple of weeks. Would you like to try a different day or join the waitlist?",
+        available: false,
+        available_slots: [],
         timezone,
-        normalized_date: fallbackDate,
       });
     } catch (error) {
       console.error("Error scanning for next available slot:", error);
