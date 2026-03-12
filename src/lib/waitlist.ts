@@ -1,7 +1,6 @@
 import { prisma } from "./prisma";
 import { sendWaitlistOpeningNotification } from "./notifications";
 import { formatDateTime } from "./utils";
-
 type BusinessForWaitlist = {
   name: string;
   phone: string | null;
