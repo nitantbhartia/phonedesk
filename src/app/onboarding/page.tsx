@@ -20,6 +20,28 @@ interface ServiceEntry {
 
 type SavedBusinessHours = Record<string, { open: string; close: string }>;
 
+type OnboardingBusinessProfile = {
+  onboardingComplete?: boolean;
+  calendarConnections?: Array<{ isActive?: boolean }>;
+  phoneNumber?: { number?: string | null } | null;
+  stripeSubscriptionId?: string | null;
+  name?: string | null;
+  ownerName?: string | null;
+  city?: string | null;
+  state?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  timezone?: string | null;
+  bookingMode?: string | null;
+  businessHours?: SavedBusinessHours | null;
+  services?: Array<{ name?: string | null; price?: number | null; duration?: number | null }>;
+};
+
+type OnboardingProfileResponse = {
+  business?: OnboardingBusinessProfile | null;
+  demoLeadHint?: { businessName?: string | null } | null;
+};
+
 const TIME_OPTIONS = [
   "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM",
   "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
@@ -273,8 +295,8 @@ export default function OnboardingPage() {
           throw new Error("Failed to load business profile");
         }
 
-        const data = await response.json();
-        const demoLeadHint = (data as { demoLeadHint?: { businessName: string } | null }).demoLeadHint;
+        const data = await response.json() as OnboardingProfileResponse;
+        const demoLeadHint = data.demoLeadHint;
         const business = data.business;
         const hasCalendarConnection = Boolean(
           business?.calendarConnections?.some(
@@ -311,15 +333,15 @@ export default function OnboardingPage() {
           setPhone(business?.phone || "");
           setAddress(business?.address || "");
           setTimezone(business?.timezone || "America/Los_Angeles");
-          setBookingMode(business?.bookingMode || "SOFT");
+          setBookingMode(business?.bookingMode === "HARD" ? "HARD" : "SOFT");
           setHours(buildHoursState(business?.businessHours as SavedBusinessHours | undefined));
           if (business?.services?.length) {
             setServices(
               business.services.map(
-                (service: { name: string; price: number; duration: number }) => ({
-                  name: service.name,
-                  price: service.price.toString(),
-                  duration: service.duration.toString(),
+                (service) => ({
+                  name: service.name || "",
+                  price: String(service.price ?? ""),
+                  duration: String(service.duration ?? ""),
                 })
               )
             );

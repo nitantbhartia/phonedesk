@@ -413,7 +413,7 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 }
 
 export async function endRetellCall(callId: string): Promise<void> {
-  await retellFetch(`/v2/call/${callId}`, { method: "DELETE" });
+  await retellFetch(`/v2/delete-call/${callId}`, { method: "DELETE" });
 }
 
 // --- Phone Number Provisioning ---

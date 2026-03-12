@@ -88,7 +88,7 @@ function DemoPageInner() {
           if (age <= 30 * 60 * 1000 && savedLdt === ldtParam) {
             setSessionToken(token);
             setNumber(num);
-            fetch(`/api/demo/public/status?token=${token}`)
+            fetch(`/api/demo/public/status?token=${token}`, { cache: "no-store" })
               .then((r) => r.json())
               .then((data: { phase: string; summary: string | null }) => {
                 if (data.phase === "completed") { setSummary(data.summary); setLivePhase("completed"); }
@@ -117,7 +117,7 @@ function DemoPageInner() {
           setLdt(sl);
           setSessionToken(token);
           setNumber(num);
-          fetch(`/api/demo/public/status?token=${token}`)
+          fetch(`/api/demo/public/status?token=${token}`, { cache: "no-store" })
             .then((r) => r.json())
             .then((data: { phase: string; summary: string | null }) => {
               if (data.phase === "completed") { setSummary(data.summary); setLivePhase("completed"); }
@@ -219,7 +219,9 @@ function DemoPageInner() {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/demo/public/status?token=${token}`);
+        const res = await fetch(`/api/demo/public/status?token=${token}`, {
+          cache: "no-store",
+        });
         const data = await res.json() as { phase: string; summary: string | null };
         if (data.phase === "in_progress" && phaseRef.current === "waiting") setLivePhase("in_progress");
         else if (data.phase === "completed") { setSummary(data.summary); setLivePhase("completed"); stopPolling(); }
@@ -284,7 +286,7 @@ function DemoPageInner() {
             </div>
             <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-6 mb-2">
               <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-3 text-center">Sample call</p>
-              <DemoCallPlayer />
+              <DemoCallPlayer audioSrc="/luna-call.wav" />
             </div>
           </div>
         )}

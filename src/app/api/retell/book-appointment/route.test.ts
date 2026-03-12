@@ -74,6 +74,7 @@ import { upsertCustomerMemory } from "@/lib/customer-memory";
 import { sendSms } from "@/lib/sms";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { getCRMWithFallback } from "@/crm/withFallback";
+import { resolveBusinessFromDemo } from "@/lib/demo-session";
 
 function makeRequest(body: unknown, signature = "sig") {
   return new Request("http://localhost/api/retell/book-appointment", {
@@ -125,6 +126,7 @@ describe("POST /api/retell/book-appointment", () => {
     vi.mocked(upsertCustomerMemory).mockReset();
     vi.mocked(sendSms).mockReset();
     vi.mocked(getCRMWithFallback).mockReset();
+    vi.mocked(resolveBusinessFromDemo).mockReset();
 
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
       business: businessRecord,
@@ -441,5 +443,43 @@ describe("POST /api/retell/book-appointment", () => {
     expect(payload.booked).toBe(true);
     expect(payload.confirmed).toBe(false);
     expect(prisma.customer.update).not.toHaveBeenCalled();
+  });
+
+  it("skips customer memory writes and crm sync for demo/test bookings", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(resolveBusinessFromDemo).mockResolvedValue("demo_biz");
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      ...businessRecord,
+      id: "demo_biz",
+      phoneNumber: { number: "+17165763523" },
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          customer_phone: "+16195550100",
+          pet_name: "Buddy",
+          service_name: "Full Groom",
+          start_time: "2026-05-21T09:00:00",
+        },
+        call: {
+          call_id: "call_demo_booking",
+          from_number: "+16195550100",
+          to_number: "+17165763523",
+        },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(true);
+    expect(bookAppointment).toHaveBeenCalledWith(
+      "demo_biz",
+      expect.objectContaining({
+        isTestBooking: true,
+      })
+    );
+    expect(upsertCustomerMemory).not.toHaveBeenCalled();
+    expect(getCRMWithFallback).not.toHaveBeenCalled();
   });
 });

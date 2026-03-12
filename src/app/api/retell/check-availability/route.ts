@@ -164,6 +164,19 @@ function normalizeDateInput(rawDate: unknown, timezone: string) {
   }
 
   const input = rawDate.trim();
+  const lowered = input.toLowerCase();
+
+  if (/\bday after tomorrow\b/.test(lowered)) {
+    return addDays(todayInTz, 2);
+  }
+
+  if (/\btomorrow\b/.test(lowered)) {
+    return addDays(todayInTz, 1);
+  }
+
+  if (/\btoday\b/.test(lowered)) {
+    return todayInTz;
+  }
 
   // Handle "today" and "tomorrow" before anything else
   if (/\btoday\b/i.test(input)) return todayInTz;
@@ -296,6 +309,28 @@ function getSlotMinutes(date: Date, timezone: string) {
     parts.find((part) => part.type === "minute")?.value || "0"
   );
   return hour * 60 + minute;
+}
+
+function getClosestSlots(
+  slots: { start: Date; end: Date }[],
+  preferredMinutes: number,
+  timezone: string,
+  limit = 3
+) {
+  return [...slots]
+    .sort((a, b) => {
+      const aDistance = Math.abs(
+        getSlotMinutes(a.start, timezone) - preferredMinutes
+      );
+      const bDistance = Math.abs(
+        getSlotMinutes(b.start, timezone) - preferredMinutes
+      );
+      if (aDistance !== bDistance) {
+        return aDistance - bDistance;
+      }
+      return a.start.getTime() - b.start.getTime();
+    })
+    .slice(0, limit);
 }
 
 // Retell custom tool endpoint: called by the voice agent during a call
@@ -439,7 +474,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const offeredSlots = slots.slice(0, 3);
+    const offeredSlots =
+      preferredMinutes !== null
+        ? getClosestSlots(slots, preferredMinutes, timezone)
+        : slots.slice(0, 3);
     const offered = offeredSlots.map((slot) => ({
       start_time: slot.start.toISOString(),
       end_time: slot.end.toISOString(),
@@ -473,8 +511,19 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      const closestSlots =
+        preferredMinutes !== null
+          ? getClosestSlots(slots, preferredMinutes, timezone, 2)
+          : [];
+      const closestDescriptions = closestSlots
+        .map((slot) => formatSlotTime(slot.start, timezone))
+        .join(" or ");
+
       return NextResponse.json({
-        result: `${preferredTime} isn't available on ${spokenDate}. I do have openings at ${slotDescriptions}. Which one works best?`,
+        result:
+          closestDescriptions.length > 0
+            ? `${preferredTime} isn't available on ${spokenDate}. The closest openings are ${closestDescriptions}. Which one works better?`
+            : `${preferredTime} isn't available on ${spokenDate}. I do have openings at ${slotDescriptions}. Which one works best?`,
         available: true,
         requested_time_available: false,
         available_slots: offered,

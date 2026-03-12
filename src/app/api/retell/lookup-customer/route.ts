@@ -8,7 +8,7 @@ import {
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { getCRMWithFallback } from "@/crm/withFallback";
-import { resolveBusinessFromDemo } from "@/lib/demo-session";
+import { resolveDemoSession } from "@/lib/demo-session";
 
 export async function POST(req: NextRequest) {
   const rawBody = await getRawBody(req);
@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
   const { args, call } = body;
 
   const calledNumber = normalizePhoneNumber(call?.to_number);
+  const demoResolution = calledNumber
+    ? await resolveDemoSession(calledNumber)
+    : null;
   let phoneRecord = calledNumber
     ? await prisma.phoneNumber.findFirst({
         where: { number: calledNumber },
@@ -37,14 +40,16 @@ export async function POST(req: NextRequest) {
 
   // Demo number fallback: during onboarding test calls, the called number is a
   // shared demo number with no PhoneNumber record — look up via DemoSession.
-  if (!phoneRecord && calledNumber) {
-    const demoBusinessId = await resolveBusinessFromDemo(calledNumber);
-    if (demoBusinessId) {
+  if (!phoneRecord && demoResolution) {
+    if (demoResolution.businessId) {
       const demoBusiness = await prisma.business.findUnique({
-        where: { id: demoBusinessId },
+        where: { id: demoResolution.businessId },
       });
       if (demoBusiness) {
-        phoneRecord = { businessId: demoBusinessId, business: demoBusiness } as unknown as typeof phoneRecord;
+        phoneRecord = {
+          businessId: demoResolution.businessId,
+          business: demoBusiness,
+        } as unknown as typeof phoneRecord;
       }
     }
   }
@@ -81,6 +86,29 @@ export async function POST(req: NextRequest) {
   const businessId = phoneRecord.business.id;
 
   console.log("[lookup-customer] callerPhone:", callerPhone, "from_number:", call?.from_number, "caller_phone arg:", args?.caller_phone, "normalizedPhone:", normalizePhoneNumber(callerPhone));
+
+  if (demoResolution) {
+    return NextResponse.json({
+      result:
+        "This is a demo call. Treat the caller as a new customer and collect their booking details from scratch.",
+      found: false,
+      caller_phone: normalizePhoneNumber(callerPhone),
+      square_customer_id: null,
+      customer_name: null,
+      visit_count: 0,
+      last_service_name: null,
+      last_visit_at: null,
+      pets: [],
+      preferred_groomer: null,
+      current_date: new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: phoneRecord.business.timezone || "America/Los_Angeles",
+      }),
+    });
+  }
 
   // Run internal DB lookup and Square CRM lookup concurrently
   const [internalContext, squareCustomer] = await Promise.allSettled([
