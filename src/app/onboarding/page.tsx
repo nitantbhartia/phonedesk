@@ -18,6 +18,20 @@ interface ServiceEntry {
   duration: string;
 }
 
+interface WebsiteImportDraft {
+  sourceUrl: string;
+  businessName?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  timezone?: string;
+  hours?: Record<string, { open: string; close: string; enabled: boolean }>;
+  services: ServiceEntry[];
+  importedFields: string[];
+  inspectedPages: string[];
+}
+
 type SavedBusinessHours = Record<string, { open: string; close: string }>;
 
 type OnboardingBusinessProfile = {
@@ -202,6 +216,9 @@ const ONBOARDING_PLANS = [
   },
 ];
 
+const websiteImportEnabled =
+  process.env.NEXT_PUBLIC_ENABLE_WEBSITE_IMPORT === "true";
+
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -259,6 +276,15 @@ export default function OnboardingPage() {
 
   // Auth step (step 3) state — shown inline for guests at step 2→3 transition
   const [profileError, setProfileError] = useState("");
+  const [showWebsiteImport, setShowWebsiteImport] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [websiteImportLoading, setWebsiteImportLoading] = useState(false);
+  const [websiteImportError, setWebsiteImportError] = useState("");
+  const [websiteImportSummary, setWebsiteImportSummary] = useState<{
+    sourceUrl: string;
+    importedFields: string[];
+    serviceCount: number;
+  } | null>(null);
   const [signupModalTab, setSignupModalTab] = useState<"signup" | "signin">("signup");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
@@ -520,6 +546,55 @@ export default function OnboardingPage() {
       return;
     }
     navigate(2);
+  }
+
+  async function importFromWebsite() {
+    setWebsiteImportError("");
+    setProfileError("");
+    setWebsiteImportLoading(true);
+
+    try {
+      const response = await fetch("/api/onboarding/website-import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: websiteUrl }),
+      });
+      const payload = (await response.json()) as {
+        draft?: WebsiteImportDraft;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.draft) {
+        throw new Error(
+          payload.error ||
+            "We could not import that website right now. You can keep filling this out manually."
+        );
+      }
+
+      const { draft } = payload;
+      if (draft.businessName) setBusinessName(draft.businessName);
+      if (draft.phone) setPhone(draft.phone);
+      if (draft.address) setAddress(draft.address);
+      if (draft.city) setCity(draft.city);
+      if (draft.state) setState(draft.state);
+      if (draft.timezone) setTimezone(draft.timezone);
+      if (draft.hours) setHours(draft.hours);
+      if (draft.services.length > 0) setServices(draft.services);
+
+      setWebsiteImportSummary({
+        sourceUrl: draft.sourceUrl,
+        importedFields: draft.importedFields,
+        serviceCount: draft.services.length,
+      });
+    } catch (error) {
+      setWebsiteImportError(
+        error instanceof Error
+          ? error.message
+          : "We could not import that website right now. You can keep filling this out manually."
+      );
+    } finally {
+      setWebsiteImportLoading(false);
+    }
   }
 
   // Core save logic — only called when authenticated
@@ -1008,9 +1083,86 @@ export default function OnboardingPage() {
           className="space-y-8"
           onSubmit={(e) => {
             e.preventDefault();
-            navigate(2);
+            validateStep1AndContinue();
           }}
         >
+          {websiteImportEnabled && (
+            <div className="rounded-3xl border-2 border-paw-brown/5 bg-white px-5 py-5 shadow-sm">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wider text-paw-brown/55">
+                    Import From Your Website
+                  </p>
+                  <h3 className="mt-1 text-lg font-extrabold text-paw-brown">
+                    Pull in your business info automatically
+                  </h3>
+                  <p className="mt-1 text-sm font-medium leading-relaxed text-paw-brown/55">
+                    We can scan your site for your business name, hours, phone, address,
+                    and priced services, then drop that into this form for you to review.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowWebsiteImport((current) => !current)}
+                  className="rounded-full border border-paw-brown/10 px-4 py-2 text-sm font-bold text-paw-brown transition-colors hover:border-paw-brown/25 hover:bg-paw-sky/40"
+                >
+                  {showWebsiteImport ? "Hide importer" : "Use website importer"}
+                </button>
+              </div>
+
+              {showWebsiteImport && (
+                <div className="mt-5 space-y-4 border-t border-paw-brown/8 pt-5">
+                  <div className="space-y-2">
+                    <OnboardingLabel
+                      htmlFor="websiteUrl"
+                      info="Paste your public website. We look for details on the homepage and a few common pages like Services, Contact, and FAQ."
+                    >
+                      Website URL
+                    </OnboardingLabel>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <OnboardingInput
+                        id="websiteUrl"
+                        placeholder="https://yourgroomingsite.com"
+                        value={websiteUrl}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void importFromWebsite()}
+                        disabled={websiteImportLoading || !websiteUrl.trim()}
+                        className="rounded-2xl bg-paw-brown px-5 py-4 text-sm font-bold text-paw-cream transition-all hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {websiteImportLoading ? "Importing..." : "Import"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {websiteImportError ? (
+                    <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {websiteImportError}
+                    </p>
+                  ) : null}
+
+                  {websiteImportSummary ? (
+                    <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                      <p className="font-bold">
+                        Imported {websiteImportSummary.importedFields.length} field
+                        {websiteImportSummary.importedFields.length === 1 ? "" : "s"} from{" "}
+                        {websiteImportSummary.sourceUrl}
+                      </p>
+                      <p className="mt-1 font-medium">
+                        Review everything below before continuing.
+                        {websiteImportSummary.serviceCount > 0
+                          ? ` We also found ${websiteImportSummary.serviceCount} priced service${websiteImportSummary.serviceCount === 1 ? "" : "s"}.`
+                          : ""}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <OnboardingLabel
