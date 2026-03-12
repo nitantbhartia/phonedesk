@@ -11,6 +11,10 @@ vi.mock("@/lib/prisma", () => ({
     business: {
       findUnique: vi.fn(),
     },
+    demoLead: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
     demoNumber: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
@@ -24,7 +28,12 @@ vi.mock("@/lib/retell", () => ({
   updateRetellAgent: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/demo-token", () => ({
+  verifyDemoToken: vi.fn(),
+}));
+
 import { prisma } from "@/lib/prisma";
+import { verifyDemoToken } from "@/lib/demo-token";
 import { POST } from "./route";
 
 describe("POST /api/demo/public/start", () => {
@@ -35,14 +44,24 @@ describe("POST /api/demo/public/start", () => {
     vi.mocked(prisma.publicDemoAttempt.findMany).mockReset();
     vi.mocked(prisma.publicDemoAttempt.create).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
+    vi.mocked(prisma.demoLead.findUnique).mockReset();
+    vi.mocked(prisma.demoLead.update).mockReset();
     vi.mocked(prisma.demoNumber.findFirst).mockReset();
+    vi.mocked(verifyDemoToken).mockReset();
   });
 
   it("does not reuse a demo number that is already assigned to an active public attempt", async () => {
+    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       retellConfig: { agentId: "agent_1" },
     } as never);
+    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
+      id: "lead_1",
+      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
+      cooldownUntil: null,
+    } as never);
+    vi.mocked(prisma.demoLead.update).mockResolvedValue({ id: "lead_1" } as never);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
       const tx = {
         publicDemoAttempt: {
@@ -64,7 +83,10 @@ describe("POST /api/demo/public/start", () => {
     });
 
     const response = await POST(
-      new Request("http://localhost/api/demo/public/start", { method: "POST" }) as never
+      new Request("http://localhost/api/demo/public/start", {
+        method: "POST",
+        body: JSON.stringify({ ldt: "token_1" }),
+      }) as never
     );
 
     expect(response.status).toBe(200);
