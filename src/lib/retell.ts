@@ -516,14 +516,14 @@ export async function deleteRetellPhoneNumber(
 export async function updateRetellPhoneNumber(
   phoneNumber: string,
   updates: {
-    inboundAgentId?: string;
+    inboundAgentId?: string | null;
     nickname?: string;
     smsWebhookUrl?: string;
   }
 ): Promise<void> {
   const body: Record<string, unknown> = {};
   if (updates.inboundAgentId !== undefined)
-    body.inbound_agent_id = updates.inboundAgentId;
+    body.inbound_agent_id = updates.inboundAgentId ?? null;
   if (updates.nickname !== undefined) body.nickname = updates.nickname;
   if (updates.smsWebhookUrl !== undefined)
     body.inbound_sms_webhook_url = updates.smsWebhookUrl;
