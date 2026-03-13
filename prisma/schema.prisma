@@ -131,11 +131,12 @@ enum PhoneProvider {
 }
 
 model DemoNumber {
-  id                String        @id @default(cuid())
-  number            String        @unique // E.164, e.g. +16195550100
-  retellPhoneNumber String        @unique // Retell E.164 identifier
+  id                String              @id @default(cuid())
+  number            String              @unique // E.164, e.g. +16195550100
+  retellPhoneNumber String              @unique // Retell E.164 identifier
   sessions          DemoSession[]
-  createdAt         DateTime      @default(now())
+  publicAttempts    PublicDemoAttempt[]
+  createdAt         DateTime            @default(now())
 }
 
 model DemoSession {
@@ -152,10 +153,11 @@ model PublicDemoAttempt {
   id           String    @id @default(cuid())
   ip           String
   sessionToken String    @unique @default(cuid())
-  demoNumberId String?   // which demo number was assigned
-  callerPhone  String?   // set when call_started webhook fires; used for phone-based rate limiting
-  leadId       String?   // verified DemoLead that unlocked this attempt
-  lead         DemoLead? @relation(fields: [leadId], references: [id])
+  demoNumberId String?     // which demo number was assigned
+  demoNumber   DemoNumber? @relation(fields: [demoNumberId], references: [id])
+  callerPhone  String?     // set when call_started webhook fires; used for phone-based rate limiting
+  leadId       String?     // verified DemoLead that unlocked this attempt
+  lead         DemoLead?   @relation(fields: [leadId], references: [id])
   startedAt    DateTime  @default(now())
   expiresAt    DateTime  // session expires after 30 min
 
