@@ -6,6 +6,7 @@ export type DemoResolution =
       businessId: string;
       source: "private";
       demoNumberId: string;
+      expired?: false;
     }
   | {
       businessId: string;
@@ -14,6 +15,8 @@ export type DemoResolution =
       publicAttemptId: string;
       leadId: string | null;
       callerPhone: string | null;
+      /** True when matched via grace-period fallback (session already expired). */
+      expired?: boolean;
     };
 
 /**
@@ -109,6 +112,7 @@ export async function resolveDemoSession(
         publicAttemptId: expiredAttempt.id,
         leadId: expiredAttempt.leadId,
         callerPhone: expiredAttempt.callerPhone,
+        expired: true,
       };
     }
   }
