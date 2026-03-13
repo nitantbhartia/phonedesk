@@ -5,10 +5,9 @@ import {
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
-import { refreshRetellLLMForCall } from "@/lib/retell";
+import { refreshRetellLLMForCall, endRetellCall, updateRetellPhoneNumber } from "@/lib/retell";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { resolveBusinessFromDemo, resolveDemoSession } from "@/lib/demo-session";
-import { endRetellCall } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
@@ -88,12 +87,19 @@ async function handleCallStarted(call: RetellCallPayload) {
     if (!phoneNum && calledNumber && call.call_id) {
       const isDemoNumber = await prisma.demoNumber.findUnique({
         where: { number: calledNumber },
-        select: { id: true },
+        select: { id: true, retellPhoneNumber: true },
       });
       if (isDemoNumber) {
+        // End the current call
         await endRetellCall(call.call_id).catch((e) => {
           console.error("[webhook] Failed to end sessionless demo call:", e);
         });
+        // Clear the inbound agent so future calls don't connect at all until a new session starts
+        if (isDemoNumber.retellPhoneNumber) {
+          await updateRetellPhoneNumber(isDemoNumber.retellPhoneNumber, { inboundAgentId: null }).catch((e) => {
+            console.error("[webhook] Failed to clear inboundAgentId for sessionless demo number:", e);
+          });
+        }
         return new NextResponse(null, { status: 204 });
       }
     }
