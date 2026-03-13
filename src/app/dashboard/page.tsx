@@ -135,6 +135,8 @@ export default function DashboardPage() {
   const [fetchError, setFetchError] = useState("");
   const [usageMinutesUsed, setUsageMinutesUsed] = useState(0);
   const [usageMinutesLimit, setUsageMinutesLimit] = useState(120);
+  const [sendingDigest, setSendingDigest] = useState(false);
+  const [digestSent, setDigestSent] = useState(false);
   const [usageOverage, setUsageOverage] = useState(0);
   const [usagePlanName, setUsagePlanName] = useState("");
   const [tourOpen, setTourOpen] = useState(false);
@@ -729,6 +731,30 @@ export default function DashboardPage() {
         <div className="px-8 py-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-bold text-paw-brown">Recent Call Log</h2>
           <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                setSendingDigest(true);
+                setDigestSent(false);
+                try {
+                  await fetch("/api/digest/weekly", { method: "POST" });
+                  setDigestSent(true);
+                  setTimeout(() => setDigestSent(false), 4000);
+                } finally {
+                  setSendingDigest(false);
+                }
+              }}
+              disabled={sendingDigest}
+              className="px-4 py-2 rounded-full border border-gray-100 text-sm font-bold hover:bg-paw-sky transition-colors disabled:opacity-50 flex items-center gap-2"
+              title="Email yourself a weekly summary"
+            >
+              {digestSent ? (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Sent!</>
+              ) : sendingDigest ? (
+                <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Sending…</>
+              ) : (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m22 3-10 9L2 3"/></svg> Weekly Recap</>
+              )}
+            </button>
             <Link
               href="/calls"
               className="px-4 py-2 rounded-full border border-gray-100 text-sm font-bold hover:bg-paw-sky transition-colors"

@@ -57,8 +57,38 @@ async function handleCallStarted(call: RetellCallPayload) {
   }
 
   try {
-    const calledNumber = normalizePhoneNumber(call.to_number);
-    const normalizedCaller = normalizePhoneNumber(call.from_number);
+    const isOutbound = call.direction === "outbound";
+
+    // For outbound calls, from_number is OUR number and to_number is the customer.
+    // For inbound calls, to_number is OUR number and from_number is the customer.
+    const ourNumber = normalizePhoneNumber(isOutbound ? call.from_number : call.to_number);
+    const calledNumber = ourNumber; // keep variable name for inbound-compat code below
+    const normalizedCaller = normalizePhoneNumber(isOutbound ? call.to_number : call.from_number);
+
+    // Outbound calls: resolve business from our number and update the pre-created Call record.
+    if (isOutbound) {
+      const phoneNum = ourNumber
+        ? await prisma.phoneNumber.findFirst({
+            where: { number: ourNumber },
+            select: { businessId: true },
+          })
+        : null;
+      if (phoneNum && call.call_id) {
+        await prisma.call.upsert({
+          where: { retellCallId: call.call_id },
+          create: {
+            businessId: phoneNum.businessId,
+            retellCallId: call.call_id,
+            callerPhone: normalizedCaller || call.to_number,
+            status: "IN_PROGRESS",
+            isOutbound: true,
+          },
+          update: { status: "IN_PROGRESS" },
+        });
+      }
+      return new NextResponse(null, { status: 204 });
+    }
+
     const demoResolution = calledNumber
       ? await resolveDemoSession(calledNumber, call.from_number ?? undefined)
       : null;
@@ -192,8 +222,30 @@ async function handleCallStarted(call: RetellCallPayload) {
 
 async function handleCallEnded(call: RetellCallPayload) {
   try {
-    const normalizedCaller = normalizePhoneNumber(call.from_number);
-    const calledNumber = normalizePhoneNumber(call.to_number);
+    const isOutbound = call.direction === "outbound";
+    const normalizedCaller = normalizePhoneNumber(isOutbound ? call.to_number : call.from_number);
+    const calledNumber = normalizePhoneNumber(isOutbound ? call.from_number : call.to_number);
+
+    const duration = call.duration_ms
+      ? Math.round(call.duration_ms / 1000)
+      : call.start_timestamp && call.end_timestamp
+        ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
+        : null;
+
+    // For outbound calls, the pre-created Call record already links to the business.
+    // Just update it with final data.
+    if (isOutbound && call.call_id) {
+      await prisma.call.updateMany({
+        where: { retellCallId: call.call_id },
+        data: {
+          duration,
+          transcript: call.transcript || null,
+          status: "COMPLETED",
+          recordingUrl: call.recording_url || null,
+        },
+      });
+      return new NextResponse(null, { status: 204 });
+    }
 
     let phoneNum = calledNumber
       ? await prisma.phoneNumber.findFirst({
@@ -219,13 +271,6 @@ async function handleCallEnded(call: RetellCallPayload) {
     if (!phoneNum?.business) return new NextResponse(null, { status: 204 });
 
     const business = phoneNum.business;
-
-    // Calculate duration - Retell provides duration_ms or we compute from timestamps
-    const duration = call.duration_ms
-      ? Math.round(call.duration_ms / 1000)
-      : call.start_timestamp && call.end_timestamp
-        ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
-        : null;
 
     // Create or update call record
     const existingCall = call.call_id
