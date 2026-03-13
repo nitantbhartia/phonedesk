@@ -84,6 +84,20 @@ async function handleCallStarted(call: RetellCallPayload) {
       }
     }
 
+    // Demo number with no active session — reject immediately to avoid cost
+    if (!phoneNum && calledNumber && call.call_id) {
+      const isDemoNumber = await prisma.demoNumber.findUnique({
+        where: { number: calledNumber },
+        select: { id: true },
+      });
+      if (isDemoNumber) {
+        await endRetellCall(call.call_id).catch((e) => {
+          console.error("[webhook] Failed to end sessionless demo call:", e);
+        });
+        return new NextResponse(null, { status: 204 });
+      }
+    }
+
     // Public demo phone-number rate limit: detect repeat callers by phone
     if (demoResolution?.source === "public" && normalizedCaller && call.call_id) {
       const now = new Date();
