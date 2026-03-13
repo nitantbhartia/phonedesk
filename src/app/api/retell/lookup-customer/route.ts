@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const calledNumber = normalizePhoneNumber(call?.to_number);
   const demoResolution = calledNumber
-    ? await resolveDemoSession(calledNumber)
+    ? await resolveDemoSession(calledNumber, call?.from_number ?? undefined)
     : null;
   let phoneRecord = calledNumber
     ? await prisma.phoneNumber.findFirst({
