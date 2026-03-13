@@ -54,12 +54,22 @@ describe("GET /api/calendar/connect", () => {
   beforeEach(() => {
     process.env.NEXTAUTH_SECRET = "test-secret";
     process.env.NEXTAUTH_URL = "http://localhost:3000";
+    process.env.SQUARE_APP_ID = "square-app-id";
+    process.env.SQUARE_APP_SECRET = "square-secret";
+    process.env.ACUITY_CLIENT_ID = "acuity-id";
+    process.env.ACUITY_CLIENT_SECRET = "acuity-secret";
     mockGenerateAuthUrl.mockReset();
     mockGetToken.mockReset();
     mockSetCredentials.mockReset();
     mockCalendarList.mockReset();
     vi.mocked(getServerSession).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
+    vi.mocked(prisma.calendarConnection.findFirst).mockReset();
+    vi.mocked(prisma.calendarConnection.update).mockReset();
+    vi.mocked(prisma.calendarConnection.count).mockReset();
+    vi.mocked(prisma.calendarConnection.create).mockReset();
+    vi.mocked(prisma.calendarConnection.updateMany).mockReset();
+    global.fetch = vi.fn();
   });
 
   it("generates a signed OAuth state when starting Google connect", async () => {
@@ -101,5 +111,211 @@ describe("GET /api/calendar/connect", () => {
       "http://localhost:3000/settings/calendar?error=invalid_oauth_state"
     );
     expect(mockGetToken).not.toHaveBeenCalled();
+  });
+
+  it("starts Square OAuth with a signed state", async () => {
+    const response = await GET(
+      new NextRequest(
+        "http://localhost:3000/api/calendar/connect?provider=square&redirect=/settings/calendar"
+      ) as never
+    );
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.origin).toContain("square");
+    expect(location.searchParams.get("state")).toContain(".");
+    expect(location.searchParams.get("client_id")).toBe("square-app-id");
+  });
+
+  it("connects Square and creates the first active connection as primary", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-12T12:00:00.000Z"));
+    const state = Buffer.from(
+      JSON.stringify({
+        redirect: "/settings/calendar",
+        provider: "square",
+        nonce: "nonce-1",
+        issuedAt: Date.now(),
+      })
+    ).toString("base64url");
+    const signature = require("node:crypto")
+      .createHmac("sha256", "test-secret")
+      .update(state)
+      .digest("base64url");
+
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "user_1" },
+    } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+    } as never);
+    vi.mocked(prisma.calendarConnection.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.calendarConnection.count).mockResolvedValue(0);
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            access_token: "square-token",
+            refresh_token: "refresh-token",
+            expires_at: "2026-04-12T12:00:00.000Z",
+            merchant_id: "merchant_1",
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            locations: [{ id: "loc_1", name: "Main Shop" }],
+          }),
+          { status: 200 }
+        )
+      );
+
+    const response = await GET(
+      new NextRequest(
+        `http://localhost:3000/api/calendar/connect?code=abc&state=${state}.${signature}`
+      ) as never
+    );
+
+    expect(response.status).toBe(307);
+    expect(prisma.calendarConnection.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        businessId: "biz_1",
+        provider: "SQUARE",
+        isPrimary: true,
+        accessToken: "square-token",
+        calendarId: "loc_1",
+      }),
+    });
+    vi.useRealTimers();
+  });
+
+  it("redirects to the homepage when the OAuth callback has no session", async () => {
+    vi.mocked(getServerSession).mockResolvedValue(null);
+
+    const state = mockGenerateAuthUrl.mock.calls.length;
+    expect(state).toBeGreaterThanOrEqual(0);
+
+    const response = await GET(
+      new NextRequest(
+        "http://localhost:3000/api/calendar/connect?code=abc&state=forged.invalid"
+      ) as never
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost:3000/");
+  });
+
+  it("connects Google and updates an existing connection", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-12T12:00:00.000Z"));
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "user_1" },
+    } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+    } as never);
+    vi.mocked(prisma.calendarConnection.findFirst).mockResolvedValue({
+      id: "conn_1",
+      refreshToken: "existing-refresh",
+    } as never);
+    mockGetToken.mockResolvedValue({
+      tokens: {
+        access_token: "google-access",
+        expiry_date: Date.parse("2026-04-01T00:00:00.000Z"),
+      },
+    });
+    mockCalendarList.mockResolvedValue({
+      data: {
+        items: [{ primary: true, id: "primary-cal" }],
+      },
+    });
+
+    const payload = Buffer.from(
+      JSON.stringify({
+        redirect: "/settings/calendar",
+        provider: "google",
+        nonce: "nonce-google",
+        issuedAt: Date.now(),
+      })
+    ).toString("base64url");
+    const signature = require("node:crypto")
+      .createHmac("sha256", "test-secret")
+      .update(payload)
+      .digest("base64url");
+
+    const response = await GET(
+      new NextRequest(
+        `http://localhost:3000/api/calendar/connect?code=abc&state=${payload}.${signature}`
+      ) as never
+    );
+
+    expect(response.status).toBe(307);
+    expect(prisma.calendarConnection.update).toHaveBeenCalledWith({
+      where: { id: "conn_1" },
+      data: {
+        accessToken: "google-access",
+        refreshToken: "existing-refresh",
+        tokenExpiry: new Date("2026-04-01T00:00:00.000Z"),
+        calendarId: "primary-cal",
+        isActive: true,
+      },
+    });
+    vi.useRealTimers();
+  });
+
+  it("returns 400 for unsupported provider bootstraps", async () => {
+    const response = await GET(
+      new NextRequest("http://localhost:3000/api/calendar/connect?provider=unknown") as never
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unsupported calendar provider",
+    });
+  });
+
+  it("disconnects a calendar provider for the current business", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "user_1" },
+    } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+    } as never);
+
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new NextRequest(
+        "http://localhost:3000/api/calendar/connect?provider=google",
+        { method: "DELETE" }
+      ) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(prisma.calendarConnection.updateMany).toHaveBeenCalledWith({
+      where: {
+        businessId: "biz_1",
+        provider: "GOOGLE",
+      },
+      data: { isActive: false, accessToken: null, refreshToken: null },
+    });
+    await expect(response.json()).resolves.toEqual({ success: true });
+  });
+
+  it("rejects disconnect requests without a provider", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "user_1" },
+    } as never);
+
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new NextRequest("http://localhost:3000/api/calendar/connect", {
+        method: "DELETE",
+      }) as never
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Missing provider" });
   });
 });

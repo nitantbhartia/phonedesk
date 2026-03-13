@@ -182,6 +182,52 @@ describe("executeCommand", () => {
     );
   });
 
+  it("blocks an all-day calendar window using a synthetic appointment", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "block_calendar",
+        entities: { date: "tomorrow", allDay: "true" },
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        businessId: "biz_1",
+        customerName: "BLOCKED",
+        serviceName: "Owner Block",
+        notes: "Blocked via SMS: tomorrow",
+      }),
+    });
+    expect(result).toContain("Blocked all day");
+  });
+
+  it("pauses and resumes bookings by toggling business activity", async () => {
+    await executeCommand(
+      "biz_1",
+      { intent: "pause_bookings", entities: {} },
+      "+16195550000",
+      "+16195559999"
+    );
+    await executeCommand(
+      "biz_1",
+      { intent: "resume_bookings", entities: {} },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.business.update).toHaveBeenNthCalledWith(1, {
+      where: { id: "biz_1" },
+      data: { isActive: false },
+    });
+    expect(prisma.business.update).toHaveBeenNthCalledWith(2, {
+      where: { id: "biz_1" },
+      data: { isActive: true },
+    });
+  });
+
   it("shows the current schedule for the requested day", async () => {
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([
       {
@@ -209,6 +255,22 @@ describe("executeCommand", () => {
     );
     expect(result).toContain("Today's schedule:");
     expect(result).toContain("Buddy (Jamie) - Full Groom");
+  });
+
+  it("shows a helpful message when no services are configured", async () => {
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      ...baseBusiness,
+      services: [],
+    } as never);
+
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "show_prices", entities: {} },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(result).toContain("No services configured yet");
   });
 
   it("cancels an appointment, texts the customer, and confirms to the owner", async () => {
@@ -248,6 +310,54 @@ describe("executeCommand", () => {
     expect(result).toContain("Cancelled Jamie's appointment");
   });
 
+  it("checks in a pet and texts the customer", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_4",
+      petName: "Buddy",
+      customerPhone: "+16195550100",
+    } as never);
+
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "check_in", entities: { petName: "Buddy" } },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.update).toHaveBeenCalledWith({
+      where: { id: "appt_4" },
+      data: {
+        groomingStatus: "CHECKED_IN",
+        groomingStatusAt: expect.any(Date),
+      },
+    });
+    expect(result).toContain("Buddy is checked in");
+  });
+
+  it("marks a pet as in progress and notifies the customer", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_5",
+      petName: "Buddy",
+      customerPhone: "+16195550100",
+    } as never);
+
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "start_grooming", entities: { petName: "Buddy" } },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.update).toHaveBeenCalledWith({
+      where: { id: "appt_5" },
+      data: {
+        groomingStatus: "IN_PROGRESS",
+        groomingStatusAt: expect.any(Date),
+      },
+    });
+    expect(result).toContain("now being groomed");
+  });
+
   it("records a behavior note with severity and detected tags", async () => {
     vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
       id: "appt_2",
@@ -284,6 +394,22 @@ describe("executeCommand", () => {
       },
     });
     expect(result).toContain("flagged CAUTION");
+  });
+
+  it("falls back to the default help text for unknown commands", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "unknown", entities: {} },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(result).toContain("I didn't understand that");
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550000",
+      expect.stringContaining("[RingPaw] I didn't understand that."),
+      "+16195559999"
+    );
   });
 
   it("marks a pet ready for pickup and notifies the customer", async () => {

@@ -121,4 +121,87 @@ describe("POST /api/retell/business-faq", () => {
     expect(payload.result).toContain("custom policy");
     expect(payload.result).toContain("Jordan");
   });
+
+  it("asks for the caller question when none is provided", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.answerable).toBe(false);
+    expect(payload.result).toContain("Tell me what the caller is asking");
+  });
+
+  it("answers location questions from the business profile", async () => {
+    const response = await POST(
+      makeRequest({
+        args: { question: "Where are you located?" },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.topic).toBe("location");
+    expect(payload.answerable).toBe(true);
+    expect(payload.result).toContain("123 Main St, San Diego, CA");
+  });
+
+  it("returns the best callback number for contact questions", async () => {
+    const response = await POST(
+      makeRequest({
+        args: { question: "What number should I call back?" },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.topic).toBe("contact");
+    expect(payload.answerable).toBe(true);
+    expect(payload.result).toContain("+16195550000");
+  });
+
+  it("uses the service list fallback for pricing questions", async () => {
+    const response = await POST(
+      makeRequest({
+        args: { question: "How much does it cost?" },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.topic).toBe("pricing");
+    expect(payload.answerable).toBe(false);
+    expect(payload.result).toContain("live service list");
+  });
+
+  it("gives a first-visit answer for new customer questions", async () => {
+    const response = await POST(
+      makeRequest({
+        args: { question: "What should I bring for a first visit?" },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.topic).toBe("first_visit");
+    expect(payload.answerable).toBe(true);
+    expect(payload.result).toContain("quick intake form");
+  });
+
+  it("falls back for questions with no reliable answer on file", async () => {
+    const response = await POST(
+      makeRequest({
+        args: { question: "Do you use hypoallergenic shampoo?" },
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.topic).toBe("general");
+    expect(payload.answerable).toBe(false);
+    expect(payload.result).toContain("Jordan");
+  });
 });

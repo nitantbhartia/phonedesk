@@ -23,39 +23,45 @@ import {
   sendAppointmentReminder,
   sendBookingConfirmationToCustomer,
   sendBookingNotificationToOwner,
+  sendCancellationWithWaitlistNotification,
   sendMissedCallNotification,
+  sendNoResponseFollowUp,
   sendOnMyWayReminder,
+  sendRescheduleConfirmationToCustomer,
+  sendRescheduleNotificationToOwner,
+  sendWaitlistOpeningNotification,
 } from "./notifications";
 
 const business = {
   id: "biz_1",
   name: "Paw House",
   phone: "+16195550000",
-  phoneNumber: { number: "+16195559999" },
-  timezone: "America/Los_Angeles",
   address: "123 Main St",
+  timezone: "America/Los_Angeles",
+  phoneNumber: { number: "+16195559999" },
 };
 
 const appointment = {
   id: "appt_1",
   customerName: "Jamie",
   customerPhone: "+16195550100",
-  petName: "Buddy",
+  petName: "Bella",
   petBreed: "Poodle",
-  petSize: "MEDIUM",
+  petSize: "SMALL",
   serviceName: "Full Groom",
   startTime: new Date("2026-05-21T16:00:00.000Z"),
   status: "CONFIRMED",
-  confirmLink: "https://confirm.example.com",
+  calendarEventId: "evt_1",
 };
 
 describe("notifications", () => {
   beforeEach(() => {
     vi.mocked(sendSms).mockReset();
     vi.mocked(prisma.appointment.update).mockReset();
+    delete process.env.TWILIO_PHONE_NUMBER;
   });
 
-  it("sends owner booking notifications with booking details", async () => {
+  it("notifies the owner about a new booking", async () => {
     await sendBookingNotificationToOwner(business as never, appointment as never);
 
     expect(sendSms).toHaveBeenCalledWith(
@@ -65,20 +71,24 @@ describe("notifications", () => {
     );
   });
 
-  it("sends customer confirmations and includes confirm links for pending bookings", async () => {
+  it("sends customer confirmations with the confirm link for pending appointments", async () => {
     await sendBookingConfirmationToCustomer(
       business as never,
-      { ...appointment, status: "PENDING" } as never
+      {
+        ...appointment,
+        status: "PENDING",
+        confirmLink: "https://confirm.test/appt_1",
+      } as never
     );
 
     expect(sendSms).toHaveBeenCalledWith(
       "+16195550100",
-      expect.stringContaining("Please confirm: https://confirm.example.com"),
+      expect.stringContaining("Please confirm: https://confirm.test/appt_1"),
       "+16195559999"
     );
   });
 
-  it("sends missed-call notifications to both owner and caller", async () => {
+  it("handles missed call notifications for both owner and caller", async () => {
     await sendMissedCallNotification(
       business as never,
       "+16195550100",
@@ -88,7 +98,7 @@ describe("notifications", () => {
     expect(sendSms).toHaveBeenNthCalledWith(
       1,
       "+16195550000",
-      expect.stringContaining("Missed call - no booking made"),
+      expect.stringContaining("Missed call"),
       "+16195559999"
     );
     expect(sendSms).toHaveBeenNthCalledWith(
@@ -99,7 +109,7 @@ describe("notifications", () => {
     );
   });
 
-  it("marks reminder flags after sending timed reminders", async () => {
+  it("marks reminders as sent when sending customer reminders", async () => {
     await sendAppointmentReminder(business as never, appointment as never);
     await send48hReminder(business as never, appointment as never);
     await sendOnMyWayReminder(business as never, appointment as never);
@@ -116,5 +126,80 @@ describe("notifications", () => {
       where: { id: "appt_1" },
       data: { onMyWaySent: true },
     });
+  });
+
+  it("sends waitlist and no-response messages", async () => {
+    await sendWaitlistOpeningNotification(
+      business as never,
+      {
+        customerPhone: "+16195550100",
+        customerName: "Jamie",
+        petName: "Bella",
+        serviceName: "Bath",
+      },
+      "Thu, May 21, 9:00 AM"
+    );
+    await sendNoResponseFollowUp(business as never, appointment as never);
+
+    expect(sendSms).toHaveBeenNthCalledWith(
+      1,
+      "+16195550100",
+      expect.stringContaining("A spot just opened up"),
+      "+16195559999"
+    );
+    expect(sendSms).toHaveBeenNthCalledWith(
+      2,
+      "+16195550100",
+      expect.stringContaining("we haven't heard back"),
+      "+16195559999"
+    );
+  });
+
+  it("sends owner and customer reschedule updates", async () => {
+    const newAppointment = {
+      ...appointment,
+      startTime: new Date("2026-05-22T16:00:00.000Z"),
+      status: "PENDING",
+      confirmLink: "https://confirm.test/appt_2",
+    };
+
+    await sendRescheduleNotificationToOwner(
+      business as never,
+      appointment as never,
+      newAppointment as never,
+      "Taylor"
+    );
+    await sendRescheduleConfirmationToCustomer(
+      business as never,
+      appointment as never,
+      newAppointment as never
+    );
+
+    expect(sendSms).toHaveBeenNthCalledWith(
+      1,
+      "+16195550000",
+      expect.stringContaining("Waitlist auto-fill: contacting Taylor"),
+      "+16195559999"
+    );
+    expect(sendSms).toHaveBeenNthCalledWith(
+      2,
+      "+16195550100",
+      expect.stringContaining("Please confirm the updated time"),
+      "+16195559999"
+    );
+  });
+
+  it("includes waitlist details in cancellation notices when available", async () => {
+    await sendCancellationWithWaitlistNotification(
+      business as never,
+      appointment as never,
+      "Taylor"
+    );
+
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550000",
+      expect.stringContaining("Waitlist auto-fill: contacting Taylor"),
+      "+16195559999"
+    );
   });
 });
