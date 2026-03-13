@@ -78,10 +78,17 @@ describe("GET /api/calendar/conflicts", () => {
       new Request("http://localhost/api/calendar/conflicts?days=99") as never
     );
     const payload = await response.json();
+    const todayStr = new Date("2026-03-12T18:00:00.000Z").toLocaleDateString("en-CA", {
+      timeZone: "America/New_York",
+    });
+    const expectedRangeEnd = new Date(`${todayStr}T00:00:00`);
+    expectedRangeEnd.setTime(
+      expectedRangeEnd.getTime() + 7 * 24 * 60 * 60 * 1000
+    );
 
     expect(vi.mocked(getConflicts).mock.calls[0]?.[0]).toBe("biz_1");
     expect(vi.mocked(getConflicts).mock.calls[0]?.[1]).toEqual(new Date("2026-03-12T18:00:00.000Z"));
-    expect(vi.mocked(getConflicts).mock.calls[0]?.[2]).toEqual(new Date("2026-03-19T07:00:00.000Z"));
+    expect(vi.mocked(getConflicts).mock.calls[0]?.[2]).toEqual(expectedRangeEnd);
     expect(payload).toEqual({
       conflicts: [
         {
