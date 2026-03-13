@@ -71,8 +71,8 @@ async function handleCallStarted(call: RetellCallPayload) {
         })
       : null;
 
-    // Demo number fallback
-    if (!phoneNum && demoResolution) {
+    // Demo number fallback — only for active (non-expired) sessions
+    if (!phoneNum && demoResolution && !demoResolution.expired) {
       if (demoResolution.businessId) {
         const demoBusiness = await prisma.business.findUnique({
           where: { id: demoResolution.businessId },
@@ -84,7 +84,7 @@ async function handleCallStarted(call: RetellCallPayload) {
       }
     }
 
-    // Demo number with no active session — reject immediately to avoid cost
+    // Demo number with no active session (or only a grace-period match) — reject immediately to avoid cost
     if (!phoneNum && calledNumber && call.call_id) {
       const isDemoNumber = await prisma.demoNumber.findUnique({
         where: { number: calledNumber },
