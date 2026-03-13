@@ -62,6 +62,31 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Block same IP from bypassing cooldown via a different email address
+  if (ip !== "unknown") {
+    const blockedByIp = await prisma.demoLead.findFirst({
+      where: {
+        ipAtCreation: ip,
+        cooldownUntil: { gt: now },
+        id: { not: lead.id },
+      },
+      select: { cooldownUntil: true },
+    });
+    if (blockedByIp) {
+      const daysLeft = Math.ceil(
+        (blockedByIp.cooldownUntil!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return NextResponse.json(
+        {
+          error: "cooldown_active",
+          message: `You already tried the live demo recently. Try again in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`,
+          cooldownUntil: blockedByIp.cooldownUntil!.toISOString(),
+        },
+        { status: 429 }
+      );
+    }
+  }
+
   // Invalidate any existing unused tokens for this lead
   await prisma.demoMagicToken.updateMany({
     where: { leadId: lead.id, usedAt: null, expiresAt: { gt: now } },

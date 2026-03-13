@@ -59,10 +59,10 @@ async function handleCallStarted(call: RetellCallPayload) {
 
   try {
     const calledNumber = normalizePhoneNumber(call.to_number);
-    const demoResolution = calledNumber
-      ? await resolveDemoSession(calledNumber)
-      : null;
     const normalizedCaller = normalizePhoneNumber(call.from_number);
+    const demoResolution = calledNumber
+      ? await resolveDemoSession(calledNumber, call.from_number ?? undefined)
+      : null;
 
     let phoneNum = calledNumber
       ? await prisma.phoneNumber.findFirst({
@@ -87,7 +87,7 @@ async function handleCallStarted(call: RetellCallPayload) {
     // Public demo phone-number rate limit: detect repeat callers by phone
     if (demoResolution?.source === "public" && normalizedCaller && call.call_id) {
       const now = new Date();
-      const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const windowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const repeat = await prisma.publicDemoAttempt.findFirst({
         where: {
           callerPhone: normalizedCaller,
