@@ -34,6 +34,7 @@ vi.mock("@/lib/demo-token", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { verifyDemoToken } from "@/lib/demo-token";
+import { updateRetellAgent, updateRetellPhoneNumber } from "@/lib/retell";
 import { POST } from "./route";
 
 describe("POST /api/demo/public/start", () => {
@@ -48,6 +49,9 @@ describe("POST /api/demo/public/start", () => {
     vi.mocked(prisma.demoLead.update).mockReset();
     vi.mocked(prisma.demoNumber.findFirst).mockReset();
     vi.mocked(verifyDemoToken).mockReset();
+    vi.mocked(updateRetellPhoneNumber).mockReset();
+    vi.mocked(updateRetellAgent).mockReset();
+    vi.mocked(updateRetellAgent).mockResolvedValue(undefined);
   });
 
   it("does not reuse a demo number that is already assigned to an active public attempt", async () => {
@@ -91,5 +95,104 @@ describe("POST /api/demo/public/start", () => {
 
     expect(response.status).toBe(200);
     expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it("requires email verification before starting the demo", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/demo/public/start", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }) as never
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "verification_required",
+      message: "Please verify your email to access the live demo.",
+    });
+  });
+
+  it("returns an existing active session idempotently", async () => {
+    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
+    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
+      id: "lead_1",
+      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
+      cooldownUntil: null,
+    } as never);
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue({
+      sessionToken: "existing_token",
+      startedAt: new Date("2026-03-11T20:00:00.000Z"),
+      demoNumberId: "demo_num_1",
+    } as never);
+    vi.mocked(prisma.demoNumber.findUnique).mockResolvedValue({
+      number: "+16195550101",
+    } as never);
+
+    const response = await POST(
+      new Request("http://localhost/api/demo/public/start", {
+        method: "POST",
+        body: JSON.stringify({ ldt: "token_1" }),
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      sessionToken: "existing_token",
+      number: "+16195550101",
+      startedAt: "2026-03-11T20:00:00.000Z",
+    });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns cooldown information for recently used leads", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-12T12:00:00.000Z"));
+    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
+    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
+      id: "lead_1",
+      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
+      cooldownUntil: new Date("2026-03-14T12:00:00.000Z"),
+    } as never);
+
+    const response = await POST(
+      new Request("http://localhost/api/demo/public/start", {
+        method: "POST",
+        body: JSON.stringify({ ldt: "token_1" }),
+      }) as never
+    );
+
+    expect(response.status).toBe(429);
+    await expect(response.json()).resolves.toEqual({
+      error: "cooldown_active",
+      message: "You've already tried the live demo recently. Come back in 2 days.",
+      cooldownUntil: "2026-03-14T12:00:00.000Z",
+    });
+    vi.useRealTimers();
+  });
+
+  it("returns 503 when there is no configured demo business agent", async () => {
+    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
+    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
+      id: "lead_1",
+      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
+      cooldownUntil: null,
+    } as never);
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      retellConfig: null,
+    } as never);
+
+    const response = await POST(
+      new Request("http://localhost/api/demo/public/start", {
+        method: "POST",
+        body: JSON.stringify({ ldt: "token_1" }),
+      }) as never
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: "demo_not_ready",
+      message: "Demo agent is not configured yet.",
+    });
   });
 });

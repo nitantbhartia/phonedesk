@@ -108,6 +108,19 @@ describe("POST /api/retell/appointment-status", () => {
     expect(payload.result).toContain("123 Main St");
   });
 
+  it("asks for the booking name when no identifying information is present", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.found).toBe(false);
+    expect(payload.result).toContain("need the name on the booking");
+  });
+
   it("returns appointment options when multiple pets are on today's schedule", async () => {
     const scheduledBuddy = {
       ...readyAppointment,
@@ -129,6 +142,45 @@ describe("POST /api/retell/appointment-status", () => {
     expect(payload.found).toBe(true);
     expect(payload.multiple_appointments).toHaveLength(2);
     expect(payload.result).toContain("Which pet");
+  });
+
+  it("returns a completed message for same-day finished appointments", async () => {
+    vi.mocked(prisma.appointment.findMany)
+      .mockResolvedValueOnce([
+        { ...readyAppointment, status: "COMPLETED", groomingStatus: null },
+      ] as never)
+      .mockResolvedValueOnce([] as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.found).toBe(true);
+    expect(payload.result).toContain("already been completed");
+  });
+
+  it("returns a scheduled message when today's appointment has not started yet", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-21T15:00:00.000Z"));
+    vi.mocked(prisma.appointment.findMany)
+      .mockResolvedValueOnce([{ ...readyAppointment, groomingStatus: null }] as never)
+      .mockResolvedValueOnce([] as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.found).toBe(true);
+    expect(payload.result).toContain("hasn't started");
+    vi.useRealTimers();
   });
 
   it("does not guess from a future appointment when there is nothing active today", async () => {

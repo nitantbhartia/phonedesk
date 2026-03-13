@@ -49,7 +49,14 @@ vi.mock("@/lib/notifications", () => ({
 import { POST } from "./route";
 import { prisma } from "@/lib/prisma";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
-import { bookAppointment, isSlotAvailable } from "@/lib/calendar";
+import {
+  bookAppointment,
+  cancelAcuityAppointment,
+  deleteGoogleCalendarEvent,
+  deleteSquareBooking,
+  isSlotAvailable,
+  parseLocalDatetime,
+} from "@/lib/calendar";
 import { tryFillFromWaitlist } from "@/lib/waitlist";
 import {
   sendRescheduleConfirmationToCustomer,
@@ -147,6 +154,13 @@ describe("POST /api/retell/reschedule-appointment", () => {
     vi.mocked(tryFillFromWaitlist).mockReset();
     vi.mocked(sendRescheduleConfirmationToCustomer).mockReset();
     vi.mocked(sendRescheduleNotificationToOwner).mockReset();
+    vi.mocked(deleteGoogleCalendarEvent).mockReset();
+    vi.mocked(deleteSquareBooking).mockReset();
+    vi.mocked(cancelAcuityAppointment).mockReset();
+    vi.mocked(parseLocalDatetime).mockReset();
+    vi.mocked(parseLocalDatetime).mockImplementation(
+      (value: string) => new Date(value)
+    );
 
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
       business: businessRecord,
@@ -186,6 +200,109 @@ describe("POST /api/retell/reschedule-appointment", () => {
     expect(payload.multiple_appointments).toHaveLength(2);
     expect(payload.multiple_appointments[0].appointment_id).toBe("appt_1");
     expect(payload.multiple_appointments[1].appointment_id).toBe("appt_2");
+    expect(bookAppointment).not.toHaveBeenCalled();
+  });
+
+  it("asks for the booking name when neither phone nor name is available", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(false);
+    expect(payload.result).toContain("need the name on the booking");
+  });
+
+  it("returns a friendly fallback when no business can be resolved", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(false);
+    expect(payload.result).toContain("wasn't able to reach the booking system");
+  });
+
+  it("returns a clear message when the provided appointment id cannot be found", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+
+    const response = await POST(
+      makeRequest({
+        args: { appointment_id: "missing_appt" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(false);
+    expect(payload.result).toContain("couldn't find that appointment");
+  });
+
+  it("asks for a new day and time when only the current appointment is identified", async () => {
+    const response = await POST(
+      makeRequest({
+        args: {},
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(false);
+    expect(payload.appointment_id).toBe("appt_1");
+    expect(payload.result).toContain("What new day and time would you like instead");
+  });
+
+  it("rejects appointments that are already in a terminal state", async () => {
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([
+      { ...currentAppointment, status: "COMPLETED" },
+    ] as never);
+
+    const response = await POST(
+      makeRequest({
+        args: { new_start_time: "2026-05-23T10:00:00" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(false);
+    expect(payload.result).toContain("already in progress or completed");
+  });
+
+  it("asks the caller to repeat the time when parsing fails", async () => {
+    vi.mocked(parseLocalDatetime).mockReturnValue(new Date("invalid"));
+
+    const response = await POST(
+      makeRequest({
+        args: { new_start_time: "next blurstday" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(false);
+    expect(payload.result).toContain("didn't come through clearly");
+  });
+
+  it("returns early when the new time matches the current appointment", async () => {
+    const response = await POST(
+      makeRequest({
+        args: { new_start_time: "2026-05-21T09:00:00-07:00" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.rescheduled).toBe(true);
+    expect(payload.result).toContain("already set for");
     expect(bookAppointment).not.toHaveBeenCalled();
   });
 
@@ -305,6 +422,48 @@ describe("POST /api/retell/reschedule-appointment", () => {
     expect(payload.rescheduled).toBe(true);
     expect(sendRescheduleNotificationToOwner).toHaveBeenCalled();
     expect(sendRescheduleConfirmationToCustomer).toHaveBeenCalled();
+  });
+
+  it("cleans up external Google calendar events after a successful move", async () => {
+    const newAppointment = {
+      ...currentAppointment,
+      id: "appt_new",
+      startTime: new Date("2026-05-23T17:00:00Z"),
+      endTime: new Date("2026-05-23T18:30:00Z"),
+      status: "PENDING",
+      confirmLink: "https://confirm.example.com/new",
+    };
+    vi.mocked(bookAppointment).mockResolvedValue(newAppointment as never);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([
+      { ...currentAppointment, calendarEventId: "google_evt" },
+    ] as never);
+    vi.mocked(prisma.appointment.update)
+      .mockResolvedValueOnce({
+        ...newAppointment,
+        status: "CONFIRMED",
+        bookingMode: "SOFT",
+        confirmLink: null,
+      } as never)
+      .mockResolvedValueOnce({
+        ...currentAppointment,
+        status: "CANCELLED",
+      } as never);
+    vi.mocked(prisma.calendarConnection.findFirst).mockResolvedValue({
+      provider: "GOOGLE",
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: { new_start_time: "2026-05-23T10:00:00" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(deleteGoogleCalendarEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "GOOGLE" }),
+      "google_evt"
+    );
   });
 
   it("returns a retry prompt when the new slot is no longer available", async () => {

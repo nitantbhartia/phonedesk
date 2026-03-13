@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { extractWebsiteDraftFromPages } from "./website-import";
+import { describe, expect, it, vi } from "vitest";
+import { extractWebsiteDraftFromPages, importWebsiteDraft } from "./website-import";
 
 describe("extractWebsiteDraftFromPages", () => {
   it("pulls structured business details and service pricing from website pages", () => {
@@ -122,5 +122,126 @@ describe("extractWebsiteDraftFromPages", () => {
     expect(draft.services).toEqual([
       { name: "Puppy Intro Bath", price: "40", duration: "45" },
     ]);
+  });
+
+  it("parses openingHours strings, deduplicates services, and ignores blacklisted lines", () => {
+    const draft = extractWebsiteDraftFromPages("https://tidytails.com", [
+      {
+        url: "https://tidytails.com/",
+        html: `
+          <html>
+            <head>
+              <title>Tidy Tails Grooming | Pet Spa</title>
+              <script type="application/ld+json">
+                {
+                  "@context": "https://schema.org",
+                  "@type": "LocalBusiness",
+                  "name": "Tidy Tails Grooming",
+                  "openingHours": [
+                    "Mon-Fri 08:00-17:00",
+                    "Sat 09:00-13:00"
+                  ]
+                }
+              </script>
+            </head>
+            <body>
+              <p>Call us today</p>
+              <p>Bath Package $45 60 min</p>
+              <p>Bath Package $45 60 min</p>
+              <p>Location & Hours</p>
+            </body>
+          </html>
+        `,
+      },
+    ]);
+
+    expect(draft.businessName).toBe("Tidy Tails Grooming");
+    expect(draft.hours?.["Mon - Fri"]).toEqual({
+      open: "8:00 AM",
+      close: "5:00 PM",
+      enabled: true,
+    });
+    expect(draft.hours?.Saturday).toEqual({
+      open: "9:00 AM",
+      close: "1:00 PM",
+      enabled: true,
+    });
+    expect(draft.services).toEqual([
+      { name: "Bath Package", price: "45", duration: "60" },
+    ]);
+  });
+
+  it("imports pages live, follows internal service/contact links, and skips unsupported content types", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          `
+            <html>
+              <head><title>Pawfect Place</title></head>
+              <body>
+                <h1>Pawfect Place</h1>
+                <a href="/services">Services</a>
+                <a href="/contact">Contact</a>
+                <a href="https://external.example/services">External</a>
+              </body>
+            </html>
+          `,
+          {
+            status: 200,
+            headers: { "content-type": "text/html" },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response("<html><body><p>Full Groom $95 2 hours</p></body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response("not html", {
+          status: 200,
+          headers: { "content-type": "application/pdf" },
+        })
+      );
+
+    const draft = await importWebsiteDraft("pawfectplace.com", fetchImpl as never);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(4);
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      1,
+      "https://pawfectplace.com/",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "user-agent": expect.stringContaining("RingPaw Website Importer"),
+        }),
+      })
+    );
+    expect(draft.sourceUrl).toBe("https://pawfectplace.com/");
+    expect(draft.inspectedPages).toEqual([
+      "https://pawfectplace.com/",
+      "https://pawfectplace.com/services",
+    ]);
+    expect(draft.services).toEqual([
+      { name: "Full Groom", price: "95", duration: "120" },
+    ]);
+  });
+
+  it("rejects invalid URLs and non-html homepages", async () => {
+    await expect(
+      importWebsiteDraft("http://")
+    ).rejects.toThrow("Invalid URL");
+
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response("{}", {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+
+    await expect(
+      importWebsiteDraft("https://example.com", fetchImpl as never)
+    ).rejects.toThrow("Unsupported content type for https://example.com/");
   });
 });

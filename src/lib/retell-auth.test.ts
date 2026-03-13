@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import Retell from "retell-sdk";
 import { createHmac } from "crypto";
-import { isRetellWebhookValid } from "./retell-auth";
+import {
+  buildRetellWebhookUrl,
+  isRetellAuthorized,
+  isRetellWebhookValid,
+} from "./retell-auth";
 
 describe("isRetellWebhookValid", () => {
   const originalEnv = { ...process.env };
@@ -45,5 +49,34 @@ describe("isRetellWebhookValid", () => {
 
     expect(isRetellWebhookValid("{}", "v=1,d=test")).toBe(true);
     expect(verifySpy).toHaveBeenCalledWith("{}", process.env.RETELL_API_KEY, "v=1,d=test");
+  });
+
+  it("accepts literal header auth when RETELL_WEBHOOK_SECRET is configured", () => {
+    process.env.RETELL_WEBHOOK_SECRET = "retell-secret";
+
+    expect(
+      isRetellAuthorized(
+        new Request("http://localhost", {
+          headers: { authorization: "Bearer retell-secret" },
+        })
+      )
+    ).toBe(true);
+    expect(
+      isRetellAuthorized(
+        new Request("http://localhost", {
+          headers: { "x-retell-secret": "retell-secret" },
+        })
+      )
+    ).toBe(true);
+  });
+
+  it("rejects missing auth in production and builds webhook urls safely", () => {
+    process.env.RETELL_WEBHOOK_SECRET = "";
+    process.env.NODE_ENV = "production";
+
+    expect(isRetellAuthorized(new Request("http://localhost"))).toBe(false);
+    expect(buildRetellWebhookUrl("https://app.test/", "api/sms/webhook")).toBe(
+      "https://app.test/api/sms/webhook"
+    );
   });
 });

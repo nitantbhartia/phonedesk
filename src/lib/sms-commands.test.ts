@@ -153,6 +153,18 @@ describe("executeCommand", () => {
     expect(result).toContain('Added "Puppy Bath"');
   });
 
+  it("asks for a service name before creating one", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "add_service", entities: { price: "55" } },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.service.create).not.toHaveBeenCalled();
+    expect(result).toContain("Please specify a service name and price");
+  });
+
   it("updates business hours across a day range and replies with the merged schedule change", async () => {
     const result = await executeCommand(
       "biz_1",
@@ -182,6 +194,49 @@ describe("executeCommand", () => {
     );
   });
 
+  it("defaults business hours updates across all days when no day range is provided", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "update_hours",
+        entities: { hours: "10am-6pm" },
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.business.update).toHaveBeenCalledWith({
+      where: { id: "biz_1" },
+      data: {
+        businessHours: expect.objectContaining({
+          mon: { open: "10:00", close: "18:00" },
+          tue: { open: "10:00", close: "18:00" },
+          wed: { open: "10:00", close: "18:00" },
+          thu: { open: "10:00", close: "18:00" },
+          fri: { open: "10:00", close: "18:00" },
+          sat: { open: "10:00", close: "18:00" },
+          sun: { open: "10:00", close: "18:00" },
+        }),
+      },
+    });
+    expect(result).toContain("Business hours updated");
+  });
+
+  it("asks for hours before updating the schedule", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "update_hours",
+        entities: {},
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.business.update).not.toHaveBeenCalled();
+    expect(result).toContain("Please specify hours");
+  });
+
   it("blocks an all-day calendar window using a synthetic appointment", async () => {
     const result = await executeCommand(
       "biz_1",
@@ -202,6 +257,29 @@ describe("executeCommand", () => {
       }),
     });
     expect(result).toContain("Blocked all day");
+  });
+
+  it("blocks a partial-day calendar window using parsed start and end times", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "block_calendar",
+        entities: { day: "Thursday", startTime: "2pm", endTime: "4:30pm" },
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        businessId: "biz_1",
+        serviceName: "Owner Block",
+        notes: "Blocked via SMS: Thursday",
+        startTime: expect.any(Date),
+        endTime: expect.any(Date),
+      }),
+    });
+    expect(result).toContain("2pm-4:30pm");
   });
 
   it("pauses and resumes bookings by toggling business activity", async () => {
@@ -257,6 +335,19 @@ describe("executeCommand", () => {
     expect(result).toContain("Buddy (Jamie) - Full Groom");
   });
 
+  it("shows a no-appointments message when the requested day is empty", async () => {
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([]);
+
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "show_schedule", entities: { date: "tomorrow" } },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(result).toBe("No appointments scheduled for tomorrow.");
+  });
+
   it("shows a helpful message when no services are configured", async () => {
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       ...baseBusiness,
@@ -310,6 +401,38 @@ describe("executeCommand", () => {
     expect(result).toContain("Cancelled Jamie's appointment");
   });
 
+  it("asks for a customer name before canceling an appointment", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "cancel_appointment",
+        entities: {},
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.findFirst).not.toHaveBeenCalled();
+    expect(result).toContain("Please specify which appointment to cancel");
+  });
+
+  it("explains when there is no matching appointment to cancel", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "cancel_appointment",
+        entities: { customerName: "Jamie" },
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.update).not.toHaveBeenCalled();
+    expect(result).toContain('No upcoming appointment found for "Jamie"');
+  });
+
   it("checks in a pet and texts the customer", async () => {
     vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
       id: "appt_4",
@@ -334,6 +457,31 @@ describe("executeCommand", () => {
     expect(result).toContain("Buddy is checked in");
   });
 
+  it("asks for a pet name before checking a pet in", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "check_in", entities: {} },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.findFirst).not.toHaveBeenCalled();
+    expect(result).toContain("Please specify the pet name");
+  });
+
+  it("explains when there is no appointment today to check in", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "check_in", entities: { petName: "Buddy" } },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(result).toContain('No appointment found today for "Buddy"');
+  });
+
   it("marks a pet as in progress and notifies the customer", async () => {
     vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
       id: "appt_5",
@@ -356,6 +504,31 @@ describe("executeCommand", () => {
       },
     });
     expect(result).toContain("now being groomed");
+  });
+
+  it("asks for a pet name before starting grooming", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "start_grooming", entities: {} },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.findFirst).not.toHaveBeenCalled();
+    expect(result).toContain("Please specify the pet name");
+  });
+
+  it("explains when there is no appointment today to start grooming", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+
+    const result = await executeCommand(
+      "biz_1",
+      { intent: "start_grooming", entities: { petName: "Buddy" } },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(result).toContain('No appointment found today for "Buddy"');
   });
 
   it("records a behavior note with severity and detected tags", async () => {
@@ -394,6 +567,52 @@ describe("executeCommand", () => {
       },
     });
     expect(result).toContain("flagged CAUTION");
+  });
+
+  it("records high-risk behavior notes even when no customer record is found", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.customer.findFirst).mockResolvedValue(null);
+
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "behavior_note",
+        entities: {
+          petName: "Buddy",
+          note: "Aggressive and attempted to bite during nails.",
+        },
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.behaviorLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        businessId: "biz_1",
+        petName: "Buddy",
+        customerId: null,
+        petId: null,
+        appointmentId: null,
+        severity: "HIGH_RISK",
+        tags: expect.arrayContaining(["biting", "aggressive"]),
+      }),
+    });
+    expect(result).toContain("flagged HIGH RISK");
+  });
+
+  it("asks for both pet name and note before recording behavior", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "behavior_note",
+        entities: { petName: "Buddy" },
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.behaviorLog.create).not.toHaveBeenCalled();
+    expect(result).toContain("Please specify pet and note");
   });
 
   it("falls back to the default help text for unknown commands", async () => {
@@ -450,5 +669,36 @@ describe("executeCommand", () => {
       "+16195559999"
     );
     expect(result).toContain("Buddy is ready for pickup");
+  });
+
+  it("asks for a pet name before finishing grooming", async () => {
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "finish_grooming",
+        entities: {},
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(prisma.appointment.findFirst).not.toHaveBeenCalled();
+    expect(result).toContain("Please specify the pet name");
+  });
+
+  it("explains when there is no appointment today to finish grooming", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+
+    const result = await executeCommand(
+      "biz_1",
+      {
+        intent: "finish_grooming",
+        entities: { petName: "Buddy" },
+      },
+      "+16195550000",
+      "+16195559999"
+    );
+
+    expect(result).toContain('No appointment found today for "Buddy"');
   });
 });

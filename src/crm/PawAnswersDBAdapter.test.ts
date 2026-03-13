@@ -77,4 +77,57 @@ describe("PawAnswersDBAdapter", () => {
       phone: "+16195550100",
     });
   });
+
+  it("returns mapped pets and services from the local database", async () => {
+    vi.mocked(prisma.pet.findMany).mockResolvedValue([
+      {
+        id: "pet_1",
+        customerId: "cust_1",
+        name: "Bella",
+        breed: "Poodle",
+        size: "SMALL",
+        notes: "Anxious for nails",
+      },
+    ] as never);
+    vi.mocked(prisma.service.findMany).mockResolvedValue([
+      {
+        id: "svc_1",
+        name: "Bath",
+        price: 45,
+        duration: 60,
+        isActive: true,
+      },
+    ] as never);
+
+    await expect(adapter.getPets("cust_1")).resolves.toEqual([
+      {
+        id: "pet_1",
+        customerId: "cust_1",
+        name: "Bella",
+        breed: "Poodle",
+        size: "SMALL",
+        temperamentNotes: "Anxious for nails",
+      },
+    ]);
+    await expect(adapter.getServices()).resolves.toEqual([
+      {
+        id: "svc_1",
+        name: "Bath",
+        priceCents: 4500,
+        durationMinutes: 60,
+        active: true,
+      },
+    ]);
+  });
+
+  it("supports addNote, healthCheck, and CRM metadata helpers", async () => {
+    await adapter.addNote("cust_1", "Asked for a shorter cut");
+
+    expect(prisma.customer.update).toHaveBeenCalledWith({
+      where: { id: "cust_1" },
+      data: { lastCallSummary: "Asked for a shorter cut" },
+    });
+    await expect(adapter.healthCheck()).resolves.toBe(true);
+    expect(adapter.getCRMType()).toBe("pawanswers");
+  });
 });
