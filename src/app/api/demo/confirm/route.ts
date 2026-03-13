@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
 
   const now = new Date();
 
+  // Validate token exists and is not already expired before entering the tx
   const magicToken = await prisma.demoMagicToken.findUnique({
     where: { token },
     include: { lead: true },
@@ -25,26 +26,34 @@ export async function POST(req: NextRequest) {
   if (!magicToken) {
     return NextResponse.json({ error: "invalid_token" }, { status: 400 });
   }
-  if (magicToken.usedAt) {
-    return NextResponse.json({ error: "token_used" }, { status: 400 });
-  }
   if (magicToken.expiresAt < now) {
     return NextResponse.json({ error: "token_expired" }, { status: 400 });
   }
+  // Note: we do NOT check usedAt here — that check happens atomically inside
+  // the transaction below to prevent two concurrent requests from both
+  // succeeding with the same token.
 
-  // Consume the token and mark the lead as verified atomically
-  await prisma.$transaction([
-    prisma.demoMagicToken.update({
-      where: { id: magicToken.id },
-      data: { usedAt: now },
-    }),
-    prisma.demoLead.update({
-      where: { id: magicToken.leadId },
-      data: {
-        verifiedAt: magicToken.lead.verifiedAt ?? now,
-      },
-    }),
-  ]);
+  // Atomically consume the token. updateMany with usedAt:null as a predicate
+  // ensures exactly one concurrent request wins — the other gets count=0.
+  const consumed = await prisma.$transaction(
+    async (tx) => {
+      const updated = await tx.demoMagicToken.updateMany({
+        where: { id: magicToken.id, usedAt: null },
+        data: { usedAt: now },
+      });
+      if (updated.count === 0) return false;
+      await tx.demoLead.update({
+        where: { id: magicToken.leadId },
+        data: { verifiedAt: magicToken.lead.verifiedAt ?? now },
+      });
+      return true;
+    },
+    { isolationLevel: "Serializable" }
+  );
+
+  if (!consumed) {
+    return NextResponse.json({ error: "token_used" }, { status: 400 });
+  }
 
   const ldt = issueDemoToken(magicToken.leadId);
 

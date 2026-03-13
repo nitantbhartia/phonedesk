@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePhoneNumber } from "@/lib/phone";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,13 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {
     return jsonNoStore({ error: "Missing token" }, { status: 400 });
+  }
+
+  // 60 polls per minute per token is generous for a UI poller; anything above
+  // that is a brute-force probe trying to enumerate session tokens.
+  const { allowed } = rateLimit(`demo-status:${token}`, { limit: 60, windowMs: 60_000 });
+  if (!allowed) {
+    return jsonNoStore({ error: "Too many requests" }, { status: 429 });
   }
 
   const attempt = await prisma.publicDemoAttempt.findUnique({
@@ -31,20 +39,22 @@ export async function GET(req: NextRequest) {
 
   const callerPhone = normalizePhoneNumber(attempt.callerPhone);
 
-  // Prefer the exact caller once the call has started; this keeps one public
-  // demo session from picking up another lead's call state or summary.
+  // Before the call starts, callerPhone is null and we have no way to scope the
+  // query to this specific session — a broad lookup could return another
+  // concurrent demo's call record.  Return "waiting" until the phone is known.
+  if (!callerPhone) {
+    return jsonNoStore({ phase: "waiting", summary: null });
+  }
+
+  // Scope strictly to this caller's phone once we know it.
   const call = await prisma.call.findFirst({
     where: {
       businessId: demoBizId,
       createdAt: { gte: attempt.startedAt },
-      ...(callerPhone
-        ? {
-            OR: [
-              { callerPhone },
-              { callerPhone: attempt.callerPhone },
-            ],
-          }
-        : {}),
+      OR: [
+        { callerPhone },
+        { callerPhone: attempt.callerPhone },
+      ],
     },
     orderBy: { createdAt: "desc" },
   });

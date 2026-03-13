@@ -88,6 +88,26 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Prevent repeated demo-number claiming without ever placing a call.
+  // A lead that has already consumed 2 attempts (called or not) within the
+  // cooldown window must wait — this closes the loop where someone claims a
+  // number, lets the 30-min session expire without calling, and repeats.
+  const recentAttempts = await prisma.publicDemoAttempt.count({
+    where: {
+      leadId: lead.id,
+      startedAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
+    },
+  });
+  if (recentAttempts >= 2) {
+    return NextResponse.json(
+      {
+        error: "cooldown_active",
+        message: "You've already requested the live demo this week. Try again next week.",
+      },
+      { status: 429 }
+    );
+  }
+
   // Verify the demo business has a Retell agent
   const demoBusiness = await prisma.business.findUnique({
     where: { id: demoBizId },
@@ -108,9 +128,22 @@ export async function POST(req: NextRequest) {
   // concurrent requests from selecting the same available number.
   let claimedNumber: string;
   let attempt: { sessionToken: string; startedAt: Date };
+  let isExistingSession = false;
   try {
     const result = await prisma.$transaction(
       async (tx) => {
+        // Re-check inside the transaction: a concurrent request for the same
+        // lead may have already created an active session between the outer
+        // idempotency check and this point.
+        const existingInTx = await tx.publicDemoAttempt.findFirst({
+          where: { leadId: lead.id, expiresAt: { gt: now } },
+          orderBy: { startedAt: "desc" },
+          include: { demoNumber: true },
+        });
+        if (existingInTx) {
+          return { demoNumber: existingInTx.demoNumber, attempt: existingInTx, isExisting: true };
+        }
+
         // Collect IDs of numbers already assigned to an active publicDemoAttempt.
         // These are not reflected in the demoSession relation, so we exclude them
         // explicitly to prevent two verified leads from sharing the same number.
@@ -137,17 +170,21 @@ export async function POST(req: NextRequest) {
         const created = await tx.publicDemoAttempt.create({
           data: { ip, demoNumberId: available.id, leadId: lead.id, expiresAt },
         });
-        return { demoNumber: available, attempt: created };
+        return { demoNumber: available, attempt: created, isExisting: false };
       },
       { isolationLevel: "Serializable" }
     );
-    claimedNumber = result.demoNumber.number;
+    claimedNumber = result.demoNumber?.number ?? "";
     attempt = result.attempt;
+    isExistingSession = result.isExisting;
 
-    // Point the demo number at the demo business agent (outside tx — external call)
-    await updateRetellPhoneNumber(result.demoNumber.retellPhoneNumber, {
-      inboundAgentId: agentId,
-    });
+    // Point the demo number at the demo business agent (outside tx — external call).
+    // Skip if we surfaced an already-active session (number already pointed).
+    if (!isExistingSession && result.demoNumber) {
+      await updateRetellPhoneNumber(result.demoNumber.retellPhoneNumber, {
+        inboundAgentId: agentId,
+      });
+    }
   } catch (e) {
     if (e instanceof Error && e.message === "demo_unavailable") {
       return NextResponse.json({ error: "demo_unavailable" }, { status: 503 });
@@ -161,6 +198,15 @@ export async function POST(req: NextRequest) {
   }).catch((e) => {
     console.error("[demo/public/start] Failed to set call duration limit:", e);
   });
+
+  // Only update lastDemoAt when a genuinely new session was created.
+  if (isExistingSession) {
+    return NextResponse.json({
+      sessionToken: attempt.sessionToken,
+      number: claimedNumber,
+      startedAt: attempt.startedAt.toISOString(),
+    });
+  }
 
   // Record that this lead has started a demo session.
   // Cooldown is set only when a real call begins (call_started webhook),
