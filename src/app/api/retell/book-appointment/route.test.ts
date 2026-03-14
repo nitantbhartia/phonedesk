@@ -158,6 +158,7 @@ describe("POST /api/retell/book-appointment", () => {
     } as never);
     vi.mocked(getCRMWithFallback).mockResolvedValue({
       getCRMType: () => "square",
+      getCustomer: vi.fn(async () => null),
       createCustomer: vi.fn(async () => ({ id: "sq_123" })),
     } as never);
   });
@@ -503,6 +504,87 @@ describe("POST /api/retell/book-appointment", () => {
     expect(payload.booked).toBe(true);
     expect(payload.confirmed).toBe(false);
     expect(prisma.customer.update).not.toHaveBeenCalled();
+  });
+
+  it("reuses an existing MoeGo customer instead of creating a duplicate on first booking", async () => {
+    const getCustomer = vi.fn(async () => ({ id: "moego_existing" }));
+    const createCustomer = vi.fn(async () => ({ id: "moego_new" }));
+    vi.mocked(upsertCustomerMemory).mockResolvedValue({
+      id: "cust_1",
+      moegoCustomerId: null,
+    } as never);
+    vi.mocked(getCRMWithFallback).mockResolvedValue({
+      getCRMType: () => "moego",
+      getCustomer,
+      createCustomer,
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          customer_phone: "+16195550100",
+          pet_name: "Buddy",
+          service_name: "Full Groom",
+          start_time: "2026-05-21T09:00:00",
+        },
+        call: {
+          from_number: "+16195550100",
+          to_number: "+16195559999",
+        },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(true);
+    expect(getCustomer).toHaveBeenCalledWith("+16195550100");
+    expect(createCustomer).not.toHaveBeenCalled();
+    expect(prisma.customer.update).toHaveBeenCalledWith({
+      where: { id: "cust_1" },
+      data: { moegoCustomerId: "moego_existing" },
+    });
+  });
+
+  it("creates a MoeGo customer when no existing external record matches the caller phone", async () => {
+    const getCustomer = vi.fn(async () => null);
+    const createCustomer = vi.fn(async () => ({ id: "moego_new" }));
+    vi.mocked(upsertCustomerMemory).mockResolvedValue({
+      id: "cust_1",
+      moegoCustomerId: null,
+    } as never);
+    vi.mocked(getCRMWithFallback).mockResolvedValue({
+      getCRMType: () => "moego",
+      getCustomer,
+      createCustomer,
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          customer_phone: "+16195550100",
+          pet_name: "Buddy",
+          service_name: "Full Groom",
+          start_time: "2026-05-21T09:00:00",
+        },
+        call: {
+          from_number: "+16195550100",
+          to_number: "+16195559999",
+        },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(true);
+    expect(getCustomer).toHaveBeenCalledWith("+16195550100");
+    expect(createCustomer).toHaveBeenCalledWith({
+      name: "Jamie",
+      phone: "+16195550100",
+    });
+    expect(prisma.customer.update).toHaveBeenCalledWith({
+      where: { id: "cust_1" },
+      data: { moegoCustomerId: "moego_new" },
+    });
   });
 
   it("skips customer memory writes and crm sync for demo/test bookings", async () => {

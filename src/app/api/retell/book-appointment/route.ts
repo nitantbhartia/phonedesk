@@ -273,26 +273,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Sync with Square CRM: create customer in Square if this is a new customer
-    if (!isTestBooking && internalCustomer && !squareCustomerId) {
+    // Sync with external CRM: create customer record on first booking
+    if (!isTestBooking && internalCustomer) {
+      const custPhone = normalizedCustomerPhone || customerPhone || call?.from_number;
       try {
         const crm = await getCRMWithFallback(business.id);
-        if (crm.getCRMType() === "square") {
-          const custPhone = normalizedCustomerPhone || customerPhone || call?.from_number;
+        const crmType = crm.getCRMType();
+
+        if (crmType === "square" && !squareCustomerId) {
           const squareCust = await crm.createCustomer({
             name: customerName,
             phone: custPhone || "",
           });
-          // Store Square customer ID for future calls
           await prisma.customer.update({
             where: { id: internalCustomer.id },
             data: { squareCustomerId: squareCust.id },
           });
           console.log(`[book-appointment] Created Square customer ${squareCust.id} for ${customerName}`);
+        } else if (crmType === "moego" && !internalCustomer.moegoCustomerId) {
+          const existingMoeGoCustomer = custPhone ? await crm.getCustomer(custPhone) : null;
+          const moegoCust = existingMoeGoCustomer ?? await crm.createCustomer({
+            name: customerName,
+            phone: custPhone || "",
+          });
+          await prisma.customer.update({
+            where: { id: internalCustomer.id },
+            data: { moegoCustomerId: moegoCust.id },
+          });
+          console.log(
+            `[book-appointment] ${existingMoeGoCustomer ? "Linked existing" : "Created"} MoeGo customer ${moegoCust.id} for ${customerName}`
+          );
         }
       } catch (crmErr) {
-        // Non-blocking: Square customer creation failure doesn't fail the booking
-        console.error("[book-appointment] Square customer create failed (non-fatal):", crmErr);
+        // Non-blocking: CRM customer creation failure doesn't fail the booking
+        console.error(`[book-appointment] CRM customer create failed (non-fatal):`, crmErr);
       }
     }
 
