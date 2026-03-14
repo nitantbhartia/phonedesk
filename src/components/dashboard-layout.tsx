@@ -145,18 +145,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const showOwnerNav = isOwnerDashboardEmailClient(session?.user?.email || null);
   const finalNavItems = showOwnerNav ? [...navItems, ownerNavItem] : navItems;
   const [usage, setUsage] = useState<UsageStats | null>(null);
-  const [forwardingReady, setForwardingReady] = useState<boolean | null>(null);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
-
   useEffect(() => {
     Promise.all([
       fetch("/api/business/profile").then((r) => r.ok ? r.json() : null),
       fetch("/api/billing/usage").then((r) => r.ok ? r.json() : null),
     ])
       .then(([profile, usageData]) => {
-        if (profile?.business) {
-          setForwardingReady(!!profile.business.phoneNumber);
-        }
         if (usageData) {
           setUsage({
             minutesUsed: usageData.minutesUsed ?? 0,
@@ -275,36 +269,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className="flex-1 p-6 lg:p-10 overflow-y-auto min-h-screen pt-20 lg:pt-10">
-        {/* Call forwarding setup banner */}
-        {forwardingReady === false && !bannerDismissed && (
-          <div className="mb-6 flex items-center gap-4 bg-paw-amber/30 border border-paw-amber rounded-2xl px-5 py-4">
-            <div className="w-9 h-9 rounded-full bg-paw-orange flex items-center justify-center flex-shrink-0 text-white">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12 19.79 19.79 0 0 1 1.06 3.38 2 2 0 0 1 3.04 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-paw-brown text-sm">Your AI receptionist isn&apos;t active yet</p>
-              <p className="text-paw-brown/60 text-sm">Set up call forwarding so RingPaw can answer your missed calls.</p>
-            </div>
-            <a
-              href="/setup/call-forwarding"
-              className="flex-shrink-0 px-4 py-2 bg-paw-brown text-paw-cream rounded-xl font-bold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              Set up now →
-            </a>
-            <button
-              onClick={() => setBannerDismissed(true)}
-              className="flex-shrink-0 text-paw-brown/40 hover:text-paw-brown transition-colors"
-              aria-label="Dismiss"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-        )}
         {children}
       </main>
     </div>
