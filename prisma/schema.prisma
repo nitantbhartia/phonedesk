@@ -90,6 +90,7 @@ model Business {
   reviewRequests  ReviewRequest[]
   breedRecommendations BreedRecommendation[]
   groomers        Groomer[]
+  smsConversations SmsConversation[]
   googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
   stripeCustomerId String? @unique
@@ -546,6 +547,20 @@ model Groomer {
   updatedAt     DateTime @updatedAt
 
   @@unique([businessId, name])
+}
+
+// Customer SMS Conversations — tracks multi-turn AI texting sessions
+model SmsConversation {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerPhone String
+  messages      Json     // Array of {role:"user"|"assistant", content:string, ts:number}
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@unique([businessId, customerPhone])
+  @@index([lastMessageAt])
 }
 
 // Feature 7: Google Review Automation

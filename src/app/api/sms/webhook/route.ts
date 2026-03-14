@@ -5,6 +5,7 @@ import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
+import { handleCustomerSms } from "@/lib/sms-ai";
 
 /** Return an empty TwiML response (Twilio requires text/xml Content-Type) */
 function twimlOk() {
@@ -412,16 +413,24 @@ export async function POST(req: NextRequest) {
         );
       }
     } else if (messageBody.trim()) {
-      await sendSmsReply(
-        from,
-        `Thanks for texting ${business.name}! Here's what I can help with:\n\n` +
-          "STATUS - Check on your pet\n" +
-          "CONFIRM - Confirm an appointment\n" +
-          "CANCEL - Cancel an appointment\n" +
-          "REBOOK - Schedule your next visit\n\n" +
-          `Or call us at ${business.phone || to} to speak with someone!`,
-        to
-      );
+      // Free-form message — hand off to AI
+      try {
+        const aiReply = await handleCustomerSms({
+          businessId: business.id,
+          customerPhone: normalizedFrom || from,
+          messageBody,
+        });
+        if (aiReply) {
+          await sendSmsReply(from, aiReply, to);
+        }
+      } catch (err) {
+        console.error("[SMS Webhook] AI handler error:", err);
+        await sendSmsReply(
+          from,
+          `Hi! Thanks for texting ${business.name}. Reply CONFIRM, CANCEL, or STATUS — or call us at ${business.phone || to}.`,
+          to
+        );
+      }
     }
   }
 
