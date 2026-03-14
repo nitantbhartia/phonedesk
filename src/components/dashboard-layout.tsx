@@ -138,6 +138,16 @@ interface UsageStats {
   plan: string;
 }
 
+export function computeShowSubBanner(business: {
+  stripeSubscriptionStatus?: string | null;
+  onboardingComplete?: boolean | null;
+} | null | undefined): boolean {
+  if (!business) return false;
+  const subscriptionActive = ["active", "trialing"].includes(business.stripeSubscriptionStatus ?? "");
+  const onboardingComplete = business.onboardingComplete ?? true;
+  return !subscriptionActive && onboardingComplete;
+}
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -153,10 +163,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     ])
       .then(([profile, usageData]) => {
         if (profile?.business) {
-          const subStatus = profile.business.stripeSubscriptionStatus;
-          const subscriptionActive = ["active", "trialing"].includes(subStatus ?? "");
-          const onboardingComplete = profile.business.onboardingComplete ?? true;
-          setShowSubBanner(!subscriptionActive && onboardingComplete);
+          setShowSubBanner(computeShowSubBanner(profile.business));
         }
         if (usageData) {
           setUsage({
@@ -277,7 +284,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main className="flex-1 p-6 lg:p-10 overflow-y-auto min-h-screen pt-20 lg:pt-10">
         {showSubBanner && (
-          <div className="mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+          <div className="sticky top-20 lg:top-0 z-10 mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
             <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
