@@ -12,6 +12,7 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
     },
     customer: {
+      findFirst: vi.fn(),
       updateMany: vi.fn(),
     },
   },
@@ -48,6 +49,7 @@ describe("POST /api/retell/add-call-note", () => {
     vi.mocked(prisma.phoneNumber.findFirst).mockReset();
     vi.mocked(prisma.demoSession.findFirst).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
+    vi.mocked(prisma.customer.findFirst).mockReset();
     vi.mocked(prisma.customer.updateMany).mockReset();
     vi.mocked(getCRMWithFallback).mockReset();
   });
@@ -90,6 +92,7 @@ describe("POST /api/retell/add-call-note", () => {
       business: { id: "biz_1" },
     } as never);
     vi.mocked(getCRMWithFallback).mockResolvedValue({
+      getCRMType: () => "square",
       addNote,
     } as never);
 
@@ -131,6 +134,7 @@ describe("POST /api/retell/add-call-note", () => {
       business: { id: "biz_1" },
     } as never);
     vi.mocked(getCRMWithFallback).mockResolvedValue({
+      getCRMType: () => "square",
       addNote: vi.fn(async () => {
         throw new Error("crm down");
       }),
@@ -152,6 +156,56 @@ describe("POST /api/retell/add-call-note", () => {
     const payload = await response.json();
 
     expect(prisma.customer.updateMany).toHaveBeenCalled();
+    expect(payload.result).toBe("Call note saved.");
+  });
+
+  it("uses the customer number for outbound MoeGo calls when writing notes and internal history", async () => {
+    const addNote = vi.fn(async () => undefined);
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+      business: { id: "biz_1" },
+    } as never);
+    vi.mocked(prisma.customer.findFirst).mockResolvedValue({
+      moegoCustomerId: "moego_123",
+    } as never);
+    vi.mocked(getCRMWithFallback).mockResolvedValue({
+      getCRMType: () => "moego",
+      addNote,
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          outcome: "voicemail",
+          note: "Left a quick rebooking voicemail.",
+        },
+        call: {
+          direction: "outbound",
+          to_number: "+16195550100",
+          from_number: "+16195559999",
+        },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(prisma.customer.findFirst).toHaveBeenCalledWith({
+      where: { businessId: "biz_1", phone: "+16195550100" },
+      select: { moegoCustomerId: true },
+    });
+    expect(addNote).toHaveBeenCalledWith(
+      "moego_123",
+      expect.stringContaining("[PawAnswers] voicemail")
+    );
+    expect(prisma.customer.updateMany).toHaveBeenCalledWith({
+      where: {
+        businessId: "biz_1",
+        phone: "+16195550100",
+      },
+      data: {
+        lastCallSummary: "Left a quick rebooking voicemail.",
+        lastContactAt: expect.any(Date),
+        lastOutcome: "voicemail",
+      },
+    });
     expect(payload.result).toBe("Call note saved.");
   });
 });

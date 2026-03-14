@@ -32,7 +32,7 @@ interface MoeGoListCustomersResponse {
 }
 
 export class MoeGoAdapter implements GroomingCRM {
-  private readonly baseUrl = "https://openapi.moego.pet/v1";
+  private readonly baseUrl = "https://openapi.moego.pet";
 
   constructor(
     private readonly apiKey: string,

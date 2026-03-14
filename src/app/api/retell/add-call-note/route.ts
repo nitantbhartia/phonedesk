@@ -54,20 +54,23 @@ export async function POST(req: NextRequest) {
 
   const businessId = phoneRecord.business.id;
   const formattedNote = `[PawAnswers] ${outcome || "call"} — ${note} (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`;
+  const isOutbound = call?.direction === "outbound";
+  const customerPhone = normalizePhoneNumber(
+    isOutbound ? call?.to_number : call?.from_number
+  );
 
   // Write note to external CRM if the customer is synced there.
   // Square: customer ID comes from AI args (passed through from lookup-customer).
   // MoeGo: customer ID looked up from internal DB (no AI arg needed).
-  const callerPhoneForCRM = normalizePhoneNumber(call?.from_number);
   try {
     const crm = await getCRMWithFallback(businessId);
     const crmType = crm.getCRMType();
 
     if (crmType === "square" && squareCustomerId) {
       await crm.addNote(squareCustomerId, formattedNote);
-    } else if (crmType === "moego" && callerPhoneForCRM) {
+    } else if (crmType === "moego" && customerPhone) {
       const customer = await prisma.customer.findFirst({
-        where: { businessId, phone: callerPhoneForCRM },
+        where: { businessId, phone: customerPhone },
         select: { moegoCustomerId: true },
       });
       if (customer?.moegoCustomerId) {
@@ -80,13 +83,12 @@ export async function POST(req: NextRequest) {
   }
 
   // Also update the internal Customer record for fallback/history
-  const callerPhone = normalizePhoneNumber(call?.from_number);
-  if (callerPhone) {
+  if (customerPhone) {
     try {
       await prisma.customer.updateMany({
         where: {
           businessId,
-          phone: callerPhone,
+          phone: customerPhone,
         },
         data: {
           lastCallSummary: note,

@@ -16,7 +16,7 @@ function errorResponse(status: number, text = "Error") {
 const API_KEY = "test-api-key";
 const COMPANY_ID = "cmp_001";
 const BUSINESS_ID = "biz_001";
-const BASE_URL = "https://openapi.moego.pet/v1";
+const BASE_URL = "https://openapi.moego.pet";
 
 describe("MoeGoAdapter", () => {
   let adapter: MoeGoAdapter;

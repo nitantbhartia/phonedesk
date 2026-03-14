@@ -291,7 +291,8 @@ export async function POST(req: NextRequest) {
           });
           console.log(`[book-appointment] Created Square customer ${squareCust.id} for ${customerName}`);
         } else if (crmType === "moego" && !internalCustomer.moegoCustomerId) {
-          const moegoCust = await crm.createCustomer({
+          const existingMoeGoCustomer = custPhone ? await crm.getCustomer(custPhone) : null;
+          const moegoCust = existingMoeGoCustomer ?? await crm.createCustomer({
             name: customerName,
             phone: custPhone || "",
           });
@@ -299,7 +300,9 @@ export async function POST(req: NextRequest) {
             where: { id: internalCustomer.id },
             data: { moegoCustomerId: moegoCust.id },
           });
-          console.log(`[book-appointment] Created MoeGo customer ${moegoCust.id} for ${customerName}`);
+          console.log(
+            `[book-appointment] ${existingMoeGoCustomer ? "Linked existing" : "Created"} MoeGo customer ${moegoCust.id} for ${customerName}`
+          );
         }
       } catch (crmErr) {
         // Non-blocking: CRM customer creation failure doesn't fail the booking
