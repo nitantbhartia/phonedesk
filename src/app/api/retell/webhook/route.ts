@@ -315,6 +315,9 @@ async function handleCallEnded(call: RetellCallPayload) {
 
 async function handleCallAnalyzed(call: RetellCallPayload) {
   if (!call.call_id) return new NextResponse(null, { status: 204 });
+  const isOutbound = call.direction === "outbound";
+  const customerPhone =
+    normalizePhoneNumber(isOutbound ? call.to_number : call.from_number) || null;
 
   const existingCall = await prisma.call.findUnique({
     where: { retellCallId: call.call_id },
@@ -342,8 +345,7 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
       await upsertCustomerMemoryFromCall({
         businessId: existingCall.businessId,
         customerName: callerName,
-        customerPhone:
-          normalizePhoneNumber(call.from_number) || existingCall.callerPhone,
+        customerPhone: customerPhone || existingCall.callerPhone,
         petName:
           extracted.petName ||
           extracted.pet_name ||
@@ -394,7 +396,9 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
         refreshedCall.business as Parameters<
           typeof sendMissedCallNotification
         >[0],
-        call.from_number || refreshedCall.callerPhone || "Unknown",
+        (isOutbound ? call.to_number : call.from_number) ||
+          refreshedCall.callerPhone ||
+          "Unknown",
         refreshedCall.callerName || undefined
       );
     }

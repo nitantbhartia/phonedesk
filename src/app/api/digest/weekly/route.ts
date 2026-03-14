@@ -4,6 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 
+function normalizeServiceName(value: string | null | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized.toLowerCase() : null;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
@@ -75,23 +80,54 @@ export async function POST(req: NextRequest) {
   const totalCalls = calls.length;
   const bookedCalls = calls.filter((c) => c.appointmentId).length;
   const missedCalls = calls.filter((c) => c.status === "MISSED").length;
-  const avgDuration = calls.length
-    ? Math.round(calls.filter((c) => c.duration).reduce((s, c) => s + (c.duration ?? 0), 0) / calls.filter((c) => c.duration).length)
+  const bookedAppointments = appointments.filter((appointment) =>
+    ["PENDING", "CONFIRMED", "COMPLETED"].includes(appointment.status)
+  );
+  const callsWithDuration = calls.filter(
+    (call): call is (typeof calls)[number] & { duration: number } =>
+      typeof call.duration === "number"
+  );
+  const avgDuration = callsWithDuration.length
+    ? Math.round(
+        callsWithDuration.reduce((sum, call) => sum + call.duration, 0) /
+          callsWithDuration.length
+      )
     : 0;
   const bookingRate = totalCalls > 0 ? Math.round((bookedCalls / totalCalls) * 100) : 0;
 
-  // Top requested service from extractedData
+  const activeServicePrices = new Map(
+    business.services
+      .filter((service) => service.name)
+      .map((service) => [normalizeServiceName(service.name)!, service.price] as const)
+  );
+  const fallbackBookingValue = business.services.length
+    ? business.services.reduce((sum, service) => sum + service.price, 0) /
+      business.services.length
+    : 75;
+
+  // Top requested service from booked appointments first, then call extractions
   const serviceCounts: Record<string, number> = {};
+  for (const appointment of bookedAppointments) {
+    if (!appointment.serviceName) continue;
+    serviceCounts[appointment.serviceName] =
+      (serviceCounts[appointment.serviceName] ?? 0) + 1;
+  }
   for (const call of calls) {
     const extracted = call.extractedData as Record<string, string> | null;
-    const svc = extracted?.service || extracted?.serviceName;
+    const svc =
+      extracted?.service_name ||
+      extracted?.serviceName ||
+      extracted?.service;
     if (svc) serviceCounts[svc] = (serviceCounts[svc] ?? 0) + 1;
   }
   const topService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-  // Revenue estimate ($75 avg per booking)
-  const AVG_BOOKING_VALUE = 75;
-  const estimatedRevenue = bookedCalls * AVG_BOOKING_VALUE;
+  const estimatedRevenue = Math.round(
+    bookedAppointments.reduce((sum, appointment) => {
+      const normalizedService = normalizeServiceName(appointment.serviceName);
+      return sum + (normalizedService ? activeServicePrices.get(normalizedService) ?? fallbackBookingValue : fallbackBookingValue);
+    }, 0)
+  );
 
   // Opportunity insight
   let insight = "";
@@ -103,6 +139,8 @@ export async function POST(req: NextRequest) {
     insight = `Your booking conversion rate is ${bookingRate}%. Review recent call transcripts — callers may be asking questions your AI isn't answering yet.`;
   } else if (totalCalls === 0) {
     insight = `No calls this week. Make sure your AI agent is active and your phone number is forwarding correctly.`;
+  } else if (topService) {
+    insight = `${topService} was your top requested service this week. Highlight it in your greeting or promos to convert similar callers faster.`;
   } else {
     insight = `Great week! Your AI handled ${totalCalls} call${totalCalls !== 1 ? "s" : ""} and booked ${bookedCalls} appointment${bookedCalls !== 1 ? "s" : ""}. Keep it up.`;
   }

@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { formatPhoneNumber, formatDuration, formatDateTime } from "@/lib/utils";
+import { computeCallScorecard } from "@/lib/call-scorecard";
 
 interface CallRecord {
   id: string;
@@ -39,59 +40,18 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-interface ScorecardResult {
-  total: number;
-  max: number;
-  criteria: { label: string; passed: boolean; points: number }[];
-}
-
-function computeScorecard(call: CallRecord): ScorecardResult {
-  const ed = call.extractedData;
-  const hasCustomerName = !!(ed?.customerName || call.callerName);
-  const hasPetName = !!ed?.dogName;
-  const hasBreed = !!ed?.breed;
-  const hasService = !!ed?.service;
-  const hasSummary = !!call.summary;
-
-  const hasAppointment = !!call.appointment;
-  const bookingPoints = hasAppointment
-    ? 2
-    : call.status === "NO_BOOKING" && hasSummary
-    ? 1
-    : call.status === "COMPLETED" && !hasAppointment
-    ? 1
-    : 0;
-  const bookingLabel = hasAppointment
-    ? "Booking confirmed"
-    : call.status === "NO_BOOKING" || (call.status === "COMPLETED" && !hasAppointment)
-    ? "Soft booking / inquiry handled"
-    : "Booking outcome";
-
-  const criteria = [
-    { label: "Got customer name", passed: hasCustomerName, points: 1 },
-    { label: "Got pet name", passed: hasPetName, points: 1 },
-    { label: "Got breed", passed: hasBreed, points: 1 },
-    { label: "Got service request", passed: hasService, points: 1 },
-    { label: bookingLabel, passed: bookingPoints > 0, points: bookingPoints },
-    { label: "Has call summary", passed: hasSummary, points: 1 },
-  ];
-
-  const total = criteria.reduce((sum, c) => sum + (c.passed ? c.points : 0), 0);
-  return { total, max: 7, criteria };
-}
-
 function ScoreBadge({ call }: { call: CallRecord }) {
-  const { total, max } = computeScorecard(call);
+  const { total, max, label } = computeCallScorecard(call);
   const colorClass =
-    total >= 5
+    total >= 6
       ? "bg-emerald-100 text-emerald-700"
-      : total >= 3
+      : total >= 4
       ? "bg-amber-100 text-amber-700"
       : "bg-red-100 text-red-600";
   return (
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${colorClass}`}
-      title="AI quality score"
+      title={`AI quality score: ${label}`}
     >
       {total}/{max}
     </span>
@@ -555,30 +515,38 @@ export default function CallLogPage() {
               <div className="space-y-4">
                 {/* AI Quality Scorecard */}
                 {(() => {
-                  const { total, max, criteria } = computeScorecard(selectedCall);
+                  const { total, max, criteria, label } = computeCallScorecard(selectedCall);
                   const badgeColor =
-                    total >= 5
+                    total >= 6
                       ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                      : total >= 3
+                      : total >= 4
                       ? "bg-amber-100 text-amber-700 border-amber-200"
                       : "bg-red-100 text-red-600 border-red-200";
                   return (
                     <div className="border rounded-2xl p-4 bg-white">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-bold text-paw-brown">AI Quality Scorecard</span>
+                        <div>
+                          <span className="text-sm font-bold text-paw-brown">AI Quality Scorecard</span>
+                          <p className="text-xs text-paw-brown/50 mt-0.5">{label}</p>
+                        </div>
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border tabular-nums ${badgeColor}`}>
                           {total}/{max}
                         </span>
                       </div>
                       <div className="space-y-1.5">
                         {criteria.map((c) => (
-                          <div key={c.label} className="flex items-center gap-2 text-sm">
-                            <span className={c.passed ? "text-emerald-500" : "text-red-400"}>
+                          <div key={c.key} className="flex items-start gap-2 text-sm">
+                            <span className={`mt-0.5 ${c.passed ? "text-emerald-500" : "text-red-400"}`}>
                               {c.passed ? "✓" : "✗"}
                             </span>
-                            <span className={c.passed ? "text-paw-brown/80" : "text-paw-brown/40"}>
-                              {c.label}
-                            </span>
+                            <div className="min-w-0">
+                              <div className={c.passed ? "text-paw-brown/80" : "text-paw-brown/40"}>
+                                {c.label}
+                              </div>
+                              {c.detail && (
+                                <div className="text-xs text-paw-brown/35">{c.detail}</div>
+                              )}
+                            </div>
                             {c.points > 1 && c.passed && (
                               <span className="ml-auto text-xs font-bold text-paw-brown/30">+{c.points}</span>
                             )}

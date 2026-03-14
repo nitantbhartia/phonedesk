@@ -437,4 +437,66 @@ describe("POST /api/retell/webhook", () => {
     expect(upsertCustomerMemoryFromCall).not.toHaveBeenCalled();
     expect(sendMissedCallNotification).not.toHaveBeenCalled();
   });
+
+  it("uses the customer number for outbound analyzed calls", async () => {
+    vi.mocked(prisma.call.findUnique)
+      .mockResolvedValueOnce({
+        id: "db_call_outbound",
+        businessId: "biz_1",
+        retellCallId: "call_outbound",
+        callerName: "Jamie",
+        callerPhone: "+16195550100",
+        appointmentId: null,
+        status: "COMPLETED",
+        isTestCall: false,
+      } as never)
+      .mockResolvedValueOnce({
+        id: "db_call_outbound",
+        businessId: "biz_1",
+        retellCallId: "call_outbound",
+        callerName: "Jamie",
+        callerPhone: "+16195550100",
+        appointmentId: null,
+        status: "COMPLETED",
+        isTestCall: false,
+        business: {
+          id: "biz_1",
+          name: "Paw House",
+          phone: "+16195550000",
+          phoneNumber: { number: "+16195559999" },
+        },
+      } as never);
+
+    const response = await POST(
+      makeRequest({
+        event: "call_analyzed",
+        call: {
+          call_id: "call_outbound",
+          direction: "outbound",
+          from_number: "+16195559999",
+          to_number: "+16195550100",
+          call_analysis: {
+            call_summary: "Left a quick rebooking voicemail.",
+            custom_analysis_data: {
+              customer_name: "Jamie",
+              pet_name: "Buddy",
+              service_name: "Full Groom",
+            },
+          },
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(204);
+    expect(upsertCustomerMemoryFromCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerPhone: "+16195550100",
+      })
+    );
+    expect(sendMissedCallNotification).toHaveBeenCalledWith(
+      expect.any(Object),
+      "+16195550100",
+      "Jamie"
+    );
+  });
 });
