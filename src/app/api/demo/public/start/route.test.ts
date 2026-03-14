@@ -5,6 +5,7 @@ vi.mock("@/lib/prisma", () => ({
     $transaction: vi.fn(),
     publicDemoAttempt: {
       findFirst: vi.fn(),
+      count: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
     },
@@ -42,6 +43,7 @@ describe("POST /api/demo/public/start", () => {
     process.env.DEMO_BUSINESS_ID = "demo_biz";
     vi.mocked(prisma.$transaction).mockReset();
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockReset();
+    vi.mocked(prisma.publicDemoAttempt.count).mockReset();
     vi.mocked(prisma.publicDemoAttempt.findMany).mockReset();
     vi.mocked(prisma.publicDemoAttempt.create).mockReset();
     vi.mocked(prisma.business.findUnique).mockReset();
@@ -57,6 +59,7 @@ describe("POST /api/demo/public/start", () => {
   it("does not reuse a demo number that is already assigned to an active public attempt", async () => {
     vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(0 as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       retellConfig: { agentId: "agent_1" },
     } as never);
@@ -69,6 +72,7 @@ describe("POST /api/demo/public/start", () => {
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
       const tx = {
         publicDemoAttempt: {
+          findFirst: vi.fn().mockResolvedValue(null),
           findMany: vi.fn().mockResolvedValue([{ demoNumberId: "demo_num_1" }]),
           create: vi.fn().mockResolvedValue({
             sessionToken: "token_1",
@@ -178,6 +182,7 @@ describe("POST /api/demo/public/start", () => {
       cooldownUntil: null,
     } as never);
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(0 as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       retellConfig: null,
     } as never);

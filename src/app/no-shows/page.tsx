@@ -86,6 +86,8 @@ export default function NoShowProtectionPage() {
   const [actionError, setActionError] = useState("");
   const [blasting, setBlasting] = useState(false);
   const [blastResult, setBlastResult] = useState<string | null>(null);
+  const [callingPhone, setCallingPhone] = useState<string | null>(null);
+  const [callResults, setCallResults] = useState<Record<string, "success" | "error">>({});
   const [activeTab, setActiveTab] = useState<"pending" | "noShows" | "waitlist" | "lapsing">("pending");
   const [showAddWaitlist, setShowAddWaitlist] = useState(false);
   const [waitlistForm, setWaitlistForm] = useState({
@@ -177,6 +179,28 @@ export default function NoShowProtectionPage() {
       }
     } catch {
       setActionError("Failed to add to waitlist. Please try again.");
+    }
+  }
+
+  async function callToRebook(customerPhone: string) {
+    setCallingPhone(customerPhone);
+    try {
+      const res = await fetch("/api/outbound/rebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerPhone }),
+      });
+      if (res.ok) {
+        setCallResults((prev) => ({ ...prev, [customerPhone]: "success" }));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        console.error("Outbound call failed:", data.error);
+        setCallResults((prev) => ({ ...prev, [customerPhone]: "error" }));
+      }
+    } catch {
+      setCallResults((prev) => ({ ...prev, [customerPhone]: "error" }));
+    } finally {
+      setCallingPhone(null);
     }
   }
 
@@ -667,11 +691,14 @@ export default function NoShowProtectionPage() {
                         <th className="px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Customer & Pet</th>
                         <th className="px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">Last Visit</th>
                         <th className="px-6 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">Days Since</th>
-                        <th className="px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">Phone</th>
+                        <th className="px-8 py-4 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-paw-brown/5">
-                      {lapsingClients.map((client, i) => (
+                      {lapsingClients.map((client, i) => {
+                        const callResult = callResults[client.customerPhone];
+                        const isCalling = callingPhone === client.customerPhone;
+                        return (
                         <tr key={i} className="hover:bg-paw-cream/30 transition-colors">
                           <td className="px-8 py-5">
                             <div className="flex items-center gap-3">
@@ -696,11 +723,36 @@ export default function NoShowProtectionPage() {
                               {client.daysSinceVisit}d ago
                             </span>
                           </td>
-                          <td className="px-8 py-5 text-right text-sm text-paw-brown/50">
-                            {formatPhoneNumber(client.customerPhone)}
+                          <td className="px-8 py-5 text-right">
+                            <div className="flex items-center justify-end gap-3">
+                              <span className="text-xs text-paw-brown/40 hidden sm:inline">{formatPhoneNumber(client.customerPhone)}</span>
+                              {callResult === "success" ? (
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                  Calling…
+                                </span>
+                              ) : callResult === "error" ? (
+                                <span className="text-xs font-bold text-red-500">Failed</span>
+                              ) : (
+                                <button
+                                  onClick={() => callToRebook(client.customerPhone)}
+                                  disabled={isCalling || !!callingPhone}
+                                  title="Have AI call this customer to rebook"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-paw-amber/10 hover:bg-paw-amber/20 text-paw-brown rounded-full text-xs font-bold transition-colors disabled:opacity-40"
+                                >
+                                  {isCalling ? (
+                                    <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                                  ) : (
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.19 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.1 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.07a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16v.92z"/></svg>
+                                  )}
+                                  {isCalling ? "Dialing…" : "AI Call"}
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </>
