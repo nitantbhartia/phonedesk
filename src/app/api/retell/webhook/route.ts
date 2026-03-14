@@ -137,7 +137,7 @@ async function handleCallStarted(call: RetellCallPayload) {
     // Public demo phone-number rate limit: detect repeat callers by phone
     if (demoResolution?.source === "public" && normalizedCaller && call.call_id) {
       const now = new Date();
-      const windowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
       const repeat = await prisma.publicDemoAttempt.findFirst({
         where: {
           callerPhone: normalizedCaller,
@@ -153,7 +153,7 @@ async function handleCallStarted(call: RetellCallPayload) {
       }
 
       if (!demoResolution.callerPhone) {
-        const cooldownUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const cooldownUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
         await prisma.publicDemoAttempt.update({
           where: { id: demoResolution.publicAttemptId },
           data: { callerPhone: normalizedCaller },
@@ -240,6 +240,7 @@ async function handleCallEnded(call: RetellCallPayload) {
         data: {
           duration,
           transcript: call.transcript || null,
+          transcriptObject: call.transcript_object ? (call.transcript_object as object[]) : undefined,
           status: "COMPLETED",
           recordingUrl: call.recording_url || null,
         },
@@ -286,6 +287,7 @@ async function handleCallEnded(call: RetellCallPayload) {
           callerPhone: normalizedCaller || call.from_number,
           duration,
           transcript: call.transcript || null,
+          transcriptObject: call.transcript_object ? (call.transcript_object as object[]) : undefined,
           status: "COMPLETED",
           recordingUrl: call.recording_url || null,
         },
@@ -298,6 +300,7 @@ async function handleCallEnded(call: RetellCallPayload) {
           callerPhone: normalizedCaller || call.from_number,
           duration,
           transcript: call.transcript || null,
+          transcriptObject: call.transcript_object ? (call.transcript_object as object[]) : undefined,
           status: "COMPLETED",
           recordingUrl: call.recording_url || null,
         },
@@ -312,6 +315,9 @@ async function handleCallEnded(call: RetellCallPayload) {
 
 async function handleCallAnalyzed(call: RetellCallPayload) {
   if (!call.call_id) return new NextResponse(null, { status: 204 });
+  const isOutbound = call.direction === "outbound";
+  const customerPhone =
+    normalizePhoneNumber(isOutbound ? call.to_number : call.from_number) || null;
 
   const existingCall = await prisma.call.findUnique({
     where: { retellCallId: call.call_id },
@@ -339,8 +345,7 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
       await upsertCustomerMemoryFromCall({
         businessId: existingCall.businessId,
         customerName: callerName,
-        customerPhone:
-          normalizePhoneNumber(call.from_number) || existingCall.callerPhone,
+        customerPhone: customerPhone || existingCall.callerPhone,
         petName:
           extracted.petName ||
           extracted.pet_name ||
@@ -391,7 +396,9 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
         refreshedCall.business as Parameters<
           typeof sendMissedCallNotification
         >[0],
-        call.from_number || refreshedCall.callerPhone || "Unknown",
+        (isOutbound ? call.to_number : call.from_number) ||
+          refreshedCall.callerPhone ||
+          "Unknown",
         refreshedCall.callerName || undefined
       );
     }

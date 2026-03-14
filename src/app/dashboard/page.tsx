@@ -137,6 +137,7 @@ export default function DashboardPage() {
   const [usageMinutesLimit, setUsageMinutesLimit] = useState(120);
   const [sendingDigest, setSendingDigest] = useState(false);
   const [digestSent, setDigestSent] = useState(false);
+  const [digestError, setDigestError] = useState("");
   const [usageOverage, setUsageOverage] = useState(0);
   const [usagePlanName, setUsagePlanName] = useState("");
   const [tourOpen, setTourOpen] = useState(false);
@@ -735,10 +736,18 @@ export default function DashboardPage() {
               onClick={async () => {
                 setSendingDigest(true);
                 setDigestSent(false);
+                setDigestError("");
                 try {
-                  await fetch("/api/digest/weekly", { method: "POST" });
+                  const response = await fetch("/api/digest/weekly", {
+                    method: "POST",
+                  });
+                  if (!response.ok) {
+                    throw new Error("digest_failed");
+                  }
                   setDigestSent(true);
                   setTimeout(() => setDigestSent(false), 4000);
+                } catch {
+                  setDigestError("Couldn’t send recap. Please try again.");
                 } finally {
                   setSendingDigest(false);
                 }
@@ -763,6 +772,11 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+        {digestError && (
+          <div className="px-8 pb-4">
+            <p className="text-sm font-medium text-red-600">{digestError}</p>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           {recentCalls.length === 0 ? (

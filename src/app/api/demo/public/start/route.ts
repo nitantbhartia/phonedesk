@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "cooldown_active",
-        message: `You've already tried the live demo recently. Come back in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`,
+        message: `You've already tried the live demo recently. Come back in ${daysLeft} day${daysLeft === 1 ? "" : "s"} — no hard feelings.`,
         cooldownUntil: lead.cooldownUntil.toISOString(),
       },
       { status: 429 }
@@ -96,14 +96,14 @@ export async function POST(req: NextRequest) {
   const recentAttempts = await prisma.publicDemoAttempt.count({
     where: {
       leadId: lead.id,
-      startedAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
+      startedAt: { gte: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000) },
     },
   });
   if (recentAttempts >= 2) {
     return NextResponse.json(
       {
         error: "cooldown_active",
-        message: "You've already requested the live demo this week. Try again next week.",
+        message: "You've already requested the live demo recently. Try again in 3 days.",
       },
       { status: 429 }
     );
