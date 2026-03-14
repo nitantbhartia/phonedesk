@@ -234,6 +234,7 @@ enum CalendarProvider {
   GOOGLE
   SQUARE
   ACUITY
+  MOEGO
 }
 
 model RetellConfig {
@@ -339,6 +340,7 @@ model Customer {
   lastOutcome     String?
   noShowCount     Int      @default(0)
   squareCustomerId String?  // Square CRM customer ID for write-back
+  moegoCustomerId  String?  // MoeGo CRM customer ID for write-back
   preferredGroomerId String?
   preferredGroomer   Groomer?  @relation(fields: [preferredGroomerId], references: [id], onDelete: SetNull)
   pets            Pet[]

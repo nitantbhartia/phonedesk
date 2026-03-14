@@ -55,15 +55,28 @@ export async function POST(req: NextRequest) {
   const businessId = phoneRecord.business.id;
   const formattedNote = `[PawAnswers] ${outcome || "call"} — ${note} (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})`;
 
-  // Write to Square CRM if we have a Square customer ID
-  if (squareCustomerId) {
-    try {
-      const crm = await getCRMWithFallback(businessId);
+  // Write note to external CRM if the customer is synced there.
+  // Square: customer ID comes from AI args (passed through from lookup-customer).
+  // MoeGo: customer ID looked up from internal DB (no AI arg needed).
+  const callerPhoneForCRM = normalizePhoneNumber(call?.from_number);
+  try {
+    const crm = await getCRMWithFallback(businessId);
+    const crmType = crm.getCRMType();
+
+    if (crmType === "square" && squareCustomerId) {
       await crm.addNote(squareCustomerId, formattedNote);
-    } catch (err) {
-      console.error("[add-call-note] Failed to write note to Square:", err);
-      // Non-blocking — fall through to internal DB write
+    } else if (crmType === "moego" && callerPhoneForCRM) {
+      const customer = await prisma.customer.findFirst({
+        where: { businessId, phone: callerPhoneForCRM },
+        select: { moegoCustomerId: true },
+      });
+      if (customer?.moegoCustomerId) {
+        await crm.addNote(customer.moegoCustomerId, formattedNote);
+      }
     }
+  } catch (err) {
+    console.error("[add-call-note] Failed to write note to external CRM:", err);
+    // Non-blocking — fall through to internal DB write
   }
 
   // Also update the internal Customer record for fallback/history
