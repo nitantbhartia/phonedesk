@@ -343,24 +343,6 @@ export default function DashboardPage() {
           </Link>
         </div>
       )}
-      {/* Agent-off banner — onboarding done but no subscription */}
-      {!subscriptionActive && onboardingComplete && (
-        <div className="mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
-          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="font-bold text-amber-800 text-sm">No active subscription</p>
-            <p className="text-amber-700/70 text-sm">Your AI receptionist is paused. Subscribe to start taking calls.</p>
-          </div>
-          <Link href="/settings/billing" className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
-            Subscribe
-          </Link>
-        </div>
-      )}
       {/* SMS commands discovery banner — shown once until dismissed */}
       {!smsHintDismissed && (
         <div className="mb-6 flex items-start gap-4 bg-paw-sky/60 border border-paw-brown/10 rounded-2xl px-5 py-4">

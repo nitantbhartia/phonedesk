@@ -145,12 +145,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const showOwnerNav = isOwnerDashboardEmailClient(session?.user?.email || null);
   const finalNavItems = showOwnerNav ? [...navItems, ownerNavItem] : navItems;
   const [usage, setUsage] = useState<UsageStats | null>(null);
+  const [showSubBanner, setShowSubBanner] = useState(false);
   useEffect(() => {
     Promise.all([
       fetch("/api/business/profile").then((r) => r.ok ? r.json() : null),
       fetch("/api/billing/usage").then((r) => r.ok ? r.json() : null),
     ])
       .then(([profile, usageData]) => {
+        if (profile?.business) {
+          const subStatus = profile.business.stripeSubscriptionStatus;
+          const subscriptionActive = ["active", "trialing"].includes(subStatus ?? "");
+          const onboardingComplete = profile.business.onboardingComplete ?? true;
+          setShowSubBanner(!subscriptionActive && onboardingComplete);
+        }
         if (usageData) {
           setUsage({
             minutesUsed: usageData.minutesUsed ?? 0,
@@ -269,6 +276,23 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className="flex-1 p-6 lg:p-10 overflow-y-auto min-h-screen pt-20 lg:pt-10">
+        {showSubBanner && (
+          <div className="mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-amber-800 text-sm">No active subscription</p>
+              <p className="text-amber-700/70 text-sm">Your AI receptionist is paused. Subscribe to start taking calls.</p>
+            </div>
+            <Link href="/settings/billing" className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
+              Subscribe
+            </Link>
+          </div>
+        )}
         {children}
       </main>
     </div>
