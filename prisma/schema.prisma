@@ -263,6 +263,7 @@ model Call {
   callerName      String?
   duration        Int?        // seconds
   transcript      String?     @db.Text
+  transcriptObject Json?      // structured transcript from Retell (array of turns with tool calls)
   summary         String?     @db.Text
   status          CallStatus  @default(IN_PROGRESS)
   extractedData   Json?       // { customerName, dogName, breed, size, service, preferredTime }
