@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     demoLead: {
+      findFirst: vi.fn(),
       upsert: vi.fn(),
     },
     demoMagicToken: {
@@ -29,11 +30,13 @@ describe("POST /api/demo/qualify", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_APP_URL = "https://app.example.com";
     vi.mocked(prisma.demoLead.upsert).mockReset();
+    vi.mocked(prisma.demoLead.findFirst).mockReset();
     vi.mocked(prisma.demoMagicToken.updateMany).mockReset();
     vi.mocked(prisma.demoMagicToken.create).mockReset();
     vi.mocked(isValidBusinessEmail).mockReset();
     vi.mocked(sendDemoMagicLink).mockReset();
     vi.mocked(isValidBusinessEmail).mockReturnValue(true);
+    vi.mocked(prisma.demoLead.findFirst).mockResolvedValue(null);
   });
 
   it("rejects invalid business emails", async () => {
