@@ -10,6 +10,7 @@ import {
   syncRetellAgent,
 } from "@/lib/retell";
 import { buildRetellWebhookUrl } from "@/lib/retell-auth";
+import { isSmsEnabled } from "@/lib/sms";
 
 async function resolveUserId(session: {
   user?: {
@@ -134,7 +135,9 @@ export async function POST(req: Request) {
       agentId,
       areaCode,
       nickname: `${business.name} - RingPaw`,
-      smsWebhookUrl: buildRetellWebhookUrl(appUrl, "/api/sms/webhook"),
+      smsWebhookUrl: isSmsEnabled()
+        ? buildRetellWebhookUrl(appUrl, "/api/sms/webhook")
+        : undefined,
     });
 
     if (!isProvisionedPhoneNumber(result?.phone_number)) {

@@ -15,6 +15,7 @@ describe("sms", () => {
   const originalSid = process.env.TWILIO_ACCOUNT_SID;
   const originalToken = process.env.TWILIO_AUTH_TOKEN;
   const originalFrom = process.env.TWILIO_PHONE_NUMBER;
+  const originalSmsEnabled = process.env.SMS_ENABLED;
 
   beforeEach(() => {
     vi.resetModules();
@@ -23,12 +24,14 @@ describe("sms", () => {
     process.env.TWILIO_ACCOUNT_SID = "AC1234567890";
     process.env.TWILIO_AUTH_TOKEN = "token1234";
     process.env.TWILIO_PHONE_NUMBER = "+16195559999";
+    delete process.env.SMS_ENABLED;
   });
 
   afterEach(() => {
     process.env.TWILIO_ACCOUNT_SID = originalSid;
     process.env.TWILIO_AUTH_TOKEN = originalToken;
     process.env.TWILIO_PHONE_NUMBER = originalFrom;
+    process.env.SMS_ENABLED = originalSmsEnabled;
   });
 
   it("sends sms through twilio with the fallback from number", async () => {
@@ -44,12 +47,19 @@ describe("sms", () => {
     });
   });
 
-  it("throws when no from number is available", async () => {
+  it("skips sending when sms is not fully configured", async () => {
     const { sendSms } = await import("./sms");
     delete process.env.TWILIO_PHONE_NUMBER;
 
-    await expect(sendSms("+16195550100", "Hello there")).rejects.toThrow(
-      "From number is required for Twilio SMS"
-    );
+    await expect(sendSms("+16195550100", "Hello there")).resolves.toBeUndefined();
+    expect(createMessage).not.toHaveBeenCalled();
+  });
+
+  it("skips sending when sms is explicitly disabled", async () => {
+    const { sendSms } = await import("./sms");
+    process.env.SMS_ENABLED = "false";
+
+    await expect(sendSms("+16195550100", "Hello there")).resolves.toBeUndefined();
+    expect(createMessage).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,18 @@ import twilio from "twilio";
 
 let _client: ReturnType<typeof twilio> | null = null;
 
+export function isSmsEnabled(): boolean {
+  if (process.env.SMS_ENABLED === "false") {
+    return false;
+  }
+
+  return Boolean(
+    process.env.TWILIO_ACCOUNT_SID &&
+      process.env.TWILIO_AUTH_TOKEN &&
+      process.env.TWILIO_PHONE_NUMBER
+  );
+}
+
 function getClient() {
   if (!_client) {
     const sid = process.env.TWILIO_ACCOUNT_SID;
@@ -25,6 +37,11 @@ export async function sendSms(
   from?: string,
   { retries = 2 }: { retries?: number } = {}
 ): Promise<void> {
+  if (!isSmsEnabled()) {
+    console.log("[Twilio] SMS disabled - skipping send to:", to);
+    return;
+  }
+
   const fromNumber = from || process.env.TWILIO_PHONE_NUMBER;
   console.log("[Twilio] sendSms — to:", to, "| from (param):", from || "none", "| from (env):", process.env.TWILIO_PHONE_NUMBER || "MISSING", "| using:", fromNumber || "NONE");
   if (!fromNumber) {

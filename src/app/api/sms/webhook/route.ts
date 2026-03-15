@@ -5,6 +5,7 @@ import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
+import { isSmsEnabled } from "@/lib/sms";
 
 /** Return an empty TwiML response (Twilio requires text/xml Content-Type) */
 function twimlOk() {
@@ -124,6 +125,10 @@ async function sendSmsReply(to: string, body: string, from: string) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isSmsEnabled()) {
+    return NextResponse.json({ ok: true });
+  }
+
   const inbound = await parseInboundPayload(req);
   const { source, from, to, messageBody, twilioFormData } = inbound;
 
