@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { updateRetellPhoneNumber } from "@/lib/retell";
 import { buildRetellWebhookUrl } from "@/lib/retell-auth";
+import { isSmsEnabled } from "@/lib/sms";
 
 /**
  * POST /api/admin/reassign-number
@@ -104,7 +105,9 @@ export async function POST(req: Request) {
     await updateRetellPhoneNumber(phoneNumber, {
       inboundAgentId: toAgentId,
       nickname: `${toBusiness.name} - RingPaw`,
-      smsWebhookUrl: buildRetellWebhookUrl(appUrl, "/api/sms/webhook"),
+      smsWebhookUrl: isSmsEnabled()
+        ? buildRetellWebhookUrl(appUrl, "/api/sms/webhook")
+        : undefined,
     });
 
     // Update DB in a transaction: move the phoneNumber record

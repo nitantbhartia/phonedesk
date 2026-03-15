@@ -40,6 +40,10 @@ describe("/api/admin/reassign-number", () => {
   beforeEach(() => {
     process.env.ADMIN_SECRET = "top-secret";
     process.env.NEXT_PUBLIC_APP_URL = "https://app.test";
+    process.env.TWILIO_ACCOUNT_SID = "AC1234567890";
+    process.env.TWILIO_AUTH_TOKEN = "token1234";
+    process.env.TWILIO_PHONE_NUMBER = "+16195559999";
+    delete process.env.SMS_ENABLED;
     vi.mocked(prisma.phoneNumber.findUnique).mockReset();
     vi.mocked(prisma.phoneNumber.update).mockReset();
     vi.mocked(prisma.phoneNumber.delete).mockReset();
@@ -123,6 +127,42 @@ describe("/api/admin/reassign-number", () => {
       from: "biz_old",
       to: "biz_new",
       message: "+16195550100 reassigned from Old Shop → New Shop",
+    });
+  });
+
+  it("omits the sms webhook when sms is disabled", async () => {
+    process.env.SMS_ENABLED = "false";
+    vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue({
+      number: "+16195550100",
+      businessId: "biz_old",
+      business: { name: "Old Shop" },
+    } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_new",
+      name: "New Shop",
+      phoneNumber: null,
+      retellConfig: { agentId: "agent_1" },
+      services: [],
+      breedRecommendations: [],
+    } as never);
+    vi.mocked(prisma.phoneNumber.update).mockReturnValue("phone-update" as never);
+    vi.mocked(prisma.business.update).mockReturnValue("business-update" as never);
+
+    await POST(
+      new Request("http://localhost/api/admin/reassign-number", {
+        method: "POST",
+        headers: { authorization: "Bearer top-secret" },
+        body: JSON.stringify({
+          phoneNumber: "+16195550100",
+          toBusinessId: "biz_new",
+        }),
+      })
+    );
+
+    expect(updateRetellPhoneNumber).toHaveBeenCalledWith("+16195550100", {
+      inboundAgentId: "agent_1",
+      nickname: "New Shop - RingPaw",
+      smsWebhookUrl: undefined,
     });
   });
 
