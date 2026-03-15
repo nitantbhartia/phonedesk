@@ -42,6 +42,27 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     ),
   },
   {
+    href: "/dashboard/revenue",
+    label: "Revenue",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard/campaigns",
+    label: "Campaigns",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <line x1="9" y1="10" x2="15" y2="10" />
+        <line x1="12" y1="7" x2="12" y2="13" />
+      </svg>
+    ),
+  },
+  {
     href: "/today",
     label: "Today",
     tourId: "tour-nav-today",
@@ -250,7 +271,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             {finalNavItems.map((item) => {
               const isActive =
                 pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                (item.href !== "/dashboard" && item.href !== "/" && pathname.startsWith(item.href));
               return (
                 <Link
                   key={item.href}

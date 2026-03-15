@@ -91,6 +91,7 @@ model Business {
   breedRecommendations BreedRecommendation[]
   groomers        Groomer[]
   smsConversations SmsConversation[]
+  campaigns        Campaign[]
   googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
   stripeCustomerId String? @unique
@@ -340,6 +341,7 @@ model Customer {
   lastCallSummary String?  @db.Text
   lastOutcome     String?
   noShowCount     Int      @default(0)
+  smsOptOut       Boolean  @default(false) // true if customer has opted out of marketing SMS
   squareCustomerId String?  // Square CRM customer ID for write-back
   moegoCustomerId  String?  // MoeGo CRM customer ID for write-back
   preferredGroomerId String?
@@ -575,4 +577,41 @@ model ReviewRequest {
   sentAt        DateTime @default(now())
   clicked       Boolean  @default(false)
   clickedAt     DateTime?
+}
+
+// Marketing Campaigns — AI-powered outbound SMS campaigns
+model Campaign {
+  id              String         @id @default(cuid())
+  businessId      String
+  business        Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name            String
+  type            CampaignType
+  status          CampaignStatus @default(DRAFT)
+  messageTemplate String         @db.Text  // may include {petName}, {customerName} tokens
+  targetSegment   Json?          // filter criteria: { daysSinceVisit, minVisitCount, serviceFilter, etc. }
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  sentCount       Int            @default(0)
+  replyCount      Int            @default(0)
+  bookingsCount   Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([businessId, status])
+}
+
+enum CampaignType {
+  WIN_BACK       // lapsed customers
+  SEASONAL       // time-of-year promos
+  CAPACITY_FILL  // empty calendar slots
+  NEW_SERVICE    // announce a new offering
+  BIRTHDAY       // pet birthday
+  MILESTONE      // nth visit celebration
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
 }

@@ -58,6 +58,8 @@ describe("buildCustomerContextSummary", () => {
         phone: "+16195550100",
         name: "Sarah",
         squareCustomerId: null,
+        moegoCustomerId: null,
+        smsOptOut: false,
         visitCount: 8,
         vipFlag: false,
         notes: "Dog gets anxious during nail trims",
