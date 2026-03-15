@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { normalizePhoneNumber } from "@/lib/phone";
+import { updateRetellPhoneNumber } from "@/lib/retell";
 
 export type DemoResolution =
   | {
       businessId: string;
       source: "private";
       demoNumberId: string;
+      expired?: false;
     }
   | {
       businessId: string;
@@ -14,6 +16,8 @@ export type DemoResolution =
       publicAttemptId: string;
       leadId: string | null;
       callerPhone: string | null;
+      /** True when matched via grace-period fallback (session already expired). */
+      expired?: boolean;
     };
 
 /**
@@ -109,6 +113,7 @@ export async function resolveDemoSession(
         publicAttemptId: expiredAttempt.id,
         leadId: expiredAttempt.leadId,
         callerPhone: expiredAttempt.callerPhone,
+        expired: true,
       };
     }
   }
@@ -121,4 +126,35 @@ export async function resolveBusinessFromDemo(
 ): Promise<string | null> {
   const resolution = await resolveDemoSession(toNumber);
   return resolution?.businessId ?? null;
+}
+
+/**
+ * Clears inboundAgentId on every demo number that currently has no active
+ * session.  Call this (fire-and-forget) after allocating a demo number so
+ * that stale agent assignments left over from expired sessions cannot accept
+ * new inbound calls.
+ *
+ * @param excludeDemoNumberId - the just-allocated number; skip it because its
+ *   agent was set immediately before this call.
+ */
+export async function cleanupIdleDemoNumbers(
+  excludeDemoNumberId: string
+): Promise<void> {
+  const now = new Date();
+  const idle = await prisma.demoNumber.findMany({
+    where: {
+      id: { not: excludeDemoNumberId },
+      sessions: { none: { expiresAt: { gt: now } } },
+      publicAttempts: { none: { expiresAt: { gt: now } } },
+    },
+    select: { retellPhoneNumber: true },
+  });
+
+  await Promise.allSettled(
+    idle.map((n) =>
+      updateRetellPhoneNumber(n.retellPhoneNumber, { inboundAgentId: null }).catch(
+        (e) => console.error("[demo] Failed to clear idle demo number agent:", n.retellPhoneNumber, e)
+      )
+    )
+  );
 }

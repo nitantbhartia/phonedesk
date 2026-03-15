@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { syncRetellAgent, updateRetellPhoneNumber, updateRetellAgent, DEMO_CALL_DURATION_MS } from "@/lib/retell";
+import { cleanupIdleDemoNumbers } from "@/lib/demo-session";
 
 const DEMO_SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -122,6 +123,12 @@ export async function POST(req: NextRequest) {
   await updateRetellPhoneNumber(available.retellPhoneNumber, {
     inboundAgentId: agentId,
   });
+
+  // Best-effort: clear any other idle demo numbers so expired sessions can't
+  // receive calls between allocations.
+  cleanupIdleDemoNumbers(available.id).catch((e) =>
+    console.error("[demo/start] cleanupIdleDemoNumbers failed:", e)
+  );
 
   // Cap test calls at 4 minutes — the agent will be reset to 5 min on next syncRetellAgent call
   await updateRetellAgent(agentId, { maxCallDurationMs: DEMO_CALL_DURATION_MS }).catch((e) => {

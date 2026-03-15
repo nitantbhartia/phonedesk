@@ -15,11 +15,67 @@ type LivePhase =
   | "waiting"      // number assigned, waiting for call
   | "in_progress"  // call in progress
   | "completed"    // call done
-  | "cooldown"     // 7-day cooldown active
+  | "cooldown"     // cooldown active
   | "unavailable"  // no demo numbers free
   | "error";
 
 type GateError = "invalid_email" | "cooldown_active" | "other" | null;
+
+type TranscriptTurn =
+  | { role: "agent" | "user"; content: string }
+  | { role: "tool_call_invocation"; name: string; tool_call_id: string; arguments?: string }
+  | { role: "tool_call_result"; tool_call_id: string }
+  | { role: string; content?: string; name?: string; tool_call_id?: string };
+
+// ─── Scenario data ─────────────────────────────────────────────────────────
+
+const SCENARIOS = [
+  {
+    id: "new_booking",
+    label: "New client booking",
+    emoji: "🐾",
+    script: "Hi, I'm a new client — I have a golden retriever who needs a full groom. Do you have anything open next Thursday around 10am?",
+  },
+  {
+    id: "reschedule",
+    label: "Existing client reschedule",
+    emoji: "📅",
+    script: "Hey, I have an appointment booked for Saturday but something came up. Can I move it to next week?",
+  },
+  {
+    id: "after_hours",
+    label: "After-hours inquiry",
+    emoji: "🌙",
+    script: "Hi, I know it's late but I wanted to check — do you have any Saturday slots? My shih tzu is really overdue for a trim.",
+  },
+] as const;
+
+type ScenarioId = (typeof SCENARIOS)[number]["id"];
+
+// ─── AI tool → friendly label ──────────────────────────────────────────────
+
+const TOOL_LABELS: Record<string, string | null> = {
+  check_availability: "Checked availability",
+  "check-availability": "Checked availability",
+  book_appointment: "Booked appointment",
+  "book-appointment": "Booked appointment",
+  get_quote: "Looked up pricing",
+  "get-quote": "Looked up pricing",
+  get_services: "Looked up services",
+  "get-services": "Looked up services",
+  lookup_customer: "Recognized returning customer",
+  "lookup-customer": "Recognized returning customer",
+  lookup_customer_context: "Recognized returning customer",
+  join_waitlist: "Added to waitlist",
+  "join-waitlist": "Added to waitlist",
+  cancel_appointment: "Cancelled appointment",
+  reschedule_appointment: "Rescheduled appointment",
+  add_call_note: "Noted for the groomer",
+  business_faq: "Checked FAQ",
+  // skip noise
+  current_datetime: null,
+  get_current_datetime: null,
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -34,6 +90,78 @@ function formatPhone(raw: string) {
   return raw;
 }
 
+// ─── Transcript viewer ─────────────────────────────────────────────────────
+
+function TranscriptViewer({ turns }: { turns: TranscriptTurn[] }) {
+  // Filter out tool_call_result (verbose JSON noise) and unknown roles
+  const visible = turns.filter(
+    (t) => t.role === "agent" || t.role === "user" || t.role === "tool_call_invocation"
+  );
+
+  if (visible.length === 0) {
+    return (
+      <p className="text-sm text-paw-brown/40 text-center py-4">No transcript available.</p>
+    );
+  }
+
+  return (
+    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+      {visible.map((turn, i) => {
+        if (turn.role === "tool_call_invocation") {
+          const label = TOOL_LABELS[(turn as { role: "tool_call_invocation"; name: string }).name ?? ""] ?? null;
+          if (!label) return null;
+          return (
+            <div
+              key={i}
+              className="flex items-center justify-center gap-2 py-1 animate-in fade-in duration-300"
+              style={{ animationDelay: `${i * 40}ms` }}
+            >
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                {label}
+              </span>
+            </div>
+          );
+        }
+
+        const isAgent = turn.role === "agent";
+        const content = (turn as { role: string; content?: string }).content ?? "";
+        if (!content.trim()) return null;
+
+        return (
+          <div
+            key={i}
+            className={`flex gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300 ${isAgent ? "justify-end" : "justify-start"}`}
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
+            {!isAgent && (
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-paw-sky border-2 border-paw-brown/10 flex items-center justify-center mt-0.5">
+                <span className="text-xs">👤</span>
+              </div>
+            )}
+            <div
+              className={`max-w-[78%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                isAgent
+                  ? "bg-paw-brown text-paw-cream rounded-br-sm"
+                  : "bg-white border-2 border-paw-brown/8 text-paw-brown rounded-bl-sm"
+              }`}
+            >
+              {content}
+            </div>
+            {isAgent && (
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-paw-brown flex items-center justify-center mt-0.5">
+                <span className="text-xs">🤖</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Inner component (uses useSearchParams) ───────────────────────────────────
 
 function DemoPageInner() {
@@ -43,7 +171,10 @@ function DemoPageInner() {
   const [ldt, setLdt] = useState<string | null>(null);
   const [number, setNumber] = useState("");
   const [summary, setSummary] = useState<string | null>(null);
+  const [transcriptObject, setTranscriptObject] = useState<TranscriptTurn[] | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioId>("new_booking");
+  const [completedTab, setCompletedTab] = useState<"summary" | "transcript">("summary");
 
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -53,6 +184,7 @@ function DemoPageInner() {
 
   const phaseRef = useRef<LivePhase>("gate");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => { phaseRef.current = livePhase; }, [livePhase]);
 
@@ -90,12 +222,20 @@ function DemoPageInner() {
             setNumber(num);
             fetch(`/api/demo/public/status?token=${token}`, { cache: "no-store" })
               .then((r) => r.json())
-              .then((data: { phase: string; summary: string | null }) => {
-                if (data.phase === "completed") { setSummary(data.summary); setLivePhase("completed"); }
-                else if (data.phase === "in_progress") { setLivePhase("in_progress"); startPolling(token); }
-                else { setLivePhase("waiting"); startPolling(token); }
+              .then((data: { phase: string; summary: string | null; transcriptObject?: TranscriptTurn[] | null }) => {
+                if (data.phase === "completed") {
+                  setSummary(data.summary);
+                  setTranscriptObject(data.transcriptObject ?? null);
+                  setLivePhase("completed");
+                } else if (data.phase === "in_progress") {
+                  setLivePhase("in_progress");
+                  startSSE(token);
+                } else {
+                  setLivePhase("waiting");
+                  startSSE(token);
+                }
               })
-              .catch(() => { setLivePhase("waiting"); startPolling(token); });
+              .catch(() => { setLivePhase("waiting"); startSSE(token); });
             return;
           }
         } catch { /* ignore */ }
@@ -119,10 +259,18 @@ function DemoPageInner() {
           setNumber(num);
           fetch(`/api/demo/public/status?token=${token}`, { cache: "no-store" })
             .then((r) => r.json())
-            .then((data: { phase: string; summary: string | null }) => {
-              if (data.phase === "completed") { setSummary(data.summary); setLivePhase("completed"); }
-              else if (data.phase === "in_progress") { setLivePhase("in_progress"); startPolling(token); }
-              else { setLivePhase("waiting"); startPolling(token); }
+            .then((data: { phase: string; summary: string | null; transcriptObject?: TranscriptTurn[] | null }) => {
+              if (data.phase === "completed") {
+                setSummary(data.summary);
+                setTranscriptObject(data.transcriptObject ?? null);
+                setLivePhase("completed");
+              } else if (data.phase === "in_progress") {
+                setLivePhase("in_progress");
+                startSSE(token);
+              } else {
+                setLivePhase("waiting");
+                startSSE(token);
+              }
             })
             .catch(() => setLivePhase("gate"));
         } else {
@@ -131,6 +279,14 @@ function DemoPageInner() {
       } catch { localStorage.removeItem("demoSession"); }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopSSE();
+      stopPolling();
+    };
   }, []);
 
   // ── Gate: submit qualification form ──────────────────────────────────────
@@ -203,13 +359,58 @@ function DemoPageInner() {
       setSessionToken(sToken);
       setNumber(num);
       setLivePhase("waiting");
-      startPolling(sToken);
+      startSSE(sToken);
     } catch {
       setLivePhase("error");
     }
   }
 
-  // ── Polling ───────────────────────────────────────────────────────────────
+  // ── SSE (primary) ─────────────────────────────────────────────────────────
+
+  function stopSSE() {
+    if (esRef.current) { esRef.current.close(); esRef.current = null; }
+  }
+
+  function startSSE(token: string) {
+    stopSSE();
+    stopPolling();
+
+    const es = new EventSource(`/api/demo/public/stream?token=${encodeURIComponent(token)}`);
+    esRef.current = es;
+
+    es.onmessage = (e: MessageEvent<string>) => {
+      try {
+        const data = JSON.parse(e.data) as {
+          phase: string;
+          summary?: string | null;
+          transcriptObject?: TranscriptTurn[] | null;
+        };
+        if (data.phase === "in_progress" && phaseRef.current === "waiting") {
+          setLivePhase("in_progress");
+        } else if (data.phase === "completed") {
+          setSummary(data.summary ?? null);
+          setTranscriptObject(data.transcriptObject ?? null);
+          setLivePhase("completed");
+          es.close();
+          esRef.current = null;
+        } else if (data.phase === "timeout") {
+          // SSE timed out — reconnect silently
+          es.close();
+          esRef.current = null;
+          if (phaseRef.current !== "completed") startSSE(token);
+        }
+      } catch { /* ignore parse errors */ }
+    };
+
+    es.onerror = () => {
+      es.close();
+      esRef.current = null;
+      // Fallback to polling if SSE fails (e.g. proxy strips streaming)
+      if (phaseRef.current !== "completed") startPolling(token);
+    };
+  }
+
+  // ── Polling (SSE fallback) ────────────────────────────────────────────────
 
   function stopPolling() {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
@@ -219,31 +420,43 @@ function DemoPageInner() {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/demo/public/status?token=${token}`, {
-          cache: "no-store",
-        });
-        const data = await res.json() as { phase: string; summary: string | null };
+        const res = await fetch(`/api/demo/public/status?token=${token}`, { cache: "no-store" });
+        const data = await res.json() as {
+          phase: string;
+          summary: string | null;
+          transcriptObject?: TranscriptTurn[] | null;
+        };
         if (data.phase === "in_progress" && phaseRef.current === "waiting") setLivePhase("in_progress");
-        else if (data.phase === "completed") { setSummary(data.summary); setLivePhase("completed"); stopPolling(); }
+        else if (data.phase === "completed") {
+          setSummary(data.summary);
+          setTranscriptObject(data.transcriptObject ?? null);
+          setLivePhase("completed");
+          stopPolling();
+        }
       } catch { /* ignore */ }
     }, 3000);
   }
 
   function resetToGate() {
+    stopSSE();
     stopPolling();
     localStorage.removeItem("demoSession");
     setLivePhase("gate");
     setLdt(null);
     setNumber("");
     setSummary(null);
+    setTranscriptObject(null);
     setSessionToken(null);
     setGateError(null);
     setGateErrorMsg("");
+    setSelectedScenario("new_booking");
+    setCompletedTab("summary");
     window.history.replaceState({}, "", "/demo");
   }
 
   const formattedNumber = number ? formatPhone(number) : "";
   const inActiveCall = livePhase === "waiting" || livePhase === "in_progress" || livePhase === "completed";
+  const currentScenario = SCENARIOS.find((s) => s.id === selectedScenario) ?? SCENARIOS[0];
 
   return (
     <div className="min-h-screen bg-paw-sky antialiased flex flex-col relative">
@@ -348,7 +561,7 @@ function DemoPageInner() {
                     </>
                   )}
                 </button>
-                <p className="text-xs text-paw-brown/40 text-center">No signup · 1 live demo per week</p>
+                <p className="text-xs text-paw-brown/40 text-center">No signup · 1 live demo every 3 days</p>
               </form>
             </div>
           )}
@@ -431,7 +644,7 @@ function DemoPageInner() {
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
                     <p className="text-lg font-bold text-amber-600 mb-1">Your AI is on the call!</p>
-                    <p className="text-sm text-paw-brown/50">We&apos;ll capture the summary when it ends.</p>
+                    <p className="text-sm text-paw-brown/50">We&apos;ll show the full transcript when it ends.</p>
                   </div>
                 )}
                 {livePhase === "completed" && (
@@ -442,15 +655,42 @@ function DemoPageInner() {
                 )}
               </div>
 
+              {/* ── Scenario selector (waiting only) ── */}
               {livePhase === "waiting" && (
-                <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8 mb-4">
+                <div className="mb-4">
+                  <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider mb-2 text-center">Pick a scenario to try</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {SCENARIOS.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => setSelectedScenario(s.id)}
+                        className={`flex flex-col items-center gap-1 px-2 py-3 rounded-2xl border-2 text-center transition-all ${
+                          selectedScenario === s.id
+                            ? "border-paw-brown bg-paw-brown/5 shadow-soft"
+                            : "border-paw-brown/10 bg-white hover:border-paw-brown/25"
+                        }`}
+                      >
+                        <span className="text-xl">{s.emoji}</span>
+                        <span className={`text-xs font-bold leading-tight ${selectedScenario === s.id ? "text-paw-brown" : "text-paw-brown/60"}`}>
+                          {s.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Try saying (waiting only) ── */}
+              {livePhase === "waiting" && (
+                <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8 mb-4 transition-all duration-300">
                   <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try saying →</p>
                   <p className="text-sm text-paw-brown/80 italic leading-relaxed">
-                    &ldquo;Hi, I&apos;d like to book a full groom for my golden retriever next Thursday — do you have anything around 10am?&rdquo;
+                    &ldquo;{currentScenario.script}&rdquo;
                   </p>
                 </div>
               )}
 
+              {/* ── In progress indicator ── */}
               {livePhase === "in_progress" && (
                 <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center mb-4 animate-in fade-in duration-300">
                   <div className="flex items-center justify-center gap-2">
@@ -458,17 +698,75 @@ function DemoPageInner() {
                     <span className="text-sm font-bold text-amber-700">Listening live</span>
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                   </div>
-                  <p className="text-xs text-amber-600/70 mt-1">We&apos;ll show the AI&apos;s summary as soon as the call ends.</p>
+                  <p className="text-xs text-amber-600/70 mt-1">Full transcript appears when the call ends.</p>
                 </div>
               )}
 
-              {livePhase === "completed" && summary && (
-                <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 mb-4 animate-in fade-in slide-in-from-bottom-3 duration-400">
-                  <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">AI Call Summary</p>
-                  <p className="text-sm text-paw-brown/80 leading-relaxed">{summary}</p>
+              {/* ── Completed: tabs for summary + transcript ── */}
+              {livePhase === "completed" && (
+                <div className="mb-4 animate-in fade-in slide-in-from-bottom-3 duration-400">
+                  {/* Tabs */}
+                  <div className="flex gap-1 bg-paw-sky/60 rounded-2xl p-1 mb-3">
+                    <button
+                      onClick={() => setCompletedTab("summary")}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                        completedTab === "summary"
+                          ? "bg-white shadow-soft text-paw-brown"
+                          : "text-paw-brown/50 hover:text-paw-brown/80"
+                      }`}
+                    >
+                      Summary
+                    </button>
+                    <button
+                      onClick={() => setCompletedTab("transcript")}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                        completedTab === "transcript"
+                          ? "bg-white shadow-soft text-paw-brown"
+                          : "text-paw-brown/50 hover:text-paw-brown/80"
+                      }`}
+                    >
+                      Full Transcript
+                      {transcriptObject && transcriptObject.length > 0 && (
+                        <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-paw-orange/20 text-paw-orange text-[10px]">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Summary tab */}
+                  {completedTab === "summary" && (
+                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4">
+                      <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">AI Call Summary</p>
+                      {summary ? (
+                        <p className="text-sm text-paw-brown/80 leading-relaxed">{summary}</p>
+                      ) : (
+                        <p className="text-sm text-paw-brown/50 italic">
+                          Summary generates a few seconds after the call ends — refresh if it&apos;s missing.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Transcript tab */}
+                  {completedTab === "transcript" && (
+                    <div className="bg-white border-2 border-paw-brown/8 rounded-2xl p-4">
+                      <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider mb-3">
+                        Conversation · AI actions highlighted
+                      </p>
+                      {transcriptObject && transcriptObject.length > 0 ? (
+                        <TranscriptViewer turns={transcriptObject} />
+                      ) : (
+                        <p className="text-sm text-paw-brown/40 text-center py-3 italic">
+                          Transcript not captured for this call — it&apos;ll appear on your next demo.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
+              {/* ── Waiting footer ── */}
               {livePhase === "waiting" && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-center gap-3 py-1 text-paw-brown/40 text-xs font-bold">
@@ -480,7 +778,7 @@ function DemoPageInner() {
                     Waiting for your call
                   </div>
                   <button
-                    onClick={() => { stopPolling(); setLivePhase("completed"); }}
+                    onClick={() => { stopSSE(); stopPolling(); setLivePhase("completed"); }}
                     className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
                   >
                     I&apos;ve already called ✓
@@ -488,6 +786,7 @@ function DemoPageInner() {
                 </div>
               )}
 
+              {/* ── Completed CTA ── */}
               {livePhase === "completed" && (
                 <div className="mt-2 space-y-3 animate-in fade-in duration-400">
                   <Link
@@ -511,7 +810,7 @@ function DemoPageInner() {
               <div className="text-4xl mb-4">⏳</div>
               <h2 className="text-2xl font-extrabold text-paw-brown mb-3">You&apos;ve already tried the live demo!</h2>
               <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
-                Live demos are limited to once per week. Ready to set it up for your shop?
+                Live demos are limited to once every 3 days. Ready to set it up for your shop?
               </p>
               <Link
                 href="/onboarding"

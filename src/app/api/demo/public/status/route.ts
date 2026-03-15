@@ -67,5 +67,6 @@ export async function GET(req: NextRequest) {
   return jsonNoStore({
     phase: terminal ? "completed" : "in_progress",
     summary: call.summary ?? null,
+    transcriptObject: terminal ? (call.transcriptObject ?? null) : null,
   });
 }

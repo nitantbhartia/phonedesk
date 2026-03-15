@@ -1,7 +1,8 @@
-// Gingr CRM Adapter skeleton — implement when a paying client requests it.
-// NOTE: Gingr uses session-based auth, not Bearer tokens.
-// Verify token refresh approach with Gingr API docs before implementing.
-// See PRD section 14.4 for step-by-step implementation guide.
+// Gingr CRM Adapter — READ-ONLY. Gingr's public API does not support write
+// operations (customer creation, notes, etc.). Their support docs explicitly
+// state "the public API is read only." Write-back for Gingr clients is not
+// possible without a private partner API arrangement with Gingr directly.
+// See: https://support.gingrapp.com/hc/en-us/articles/27482358729101
 
 import type {
   GroomingCRM,

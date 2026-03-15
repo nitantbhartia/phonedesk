@@ -280,6 +280,87 @@ export function generateGreeting(business: Business): string {
   return `Hi, you've reached ${business.name}! This is Pip — how can I help you today?`;
 }
 
+export function generateRebookingPrompt(
+  business: Business & { services: Service[]; breedRecommendations: BreedRecommendation[]; groomers?: Groomer[] }
+): string {
+  const hours = business.businessHours
+    ? formatBusinessHours(
+        business.businessHours as Record<string, { open: string; close: string }>
+      )
+    : "Monday–Friday 9:00 AM–5:00 PM";
+
+  const serviceList = business.services
+    .filter((s) => s.isActive)
+    .map((s) => `- ${s.name}: $${s.price} (${s.duration} minutes)`)
+    .join("\n");
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const breedGuideSection = buildBreedGuideSection(business.breedRecommendations);
+
+  return `IDENTITY & ROLE
+You are Pip, the friendly AI receptionist for ${business.name}, a pet grooming business.
+You are making a brief, warm outbound courtesy call on behalf of ${business.ownerName} to a customer whose pet may be due for their next grooming appointment.
+Business: ${business.name}
+Owner: ${business.ownerName}
+Location: ${business.address || business.city || "Not specified"}
+Hours: ${hours}
+Services:
+${serviceList || "- Full Groom: $75 (90 minutes)\n- Bath & Brush: $45 (60 minutes)\n- Nail Trim: $20 (15 minutes)"}
+---
+THIS IS AN OUTBOUND CALL — KEY DIFFERENCES FROM INBOUND
+- YOU are calling THEM, not the other way around. Be mindful of their time.
+- Always confirm you're speaking with the right person before diving in.
+- If they seem busy or caught off guard, offer to call back.
+- This is a gentle reminder, NOT a sales call. Never be pushy.
+- Keep the call short and focused — your one goal is to book an appointment or understand why they haven't.
+---
+CUSTOMER CONTEXT (injected per-call)
+Customer name: {{customer_name}}
+Pet name: {{pet_name}}
+Last service: {{last_service}}
+Days since last visit: {{days_since_visit}}
+---
+CALL OPENING
+When the call connects, confirm you're speaking with the right person, then introduce yourself briefly:
+"Hi, is this {{customer_name}}? This is Pip calling from ${business.name}. I hope I'm not catching you at a bad time — I'm just reaching out because it looks like it's been a while since we've seen {{pet_name}}, and I wanted to check in."
+
+Then pause and let them respond before continuing.
+---
+GOAL
+Warmly offer to book their next appointment. If they're interested, use check_availability and book_appointment to schedule right now on the call.
+---
+HANDLING RESPONSES
+- Interested → use tools to find a slot and confirm booking
+- Already booked somewhere else → "No worries at all — glad {{pet_name}} is taken care of!" then end the call warmly
+- Not interested / not a good time → "Absolutely, I completely understand. We'd love to see you whenever you're ready." then end the call
+- Wants a callback → Thank them, note their preferred callback time in the call summary, end warmly
+- Busy right now → Offer to call back: "Of course — when would be a better time to reach you?"
+---
+VOICEMAIL DETECTION
+If you reach voicemail (you hear a beep, "please leave a message", or it's clearly not a live person), leave this message and immediately end the call:
+"Hi {{customer_name}}, this is Pip calling from ${business.name}. Just a quick check-in — it's been a little while since we've seen {{pet_name}}, and we'd love to get them back in. Feel free to call us back or reply to any of our texts to book. Hope to see you soon — take care!"
+---
+PERSONALITY & TONE
+- Warm, brief, and genuinely kind — you're doing them a favor by reminding them
+- Never use high-pressure language. This is a courtesy call.
+- Keep it short. If the call runs over 2 minutes, you're doing too much small talk.
+- Use {{pet_name}} naturally in conversation
+- Mirror their energy — if they're brief, be brief
+---
+VOICE RULES
+- Calm, steady pace. Never rushed.
+- Acknowledge what they say before moving on
+- Natural bridging phrases: "Of course", "Absolutely", "Let me check that"
+- One question per turn — never stack questions
+---
+${breedGuideSection}
+---
+BOOKING TOOLS
+Use check_availability to find open slots, then book_appointment to confirm.
+The booking webhook is: ${appUrl}/api/retell
+Use the same tools as the inbound agent.`;
+}
+
 // --- Retell LLM (Response Engine) ---
 
 export async function createRetellLLM(config: {
@@ -457,6 +538,78 @@ export async function endRetellCall(callId: string): Promise<void> {
   await retellFetch(`/v2/delete-call/${callId}`, { method: "DELETE" });
 }
 
+export async function createOutboundCall(params: {
+  fromNumber: string; // business's Retell E.164 number
+  toNumber: string;   // customer's E.164 number
+  agentId: string;
+  dynamicVariables: Record<string, string>;
+}): Promise<{ call_id: string }> {
+  return retellFetch("/v2/create-phone-call", {
+    method: "POST",
+    body: JSON.stringify({
+      from_number: params.fromNumber,
+      to_number: params.toNumber,
+      override_agent_id: params.agentId,
+      retell_llm_dynamic_variables: params.dynamicVariables,
+    }),
+  });
+}
+
+type RebookingSyncBusiness = Business & {
+  services: Service[];
+  breedRecommendations: BreedRecommendation[];
+  groomers?: Groomer[];
+  retellConfig?: RetellConfig | null;
+};
+
+export async function syncRebookingAgent(business: RebookingSyncBusiness): Promise<{ agentId: string }> {
+  const prompt = generateRebookingPrompt(business);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const webhookUrl = `${appUrl}/api/retell/webhook`;
+  const existingConfig = business.retellConfig;
+
+  if (existingConfig?.rebookingAgentId && existingConfig.rebookingLlmId) {
+    await updateRetellLLM(existingConfig.rebookingLlmId, {
+      generalPrompt: prompt,
+      beginMessage: null as unknown as string, // begin_message handled via dynamic variables at call time
+    });
+    await updateRetellAgent(existingConfig.rebookingAgentId, {
+      agentName: `${business.name} Rebooking`,
+      webhookUrl,
+      voiceSpeed: DEFAULT_VOICE_SPEED,
+      volume: DEFAULT_VOLUME,
+    });
+    return { agentId: existingConfig.rebookingAgentId };
+  }
+
+  const llm = await createRetellLLM({
+    generalPrompt: prompt,
+    beginMessage: "", // will be set per-call via agent_override or dynamic variable substitution
+    tools: buildAgentTools(appUrl),
+  });
+
+  const agent = await createRetellAgent({
+    llmId: llm.llm_id,
+    agentName: `${business.name} Rebooking`,
+    webhookUrl,
+  });
+
+  await prisma.retellConfig.upsert({
+    where: { businessId: business.id },
+    create: {
+      businessId: business.id,
+      rebookingAgentId: agent.agent_id,
+      rebookingLlmId: llm.llm_id,
+    },
+    update: {
+      rebookingAgentId: agent.agent_id,
+      rebookingLlmId: llm.llm_id,
+    },
+  });
+
+  return { agentId: agent.agent_id };
+}
+
 // --- Phone Number Provisioning ---
 
 const FALLBACK_AREA_CODES = [415, 212, 312, 512, 720, 206, 404, 617, 213, 303];
@@ -516,14 +669,14 @@ export async function deleteRetellPhoneNumber(
 export async function updateRetellPhoneNumber(
   phoneNumber: string,
   updates: {
-    inboundAgentId?: string;
+    inboundAgentId?: string | null;
     nickname?: string;
     smsWebhookUrl?: string;
   }
 ): Promise<void> {
   const body: Record<string, unknown> = {};
   if (updates.inboundAgentId !== undefined)
-    body.inbound_agent_id = updates.inboundAgentId;
+    body.inbound_agent_id = updates.inboundAgentId ?? null;
   if (updates.nickname !== undefined) body.nickname = updates.nickname;
   if (updates.smsWebhookUrl !== undefined)
     body.inbound_sms_webhook_url = updates.smsWebhookUrl;

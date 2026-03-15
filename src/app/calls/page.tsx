@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { formatPhoneNumber, formatDuration, formatDateTime } from "@/lib/utils";
+import { computeCallScorecard } from "@/lib/call-scorecard";
 
 interface CallRecord {
   id: string;
@@ -37,6 +38,24 @@ function getInitials(name: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+function ScoreBadge({ call }: { call: CallRecord }) {
+  const { total, max, label } = computeCallScorecard(call);
+  const colorClass =
+    total >= 6
+      ? "bg-emerald-100 text-emerald-700"
+      : total >= 4
+      ? "bg-amber-100 text-amber-700"
+      : "bg-red-100 text-red-600";
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${colorClass}`}
+      title={`AI quality score: ${label}`}
+    >
+      {total}/{max}
+    </span>
+  );
 }
 
 export default function CallLogPage() {
@@ -274,6 +293,9 @@ export default function CallLogPage() {
                 <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden md:table-cell">
                   Time
                 </th>
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">
+                  AI Score
+                </th>
                 <th className="px-4 sm:px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">
                   Action
                 </th>
@@ -408,6 +430,9 @@ export default function CallLogPage() {
                     <td className="px-4 sm:px-6 py-4 sm:py-6 text-sm font-medium text-paw-brown/70 hidden md:table-cell">
                       {formatDateTime(call.createdAt)}
                     </td>
+                    <td className="px-4 sm:px-6 py-4 sm:py-6 hidden sm:table-cell">
+                      <ScoreBadge call={call} />
+                    </td>
                     <td className="px-4 sm:px-8 py-4 sm:py-6 text-right">
                       <button
                         onClick={() => setSelectedCall(call)}
@@ -488,6 +513,50 @@ export default function CallLogPage() {
               </DialogHeader>
 
               <div className="space-y-4">
+                {/* AI Quality Scorecard */}
+                {(() => {
+                  const { total, max, criteria, label } = computeCallScorecard(selectedCall);
+                  const badgeColor =
+                    total >= 6
+                      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                      : total >= 4
+                      ? "bg-amber-100 text-amber-700 border-amber-200"
+                      : "bg-red-100 text-red-600 border-red-200";
+                  return (
+                    <div className="border rounded-2xl p-4 bg-white">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <span className="text-sm font-bold text-paw-brown">AI Quality Scorecard</span>
+                          <p className="text-xs text-paw-brown/50 mt-0.5">{label}</p>
+                        </div>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border tabular-nums ${badgeColor}`}>
+                          {total}/{max}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {criteria.map((c) => (
+                          <div key={c.key} className="flex items-start gap-2 text-sm">
+                            <span className={`mt-0.5 ${c.passed ? "text-emerald-500" : "text-red-400"}`}>
+                              {c.passed ? "✓" : "✗"}
+                            </span>
+                            <div className="min-w-0">
+                              <div className={c.passed ? "text-paw-brown/80" : "text-paw-brown/40"}>
+                                {c.label}
+                              </div>
+                              {c.detail && (
+                                <div className="text-xs text-paw-brown/35">{c.detail}</div>
+                              )}
+                            </div>
+                            {c.points > 1 && c.passed && (
+                              <span className="ml-auto text-xs font-bold text-paw-brown/30">+{c.points}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Call Info */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

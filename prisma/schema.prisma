@@ -234,22 +234,25 @@ enum CalendarProvider {
   GOOGLE
   SQUARE
   ACUITY
+  MOEGO
 }
 
 model RetellConfig {
-  id              String   @id @default(cuid())
-  businessId      String   @unique
-  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  agentId         String?  // Retell agent ID
-  llmId           String?  // Retell LLM (Response Engine) ID
-  systemPrompt    String?  @db.Text
-  voiceId         String?
-  greeting        String?  @db.Text
-  fallbackMessage String?  @db.Text
-  personality     Json?    // { tone, style, language, customInstructions }
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  businessId         String   @unique
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  agentId            String?  // Retell agent ID
+  llmId              String?  // Retell LLM (Response Engine) ID
+  systemPrompt       String?  @db.Text
+  voiceId            String?
+  greeting           String?  @db.Text
+  fallbackMessage    String?  @db.Text
+  personality        Json?    // { tone, style, language, customInstructions }
+  isActive           Boolean  @default(true)
+  rebookingAgentId   String?  // Retell agent ID for outbound rebooking calls
+  rebookingLlmId     String?  // Retell LLM ID for outbound rebooking calls
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Call {
@@ -261,6 +264,7 @@ model Call {
   callerName      String?
   duration        Int?        // seconds
   transcript      String?     @db.Text
+  transcriptObject Json?      // structured transcript from Retell (array of turns with tool calls)
   summary         String?     @db.Text
   status          CallStatus  @default(IN_PROGRESS)
   extractedData   Json?       // { customerName, dogName, breed, size, service, preferredTime }
@@ -268,6 +272,7 @@ model Call {
   appointment     Appointment? @relation(fields: [appointmentId], references: [id])
   recordingUrl    String?
   isTestCall      Boolean     @default(false) // true if made before onboarding complete; excluded from usage counts
+  isOutbound      Boolean     @default(false) // true for AI-initiated outbound rebooking calls
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -335,6 +340,7 @@ model Customer {
   lastOutcome     String?
   noShowCount     Int      @default(0)
   squareCustomerId String?  // Square CRM customer ID for write-back
+  moegoCustomerId  String?  // MoeGo CRM customer ID for write-back
   preferredGroomerId String?
   preferredGroomer   Groomer?  @relation(fields: [preferredGroomerId], references: [id], onDelete: SetNull)
   pets            Pet[]

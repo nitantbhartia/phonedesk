@@ -135,6 +135,9 @@ export default function DashboardPage() {
   const [fetchError, setFetchError] = useState("");
   const [usageMinutesUsed, setUsageMinutesUsed] = useState(0);
   const [usageMinutesLimit, setUsageMinutesLimit] = useState(120);
+  const [sendingDigest, setSendingDigest] = useState(false);
+  const [digestSent, setDigestSent] = useState(false);
+  const [digestError, setDigestError] = useState("");
   const [usageOverage, setUsageOverage] = useState(0);
   const [usagePlanName, setUsagePlanName] = useState("");
   const [tourOpen, setTourOpen] = useState(false);
@@ -337,24 +340,6 @@ export default function DashboardPage() {
           </div>
           <Link href="/onboarding" className="shrink-0 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">
             Finish Setup
-          </Link>
-        </div>
-      )}
-      {/* Agent-off banner — onboarding done but no subscription */}
-      {!subscriptionActive && onboardingComplete && (
-        <div className="mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
-          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="font-bold text-amber-800 text-sm">No active subscription</p>
-            <p className="text-amber-700/70 text-sm">Your AI receptionist is paused. Subscribe to start taking calls.</p>
-          </div>
-          <Link href="/settings/billing" className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
-            Subscribe
           </Link>
         </div>
       )}
@@ -729,6 +714,38 @@ export default function DashboardPage() {
         <div className="px-8 py-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-bold text-paw-brown">Recent Call Log</h2>
           <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                setSendingDigest(true);
+                setDigestSent(false);
+                setDigestError("");
+                try {
+                  const response = await fetch("/api/digest/weekly", {
+                    method: "POST",
+                  });
+                  if (!response.ok) {
+                    throw new Error("digest_failed");
+                  }
+                  setDigestSent(true);
+                  setTimeout(() => setDigestSent(false), 4000);
+                } catch {
+                  setDigestError("Couldn’t send recap. Please try again.");
+                } finally {
+                  setSendingDigest(false);
+                }
+              }}
+              disabled={sendingDigest}
+              className="px-4 py-2 rounded-full border border-gray-100 text-sm font-bold hover:bg-paw-sky transition-colors disabled:opacity-50 flex items-center gap-2"
+              title="Email yourself a weekly summary"
+            >
+              {digestSent ? (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Sent!</>
+              ) : sendingDigest ? (
+                <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Sending…</>
+              ) : (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m22 3-10 9L2 3"/></svg> Weekly Recap</>
+              )}
+            </button>
             <Link
               href="/calls"
               className="px-4 py-2 rounded-full border border-gray-100 text-sm font-bold hover:bg-paw-sky transition-colors"
@@ -737,6 +754,11 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+        {digestError && (
+          <div className="px-8 pb-4">
+            <p className="text-sm font-medium text-red-600">{digestError}</p>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           {recentCalls.length === 0 ? (

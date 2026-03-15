@@ -5,10 +5,9 @@ import {
 } from "@/lib/notifications";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { upsertCustomerMemoryFromCall, lookupCustomerContext } from "@/lib/customer-memory";
-import { refreshRetellLLMForCall } from "@/lib/retell";
+import { refreshRetellLLMForCall, endRetellCall, updateRetellPhoneNumber } from "@/lib/retell";
 import { isRetellWebhookValid } from "@/lib/retell-auth";
 import { resolveBusinessFromDemo, resolveDemoSession } from "@/lib/demo-session";
-import { endRetellCall } from "@/lib/retell";
 
 // Retell sends webhook events: call_started, call_ended, call_analyzed
 // Payload: { event: string, call: { call_id, call_type, agent_id, call_status, from_number, to_number, direction, start_timestamp, end_timestamp, disconnection_reason, transcript, transcript_object, call_analysis, metadata } }
@@ -58,8 +57,38 @@ async function handleCallStarted(call: RetellCallPayload) {
   }
 
   try {
-    const calledNumber = normalizePhoneNumber(call.to_number);
-    const normalizedCaller = normalizePhoneNumber(call.from_number);
+    const isOutbound = call.direction === "outbound";
+
+    // For outbound calls, from_number is OUR number and to_number is the customer.
+    // For inbound calls, to_number is OUR number and from_number is the customer.
+    const ourNumber = normalizePhoneNumber(isOutbound ? call.from_number : call.to_number);
+    const calledNumber = ourNumber; // keep variable name for inbound-compat code below
+    const normalizedCaller = normalizePhoneNumber(isOutbound ? call.to_number : call.from_number);
+
+    // Outbound calls: resolve business from our number and update the pre-created Call record.
+    if (isOutbound) {
+      const phoneNum = ourNumber
+        ? await prisma.phoneNumber.findFirst({
+            where: { number: ourNumber },
+            select: { businessId: true },
+          })
+        : null;
+      if (phoneNum && call.call_id) {
+        await prisma.call.upsert({
+          where: { retellCallId: call.call_id },
+          create: {
+            businessId: phoneNum.businessId,
+            retellCallId: call.call_id,
+            callerPhone: normalizedCaller || call.to_number,
+            status: "IN_PROGRESS",
+            isOutbound: true,
+          },
+          update: { status: "IN_PROGRESS" },
+        });
+      }
+      return new NextResponse(null, { status: 204 });
+    }
+
     const demoResolution = calledNumber
       ? await resolveDemoSession(calledNumber, call.from_number ?? undefined)
       : null;
@@ -71,8 +100,8 @@ async function handleCallStarted(call: RetellCallPayload) {
         })
       : null;
 
-    // Demo number fallback
-    if (!phoneNum && demoResolution) {
+    // Demo number fallback — only for active (non-expired) sessions
+    if (!phoneNum && demoResolution && !demoResolution.expired) {
       if (demoResolution.businessId) {
         const demoBusiness = await prisma.business.findUnique({
           where: { id: demoResolution.businessId },
@@ -84,16 +113,23 @@ async function handleCallStarted(call: RetellCallPayload) {
       }
     }
 
-    // Demo number with no active session — reject immediately to avoid cost
+    // Demo number with no active session (or only a grace-period match) — reject immediately to avoid cost
     if (!phoneNum && calledNumber && call.call_id) {
       const isDemoNumber = await prisma.demoNumber.findUnique({
         where: { number: calledNumber },
-        select: { id: true },
+        select: { id: true, retellPhoneNumber: true },
       });
       if (isDemoNumber) {
+        // End the current call
         await endRetellCall(call.call_id).catch((e) => {
           console.error("[webhook] Failed to end sessionless demo call:", e);
         });
+        // Clear the inbound agent so future calls don't connect at all until a new session starts
+        if (isDemoNumber.retellPhoneNumber) {
+          await updateRetellPhoneNumber(isDemoNumber.retellPhoneNumber, { inboundAgentId: null }).catch((e) => {
+            console.error("[webhook] Failed to clear inboundAgentId for sessionless demo number:", e);
+          });
+        }
         return new NextResponse(null, { status: 204 });
       }
     }
@@ -101,7 +137,7 @@ async function handleCallStarted(call: RetellCallPayload) {
     // Public demo phone-number rate limit: detect repeat callers by phone
     if (demoResolution?.source === "public" && normalizedCaller && call.call_id) {
       const now = new Date();
-      const windowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
       const repeat = await prisma.publicDemoAttempt.findFirst({
         where: {
           callerPhone: normalizedCaller,
@@ -117,7 +153,7 @@ async function handleCallStarted(call: RetellCallPayload) {
       }
 
       if (!demoResolution.callerPhone) {
-        const cooldownUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const cooldownUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
         await prisma.publicDemoAttempt.update({
           where: { id: demoResolution.publicAttemptId },
           data: { callerPhone: normalizedCaller },
@@ -186,8 +222,31 @@ async function handleCallStarted(call: RetellCallPayload) {
 
 async function handleCallEnded(call: RetellCallPayload) {
   try {
-    const normalizedCaller = normalizePhoneNumber(call.from_number);
-    const calledNumber = normalizePhoneNumber(call.to_number);
+    const isOutbound = call.direction === "outbound";
+    const normalizedCaller = normalizePhoneNumber(isOutbound ? call.to_number : call.from_number);
+    const calledNumber = normalizePhoneNumber(isOutbound ? call.from_number : call.to_number);
+
+    const duration = call.duration_ms
+      ? Math.round(call.duration_ms / 1000)
+      : call.start_timestamp && call.end_timestamp
+        ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
+        : null;
+
+    // For outbound calls, the pre-created Call record already links to the business.
+    // Just update it with final data.
+    if (isOutbound && call.call_id) {
+      await prisma.call.updateMany({
+        where: { retellCallId: call.call_id },
+        data: {
+          duration,
+          transcript: call.transcript || null,
+          transcriptObject: call.transcript_object ? (call.transcript_object as object[]) : undefined,
+          status: "COMPLETED",
+          recordingUrl: call.recording_url || null,
+        },
+      });
+      return new NextResponse(null, { status: 204 });
+    }
 
     let phoneNum = calledNumber
       ? await prisma.phoneNumber.findFirst({
@@ -214,13 +273,6 @@ async function handleCallEnded(call: RetellCallPayload) {
 
     const business = phoneNum.business;
 
-    // Calculate duration - Retell provides duration_ms or we compute from timestamps
-    const duration = call.duration_ms
-      ? Math.round(call.duration_ms / 1000)
-      : call.start_timestamp && call.end_timestamp
-        ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
-        : null;
-
     // Create or update call record
     const existingCall = call.call_id
       ? await prisma.call.findUnique({
@@ -235,6 +287,7 @@ async function handleCallEnded(call: RetellCallPayload) {
           callerPhone: normalizedCaller || call.from_number,
           duration,
           transcript: call.transcript || null,
+          transcriptObject: call.transcript_object ? (call.transcript_object as object[]) : undefined,
           status: "COMPLETED",
           recordingUrl: call.recording_url || null,
         },
@@ -247,6 +300,7 @@ async function handleCallEnded(call: RetellCallPayload) {
           callerPhone: normalizedCaller || call.from_number,
           duration,
           transcript: call.transcript || null,
+          transcriptObject: call.transcript_object ? (call.transcript_object as object[]) : undefined,
           status: "COMPLETED",
           recordingUrl: call.recording_url || null,
         },
@@ -261,6 +315,9 @@ async function handleCallEnded(call: RetellCallPayload) {
 
 async function handleCallAnalyzed(call: RetellCallPayload) {
   if (!call.call_id) return new NextResponse(null, { status: 204 });
+  const isOutbound = call.direction === "outbound";
+  const customerPhone =
+    normalizePhoneNumber(isOutbound ? call.to_number : call.from_number) || null;
 
   const existingCall = await prisma.call.findUnique({
     where: { retellCallId: call.call_id },
@@ -288,8 +345,7 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
       await upsertCustomerMemoryFromCall({
         businessId: existingCall.businessId,
         customerName: callerName,
-        customerPhone:
-          normalizePhoneNumber(call.from_number) || existingCall.callerPhone,
+        customerPhone: customerPhone || existingCall.callerPhone,
         petName:
           extracted.petName ||
           extracted.pet_name ||
@@ -340,7 +396,9 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
         refreshedCall.business as Parameters<
           typeof sendMissedCallNotification
         >[0],
-        call.from_number || refreshedCall.callerPhone || "Unknown",
+        (isOutbound ? call.to_number : call.from_number) ||
+          refreshedCall.callerPhone ||
+          "Unknown",
         refreshedCall.callerName || undefined
       );
     }
