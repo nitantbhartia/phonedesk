@@ -79,18 +79,26 @@ function LandingPageContent() {
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <svg
-          className="leaf-shape absolute top-[-10%] left-[-5%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] text-paw-amber"
+          className="paw-shape absolute top-[-10%] left-[-5%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] text-paw-amber"
           viewBox="0 0 200 200"
           fill="currentColor"
         >
-          <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
+          <ellipse cx="100" cy="130" rx="38" ry="32" />
+          <ellipse cx="62" cy="82" rx="16" ry="20" transform="rotate(-10 62 82)" />
+          <ellipse cx="138" cy="82" rx="16" ry="20" transform="rotate(10 138 82)" />
+          <ellipse cx="82" cy="62" rx="14" ry="18" transform="rotate(-5 82 62)" />
+          <ellipse cx="118" cy="62" rx="14" ry="18" transform="rotate(5 118 62)" />
         </svg>
         <svg
-          className="leaf-shape absolute bottom-[-10%] right-[-5%] w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] text-white opacity-60"
+          className="paw-shape absolute bottom-[-10%] right-[-5%] w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] text-white opacity-60"
           viewBox="0 0 200 200"
           fill="currentColor"
         >
-          <path d="M100 200C140 160 180 120 200 60C160 70 120 90 100 0C80 90 40 70 0 60C20 120 60 160 100 200Z" />
+          <ellipse cx="100" cy="130" rx="38" ry="32" />
+          <ellipse cx="62" cy="82" rx="16" ry="20" transform="rotate(-10 62 82)" />
+          <ellipse cx="138" cy="82" rx="16" ry="20" transform="rotate(10 138 82)" />
+          <ellipse cx="82" cy="62" rx="14" ry="18" transform="rotate(-5 82 62)" />
+          <ellipse cx="118" cy="62" rx="14" ry="18" transform="rotate(5 118 62)" />
         </svg>
       </div>
 
@@ -111,10 +119,10 @@ function LandingPageContent() {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/demo"
+                href="/auth?mode=signup"
                 className="hidden sm:block px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
               >
-                Get Started
+                Start Free Trial
               </Link>
               {/* Mobile hamburger */}
               <button
@@ -141,11 +149,11 @@ function LandingPageContent() {
               <a href="#features" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Features</a>
               <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Pricing</a>
               <Link
-                href="/demo"
+                href="/auth?mode=signup"
                 onClick={() => setMobileMenuOpen(false)}
                 className="mt-1 px-6 py-3 bg-paw-brown text-paw-cream rounded-full font-bold text-center hover:bg-opacity-90 transition-all shadow-lg"
               >
-                Get Started Free
+                Start Free Trial
               </Link>
             </div>
           )}
@@ -179,20 +187,35 @@ function LandingPageContent() {
 
             <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
               <Link
-                href="/demo"
+                href="/auth?mode=signup"
                 className="relative overflow-hidden px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50 btn-shimmer"
               >
-                Get Started Today
+                Start Free Trial
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
               </Link>
-              <Link
-                href="/auth?mode=signin"
+              <a
+                href="#how-it-works"
                 className="px-8 py-4 bg-white text-paw-brown border-2 border-paw-brown/10 rounded-full font-bold text-lg hover:bg-paw-cream transition-all shadow-sm flex items-center justify-center gap-2"
               >
-                Sign In
-              </Link>
+                See How It Works
+              </a>
+            </div>
+
+            <div className="animate-fade-in-up-delay-4 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-paw-brown/60">
+              <span className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                Card required
+              </span>
+              <span className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                Only charged after first booking
+              </span>
+              <span className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                Cancel anytime
+              </span>
             </div>
 
           </div>
@@ -221,21 +244,33 @@ function LandingPageContent() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 justify-center">
-            <div className="text-2xl sm:text-4xl font-extrabold text-paw-brown leading-none">8</div>
+            <div className="text-2xl sm:text-4xl font-extrabold text-paw-brown leading-none">24/7</div>
             <div>
-              <div className="text-[10px] sm:text-sm font-semibold text-paw-brown/70 leading-tight">Bookings per Week</div>
-              <div className="hidden sm:block text-xs text-paw-brown/35 mt-1">Across active customers</div>
+              <div className="text-[10px] sm:text-sm font-semibold text-paw-brown/70 leading-tight">Availability</div>
+              <div className="hidden sm:block text-xs text-paw-brown/35 mt-1">Never miss a call</div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 justify-center">
-            <div className="text-2xl sm:text-4xl font-extrabold text-paw-amber leading-none">$85</div>
+            <div className="text-2xl sm:text-4xl font-extrabold text-paw-amber leading-none">$0</div>
             <div>
-              <div className="text-[10px] sm:text-sm font-semibold text-paw-brown/70 leading-tight">Avg. Groom Value</div>
-              <div className="hidden sm:block text-xs text-paw-brown/35 mt-1">IBIS World, 2024</div>
+              <div className="text-[10px] sm:text-sm font-semibold text-paw-brown/70 leading-tight">Until First Booking</div>
+              <div className="hidden sm:block text-xs text-paw-brown/35 mt-1">Free trial, pay on results</div>
             </div>
           </div>
         </div>
       </section>
+
+      <div className="py-6 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm font-semibold text-paw-brown/50">
+          <span>No contracts</span>
+          <span className="hidden sm:inline text-paw-brown/20">&middot;</span>
+          <span>Cancel anytime</span>
+          <span className="hidden sm:inline text-paw-brown/20">&middot;</span>
+          <span>Pay only on results</span>
+          <span className="hidden sm:inline text-paw-brown/20">&middot;</span>
+          <span>5-minute setup</span>
+        </div>
+      </div>
 
       {/* ROI Calculator */}
       <section className="py-12 sm:py-20 px-4 sm:px-6 relative z-10">
@@ -448,7 +483,7 @@ function LandingPageContent() {
           </div>
 
           {/* Compact feature grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 gap-4">
             {[
               {
                 icon: (
@@ -458,15 +493,6 @@ function LandingPageContent() {
                 ),
                 title: "Real-Time Calendar Booking",
                 desc: "Checks your live availability before offering any slot. No double bookings. Works with Google Calendar, Square, and Acuity Scheduling.",
-              },
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                  </svg>
-                ),
-                title: "Daily Revenue Report",
-                desc: "Every evening: calls answered, bookings created, and estimated revenue protected. Know exactly what RingPaw earned you.",
               },
               {
                 icon: (
@@ -495,15 +521,6 @@ function LandingPageContent() {
                 title: "No-Show Protection",
                 desc: "48hr and 24hr reminders sent automatically. If someone cancels, RingPaw texts your waitlist and fills the slot before you notice.",
               },
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
-                  </svg>
-                ),
-                title: "Dog Profile Cards",
-                desc: "After every visit, owners get a personalized summary with groomer notes and a one-tap rebooking link. They share it. You get new clients.",
-              },
             ].map((feature) => (
               <div key={feature.title} className="bg-paw-cream/50 rounded-2xl p-5 hover:bg-paw-cream transition-colors duration-200">
                 <div className="w-9 h-9 bg-paw-sky/60 rounded-xl flex items-center justify-center text-paw-brown mb-3">
@@ -521,8 +538,15 @@ function LandingPageContent() {
       <section id="pricing" className="py-12 sm:py-24 px-4 sm:px-6 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-paw-brown">Try RingPaw free.</h2>
-            <p className="text-paw-brown/80 mt-4 text-lg font-medium max-w-xl mx-auto">Pay only when Pip books your first appointment. If it doesn&apos;t work in 30 days, you owe nothing.</p>
+            <h2 className="text-4xl font-extrabold text-paw-brown">Start free. Pay on results.</h2>
+            <p className="text-paw-brown/80 mt-4 text-lg font-medium max-w-xl mx-auto">Start your free trial. Card required. You&apos;re only charged when Pip books your first appointment.</p>
+          </div>
+          <div className="max-w-md mx-auto mb-12 bg-paw-cream border-2 border-paw-amber/40 rounded-2xl p-5 text-center shadow-sm">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <svg className="w-6 h-6 text-paw-amber" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
+              <span className="text-lg font-extrabold text-paw-brown">30-Day Outcome Guarantee</span>
+            </div>
+            <p className="text-sm text-paw-brown/70">Card required to start. You are only charged when Pip books your first appointment. If it does not work in 30 days, you owe nothing.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 items-center">
             {/* Solo */}
@@ -542,7 +566,7 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  120 Minutes / Month
+                  120 Minutes / Month (~60 calls)
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -556,17 +580,13 @@ function LandingPageContent() {
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                   SMS Confirmations & Reminders
                 </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  $0.40/min overage
-                </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
 
             {/* Studio */}
             <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10 card-glow">
-              <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">MOST POPULAR</div>
+              <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">RECOMMENDED</div>
               <h3 className="text-xl font-bold text-paw-amber mb-1">Studio</h3>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-5xl font-extrabold text-white">$199</span>
@@ -582,7 +602,7 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  300 Minutes / Month
+                  300 Minutes / Month (~150 calls)
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -595,10 +615,6 @@ function LandingPageContent() {
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                   SMS Confirmations & Reminders
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  $0.40/min overage
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-amber hover:underline block text-center">See all features →</a>
@@ -621,7 +637,7 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  500 Minutes / Month
+                  500 Minutes / Month (~250 calls)
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -635,17 +651,13 @@ function LandingPageContent() {
                   <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                   SMS Confirmations & Reminders
                 </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  $0.40/min overage
-                </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
           </div>
 
           {/* Guarantee line */}
-          <p className="text-center text-sm text-paw-brown/60 mt-10 font-medium">
+          <p className="text-center text-base text-paw-brown/70 mt-10 font-semibold">
             All plans include a 30-day outcome guarantee. If RingPaw doesn&apos;t book a single appointment, you pay nothing.
           </p>
         </div>
@@ -681,6 +693,15 @@ function LandingPageContent() {
               </span>
             </summary>
             <p className="mt-4 text-paw-brown/70 leading-relaxed">RingPaw handles the vast majority of calls on its own &mdash; but when something&apos;s genuinely outside its knowledge, it doesn&apos;t guess or go silent. It tells the caller, &ldquo;Let me have [your name] give you a quick call back,&rdquo; takes their number, and texts you a summary of what they needed. You call back already knowing the context. Nothing falls through the cracks.</p>
+          </details>
+          <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
+            <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
+              What happens if the AI makes a mistake?
+              <span className="group-open:rotate-180 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </span>
+            </summary>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Pip knows its limits. If a caller asks something unusual or wants to reschedule a complex appointment, Pip takes a message and texts you immediately. You stay in control &mdash; Pip never guesses on your behalf. And because every call is logged with a full transcript, you can review exactly what was said and adjust Pip&apos;s behavior from your dashboard.</p>
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -728,10 +749,10 @@ function LandingPageContent() {
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">Ready to stop missing calls?</h2>
           <p className="text-white/60 mb-6">Set up in 5 minutes. Card required · only charged after your first booking.</p>
           <Link
-            href="/demo"
+            href="/auth?mode=signup"
             className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
           >
-            Get Started Free
+            Start Free Trial
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
             </svg>
