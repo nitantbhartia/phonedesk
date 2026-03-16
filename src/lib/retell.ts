@@ -454,7 +454,7 @@ export async function refreshRetellLLMForCall(
 // --- Retell Agent ---
 
 const MAX_CALL_DURATION_MS = 300_000;  // 5 min cap for all live calls
-const DEMO_CALL_DURATION_MS = 240_000; // 4 min cap for onboarding test calls
+const DEMO_CALL_DURATION_MS = 120_000; // 2 min cap for public demo calls
 
 export async function createRetellAgent(config: {
   llmId: string;
