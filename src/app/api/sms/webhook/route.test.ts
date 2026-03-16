@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({
@@ -35,9 +36,6 @@ vi.mock("@/lib/retell-auth", () => ({
 
 vi.mock("@/lib/sms", () => ({
   isSmsEnabled: vi.fn(() => true),
-}));
-
-vi.mock("@/lib/retell", () => ({
   sendSms: vi.fn(),
 }));
 
@@ -55,8 +53,7 @@ import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
-import { isSmsEnabled } from "@/lib/sms";
-import { sendSms } from "@/lib/retell";
+import { isSmsEnabled, sendSms } from "@/lib/sms";
 import { bookAppointment, isSlotAvailable } from "@/lib/calendar";
 
 function makeJsonRequest(body: unknown) {
@@ -140,6 +137,52 @@ describe("POST /api/sms/webhook", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
     expect(prisma.smsLog.create).not.toHaveBeenCalled();
+  });
+
+  it("parses textbelt reply payloads using webhookData as the business number", async () => {
+    process.env.TEXTBELT_API_KEY = "textbelt-key";
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_today",
+      petName: "Bella",
+      groomingStatus: "READY_FOR_PICKUP",
+      startTime: new Date("2026-05-21T16:00:00.000Z"),
+    } as never);
+    const payload = JSON.stringify({
+      fromNumber: "+16195550100",
+      text: "STATUS",
+      data: "+16195559999",
+    });
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const signature = createHmac("sha256", "textbelt-key")
+      .update(timestamp + payload)
+      .digest("hex");
+
+    const response = await POST(
+      new Request("http://localhost/api/sms/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-textbelt-timestamp": timestamp,
+          "x-textbelt-signature": signature,
+        },
+        body: payload,
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(prisma.smsLog.create).toHaveBeenCalledWith({
+      data: {
+        direction: "INBOUND",
+        fromNumber: "+16195550100",
+        toNumber: "+16195559999",
+        body: "STATUS",
+      },
+    });
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "Bella is ready for pickup! Head to 123 Bark St.",
+      "+16195559999"
+    );
   });
 
   it("parses and executes owner commands when the owner texts from the business phone", async () => {
