@@ -180,8 +180,9 @@ describe("business/profile", () => {
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_2" } as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValueOnce(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked((prisma as any).demoLead.findUnique).mockResolvedValueOnce({ businessName: "Happy Paws" });
+    vi.mocked(prisma.demoLead.findUnique).mockResolvedValueOnce({
+      businessName: "Happy Paws",
+    } as never);
 
     const response = await GET();
     const payload = await response.json();
