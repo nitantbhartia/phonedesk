@@ -509,11 +509,18 @@ function DemoPageInner() {
               <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-3 text-center">Real booking call</p>
               <DemoCallPlayer audioSrc="/luna-call.wav" />
             </div>
+            <button
+              onClick={() => document.getElementById("live-demo")?.scrollIntoView({ behavior: "smooth" })}
+              className="flex flex-col items-center gap-1 w-full py-3 group"
+            >
+              <span className="text-sm font-bold text-paw-brown/60 group-hover:text-paw-brown transition-colors">Now try it live with your voice</span>
+              <svg className="w-5 h-5 text-paw-orange animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
           </div>
         )}
 
         {/* ── Tier 2: Live demo gate / active session ── */}
-        <div className="w-full max-w-xl">
+        <div id="live-demo" className="w-full max-w-xl scroll-mt-4">
 
           {/* Gate — scenario preview + explainer + qualification form */}
           {livePhase === "gate" && (

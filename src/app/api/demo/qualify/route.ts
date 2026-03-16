@@ -4,7 +4,7 @@ import { isValidBusinessEmail } from "@/lib/disposable-domains";
 import { sendDemoMagicLink } from "@/lib/email";
 
 const MAGIC_LINK_TTL_MS = 60 * 60 * 1000; // 1 hour
-const COOLDOWN_DAYS = 7;
+const COOLDOWN_DAYS = 3;
 
 function getClientIp(req: NextRequest): string {
   return (
