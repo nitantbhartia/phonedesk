@@ -55,6 +55,7 @@ import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
+import { isSmsEnabled } from "@/lib/sms";
 import { sendSms } from "@/lib/retell";
 import { bookAppointment, isSlotAvailable } from "@/lib/calendar";
 
@@ -83,6 +84,7 @@ describe("POST /api/sms/webhook", () => {
     delete process.env.TWILIO_AUTH_TOKEN;
     delete process.env.TWILIO_PHONE_NUMBER;
 
+    vi.mocked(isSmsEnabled).mockReturnValue(true);
     vi.mocked(isRetellAuthorized).mockReturnValue(true);
     vi.mocked(rateLimit).mockReturnValue({ allowed: true } as never);
     vi.mocked(prisma.smsLog.create).mockReset();
@@ -121,6 +123,23 @@ describe("POST /api/sms/webhook", () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: "Unauthorized" });
+  });
+
+  it("returns a no-op response immediately when sms is disabled", async () => {
+    vi.mocked(isSmsEnabled).mockReturnValue(false);
+    vi.mocked(isRetellAuthorized).mockReturnValue(false);
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550100",
+        to_number: "+16195559999",
+        message: "STATUS",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(prisma.smsLog.create).not.toHaveBeenCalled();
   });
 
   it("parses and executes owner commands when the owner texts from the business phone", async () => {
