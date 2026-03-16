@@ -196,7 +196,7 @@ const ONBOARDING_PLANS = [
     id: "STARTER",
     name: "Solo",
     price: 99,
-    features: ["120 minutes/month", "Everything included", "Calendar integration", "$0.40/min overage"],
+    features: ["120 minutes/month (~60 calls)", "Everything included", "Calendar integration"],
     description: "For solo groomers tired of missing calls between clients.",
   },
   {
@@ -204,14 +204,14 @@ const ONBOARDING_PLANS = [
     name: "Studio",
     price: 199,
     popular: true,
-    features: ["300 minutes/month", "Priority setup", "Square + Google Calendar", "$0.40/min overage"],
+    features: ["300 minutes/month (~150 calls)", "Priority setup", "Square + Google Calendar"],
     description: "For full-time groomers who want RingPaw handling every missed call.",
   },
   {
     id: "BUSINESS",
     name: "Salon",
     price: 349,
-    features: ["500 minutes/month", "Priority support", "Multi-groomer routing", "$0.40/min overage"],
+    features: ["500 minutes/month (~250 calls)", "Priority support", "Multi-groomer routing"],
     description: "For small shops with multiple groomers and higher call volume.",
   },
 ];
@@ -887,10 +887,10 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-paw-sky antialiased flex flex-col items-center justify-center py-12 px-6 relative">
         {/* Background decorations */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <svg className="leaf-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber" viewBox="0 0 200 200" fill="currentColor">
+          <svg className="paw-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber" viewBox="0 0 200 200" fill="currentColor">
             <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
           </svg>
-          <svg className="leaf-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-60" viewBox="0 0 200 200" fill="currentColor">
+          <svg className="paw-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-60" viewBox="0 0 200 200" fill="currentColor">
             <path d="M100 200C140 160 180 120 200 60C160 70 120 90 100 0C80 90 40 70 0 60C20 120 60 160 100 200Z" />
           </svg>
         </div>
@@ -2016,7 +2016,7 @@ export default function OnboardingPage() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-paw-brown text-paw-cream text-xs font-bold rounded-full whitespace-nowrap">
-                    Most Popular
+                    Recommended
                   </div>
                 )}
                 <div className="mb-2">

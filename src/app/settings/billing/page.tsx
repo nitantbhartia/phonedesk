@@ -12,10 +12,9 @@ const PLANS = [
     price: 99,
     minutes: 120,
     features: [
-      "120 minutes/month",
+      "120 minutes/month (~60 calls)",
       "Everything included",
       "Calendar integration",
-      "$0.40/min overage",
     ],
   },
   {
@@ -25,10 +24,9 @@ const PLANS = [
     minutes: 300,
     popular: true,
     features: [
-      "300 minutes/month",
+      "300 minutes/month (~150 calls)",
       "Priority setup",
       "Square + Google Calendar",
-      "$0.40/min overage",
     ],
   },
   {
@@ -37,10 +35,9 @@ const PLANS = [
     price: 349,
     minutes: 500,
     features: [
-      "500 minutes/month",
+      "500 minutes/month (~250 calls)",
       "Priority support",
       "Multi-groomer routing",
-      "$0.40/min overage",
     ],
   },
 ];
@@ -167,8 +164,6 @@ export default function BillingPage() {
   const percentUsed = usage?.percentUsed ?? 0;
   const isAtLimit = percentUsed >= 100;
   const isNearLimit = percentUsed >= 80 && !isAtLimit;
-  const overageMinutes = usage?.overageMinutes ?? 0;
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -225,12 +220,7 @@ export default function BillingPage() {
                   style={{ width: `${Math.min(percentUsed, 100)}%` }}
                 />
               </div>
-              {overageMinutes > 0 && (
-                <p className="text-sm text-red-700 font-medium mt-1">
-                  {overageMinutes} min overage this month — ${(overageMinutes * 0.4).toFixed(2)} billed at $0.40/min
-                </p>
-              )}
-              {isAtLimit && overageMinutes === 0 && (
+              {isAtLimit && (
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mt-3">
                   <p className="text-sm font-medium text-red-800">
                     You&apos;ve used all your minutes for this month.
@@ -294,7 +284,7 @@ export default function BillingPage() {
                 ) : null}
                 {plan.popular && !isCurrent ? (
                   <span className="inline-flex items-center rounded-full bg-paw-amber px-2.5 py-1 text-[11px] font-bold text-paw-brown">
-                    Popular
+                    Recommended
                   </span>
                 ) : null}
               </div>

@@ -271,8 +271,17 @@ export default function CallLogPage() {
             <p className="text-sm mt-1">
               {filter !== "all"
                 ? "Try a different filter."
-                : "Calls will appear here once your AI starts answering."}
+                : "Make a test call to your RingPaw number to see it in action."}
             </p>
+            {filter === "all" && (
+              <a
+                href="/settings/agent"
+                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
+              >
+                View your number
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+              </a>
+            )}
           </div>
         ) : (
           <table className="w-full text-left">
