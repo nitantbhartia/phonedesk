@@ -187,10 +187,10 @@ function LandingPageContent() {
 
             <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
               <Link
-                href="/auth?mode=signup"
+                href="/demo"
                 className="relative overflow-hidden px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2 disabled:opacity-50 btn-shimmer"
               >
-                Start Free Trial
+                Try the Demo
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
@@ -328,15 +328,15 @@ function LandingPageContent() {
                 </div>
               </div>
 
-              <a
-                href="#how-it-works"
+              <Link
+                href="/demo"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
               >
-                See How It Works
+                Try the Demo
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -749,10 +749,10 @@ function LandingPageContent() {
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">Ready to stop missing calls?</h2>
           <p className="text-white/60 mb-6">Set up in 5 minutes. Card required · only charged after your first booking.</p>
           <Link
-            href="/auth?mode=signup"
+            href="/demo"
             className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
           >
-            Start Free Trial
+            Try the Demo
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
             </svg>
