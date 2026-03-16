@@ -148,7 +148,6 @@ export default function DashboardPage() {
   const [sendingDigest, setSendingDigest] = useState(false);
   const [digestSent, setDigestSent] = useState(false);
   const [digestError, setDigestError] = useState("");
-  const [usageOverage, setUsageOverage] = useState(0);
   const [usagePlanName, setUsagePlanName] = useState("");
   const [tourOpen, setTourOpen] = useState(false);
   const [smsHintDismissed, setSmsHintDismissed] = useState(true); // default true to avoid flash
@@ -197,7 +196,6 @@ export default function DashboardPage() {
         const data = await usageRes.json();
         setUsageMinutesUsed(data.minutesUsed ?? 0);
         setUsageMinutesLimit(data.minutesLimit ?? 120);
-        setUsageOverage(data.overageMinutes ?? 0);
         setUsagePlanName(data.planName ?? "");
       }
     } catch (error) {

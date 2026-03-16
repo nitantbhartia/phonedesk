@@ -51,21 +51,10 @@ export default function TodayPage() {
 
   async function fetchToday() {
     try {
-      const res = await fetch("/api/calls?limit=0&today=1");
-      // Use a dedicated endpoint if available, or fall back to appointments stats
-      const statsRes = await fetch("/api/appointments/stats");
-      if (statsRes.ok) {
-        const data = await statsRes.json();
-        // Get today's appointments from pending confirmation + transform
-        const todayAppts = (data.pendingConfirmation || []).concat(
-          (data.recentNoShows || [])
-        );
-        // Actually, let's fetch today's appointments directly
-        const todayRes = await fetch("/api/appointments/today");
-        if (todayRes.ok) {
-          const todayData = await todayRes.json();
-          setAppointments(todayData.appointments || []);
-        }
+      const res = await fetch("/api/appointments/today");
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data.appointments || []);
       }
     } catch {
       setFetchError("Failed to load today's appointments. Please refresh.");
@@ -203,7 +192,16 @@ export default function TodayPage() {
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
           <p className="font-bold text-paw-brown/50">No appointments scheduled today</p>
-          <p className="text-sm text-paw-brown/40 mt-1">Appointments will appear here as they&apos;re booked</p>
+          <p className="text-sm text-paw-brown/40 mt-1">
+            Appointments booked by your AI receptionist will appear here automatically.
+          </p>
+          <a
+            href="/dashboard"
+            className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
+          >
+            Back to Dashboard
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+          </a>
         </div>
       ) : (
         <div className="space-y-4">
