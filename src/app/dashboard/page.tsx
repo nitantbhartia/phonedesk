@@ -8,11 +8,18 @@ import { DashboardTour, shouldShowTour } from "@/components/dashboard-tour";
 
 interface DashboardStats {
   callsThisWeek: number;
+  callsLastWeek: number;
   callsThisMonth: number;
   bookingsConfirmed: number;
   bookingsMissed: number;
   revenueProtected: number;
   avgCallDuration: number;
+  nextAppointment: {
+    petName: string | null;
+    serviceName: string | null;
+    startTime: string;
+    customerName: string | null;
+  } | null;
 }
 
 interface RecentCall {
@@ -22,6 +29,7 @@ interface RecentCall {
   status: string;
   duration: number | null;
   summary: string | null;
+  transcript: string | null;
   createdAt: string;
   appointment?: {
     petName: string | null;
@@ -116,11 +124,13 @@ export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     callsThisWeek: 0,
+    callsLastWeek: 0,
     callsThisMonth: 0,
     bookingsConfirmed: 0,
     bookingsMissed: 0,
     revenueProtected: 0,
     avgCallDuration: 0,
+    nextAppointment: null,
   });
   const [recentCalls, setRecentCalls] = useState<RecentCall[]>([]);
   const [loading, setLoading] = useState(true);
@@ -482,6 +492,17 @@ export default function DashboardPage() {
                 <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Call Summary</p>
                 <p className="text-sm text-paw-brown leading-relaxed">{transcriptCall.summary || "No summary available for this call."}</p>
               </div>
+              {transcriptCall.transcript && (
+                <details className="group">
+                  <summary className="flex items-center gap-2 cursor-pointer text-xs font-bold text-paw-brown/50 uppercase tracking-wider hover:text-paw-brown transition-colors">
+                    <svg className="w-3 h-3 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path d="m9 18 6-6-6-6" /></svg>
+                    Full Transcript
+                  </summary>
+                  <div className="mt-2 bg-white rounded-2xl border border-paw-brown/8 p-4 max-h-60 overflow-y-auto">
+                    <p className="text-sm text-paw-brown/70 leading-relaxed whitespace-pre-wrap">{transcriptCall.transcript}</p>
+                  </div>
+                </details>
+              )}
               {transcriptCall.duration && (
                 <p className="text-xs text-paw-brown/40 text-right">Duration: {formatDuration(transcriptCall.duration)}</p>
               )}
@@ -513,11 +534,17 @@ export default function DashboardPage() {
             <span className="text-2xl font-extrabold text-paw-brown">
               {stats.callsThisWeek}
             </span>
-            {stats.callsThisWeek > 0 && (
-              <span className="text-green-500 text-xs font-bold">+12%</span>
-            )}
+            {stats.callsLastWeek > 0 && (() => {
+              const pctChange = Math.round(((stats.callsThisWeek - stats.callsLastWeek) / stats.callsLastWeek) * 100);
+              if (pctChange === 0) return null;
+              return (
+                <span className={`text-xs font-bold ${pctChange > 0 ? "text-green-500" : "text-red-400"}`}>
+                  {pctChange > 0 ? "+" : ""}{pctChange}%
+                </span>
+              );
+            })()}
           </div>
-          <p className="text-xs text-paw-brown/40 mt-0.5">Past 7 days</p>
+          <p className="text-xs text-paw-brown/40 mt-0.5">Past 7 days{stats.callsLastWeek > 0 ? ` · ${stats.callsLastWeek} last week` : ""}</p>
         </div>
 
         {/* Bookings */}
@@ -541,10 +568,13 @@ export default function DashboardPage() {
             <span className="text-2xl font-extrabold text-paw-brown">
               {stats.bookingsConfirmed}
             </span>
-            <span className="text-xs font-bold text-paw-brown/40">
-              vs {stats.bookingsMissed} missed
-            </span>
+            {stats.bookingsConfirmed + stats.bookingsMissed > 0 && (
+              <span className="text-xs font-bold text-paw-orange">
+                {Math.round((stats.bookingsConfirmed / (stats.bookingsConfirmed + stats.bookingsMissed)) * 100)}% rate
+              </span>
+            )}
           </div>
+          <p className="text-xs text-paw-brown/40 mt-0.5">Past 30 days · {stats.bookingsMissed} missed</p>
           <div className="w-full bg-gray-100 h-1 rounded-full mt-2 flex overflow-hidden">
             <div
               className="bg-paw-orange h-full"
@@ -582,7 +612,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="text-xs text-paw-brown/40 mt-0.5">
-            Based on ${avgServicePrice} average groom
+            Past 30 days · ${avgServicePrice} avg groom
           </p>
         </div>
 
@@ -593,38 +623,43 @@ export default function DashboardPage() {
             fill="currentColor"
             viewBox="0 0 200 200"
           >
-            <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
+            <ellipse cx="100" cy="130" rx="38" ry="32" />
+            <ellipse cx="62" cy="82" rx="16" ry="20" transform="rotate(-10 62 82)" />
+            <ellipse cx="138" cy="82" rx="16" ry="20" transform="rotate(10 138 82)" />
+            <ellipse cx="82" cy="62" rx="14" ry="18" transform="rotate(-5 82 62)" />
+            <ellipse cx="118" cy="62" rx="14" ry="18" transform="rotate(5 118 62)" />
           </svg>
           <p className="text-xs font-bold text-paw-amber uppercase tracking-wider mb-2">
             Next Appointment
           </p>
-          {(() => {
-            const nextAppt = recentCalls.find((c) => c.appointment)?.appointment;
-            return nextAppt ? (
+          {stats.nextAppointment ? (
             <>
               <p className="text-xl font-bold text-white">
-                {nextAppt.petName || "Upcoming"}
+                {stats.nextAppointment.petName || stats.nextAppointment.customerName || "Upcoming"}
               </p>
               <p className="text-sm text-white/70">
-                {nextAppt.startTime
-                  ? new Date(nextAppt.startTime).toLocaleDateString("en-US", {
-                      weekday: "long",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })
-                  : ""}
+                {new Date(stats.nextAppointment.startTime).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
               </p>
+              {stats.nextAppointment.serviceName && (
+                <p className="text-xs text-white/50 mt-0.5">{stats.nextAppointment.serviceName}</p>
+              )}
             </>
           ) : (
             <>
               <p className="text-xl font-bold text-white">None scheduled</p>
               <p className="text-xs text-white/70">No upcoming appointments</p>
             </>
-          );
-          })()}
-          <button className="mt-3 px-3 py-1.5 bg-white/10 hover:bg-white/20 transition-all rounded-xl text-xs font-bold text-white uppercase tracking-widest">
-            View Details
-          </button>
+          )}
+          <Link
+            href="/today"
+            className="mt-3 inline-block px-3 py-1.5 bg-white/10 hover:bg-white/20 transition-all rounded-xl text-xs font-bold text-white uppercase tracking-widest"
+          >
+            View Schedule
+          </Link>
         </div>
       </div>
 
@@ -632,8 +667,7 @@ export default function DashboardPage() {
       {subscriptionActive && usageMinutesLimit > 0 && (() => {
         const pct = Math.min((usageMinutesUsed / usageMinutesLimit) * 100, 100);
         const remaining = Math.max(0, usageMinutesLimit - usageMinutesUsed);
-        const isOver = usageOverage > 0;
-        const isNear = pct >= 80 && !isOver;
+        const isNear = pct >= 80;
         return (
           <div className="bg-white rounded-2xl shadow-card border border-white/50 p-4 sm:p-5 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -644,24 +678,13 @@ export default function DashboardPage() {
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-extrabold text-paw-brown">{usageMinutesUsed}</span>
                   <span className="text-paw-brown/50 font-medium">/ {usageMinutesLimit} min used</span>
-                  {isOver && (
-                    <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                      +{usageOverage} min overage
-                    </span>
-                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {isOver ? (
-                  <span className="text-sm font-bold text-red-600">
-                    ${(usageOverage * 0.4).toFixed(2)} overage charge
-                  </span>
-                ) : (
-                  <span className={`text-sm font-bold ${isNear ? "text-amber-600" : "text-paw-brown/50"}`}>
-                    {remaining} min remaining
-                  </span>
-                )}
-                {(isOver || isNear) && (
+                <span className={`text-sm font-bold ${isNear ? "text-amber-600" : "text-paw-brown/50"}`}>
+                  {remaining} min remaining
+                </span>
+                {isNear && (
                   <Link
                     href="/settings/billing"
                     className="px-4 py-2 bg-paw-amber text-paw-brown text-sm font-bold rounded-full hover:bg-paw-brown hover:text-white transition-colors"
@@ -673,7 +696,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-3 w-full h-1.5 rounded-full bg-paw-brown/10 overflow-hidden">
               <div
-                className={`h-full transition-all rounded-full ${isOver ? "bg-red-500" : isNear ? "bg-amber-400" : "bg-paw-amber"}`}
+                className={`h-full transition-all rounded-full ${isNear ? "bg-amber-400" : "bg-paw-amber"}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -774,11 +797,17 @@ export default function DashboardPage() {
               >
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
-              <p className="font-bold">No calls yet</p>
-              <p className="text-sm mt-1">
-                Calls will appear here once your AI receptionist starts
-                answering.
+              <p className="font-bold text-paw-brown">No calls yet</p>
+              <p className="text-sm mt-1 mb-4">
+                Make a test call to your RingPaw number to see it in action.
               </p>
+              <Link
+                href="/settings/agent"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
+              >
+                View your number
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+              </Link>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">

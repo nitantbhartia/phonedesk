@@ -69,12 +69,16 @@ export async function GET() {
   // Compute dashboard stats
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [callsThisWeek, callsThisMonth, bookingsConfirmed, bookingsMissed, avgDuration, totalDuration] =
+  const [callsThisWeek, callsLastWeek, callsThisMonth, bookingsConfirmed, bookingsMissed, avgDuration, totalDuration, nextAppointment] =
     await Promise.all([
       prisma.call.count({
         where: { businessId: business.id, isTestCall: false, createdAt: { gte: weekAgo } },
+      }),
+      prisma.call.count({
+        where: { businessId: business.id, isTestCall: false, createdAt: { gte: twoWeeksAgo, lt: weekAgo } },
       }),
       prisma.call.count({
         where: { businessId: business.id, isTestCall: false, createdAt: { gte: monthAgo } },
@@ -102,6 +106,15 @@ export async function GET() {
         where: { businessId: business.id, isTestCall: false, duration: { not: null }, createdAt: { gte: monthAgo } },
         _sum: { duration: true },
       }),
+      prisma.appointment.findFirst({
+        where: {
+          businessId: business.id,
+          startTime: { gt: now },
+          status: { in: ["PENDING", "CONFIRMED"] },
+        },
+        orderBy: { startTime: "asc" },
+        select: { petName: true, serviceName: true, startTime: true, customerName: true },
+      }),
     ]);
 
   // Estimate revenue protected
@@ -115,12 +128,14 @@ export async function GET() {
 
   const stats = {
     callsThisWeek,
+    callsLastWeek,
     callsThisMonth,
     bookingsConfirmed,
     bookingsMissed,
     revenueProtected: Math.round(bookingsConfirmed * avgServicePrice),
     avgCallDuration: Math.round(avgDuration._avg.duration || 0),
     totalCallMinutes,
+    nextAppointment,
   };
 
   // When STRIPE_BYPASS=true, tell the UI that the subscription is active
