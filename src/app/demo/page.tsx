@@ -462,11 +462,19 @@ function DemoPageInner() {
     <div className="min-h-screen bg-paw-sky antialiased flex flex-col relative">
       {/* Background blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <svg className="leaf-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber opacity-60" viewBox="0 0 200 200" fill="currentColor">
-          <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
+        <svg className="paw-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber opacity-60" viewBox="0 0 200 200" fill="currentColor">
+          <ellipse cx="100" cy="130" rx="38" ry="32" />
+          <ellipse cx="62" cy="82" rx="16" ry="20" transform="rotate(-10 62 82)" />
+          <ellipse cx="138" cy="82" rx="16" ry="20" transform="rotate(10 138 82)" />
+          <ellipse cx="82" cy="62" rx="14" ry="18" transform="rotate(-5 82 62)" />
+          <ellipse cx="118" cy="62" rx="14" ry="18" transform="rotate(5 118 62)" />
         </svg>
-        <svg className="leaf-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-50" viewBox="0 0 200 200" fill="currentColor">
-          <path d="M100 200C140 160 180 120 200 60C160 70 120 90 100 0C80 90 40 70 0 60C20 120 60 160 100 200Z" />
+        <svg className="paw-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-50" viewBox="0 0 200 200" fill="currentColor">
+          <ellipse cx="100" cy="130" rx="38" ry="32" />
+          <ellipse cx="62" cy="82" rx="16" ry="20" transform="rotate(-10 62 82)" />
+          <ellipse cx="138" cy="82" rx="16" ry="20" transform="rotate(10 138 82)" />
+          <ellipse cx="82" cy="62" rx="14" ry="18" transform="rotate(-5 82 62)" />
+          <ellipse cx="118" cy="62" rx="14" ry="18" transform="rotate(5 118 62)" />
         </svg>
       </div>
 
@@ -476,7 +484,7 @@ function DemoPageInner() {
           <BrandLogo mobileWidth={120} desktopWidth={140} priority />
         </Link>
         <Link
-          href="/onboarding"
+          href="/auth?mode=signup"
           className="px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
         >
           Start Free Trial
@@ -494,11 +502,11 @@ function DemoPageInner() {
                 <span className="text-paw-orange">No setup needed.</span>
               </h1>
               <p className="text-paw-brown/60 font-medium text-lg max-w-md mx-auto leading-relaxed">
-                Listen to a real sample call, then try it live yourself.
+                Listen to a real booking call, then try it live with your own voice.
               </p>
             </div>
             <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-6 mb-2">
-              <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-3 text-center">Sample call</p>
+              <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-3 text-center">Real booking call</p>
               <DemoCallPlayer audioSrc="/luna-call.wav" />
             </div>
           </div>
@@ -507,62 +515,108 @@ function DemoPageInner() {
         {/* ── Tier 2: Live demo gate / active session ── */}
         <div className="w-full max-w-xl">
 
-          {/* Gate — qualification form */}
+          {/* Gate — scenario preview + explainer + qualification form */}
           {livePhase === "gate" && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-8 animate-in fade-in duration-300">
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-4">
-                  <span className="w-1.5 h-1.5 rounded-full bg-paw-orange animate-pulse" />
-                  Live AI Demo
-                </div>
-                <h2 className="text-2xl font-extrabold text-paw-brown mb-2">Try it live</h2>
-                <p className="text-paw-brown/60 text-sm font-medium">
-                  Enter your business email to get a real number to call.
+            <div className="animate-in fade-in duration-300 space-y-6">
+              {/* Scenario preview — builds curiosity before the gate */}
+              <div className="text-center">
+                <h2 className="text-2xl font-extrabold text-paw-brown mb-2">Now try it with your voice</h2>
+                <p className="text-paw-brown/60 text-sm font-medium max-w-sm mx-auto">
+                  Pick a scenario, call a real number, and talk to Pip — our AI receptionist. It takes about 2 minutes.
                 </p>
               </div>
-              <form onSubmit={submitQualify} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@yourbusiness.com"
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium text-sm placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                />
-                <input
-                  type="text"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="Business name (optional)"
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium text-sm placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                />
-                {gateError && (
-                  <p className="text-sm text-red-600 font-medium px-1">{gateErrorMsg}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={gateLoading || !email}
-                  className="w-full px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {gateLoading ? (
-                    <>
-                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                      </svg>
-                      Sending link…
-                    </>
-                  ) : (
-                    <>
-                      Send me the demo link
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-                      </svg>
-                    </>
+              <div className="grid grid-cols-3 gap-2">
+                {SCENARIOS.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedScenario(s.id)}
+                    className={`flex flex-col items-center gap-1 px-2 py-3 rounded-2xl border-2 text-center transition-all ${
+                      selectedScenario === s.id
+                        ? "border-paw-brown bg-paw-brown/5 shadow-soft"
+                        : "border-paw-brown/10 bg-white hover:border-paw-brown/25"
+                    }`}
+                  >
+                    <span className="text-xl">{s.emoji}</span>
+                    <span className={`text-xs font-bold leading-tight ${selectedScenario === s.id ? "text-paw-brown" : "text-paw-brown/60"}`}>
+                      {s.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8 transition-all duration-300">
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">You&apos;ll say something like →</p>
+                <p className="text-sm text-paw-brown/80 italic leading-relaxed">
+                  &ldquo;{currentScenario.script}&rdquo;
+                </p>
+              </div>
+
+              {/* Explainer: what happens */}
+              <div className="flex items-center gap-4 text-xs text-paw-brown/50 font-semibold justify-center">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72" /></svg>
+                  Real phone call
+                </span>
+                <span className="text-paw-brown/20">&middot;</span>
+                <span>~2 min</span>
+                <span className="text-paw-brown/20">&middot;</span>
+                <span>Full transcript after</span>
+              </div>
+
+              {/* Gate form */}
+              <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-8">
+                <div className="text-center mb-5">
+                  <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-paw-orange animate-pulse" />
+                    Live AI Demo
+                  </div>
+                  <p className="text-paw-brown/60 text-sm font-medium">
+                    Enter your email to get a demo number. No signup required.
+                  </p>
+                </div>
+                <form onSubmit={submitQualify} className="space-y-3">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@yourbusiness.com"
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium text-sm placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                  />
+                  <input
+                    type="text"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Business name (optional)"
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium text-sm placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                  />
+                  {gateError && (
+                    <p className="text-sm text-red-600 font-medium px-1">{gateErrorMsg}</p>
                   )}
-                </button>
-                <p className="text-xs text-paw-brown/40 text-center">No signup · 1 live demo every 3 days</p>
-              </form>
+                  <button
+                    type="submit"
+                    disabled={gateLoading || !email}
+                    className="w-full px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {gateLoading ? (
+                      <>
+                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        Sending link…
+                      </>
+                    ) : (
+                      <>
+                        Send me the demo link
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-paw-brown/40 text-center">No signup required · 1 live demo every 3 days</p>
+                </form>
+              </div>
             </div>
           )}
 
@@ -778,24 +832,48 @@ function DemoPageInner() {
                     Waiting for your call
                   </div>
                   <button
-                    onClick={() => { stopSSE(); stopPolling(); setLivePhase("completed"); }}
+                    onClick={() => {
+                      // Force a status check instead of blindly skipping to completed
+                      if (sessionToken) {
+                        fetch(`/api/demo/public/status?token=${sessionToken}`, { cache: "no-store" })
+                          .then((r) => r.json())
+                          .then((data: { phase: string; summary: string | null; transcriptObject?: TranscriptTurn[] | null }) => {
+                            if (data.phase === "completed") {
+                              setSummary(data.summary);
+                              setTranscriptObject(data.transcriptObject ?? null);
+                              setLivePhase("completed");
+                              stopSSE();
+                              stopPolling();
+                            } else if (data.phase === "in_progress") {
+                              setLivePhase("in_progress");
+                            }
+                            // If still waiting, stay on waiting — call hasn't been detected yet
+                          })
+                          .catch(() => { /* stay on waiting */ });
+                      }
+                    }}
                     className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
                   >
-                    I&apos;ve already called ✓
+                    I&apos;ve already called — check status
                   </button>
                 </div>
               )}
 
               {/* ── Completed CTA ── */}
               {livePhase === "completed" && (
-                <div className="mt-2 space-y-3 animate-in fade-in duration-400">
+                <div className="mt-2 space-y-4 animate-in fade-in duration-400">
+                  <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
+                    <p className="text-sm font-bold text-paw-brown mb-1">Imagine this answering every call you miss.</p>
+                    <p className="text-xs text-paw-brown/50">Setup takes 5 minutes. Pip starts answering today.</p>
+                  </div>
                   <Link
-                    href="/onboarding"
+                    href="/auth?mode=signup"
                     className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-center text-lg hover:bg-opacity-90 transition-all shadow-soft"
                   >
-                    Set this up for my shop →
+                    Set this up for my shop
+                    <svg className="inline-block ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
                   </Link>
-                  <p className="text-xs text-paw-brown/40 text-center">Card required · only charged after your first booking</p>
+                  <p className="text-xs text-paw-brown/40 text-center">Card required · only charged after your first booking · cancel anytime</p>
                   <button onClick={resetToGate} className="w-full py-2 text-xs text-paw-brown/40 hover:text-paw-brown/60 transition-colors">
                     Start over
                   </button>
@@ -813,7 +891,7 @@ function DemoPageInner() {
                 Live demos are limited to once every 3 days. Ready to set it up for your shop?
               </p>
               <Link
-                href="/onboarding"
+                href="/auth?mode=signup"
                 className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft mb-3"
               >
                 Start my free trial →
@@ -837,7 +915,7 @@ function DemoPageInner() {
                 >
                   Try again
                 </button>
-                <Link href="/onboarding" className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors">
+                <Link href="/auth?mode=signup" className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors">
                   Sign up instead
                 </Link>
               </div>
