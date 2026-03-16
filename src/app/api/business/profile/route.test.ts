@@ -21,6 +21,9 @@ vi.mock("@/lib/prisma", () => ({
     demoSession: {
       findUnique: vi.fn(),
     },
+    demoLead: {
+      findUnique: vi.fn(),
+    },
     service: {
       updateMany: vi.fn(),
       create: vi.fn(),
@@ -35,6 +38,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     appointment: {
       count: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -68,6 +72,7 @@ describe("business/profile", () => {
     vi.mocked(prisma.call.count).mockReset();
     vi.mocked(prisma.call.aggregate).mockReset();
     vi.mocked(prisma.appointment.count).mockReset();
+    vi.mocked(prisma.appointment.findFirst).mockReset();
     vi.mocked(syncRetellAgent).mockReset();
     vi.mocked(seedBreedRecommendations).mockReset();
   });
@@ -96,29 +101,94 @@ describe("business/profile", () => {
       } as never);
     vi.mocked(prisma.demoSession.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.call.count)
-      .mockResolvedValueOnce(5)
-      .mockResolvedValueOnce(12)
-      .mockResolvedValueOnce(3);
+      .mockResolvedValueOnce(5)   // callsThisWeek
+      .mockResolvedValueOnce(3)   // callsLastWeek
+      .mockResolvedValueOnce(12)  // callsThisMonth
+      .mockResolvedValueOnce(2);  // bookingsMissed (NO_BOOKING)
     vi.mocked(prisma.appointment.count)
-      .mockResolvedValueOnce(4)
-      .mockResolvedValueOnce(2);
+      .mockResolvedValueOnce(4);  // bookingsConfirmed
     vi.mocked(prisma.call.aggregate)
       .mockResolvedValueOnce({ _avg: { duration: 83 } } as never)
       .mockResolvedValueOnce({ _sum: { duration: 600 } } as never);
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValueOnce({
+      petName: "Buddy",
+      serviceName: "Full Groom",
+      startTime: new Date("2026-04-01T10:00:00Z"),
+      customerName: "Jane Doe",
+    } as never);
 
     const response = await GET();
     const payload = await response.json();
 
     expect(payload.stats).toEqual({
       callsThisWeek: 5,
+      callsLastWeek: 3,
       callsThisMonth: 12,
       bookingsConfirmed: 4,
-      bookingsMissed: 3,
+      bookingsMissed: 2,
       revenueProtected: 200,
       avgCallDuration: 83,
       totalCallMinutes: 10,
+      nextAppointment: {
+        petName: "Buddy",
+        serviceName: "Full Groom",
+        startTime: "2026-04-01T10:00:00.000Z",
+        customerName: "Jane Doe",
+      },
     });
     expect(payload.demoPhoneNumber).toBeNull();
+  });
+
+  it("returns null nextAppointment when no upcoming appointments exist", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({
+        id: "biz_1",
+        services: [{ price: 50 }],
+        groomers: [],
+        phoneNumber: null,
+        calendarConnections: [],
+        retellConfig: null,
+      } as never);
+    vi.mocked(prisma.demoSession.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.call.count)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    vi.mocked(prisma.appointment.count).mockResolvedValueOnce(0);
+    vi.mocked(prisma.call.aggregate)
+      .mockResolvedValueOnce({ _avg: { duration: null } } as never)
+      .mockResolvedValueOnce({ _sum: { duration: null } } as never);
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValueOnce(null);
+
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(payload.stats.nextAppointment).toBeNull();
+    expect(payload.stats.callsLastWeek).toBe(0);
+    expect(payload.stats.totalCallMinutes).toBe(0);
+    expect(payload.stats.avgCallDuration).toBe(0);
+  });
+
+  it("returns demoLeadHint when business does not exist but demoLead does", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "lead@example.com", name: "Lead" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_2" } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked((prisma as any).demoLead.findUnique).mockResolvedValueOnce({ businessName: "Happy Paws" });
+
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(payload.business).toBeNull();
+    expect(payload.stats).toBeNull();
+    expect(payload.demoLeadHint).toEqual({ businessName: "Happy Paws" });
   });
 
   it("creates a new business, seeds defaults, creates services, and syncs retell when config exists", async () => {
