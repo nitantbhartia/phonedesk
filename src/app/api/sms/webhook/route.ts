@@ -15,7 +15,7 @@ function twimlOk() {
   );
 }
 
-type InboundSource = "retell" | "twilio";
+type InboundSource = "retell" | "twilio" | "textbelt";
 
 type InboundPayload = {
   source: InboundSource;
@@ -23,6 +23,7 @@ type InboundPayload = {
   to: string;
   messageBody: string;
   twilioFormData?: FormData;
+  rawBody?: string;
 };
 
 function getPublicRequestUrl(req: NextRequest) {
@@ -76,7 +77,29 @@ async function parseInboundPayload(req: NextRequest): Promise<InboundPayload> {
     };
   }
 
-  const body = await req.json().catch(() => ({}));
+  const rawBody = await req.text();
+  const body = rawBody
+    ? ((() => {
+        try {
+          return JSON.parse(rawBody);
+        } catch {
+          return {};
+        }
+      })())
+    : {};
+  if (
+    typeof body.fromNumber === "string" &&
+    typeof body.text === "string"
+  ) {
+    return {
+      source: "textbelt",
+      from: body.fromNumber.trim(),
+      to: String(body.data || new URL(req.url).searchParams.get("to") || "").trim(),
+      messageBody: body.text.trim(),
+      rawBody,
+    };
+  }
+
   return {
     source: "retell",
     from: String(body.from_number || body.chat_inbound?.from_number || "").trim(),
@@ -84,44 +107,48 @@ async function parseInboundPayload(req: NextRequest): Promise<InboundPayload> {
     messageBody: String(
       body.message || body.text || body.chat_inbound?.message || ""
     ).trim(),
+    rawBody,
   };
 }
 
 async function sendSmsReply(to: string, body: string, from: string) {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const twilioFrom = process.env.TWILIO_PHONE_NUMBER || from;
+  const { sendSms } = await import("@/lib/sms");
+  await sendSms(to, body, from);
+}
 
-  if (accountSid && authToken) {
-    const payload = new URLSearchParams({
-      To: to,
-      From: twilioFrom,
-      Body: body,
-    });
-
-    const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `${accountSid}:${authToken}`
-          ).toString("base64")}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload.toString(),
-      }
-    );
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Twilio SMS error: ${text}`);
-    }
-    return;
+function verifyTextbeltSignature(req: NextRequest, rawBody: string) {
+  const apiKey = process.env.TEXTBELT_API_KEY;
+  if (!apiKey) {
+    return true;
   }
 
-  const { sendSms } = await import("@/lib/retell");
-  await sendSms(to, body, from);
+  const signature = req.headers.get("x-textbelt-signature");
+  const timestamp = req.headers.get("x-textbelt-timestamp");
+  if (!signature || !timestamp) {
+    return false;
+  }
+
+  const timestampNumber = Number(timestamp);
+  if (!Number.isFinite(timestampNumber)) {
+    return false;
+  }
+
+  const ageSeconds = Math.abs(Math.floor(Date.now() / 1000) - timestampNumber);
+  if (ageSeconds > 15 * 60) {
+    return false;
+  }
+
+  const expected = createHmac("sha256", apiKey)
+    .update(timestamp + rawBody)
+    .digest("hex");
+
+  const sigBuf = Buffer.from(signature, "utf8");
+  const expBuf = Buffer.from(expected, "utf8");
+  if (sigBuf.length !== expBuf.length) {
+    return false;
+  }
+
+  return timingSafeEqual(sigBuf, expBuf);
 }
 
 export async function POST(req: NextRequest) {
@@ -130,7 +157,7 @@ export async function POST(req: NextRequest) {
   }
 
   const inbound = await parseInboundPayload(req);
-  const { source, from, to, messageBody, twilioFormData } = inbound;
+  const { source, from, to, messageBody, twilioFormData, rawBody } = inbound;
 
   if (source === "retell" && !isRetellAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -147,6 +174,15 @@ export async function POST(req: NextRequest) {
   ) {
     console.warn("[SMS Webhook] Twilio signature verification failed — rejecting request");
     return twimlOk();
+  }
+
+  if (
+    source === "textbelt" &&
+    rawBody &&
+    !verifyTextbeltSignature(req, rawBody)
+  ) {
+    console.warn("[SMS Webhook] Textbelt signature verification failed — rejecting request");
+    return NextResponse.json({ ok: true });
   }
 
   const { allowed } = rateLimit(`sms:${from}`, { limit: 20, windowMs: 60_000 });
