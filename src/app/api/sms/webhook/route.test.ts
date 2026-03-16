@@ -33,6 +33,10 @@ vi.mock("@/lib/retell-auth", () => ({
   isRetellAuthorized: vi.fn(),
 }));
 
+vi.mock("@/lib/sms", () => ({
+  isSmsEnabled: vi.fn(() => true),
+}));
+
 vi.mock("@/lib/retell", () => ({
   sendSms: vi.fn(),
 }));
