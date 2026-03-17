@@ -557,6 +557,13 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 }
 
 export async function endRetellCall(callId: string): Promise<void> {
+  await retellFetch(`/v2/end-call/${callId}`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function deleteRetellCallRecord(callId: string): Promise<void> {
   await retellFetch(`/v2/delete-call/${callId}`, { method: "DELETE" });
 }
 
