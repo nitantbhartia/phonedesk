@@ -16,6 +16,7 @@ import {
   createRetellAgent,
   createRetellLLM,
   deleteRetellAgent,
+  deleteRetellCallRecord,
   deleteRetellPhoneNumber,
   endRetellCall,
   generateGreeting,
@@ -389,6 +390,7 @@ describe("Retell API helpers", () => {
 
     await deleteRetellAgent("agent_1");
     await endRetellCall("call_1");
+    await deleteRetellCallRecord("call_2");
     await deleteRetellPhoneNumber("+16195559999");
 
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -398,11 +400,16 @@ describe("Retell API helpers", () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      "https://api.retellai.com/v2/delete-call/call_1",
-      expect.objectContaining({ method: "DELETE" })
+      "https://api.retellai.com/v2/end-call/call_1",
+      expect.objectContaining({ method: "POST" })
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
+      "https://api.retellai.com/v2/delete-call/call_2",
+      expect.objectContaining({ method: "DELETE" })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
       "https://api.retellai.com/delete-phone-number/%2B16195559999",
       expect.objectContaining({ method: "DELETE" })
     );

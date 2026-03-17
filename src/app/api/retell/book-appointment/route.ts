@@ -70,6 +70,54 @@ export async function POST(req: NextRequest) {
 
   const business = phoneNum.business;
 
+  // Inherit isTestCall from the Call record (set by webhook for demo/onboarding calls).
+  // This ensures demo calls get HARD booking mode even when the business has SOFT configured.
+  if (!isTestBooking && call?.call_id) {
+    const callRecord = await prisma.call.findUnique({
+      where: { retellCallId: call.call_id },
+      select: { isTestCall: true },
+    });
+    if (callRecord?.isTestCall) {
+      isTestBooking = true;
+    }
+  }
+
+  // Idempotency: if this call already produced a booking, return it instead of double-booking.
+  if (call?.call_id) {
+    const existingCallRecord = await prisma.call.findUnique({
+      where: { retellCallId: call.call_id },
+      select: { appointmentId: true },
+    });
+    if (existingCallRecord?.appointmentId) {
+      const existing = await prisma.appointment.findUnique({
+        where: { id: existingCallRecord.appointmentId },
+      });
+      if (existing) {
+        const timezone = business.timezone || "America/Los_Angeles";
+        const timeStr = existing.startTime.toLocaleString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZone: timezone,
+        });
+        const isConfirmed = existing.status === "CONFIRMED";
+        const resultMessage = isConfirmed
+          ? `I've booked ${existing.petName || "your pet"} for a ${existing.serviceName || "grooming"} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
+          : `I've got ${timeStr} held for ${existing.petName || "your pet"}'s ${existing.serviceName || "grooming"} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
+        console.log("[book-appointment] Returning existing booking for call", call.call_id, "appointment", existing.id);
+        return NextResponse.json({
+          result: resultMessage,
+          booked: true,
+          confirmed: isConfirmed,
+          appointment_id: existing.id,
+          timezone,
+        });
+      }
+    }
+  }
+
   const {
     customer_name: customerName,
     customer_phone: customerPhone,
