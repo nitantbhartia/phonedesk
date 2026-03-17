@@ -174,6 +174,7 @@ export async function POST(req: NextRequest) {
     timezone,
     businessHours,
     bookingMode,
+    vaccinePolicy,
     services,
     // Agent config fields (optional — sent from agent settings page)
     agentActive,
@@ -201,6 +202,7 @@ export async function POST(req: NextRequest) {
         ...(timezone !== undefined ? { timezone } : {}),
         ...(businessHours !== undefined ? { businessHours } : {}),
         ...(bookingMode !== undefined ? { bookingMode } : {}),
+        ...(vaccinePolicy !== undefined && ["OFF", "FLAG_ONLY", "REQUIRE"].includes(vaccinePolicy) ? { vaccinePolicy } : {}),
         onboardingStep: 3,
       },
     });
@@ -372,7 +374,7 @@ export async function PATCH(req: NextRequest) {
 
   // Only allow safe fields to be updated
   const allowedFields = ["name", "ownerName", "city", "state", "phone", "address",
-    "timezone", "businessHours", "bookingMode", "isActive", "onboardingComplete",
+    "timezone", "businessHours", "bookingMode", "vaccinePolicy", "isActive", "onboardingComplete",
     "onboardingStep", "googleReviewUrl"];
   const safeData: Record<string, unknown> = {};
   for (const key of allowedFields) {

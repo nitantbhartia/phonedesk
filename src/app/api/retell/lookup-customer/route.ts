@@ -159,6 +159,24 @@ export async function POST(req: NextRequest) {
     result = buildCustomerContextSummary(context);
   }
 
+  // Look up the most recent vaccine status from prior appointments
+  let lastVaccineStatus: string | null = null;
+  if (found) {
+    const normalizedCaller = normalizePhoneNumber(callerPhone);
+    if (normalizedCaller) {
+      const recentAppt = await prisma.appointment.findFirst({
+        where: {
+          businessId,
+          customerPhone: normalizedCaller,
+          vaccineStatus: { not: null },
+        },
+        orderBy: { startTime: "desc" },
+        select: { vaccineStatus: true },
+      });
+      lastVaccineStatus = recentAppt?.vaccineStatus ?? null;
+    }
+  }
+
   console.log("[lookup-customer] result: found=", found, "customer=", customerName, "pets=", context.pets.map(p => p.name));
 
   return NextResponse.json({
@@ -176,6 +194,7 @@ export async function POST(req: NextRequest) {
       size: pet.size,
     })),
     preferred_groomer: (context.customer as { preferredGroomer?: { name: string } | null })?.preferredGroomer?.name || null,
+    vaccineStatus: lastVaccineStatus,
     current_date: todayStr,
   });
 }

@@ -31,6 +31,7 @@ import {
   Save,
   Plus,
   Trash2,
+  ShieldCheck,
 } from "lucide-react";
 
 interface BusinessData {
@@ -38,6 +39,7 @@ interface BusinessData {
   name: string;
   ownerName: string;
   bookingMode: string;
+  vaccinePolicy: string;
   isActive: boolean;
   services: Array<{
     id: string;
@@ -65,6 +67,7 @@ export default function AgentSettingsPage() {
   // Form state
   const [greeting, setGreeting] = useState("");
   const [bookingMode, setBookingMode] = useState("SOFT");
+  const [vaccinePolicy, setVaccinePolicy] = useState("OFF");
   const [isActive, setIsActive] = useState(true);
   const [services, setServices] = useState<
     Array<{ id?: string; name: string; price: string; duration: string; isAddon: boolean }>
@@ -87,6 +90,7 @@ export default function AgentSettingsPage() {
           setBusiness(data.business);
           setGreeting(data.business.retellConfig?.greeting || "");
           setBookingMode(data.business.bookingMode);
+          setVaccinePolicy(data.business.vaccinePolicy || "OFF");
           setIsActive(data.business.isActive);
           setServices(
             data.business.services.map(
@@ -118,6 +122,7 @@ export default function AgentSettingsPage() {
           name: business?.name,
           ownerName: business?.ownerName,
           bookingMode,
+          vaccinePolicy,
           services: services.filter((s) => s.name.trim()),
           agentActive: isActive,
           greeting,
@@ -247,6 +252,44 @@ export default function AgentSettingsPage() {
             {bookingMode === "SOFT"
               ? "Soft booking holds the slot for 2 hours and sends the customer a confirmation link."
               : "Hard booking confirms the appointment immediately on your calendar."}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Vaccine Policy */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5" />
+            Vaccine Policy
+          </CardTitle>
+          <CardDescription>
+            Control whether Pip asks about rabies and Bordetella vaccination status during booking calls.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select value={vaccinePolicy} onValueChange={setVaccinePolicy}>
+            <SelectTrigger className="w-72">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="OFF">
+                Off — don&apos;t ask about vaccines
+              </SelectItem>
+              <SelectItem value="FLAG_ONLY">
+                Ask &amp; note, but always book
+              </SelectItem>
+              <SelectItem value="REQUIRE">
+                Ask &amp; block if unvaccinated
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground mt-2">
+            {vaccinePolicy === "OFF"
+              ? "Pip won't ask about vaccines during calls. Vaccination is still collected on the intake form."
+              : vaccinePolicy === "FLAG_ONLY"
+                ? "Pip asks about rabies and Bordetella before booking. If the owner says no or is unsure, Pip books anyway and notes the status for your review."
+                : "Pip asks about rabies and Bordetella before booking. If the owner says their dog isn't vaccinated, Pip will not book and will ask them to call back after getting updated."}
           </p>
         </CardContent>
       </Card>
