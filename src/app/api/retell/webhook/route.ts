@@ -145,15 +145,6 @@ async function handleCallStarted(call: RetellCallPayload) {
           where: { id: demoResolution.publicAttemptId },
           data: { callerPhone: normalizedCaller },
         });
-        if (demoResolution.leadId) {
-          const cooldownUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-          await prisma.demoLead.update({
-            where: { id: demoResolution.leadId },
-            data: { cooldownUntil },
-          }).catch((e) => {
-            console.error("[webhook] Failed to set demo lead cooldown:", e);
-          });
-        }
       }
 
       // Check if this phone has already completed a real demo call (duration > 30s)
