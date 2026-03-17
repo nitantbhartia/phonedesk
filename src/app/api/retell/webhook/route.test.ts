@@ -499,6 +499,134 @@ describe("POST /api/retell/webhook", () => {
     expect(sendMissedCallNotification).not.toHaveBeenCalled();
   });
 
+  // ── Issue A: handleCallEnded returns 500 on DB failure ──────────────
+  it("returns 500 when handleCallEnded DB write fails so Retell retries", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+      business: { id: "biz_1", phoneNumber: { number: "+16195559999" } },
+    } as never);
+    vi.mocked(prisma.call.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.call.create).mockRejectedValue(new Error("DB connection lost"));
+
+    const response = await POST(
+      makeRequest({
+        event: "call_ended",
+        call: {
+          call_id: "call_db_fail",
+          from_number: "+16195550100",
+          to_number: "+16195559999",
+          start_timestamp: 1000,
+          end_timestamp: 91000,
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(500);
+  });
+
+  // ── Issue C: upsertCustomerMemoryFromCall failure is non-fatal ─────
+  it("does not crash call_analyzed when upsertCustomerMemoryFromCall throws", async () => {
+    vi.mocked(upsertCustomerMemoryFromCall).mockRejectedValue(
+      new Error("memory upsert failed")
+    );
+    vi.mocked(prisma.call.findUnique)
+      .mockResolvedValueOnce({
+        id: "db_call_mem",
+        businessId: "biz_1",
+        retellCallId: "call_mem_fail",
+        callerName: null,
+        callerPhone: "+16195550100",
+        appointmentId: "appt_1",
+        status: "COMPLETED",
+        isTestCall: false,
+      } as never)
+      .mockResolvedValueOnce({
+        id: "db_call_mem",
+        businessId: "biz_1",
+        retellCallId: "call_mem_fail",
+        callerName: "Jamie",
+        callerPhone: "+16195550100",
+        appointmentId: "appt_1",
+        status: "COMPLETED",
+        isTestCall: false,
+        business: {
+          id: "biz_1",
+          name: "Paw House",
+          phone: "+16195550000",
+          phoneNumber: { number: "+16195559999" },
+        },
+      } as never);
+
+    const response = await POST(
+      makeRequest({
+        event: "call_analyzed",
+        call: {
+          call_id: "call_mem_fail",
+          from_number: "+16195550100",
+          call_analysis: {
+            call_summary: "Booked a groom.",
+            custom_analysis_data: { customer_name: "Jamie" },
+          },
+        },
+      }) as never
+    );
+
+    // Should succeed despite memory upsert failure
+    expect(response.status).toBe(204);
+    expect(upsertCustomerMemoryFromCall).toHaveBeenCalled();
+    // Call update should still have happened
+    expect(prisma.call.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { retellCallId: "call_mem_fail" },
+      })
+    );
+  });
+
+  // ── Demo rate limit: blocks repeat calls within same session ───────
+  it("ends the call when the same phone already completed a demo call in the current session", async () => {
+    const { endRetellCall } = await import("@/lib/retell");
+    process.env.DEMO_BUSINESS_ID = "demo_biz";
+    vi.mocked(resolveDemoSession).mockResolvedValue({
+      businessId: "demo_biz",
+      source: "public",
+      demoNumberId: "demo_num_1",
+      publicAttemptId: "attempt_1",
+      leadId: null,
+      // callerPhone already set from first call
+      callerPhone: "+16195550100",
+    });
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({
+        id: "demo_biz",
+        retellConfig: { llmId: "llm_demo" },
+      } as never)
+      .mockResolvedValueOnce({
+        onboardingComplete: true,
+      } as never);
+    // A previous completed call (>30s) exists for this phone
+    vi.mocked(prisma.call.findFirst).mockResolvedValue({
+      id: "prev_call",
+      duration: 120,
+      callerPhone: "+16195550100",
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        event: "call_started",
+        call: {
+          call_id: "call_repeat",
+          from_number: "(619) 555-0100",
+          to_number: "+1 (716) 576-3523",
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(204);
+    expect(endRetellCall).toHaveBeenCalledWith("call_repeat");
+    // Should NOT create a call record
+    expect(prisma.call.upsert).not.toHaveBeenCalled();
+  });
+
   it("uses the customer number for outbound analyzed calls", async () => {
     vi.mocked(prisma.call.findUnique)
       .mockResolvedValueOnce({
