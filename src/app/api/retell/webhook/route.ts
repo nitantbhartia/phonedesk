@@ -159,22 +159,15 @@ async function handleCallStarted(call: RetellCallPayload) {
       // Check if this phone has already completed a real demo call (duration > 30s)
       // within the rate-limit window.  Calls blocked by the subscription gate or
       // ended immediately don't count — the caller deserves a real attempt.
+      // Check both the current session AND previous sessions.
       const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
       const demoBizId = process.env.DEMO_BUSINESS_ID;
-      const previousAttempt = await prisma.publicDemoAttempt.findFirst({
-        where: {
-          callerPhone: normalizedCaller,
-          startedAt: { gte: windowStart },
-          id: { not: demoResolution.publicAttemptId },
-        },
-      });
-      if (previousAttempt && demoBizId) {
-        // Only block if the previous attempt had a real call (duration > 30s)
+      if (demoBizId) {
         const previousCall = await prisma.call.findFirst({
           where: {
             businessId: demoBizId,
             callerPhone: normalizedCaller,
-            createdAt: { gte: previousAttempt.startedAt },
+            createdAt: { gte: windowStart },
             duration: { gt: 30 },
           },
         });
