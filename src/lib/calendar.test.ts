@@ -515,6 +515,54 @@ describe("calendar helpers", () => {
     });
   });
 
+  it("forces HARD booking mode for test/demo bookings regardless of business setting", async () => {
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+      bookingMode: "SOFT",
+    } as never);
+    vi.mocked(prisma.calendarConnection.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue({
+      name: "Full Groom",
+      price: 95,
+      bookingMode: "SOFT",
+    } as never);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.calendarConnection.findMany).mockResolvedValue([]);
+
+    const createMock = vi.fn().mockResolvedValue({
+      id: "appt_test",
+      status: "CONFIRMED",
+    });
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => {
+      return callback({
+        appointment: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: createMock,
+          update: vi.fn(),
+        },
+      });
+    });
+
+    const appointment = await bookAppointment("biz_1", {
+      customerName: "Demo User",
+      customerPhone: "+16195550100",
+      petName: "Luna",
+      serviceName: "Full Groom",
+      startTime: new Date("2026-03-12T20:00:00.000Z"),
+      endTime: new Date("2026-03-12T21:00:00.000Z"),
+      isTestBooking: true,
+    });
+
+    // Should create with CONFIRMED status (HARD mode), not PENDING
+    expect(createMock).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        status: "CONFIRMED",
+        bookingMode: "HARD",
+      }),
+    });
+    expect(appointment.status).toBe("CONFIRMED");
+  });
+
   it("syncs external calendar ids after booking to Google, Square, and Acuity", async () => {
     const transactionMock = vi.fn(async (callback: any) =>
       callback({

@@ -63,10 +63,9 @@ export async function sendBookingConfirmationToCustomer(
     time,
     business.address ? business.address : "",
     "",
-    appointment.status === "PENDING" && appointment.confirmLink
-      ? `Please confirm: ${appointment.confirmLink}`
-      : "",
-    "Reply CANCEL to cancel. See you soon!",
+    appointment.status === "PENDING"
+      ? "Reply CONFIRM to lock in your spot, or CANCEL to cancel."
+      : "Reply CANCEL to cancel. See you soon!",
   ]
     .filter(Boolean)
     .join("\n");
@@ -306,10 +305,9 @@ export async function sendRescheduleConfirmationToCustomer(
     `Now: ${newTime}`,
     business.address || "",
     "",
-    newAppt.status === "PENDING" && newAppt.confirmLink
-      ? `Please confirm the updated time: ${newAppt.confirmLink}`
-      : "",
-    "Reply CANCEL if you need to change it again.",
+    newAppt.status === "PENDING"
+      ? "Reply CONFIRM to lock in the new time, or CANCEL to change it again."
+      : "Reply CANCEL if you need to change it again.",
   ]
     .filter(Boolean)
     .join("\n");

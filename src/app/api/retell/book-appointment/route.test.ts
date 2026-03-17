@@ -587,7 +587,7 @@ describe("POST /api/retell/book-appointment", () => {
     });
   });
 
-  it("skips customer memory writes and crm sync for demo/test bookings", async () => {
+  it("skips customer memory writes, crm sync, and intake form for demo/test bookings", async () => {
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
     vi.mocked(resolveBusinessFromDemo).mockResolvedValue("demo_biz");
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
@@ -623,6 +623,7 @@ describe("POST /api/retell/book-appointment", () => {
     );
     expect(upsertCustomerMemory).not.toHaveBeenCalled();
     expect(getCRMWithFallback).not.toHaveBeenCalled();
+    expect(prisma.intakeForm.create).not.toHaveBeenCalled();
   });
 
   it("sends SMS notifications for demo bookings using the demo number when no phoneNumber record exists", async () => {
