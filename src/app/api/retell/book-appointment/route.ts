@@ -390,6 +390,12 @@ export async function POST(req: NextRequest) {
       console.log(`[book-appointment] Test/demo booking for business ${business.id} — skipping bookingsCount increment and billing`);
     }
 
+    // For demo/test bookings the business won't have a provisioned PhoneNumber
+    // record — use the called demo number so SMS notifications still go out.
+    if (isTestBooking && fullBusiness && !fullBusiness.phoneNumber && calledNumber) {
+      (fullBusiness as Record<string, unknown>).phoneNumber = { number: calledNumber };
+    }
+
     if (fullBusiness) {
       const smsResults = await Promise.allSettled([
         sendBookingNotificationToOwner(
