@@ -174,11 +174,8 @@ const STEP_CONFIG = [
     subtitle: "Call the number below and have a real conversation. Ask about pricing, availability, or try to book — your AI is ready.",
     proTip: "The more naturally you talk, the better. Say your dog's name, ask follow-up questions, be a real caller — your AI can handle it.",
   },
-  {
-    title: "Choose your plan",
-    subtitle: "RingPaw pays for itself with just one extra booking a month. You can change plans anytime.",
-    proTip: "Most solo groomers start on the Solo plan and upgrade to Studio once they see how many calls they were missing.",
-  },
+  // Step 6 is skipped (no billing during free launch) — placeholder kept to preserve indices
+  { title: "", subtitle: "", proTip: "" },
   {
     title: "Ready to launch!",
     subtitle: "Everything's configured. Hit Go Live and your AI starts answering calls immediately.",
@@ -188,17 +185,6 @@ const STEP_CONFIG = [
     title: "Set up call forwarding",
     subtitle: "Forward unanswered calls from your business phone to RingPaw — your clients never hear voicemail again.",
     proTip: "Conditional forwarding only kicks in when you don't answer, so you still take calls normally when you're free.",
-  },
-];
-
-const ONBOARDING_PLANS = [
-  {
-    id: "PRO",
-    name: "Studio",
-    price: 199,
-    popular: true,
-    features: ["300 minutes/month (~150 calls)", "Everything included", "Square + Google Calendar"],
-    description: "For full-time groomers who want RingPaw handling every missed call.",
   },
 ];
 
@@ -255,11 +241,6 @@ export default function OnboardingPage() {
   // Prevents the resumeOnboarding effect from resetting step during inline auth (step 3).
   const skipNextResumeRef = useRef(false);
 
-  // Step 6: Subscription
-  const [subscribed, setSubscribed] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [billingConsent, setBillingConsent] = useState(false);
-
   // Auth step (step 3) state — shown inline for guests at step 2→3 transition
   const [profileError, setProfileError] = useState("");
   const [showWebsiteImport, setShowWebsiteImport] = useState(false);
@@ -298,7 +279,6 @@ export default function OnboardingPage() {
           ? new URLSearchParams()
           : new URLSearchParams(window.location.search);
       const requestedStep = Number(params.get("step") || "0");
-      const subscribedParam = params.get("subscribed") === "true";
       const restoreDraft = params.get("restoreDraft") === "1";
 
       try {
@@ -330,7 +310,6 @@ export default function OnboardingPage() {
             // dashboard "Set up now" banner when a user completed onboarding but never
             // provisioned a real number (e.g. payment was skipped or failed).
             if (requestedStep === 7 && !business?.phoneNumber?.number) {
-              setSubscribed(Boolean(business?.stripeSubscriptionId));
               setStep(7);
               return;
             }
@@ -360,8 +339,6 @@ export default function OnboardingPage() {
           }
           setCalendarConnected(hasCalendarConnection);
           setProvisionedNumber(business?.phoneNumber?.number || "");
-          setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
-
           // Restore draft saved before Google OAuth redirect and auto-save
           if (restoreDraft && !business?.name) {
             try {
@@ -774,27 +751,6 @@ export default function OnboardingPage() {
       );
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function startCheckout(planId: string) {
-    setCheckoutLoading(planId);
-    try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: planId,
-          successUrl: "/onboarding?step=7&subscribed=true",
-          cancelUrl: "/onboarding?step=6",
-        }),
-      });
-      const data = await res.json() as { url?: string };
-      if (data.url) window.location.href = data.url;
-    } catch {
-      // User stays on step 6
-    } finally {
-      setCheckoutLoading(null);
     }
   }
 
@@ -1902,8 +1858,8 @@ export default function OnboardingPage() {
 
           <OnboardingFooter
             onBack={() => navigate(4)}
-            onNext={() => navigate(6)}
-            nextLabel={provisionedNumber ? "Choose Plan" : "Continue Setup"}
+            onNext={() => navigate(7)}
+            nextLabel={provisionedNumber ? "Continue" : "Continue Setup"}
             nextDisabled={!provisionedNumber || callPhase === "waiting"}
           />
         </div>
@@ -1985,62 +1941,7 @@ export default function OnboardingPage() {
       )}
 
       {/* Step 6: Choose Plan */}
-      {step === 6 && (
-        <div className="space-y-6">
-          <div className="max-w-md mx-auto">
-            {ONBOARDING_PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                className="relative bg-white rounded-3xl p-6 border-2 border-paw-brown shadow-soft flex flex-col"
-              >
-                <div className="mb-2">
-                  <p className="font-extrabold text-paw-brown text-lg">{plan.name}</p>
-                  <p className="text-3xl font-extrabold text-paw-brown mt-1">
-                    ${plan.price}<span className="text-base font-medium text-paw-brown/50">/mo</span>
-                  </p>
-                </div>
-                {plan.description && (
-                  <p className="text-xs text-paw-brown/60 mb-3 leading-snug">{plan.description}</p>
-                )}
-                <ul className="space-y-2 mb-4 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-paw-brown/70 font-medium">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-paw-amber shrink-0 mt-0.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  <span className="font-bold">No credit card required</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <OnboardingFooter
-            onBack={() => navigate(5)}
-            onNext={async () => {
-              try {
-                await fetch("/api/business/profile", {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ plan: "PRO" }),
-                });
-              } catch { /* non-fatal */ }
-              setSubscribed(true);
-              navigate(7);
-            }}
-            nextLabel="Continue"
-          />
-        </div>
-      )}
-
-      {/* Step 7: Go Live */}
+      {/* Step 7: Go Live (step 6 skipped — no billing) */}
       {step === 7 && (
         <div className="space-y-8">
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
@@ -2151,7 +2052,7 @@ export default function OnboardingPage() {
             <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => navigate(6)}
+                onClick={() => navigate(5)}
                 className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
               >
                 Back
