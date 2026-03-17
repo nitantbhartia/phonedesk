@@ -315,6 +315,12 @@ export async function POST(req: NextRequest) {
             to
           );
         }
+      } else {
+        await sendSmsReply(
+          from,
+          `No upcoming appointment found to confirm. Call ${business.name} if you need help!`,
+          to
+        );
       }
     } else if (upperBody === "BOOK") {
       const waitlistEntry = await prisma.waitlistEntry.findFirst({
@@ -341,16 +347,26 @@ export async function POST(req: NextRequest) {
             to
           );
         } else {
-          await bookAppointment(business.id, {
-            customerName: waitlistEntry.customerName,
-            customerPhone: waitlistEntry.customerPhone,
-            petName: waitlistEntry.petName || undefined,
-            petBreed: waitlistEntry.petBreed || undefined,
-            petSize: waitlistEntry.petSize || undefined,
-            serviceName: waitlistEntry.serviceName || undefined,
-            startTime,
-            endTime,
-          });
+          try {
+            await bookAppointment(business.id, {
+              customerName: waitlistEntry.customerName,
+              customerPhone: waitlistEntry.customerPhone,
+              petName: waitlistEntry.petName || undefined,
+              petBreed: waitlistEntry.petBreed || undefined,
+              petSize: waitlistEntry.petSize || undefined,
+              serviceName: waitlistEntry.serviceName || undefined,
+              startTime,
+              endTime,
+            });
+          } catch (bookErr) {
+            console.error("[SMS Webhook] BOOK bookAppointment failed:", bookErr);
+            await sendSmsReply(
+              from,
+              "Sorry, that slot was just taken. We'll let you know when the next opening comes up!",
+              to
+            );
+            return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
+          }
 
           await prisma.waitlistEntry.update({
             where: { id: waitlistEntry.id },

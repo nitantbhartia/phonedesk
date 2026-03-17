@@ -326,6 +326,8 @@ async function handleCallEnded(call: RetellCallPayload) {
     }
   } catch (err) {
     console.error("[webhook] handleCallEnded DB error:", err);
+    // Return 500 so Retell retries — a 204 here would silently lose the call record
+    return new NextResponse(null, { status: 500 });
   }
 
   return new NextResponse(null, { status: 204 });
@@ -360,38 +362,42 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
     });
 
     if (callerName && !existingCall.isTestCall) {
-      await upsertCustomerMemoryFromCall({
-        businessId: existingCall.businessId,
-        customerName: callerName,
-        customerPhone: customerPhone || existingCall.callerPhone,
-        petName:
-          extracted.petName ||
-          extracted.pet_name ||
-          extracted.dogName ||
-          extracted.dog_name ||
-          null,
-        petBreed:
-          extracted.petBreed ||
-          extracted.pet_breed ||
-          extracted.dogBreed ||
-          extracted.dog_breed ||
-          null,
-        petSize:
-          (extracted.petSize ||
-            extracted.pet_size ||
-            extracted.dogSize ||
-            extracted.dog_size ||
-            null) as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE" | null,
-        serviceName: extracted.serviceName || extracted.service_name || null,
-        summary,
-        notes:
-          extracted.notes ||
-          extracted.specialNotes ||
-          extracted.special_handling_notes ||
-          null,
-        outcome: existingCall.appointmentId ? "BOOKED" : "NO_BOOKING",
-        contactedAt: new Date(),
-      });
+      try {
+        await upsertCustomerMemoryFromCall({
+          businessId: existingCall.businessId,
+          customerName: callerName,
+          customerPhone: customerPhone || existingCall.callerPhone,
+          petName:
+            extracted.petName ||
+            extracted.pet_name ||
+            extracted.dogName ||
+            extracted.dog_name ||
+            null,
+          petBreed:
+            extracted.petBreed ||
+            extracted.pet_breed ||
+            extracted.dogBreed ||
+            extracted.dog_breed ||
+            null,
+          petSize:
+            (extracted.petSize ||
+              extracted.pet_size ||
+              extracted.dogSize ||
+              extracted.dog_size ||
+              null) as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE" | null,
+          serviceName: extracted.serviceName || extracted.service_name || null,
+          summary,
+          notes:
+            extracted.notes ||
+            extracted.specialNotes ||
+            extracted.special_handling_notes ||
+            null,
+          outcome: existingCall.appointmentId ? "BOOKED" : "NO_BOOKING",
+          contactedAt: new Date(),
+        });
+      } catch (memErr) {
+        console.error("[webhook] upsertCustomerMemoryFromCall failed (non-fatal):", memErr);
+      }
     }
 
     const refreshedCall = await prisma.call.findUnique({

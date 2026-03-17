@@ -51,15 +51,19 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  // Notify owner
+  // Notify owner (non-fatal — confirmation already saved, don't crash the redirect)
   if (appointment.business.phone && appointment.business.phoneNumber) {
-    const { sendSms } = await import("@/lib/sms");
-    const { formatDateTime } = await import("@/lib/utils");
-    await sendSms(
-      appointment.business.phone,
-      `[RingPaw] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
-      process.env.TWILIO_PHONE_NUMBER || appointment.business.phoneNumber.number
-    );
+    try {
+      const { sendSms } = await import("@/lib/sms");
+      const { formatDateTime } = await import("@/lib/utils");
+      await sendSms(
+        appointment.business.phone,
+        `[RingPaw] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
+        process.env.TWILIO_PHONE_NUMBER || appointment.business.phoneNumber.number
+      );
+    } catch (smsErr) {
+      console.error("[confirm] Owner notification SMS failed (non-fatal):", smsErr);
+    }
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
