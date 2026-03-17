@@ -497,7 +497,7 @@ function DemoPageInner() {
 
           {/* Active demo — waiting / in_progress / completed */}
           {inActiveCall && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-8 animate-in fade-in duration-300">
+            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-5 sm:p-8 animate-in fade-in duration-300">
               <div className="text-center mb-6">
                 {/* Hero heading for waiting state */}
                 {livePhase === "waiting" && (
@@ -543,7 +543,7 @@ function DemoPageInner() {
                     <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
                     <a
                       href={`tel:${number}`}
-                      className="block text-5xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
+                      className="block text-4xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
                     >
                       {formattedNumber}
                     </a>
@@ -854,8 +854,8 @@ function DemoPageInner() {
         </div>
       </main>
 
-      {/* Post-demo conversion CTA */}
-      <section className="relative z-10 px-4 pb-12">
+      {/* Post-demo conversion CTA — hidden when completed (lead form is the CTA) */}
+      {livePhase !== "completed" && <section className="relative z-10 px-4 pb-12">
         <div className="max-w-xl mx-auto">
           <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
             <div className="absolute -right-16 -top-16 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
@@ -881,7 +881,7 @@ function DemoPageInner() {
             </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* Sticky CTA — appears on scroll, hidden during completed state (which has its own CTA) */}
       {showStickyCta && livePhase !== "completed" && (
