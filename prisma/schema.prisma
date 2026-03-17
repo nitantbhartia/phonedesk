@@ -71,6 +71,7 @@ model Business {
   timezone        String   @default("America/Los_Angeles")
   businessHours   Json?    // { mon: { open: "09:00", close: "17:00" }, ... }
   bookingMode     BookingMode @default(SOFT)
+  vaccinePolicy   VaccinePolicy @default(OFF)
   isActive        Boolean  @default(false)
   onboardingStep  Int      @default(1)
   onboardingComplete Boolean @default(false)
@@ -112,6 +113,12 @@ enum Plan {
 enum BookingMode {
   HARD
   SOFT
+}
+
+enum VaccinePolicy {
+  OFF        // No vaccine check (default, existing behavior)
+  FLAG_ONLY  // Ask about vaccines, always book, note status
+  REQUIRE    // Ask about vaccines, block booking if hard no
 }
 
 model PhoneNumber {
@@ -303,6 +310,7 @@ model Appointment {
   calendarEventId String?           // external calendar event ID
   confirmLink     String?
   notes           String?           @db.Text
+  vaccineStatus   String?           // confirmed, uncertain, unvaccinated_flagged, exemption_bordetella, exemption_rabies
   reminderSent    Boolean           @default(false)
   reminder48hSent Boolean           @default(false)
   onMyWaySent     Boolean           @default(false)

@@ -587,7 +587,7 @@ describe("POST /api/retell/book-appointment", () => {
     });
   });
 
-  it("skips customer memory writes and crm sync for demo/test bookings", async () => {
+  it("skips customer memory writes, crm sync, and intake form for demo/test bookings", async () => {
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
     vi.mocked(resolveBusinessFromDemo).mockResolvedValue("demo_biz");
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
@@ -623,5 +623,56 @@ describe("POST /api/retell/book-appointment", () => {
     );
     expect(upsertCustomerMemory).not.toHaveBeenCalled();
     expect(getCRMWithFallback).not.toHaveBeenCalled();
+    expect(prisma.intakeForm.create).not.toHaveBeenCalled();
+  });
+
+  it("sends SMS notifications for demo bookings using the demo number when no phoneNumber record exists", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(resolveBusinessFromDemo).mockResolvedValue("demo_biz");
+    // First call: resolve business with services (no phoneNumber join)
+    // Second call: fullBusiness lookup — no phoneNumber record
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({
+        ...businessRecord,
+        id: "demo_biz",
+      } as never)
+      .mockResolvedValueOnce({
+        ...businessRecord,
+        id: "demo_biz",
+        phoneNumber: null,
+      } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: {
+          customer_name: "Jamie",
+          customer_phone: "+16195550100",
+          pet_name: "Buddy",
+          service_name: "Full Groom",
+          start_time: "2026-05-21T09:00:00",
+        },
+        call: {
+          call_id: "call_demo_sms",
+          from_number: "+16195550100",
+          to_number: "+17165763523",
+        },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(payload.booked).toBe(true);
+    // Notification functions should be called with the demo number as phoneNumber
+    expect(sendBookingNotificationToOwner).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phoneNumber: { number: "+17165763523" },
+      }),
+      expect.any(Object)
+    );
+    expect(sendBookingConfirmationToCustomer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phoneNumber: { number: "+17165763523" },
+      }),
+      expect.any(Object)
+    );
   });
 });

@@ -8,14 +8,9 @@ vi.mock("@/lib/prisma", () => ({
       count: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
-      count: vi.fn(),
     },
     business: {
       findUnique: vi.fn(),
-    },
-    demoLead: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
     },
     demoNumber: {
       findFirst: vi.fn(),
@@ -25,18 +20,18 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("@/lib/retell", () => ({
-  DEMO_CALL_DURATION_MS: 240000,
+  DEMO_CALL_DURATION_MS: 120000,
   updateRetellPhoneNumber: vi.fn(),
   updateRetellAgent: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/lib/demo-token", () => ({
-  verifyDemoToken: vi.fn(),
+vi.mock("@/lib/demo-session", () => ({
+  cleanupIdleDemoNumbers: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { prisma } from "@/lib/prisma";
-import { verifyDemoToken } from "@/lib/demo-token";
 import { updateRetellAgent, updateRetellPhoneNumber } from "@/lib/retell";
+import { cleanupIdleDemoNumbers } from "@/lib/demo-session";
 import { POST } from "./route";
 
 describe("POST /api/demo/public/start", () => {
@@ -47,36 +42,26 @@ describe("POST /api/demo/public/start", () => {
     vi.mocked(prisma.publicDemoAttempt.count).mockReset();
     vi.mocked(prisma.publicDemoAttempt.findMany).mockReset();
     vi.mocked(prisma.publicDemoAttempt.create).mockReset();
-    vi.mocked(prisma.publicDemoAttempt.count).mockReset();
-    // Default: no recent attempts (allow through)
     vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(0);
     vi.mocked(prisma.business.findUnique).mockReset();
-    vi.mocked(prisma.demoLead.findUnique).mockReset();
-    vi.mocked(prisma.demoLead.update).mockReset();
     vi.mocked(prisma.demoNumber.findFirst).mockReset();
-    vi.mocked(verifyDemoToken).mockReset();
     vi.mocked(updateRetellPhoneNumber).mockReset();
+    vi.mocked(updateRetellPhoneNumber).mockResolvedValue(undefined as never);
     vi.mocked(updateRetellAgent).mockReset();
     vi.mocked(updateRetellAgent).mockResolvedValue(undefined);
+    vi.mocked(cleanupIdleDemoNumbers).mockReset();
+    vi.mocked(cleanupIdleDemoNumbers).mockResolvedValue(undefined);
   });
 
   it("does not reuse a demo number that is already assigned to an active public attempt", async () => {
-    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
-    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValueOnce(null);
     vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(0 as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       retellConfig: { agentId: "agent_1" },
     } as never);
-    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
-      id: "lead_1",
-      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
-      cooldownUntil: null,
-    } as never);
-    vi.mocked(prisma.demoLead.update).mockResolvedValue({ id: "lead_1" } as never);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
       const tx = {
         publicDemoAttempt: {
-          // No existing in-tx session
           findFirst: vi.fn().mockResolvedValue(null),
           findMany: vi.fn().mockResolvedValue([{ demoNumberId: "demo_num_1" }]),
           create: vi.fn().mockResolvedValue({
@@ -98,7 +83,7 @@ describe("POST /api/demo/public/start", () => {
     const response = await POST(
       new Request("http://localhost/api/demo/public/start", {
         method: "POST",
-        body: JSON.stringify({ ldt: "token_1" }),
+        body: JSON.stringify({}),
       }) as never
     );
 
@@ -106,28 +91,7 @@ describe("POST /api/demo/public/start", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
-  it("requires email verification before starting the demo", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/demo/public/start", {
-        method: "POST",
-        body: JSON.stringify({}),
-      }) as never
-    );
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      error: "verification_required",
-      message: "Please verify your email to access the live demo.",
-    });
-  });
-
   it("returns an existing active session idempotently", async () => {
-    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
-    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
-      id: "lead_1",
-      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
-      cooldownUntil: null,
-    } as never);
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue({
       sessionToken: "existing_token",
       startedAt: new Date("2026-03-11T20:00:00.000Z"),
@@ -140,7 +104,7 @@ describe("POST /api/demo/public/start", () => {
     const response = await POST(
       new Request("http://localhost/api/demo/public/start", {
         method: "POST",
-        body: JSON.stringify({ ldt: "token_1" }),
+        body: JSON.stringify({}),
       }) as never
     );
 
@@ -153,64 +117,136 @@ describe("POST /api/demo/public/start", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  it("returns cooldown information for recently used leads", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-03-12T12:00:00.000Z"));
-    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
-    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
-      id: "lead_1",
-      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
-      cooldownUntil: new Date("2026-03-14T12:00:00.000Z"),
-    } as never);
+  it("blocks IPs that have had too many recent attempts", async () => {
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(3);
 
     const response = await POST(
       new Request("http://localhost/api/demo/public/start", {
         method: "POST",
-        body: JSON.stringify({ ldt: "token_1" }),
+        body: JSON.stringify({}),
       }) as never
     );
 
     expect(response.status).toBe(429);
-    await expect(response.json()).resolves.toEqual({
-      error: "cooldown_active",
-      message: "You've already tried the live demo recently. Come back in 2 days — no hard feelings.",
-      cooldownUntil: "2026-03-14T12:00:00.000Z",
-    });
-    vi.useRealTimers();
+    const body = await response.json() as { error: string };
+    expect(body.error).toBe("cooldown_active");
   });
 
-  it("blocks a lead who has had 2+ attempts in the last 3 days", async () => {
-    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
-    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
-      id: "lead_1",
-      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
-      cooldownUntil: null,
+  it("auto-reclaims an idle demo number when all lines are busy", async () => {
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(0 as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      retellConfig: { agentId: "agent_1" },
     } as never);
-    // No active session
-    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
-    // 2 recent attempts — exceeds the limit
-    vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(2);
+    vi.mocked(updateRetellPhoneNumber).mockResolvedValue(undefined as never);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+      const tx = {
+        publicDemoAttempt: {
+          findFirst: vi.fn()
+            // First call: no existing session for this IP
+            .mockResolvedValueOnce(null)
+            // Second call: find the stale attempt to reclaim
+            .mockResolvedValueOnce({
+              id: "stale_attempt",
+              demoNumberId: "demo_num_1",
+              startedAt: new Date("2026-03-17T06:00:00.000Z"),
+              callerPhone: "+16195550100",
+              demoNumber: {
+                id: "demo_num_1",
+                number: "+17165763523",
+                retellPhoneNumber: "retell_demo_1",
+              },
+            }),
+          findMany: vi.fn().mockResolvedValue([
+            { demoNumberId: "demo_num_1" },
+            { demoNumberId: "demo_num_2" },
+          ]),
+          create: vi.fn().mockResolvedValue({
+            sessionToken: "new_token",
+            startedAt: new Date("2026-03-17T07:00:00.000Z"),
+          }),
+          update: vi.fn().mockResolvedValue({}),
+        },
+        demoNumber: {
+          // No available number on first check
+          findFirst: vi.fn().mockResolvedValue(null),
+        },
+        call: {
+          // No active call for the stale session
+          findFirst: vi.fn().mockResolvedValue(null),
+        },
+      };
+      return callback(tx as never);
+    });
 
     const response = await POST(
       new Request("http://localhost/api/demo/public/start", {
         method: "POST",
-        body: JSON.stringify({ ldt: "token_1" }),
+        body: JSON.stringify({}),
       }) as never
     );
 
-    expect(response.status).toBe(429);
-    const body = await response.json() as { error: string; message: string };
-    expect(body.error).toBe("cooldown_active");
-    expect(body.message).toContain("3 days");
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.number).toBe("+17165763523");
+  });
+
+  it("does NOT reclaim a demo number with an active in-progress call", async () => {
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(0 as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      retellConfig: { agentId: "agent_1" },
+    } as never);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+      const tx = {
+        publicDemoAttempt: {
+          findFirst: vi.fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({
+              id: "active_attempt",
+              demoNumberId: "demo_num_1",
+              startedAt: new Date("2026-03-17T06:50:00.000Z"),
+              callerPhone: "+16195550100",
+              demoNumber: {
+                id: "demo_num_1",
+                number: "+17165763523",
+                retellPhoneNumber: "retell_demo_1",
+              },
+            }),
+          findMany: vi.fn().mockResolvedValue([
+            { demoNumberId: "demo_num_1" },
+          ]),
+          create: vi.fn(),
+          update: vi.fn(),
+        },
+        demoNumber: {
+          findFirst: vi.fn().mockResolvedValue(null),
+        },
+        call: {
+          // Active call exists — should NOT reclaim
+          findFirst: vi.fn().mockResolvedValue({
+            id: "active_call",
+            status: "IN_PROGRESS",
+          }),
+        },
+      };
+      return callback(tx as never);
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/demo/public/start", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }) as never
+    );
+
+    expect(response.status).toBe(503);
+    const body = await response.json();
+    expect(body.error).toBe("demo_unavailable");
   });
 
   it("returns 503 when there is no configured demo business agent", async () => {
-    vi.mocked(verifyDemoToken).mockReturnValue({ leadId: "lead_1" } as never);
-    vi.mocked(prisma.demoLead.findUnique).mockResolvedValue({
-      id: "lead_1",
-      verifiedAt: new Date("2026-03-11T19:00:00.000Z"),
-      cooldownUntil: null,
-    } as never);
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.publicDemoAttempt.count).mockResolvedValue(0 as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
@@ -220,7 +256,7 @@ describe("POST /api/demo/public/start", () => {
     const response = await POST(
       new Request("http://localhost/api/demo/public/start", {
         method: "POST",
-        body: JSON.stringify({ ldt: "token_1" }),
+        body: JSON.stringify({}),
       }) as never
     );
 

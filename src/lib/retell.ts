@@ -4,6 +4,7 @@ import type { Business, BreedRecommendation, RetellConfig, Service, Groomer } fr
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
 const DEFAULT_VOICE_ID = "11labs-Grace";
+const DEFAULT_VOICE_MODEL = "eleven_turbo_v2_5";
 const DEFAULT_VOICE_SPEED = 0.95; // slightly under 1.0 — more unhurried, natural pacing
 const DEFAULT_VOLUME = 1.0;
 
@@ -164,7 +165,25 @@ Ask one confirmation question to lock in that slot.
 If requested_time_available=false and available=true:
 Offer only the returned slots and ask which they prefer.
 If availability or service matching comes back unclear, briefly explain what you couldn't match, offer the closest valid option, and ask exactly one clarifying question.
-STEP 5 — UPSELL ADD-ON (returning customers only, one offer max)
+${business.vaccinePolicy !== "OFF" ? `STEP 4A — VACCINE CHECK (required before booking)
+After the caller confirms a time slot and before you book, ask about vaccines.
+Ask naturally: "Just a quick question before we lock that in — is [dog name]'s rabies vaccination current?"
+If yes: "And is their Bordetella vaccine up to date as well?"
+HANDLING RESPONSES:
+- BOTH CONFIRMED (yes to both): Proceed to booking. Pass vaccine_status="confirmed" to book_appointment.
+- HARD NO ("they're not vaccinated" / "no" to rabies):
+  ${business.vaccinePolicy === "REQUIRE"
+    ? `Do NOT book. Say: "We do require current vaccines for all appointments — once you've had a chance to get that updated with your vet, we'd love to get [dog name] in. Would you like our number to call back when you're all set?" Then proceed to close the call without booking.`
+    : `Book anyway but note it. Say: "No worries — we just ask that you bring proof of current vaccines on the day of the appointment. Does that work?" Pass vaccine_status="unvaccinated_flagged" to book_appointment.`}
+- UNCERTAIN ("I think so" / "not sure"):
+  Say: "No worries — we just ask that you bring proof of current rabies and Bordetella on the day of the appointment. If you can't locate the records, your vet can usually send them over quickly. Does that work for you?"
+  Proceed to book. Pass vaccine_status="uncertain" to book_appointment.
+- MEDICAL EXEMPTION ("my vet said they can't get Bordetella"):
+  Say: "That's totally fine, I'll make a note for ${business.groomers?.filter(g => g.isActive)?.[0]?.name || "the groomer"} and they may want to give you a quick call before the appointment to discuss."
+  Proceed to book. Pass vaccine_status="exemption_bordetella" to book_appointment.
+IMPORTANT: Only ask ONE vaccine question per turn. Ask rabies first, wait for answer, then ask bordetella.
+If lookup_customer_context returned vaccineStatus="confirmed", skip the vaccine questions — just say "I see [dog name]'s vaccines are on file — perfect." and pass vaccine_status="confirmed" to book_appointment.
+` : ""}STEP 5 — UPSELL ADD-ON (returning customers only, one offer max)
 Before booking, check the services list from get_services for any with is_addon=true. If add-ons exist and this is a returning customer (found=true from lookup), offer exactly ONE add-on naturally:
 "While I have you — we also offer [add-on name] for just $[price], which only takes an extra [duration] minutes. Want to add that on today?"
 Rules:
@@ -225,23 +244,24 @@ ${business.bookingMode === "HARD"
 }
 CALLER ASKS IF THIS IS AI:
 ${business.bookingMode === "HARD"
-  ? `"I'm Pip, ${business.ownerName}'s receptionist — I make sure no call goes to voicemail while they're with a client. I can get you fully booked right now if you'd like!"`
-  : `"I'm Pip, ${business.ownerName}'s receptionist — I make sure no call goes to voicemail while they're with a client. I can get the details on the calendar right now and ${business.ownerName} will confirm it with you."`
+  ? `"I'm an AI assistant for ${business.name} — I handle calls and bookings so ${business.ownerName} can focus on the dogs. I can get you fully booked right now if you'd like!"`
+  : `"I'm an AI assistant for ${business.name} — I handle calls and bookings so ${business.ownerName} can focus on the dogs. I can get the details on the calendar right now and ${business.ownerName} will confirm it with you."`
 }
+CALLER WANTS A REAL PERSON:
+If the caller asks to speak to a real person or says they don't want to talk to AI, say: "Of course — I'll let ${business.ownerName} know. They'll call you back as soon as they're free. Can I confirm the best number to reach you at?"
+Then call add_call_note with outcome "transfer_requested" and call end_call.
+CANNOT UNDERSTAND CALLER:
+If you cannot understand the caller after two attempts, say: "I'm having a little trouble hearing you — I'll have ${business.ownerName} give you a call back shortly. Sorry about that!"
+Then call add_call_note with outcome "callback_needed" and call end_call.
 PRICING:
 Do not mention pricing unless the caller asks. If asked, use the prices returned by get_services. Never quote a price that didn't come from get_services.
 NAME SPELLING:
 Always confirm spelling if a name is unclear.
 ---
 WHAT YOU NEVER DO
-- Never ask more than one question per turn
-- Never say "As an AI" or reference being software
 - Never recite a list of services unprompted
 - Never apologize excessively
-- Never rush a caller who is talking about their dog — this is rapport, not a distraction
-- Never confirm a time slot before book_appointment returns success
-- Never reinvent or reformat timestamps from tool results
-- Never re-check availability for the same day unless the caller requests a different day${breedGuideSection ? "\n" + breedGuideSection : ""}`;
+- Never rush a caller who is talking about their dog — this is rapport, not a distraction${breedGuideSection ? "\n" + breedGuideSection : ""}`;
 }
 
 function formatTime12h(time24: string): string {
@@ -454,7 +474,7 @@ export async function refreshRetellLLMForCall(
 // --- Retell Agent ---
 
 const MAX_CALL_DURATION_MS = 300_000;  // 5 min cap for all live calls
-const DEMO_CALL_DURATION_MS = 240_000; // 4 min cap for onboarding test calls
+const DEMO_CALL_DURATION_MS = 120_000; // 2 min cap for public demo calls
 
 export async function createRetellAgent(config: {
   llmId: string;
@@ -471,6 +491,7 @@ export async function createRetellAgent(config: {
       },
       agent_name: config.agentName,
       voice_id: config.voiceId || DEFAULT_VOICE_ID,
+      voice_model: DEFAULT_VOICE_MODEL,
       voice_speed: DEFAULT_VOICE_SPEED,
       volume: DEFAULT_VOLUME,
       webhook_url: config.webhookUrl,
@@ -512,6 +533,7 @@ export async function updateRetellAgent(
     reminder_trigger_ms: 6000,
     reminder_max_count: 1,
     normalize_for_speech: true,
+    voice_model: DEFAULT_VOICE_MODEL,
     max_call_duration_ms: updates.maxCallDurationMs ?? MAX_CALL_DURATION_MS,
     end_call_after_silence_ms: 75_000, // 75s silence → drop dead calls (phone left down, solicitor went quiet)
     voicemail_option: { action: { type: "hangup" } }, // hang up immediately on voicemail / IVR — don't burn minutes
@@ -535,6 +557,13 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 }
 
 export async function endRetellCall(callId: string): Promise<void> {
+  await retellFetch(`/v2/end-call/${callId}`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function deleteRetellCallRecord(callId: string): Promise<void> {
   await retellFetch(`/v2/delete-call/${callId}`, { method: "DELETE" });
 }
 
@@ -867,6 +896,12 @@ export function buildAgentTools(appUrl: string): RetellTool[] {
             type: "string",
             description:
               "The name of the preferred groomer, if the customer requested one.",
+          },
+          vaccine_status: {
+            type: "string",
+            description:
+              "Vaccine compliance status collected during the call. Only required when vaccine check is enabled for this business.",
+            enum: ["confirmed", "uncertain", "unvaccinated_flagged", "exemption_bordetella", "exemption_rabies"],
           },
         },
         required: ["customer_name", "service_id", "start_time"],

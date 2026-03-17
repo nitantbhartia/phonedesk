@@ -56,7 +56,7 @@ describe("POST /api/demo/qualify", () => {
   });
 
   it("blocks verified leads that are still in cooldown", async () => {
-    const cooldownUntil = new Date("2026-03-19T18:00:00.000Z");
+    const cooldownUntil = new Date("2026-03-15T18:00:00.000Z");
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-12T18:00:00.000Z"));
     vi.mocked(prisma.demoLead.upsert).mockResolvedValue({
