@@ -4,7 +4,7 @@ import type { Business, BreedRecommendation, RetellConfig, Service, Groomer } fr
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
 const DEFAULT_VOICE_ID = "11labs-Grace";
-const DEFAULT_VOICE_MODEL = "eleven_flash_v2_5";
+const DEFAULT_VOICE_MODEL = "eleven_turbo_v2_5";
 const DEFAULT_VOICE_SPEED = 0.95; // slightly under 1.0 — more unhurried, natural pacing
 const DEFAULT_VOLUME = 1.0;
 
