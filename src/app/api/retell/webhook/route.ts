@@ -137,34 +137,52 @@ async function handleCallStarted(call: RetellCallPayload) {
     // Public demo phone-number rate limit: detect repeat callers by phone
     if (demoResolution?.source === "public" && normalizedCaller && call.call_id) {
       const now = new Date();
-      const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-      const repeat = await prisma.publicDemoAttempt.findFirst({
-        where: {
-          callerPhone: normalizedCaller,
-          startedAt: { gte: windowStart },
-          id: { not: demoResolution.publicAttemptId },
-        },
-      });
-      if (repeat) {
-        await endRetellCall(call.call_id).catch((e) => {
-          console.error("[webhook] Failed to end repeat demo call:", e);
-        });
-        return new NextResponse(null, { status: 204 });
-      }
 
+      // Always record the caller's phone on the current attempt first, so the
+      // status/stream endpoints can detect the call regardless of rate limiting.
       if (!demoResolution.callerPhone) {
-        const cooldownUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
         await prisma.publicDemoAttempt.update({
           where: { id: demoResolution.publicAttemptId },
           data: { callerPhone: normalizedCaller },
         });
         if (demoResolution.leadId) {
+          const cooldownUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
           await prisma.demoLead.update({
             where: { id: demoResolution.leadId },
             data: { cooldownUntil },
           }).catch((e) => {
             console.error("[webhook] Failed to set demo lead cooldown:", e);
           });
+        }
+      }
+
+      // Check if this phone has already completed a real demo call (duration > 30s)
+      // within the rate-limit window.  Calls blocked by the subscription gate or
+      // ended immediately don't count — the caller deserves a real attempt.
+      const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      const demoBizId = process.env.DEMO_BUSINESS_ID;
+      const previousAttempt = await prisma.publicDemoAttempt.findFirst({
+        where: {
+          callerPhone: normalizedCaller,
+          startedAt: { gte: windowStart },
+          id: { not: demoResolution.publicAttemptId },
+        },
+      });
+      if (previousAttempt && demoBizId) {
+        // Only block if the previous attempt had a real call (duration > 30s)
+        const previousCall = await prisma.call.findFirst({
+          where: {
+            businessId: demoBizId,
+            callerPhone: normalizedCaller,
+            createdAt: { gte: previousAttempt.startedAt },
+            duration: { gt: 30 },
+          },
+        });
+        if (previousCall) {
+          await endRetellCall(call.call_id).catch((e) => {
+            console.error("[webhook] Failed to end repeat demo call:", e);
+          });
+          return new NextResponse(null, { status: 204 });
         }
       }
     }
