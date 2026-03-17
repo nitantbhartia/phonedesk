@@ -868,15 +868,15 @@ function DemoPageInner() {
               <p className="text-white/60 text-base mb-6">
                 Set up in 5 minutes. Pip starts answering your calls today.
               </p>
-              <button
-                onClick={() => document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth" })}
+              <Link
+                href="/onboarding"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
               >
                 Get in Touch
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
-              </button>
+              </Link>
               <p className="text-white/40 text-xs mt-4">Free to set up · no credit card needed · cancel anytime</p>
             </div>
           </div>
