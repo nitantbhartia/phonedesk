@@ -206,11 +206,11 @@ function LandingPageContent() {
             <div className="animate-fade-in-up-delay-4 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-paw-brown/60">
               <span className="flex items-center gap-1.5">
                 <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                Card required
+                Free to set up
               </span>
               <span className="flex items-center gap-1.5">
                 <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                Only charged after first booking
+                No credit card needed
               </span>
               <span className="flex items-center gap-1.5">
                 <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -574,54 +574,18 @@ function LandingPageContent() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-paw-brown">Start free. Pay on results.</h2>
-            <p className="text-paw-brown/80 mt-4 text-lg font-medium max-w-xl mx-auto">Start your free trial. Card required. You&apos;re only charged when Pip books your first appointment.</p>
+            <p className="text-paw-brown/80 mt-4 text-lg font-medium max-w-xl mx-auto">Start your free trial. No credit card required.</p>
           </div>
           <div className="max-w-md mx-auto mb-12 bg-paw-cream border-2 border-paw-amber/40 rounded-2xl p-5 text-center shadow-sm">
             <div className="flex items-center justify-center gap-2 mb-1">
               <svg className="w-6 h-6 text-paw-amber" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
               <span className="text-lg font-extrabold text-paw-brown">30-Day Outcome Guarantee</span>
             </div>
-            <p className="text-sm text-paw-brown/70">Card required to start. You are only charged when Pip books your first appointment. If it does not work in 30 days, you owe nothing.</p>
+            <p className="text-sm text-paw-brown/70">No credit card needed. You are only charged when Pip books your first appointment. If it does not work in 30 days, you owe nothing.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 items-center">
-            {/* Solo */}
-            <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-xl font-bold text-paw-brown mb-1">Solo</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-4xl font-extrabold">$99</span>
-                <span className="text-gray-500">/mo</span>
-              </div>
-              <p className="text-sm text-gray-500 mb-6 leading-snug">For solo groomers who are tired of missing calls between clients.</p>
-              <Link
-                href="/auth?mode=signup"
-                className="block w-full py-3 text-center border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
-              >
-                Start Free Trial
-              </Link>
-              <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  120 Minutes / Month (~60 calls)
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Everything Included
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Calendar Integration
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  SMS Confirmations & Reminders
-                </li>
-              </ul>
-              <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
-            </div>
-
+          <div className="max-w-md mx-auto">
             {/* Studio */}
-            <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative md:transform md:scale-105 z-10 card-glow">
-              <div className="absolute top-0 right-0 bg-paw-amber text-paw-brown text-xs font-bold px-4 py-2 rounded-bl-2xl rounded-tr-2xl">RECOMMENDED</div>
+            <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative card-glow">
               <h3 className="text-xl font-bold text-paw-amber mb-1">Studio</h3>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-5xl font-extrabold text-white">$199</span>
@@ -629,10 +593,10 @@ function LandingPageContent() {
               </div>
               <p className="text-sm text-white/70 mb-6 leading-snug">For full-time groomers who want Pip handling every missed call.</p>
               <Link
-                href="/auth?mode=signup"
+                href="/onboarding"
                 className="block w-full py-4 text-center bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg"
               >
-                Start Free Trial
+                Get Started
               </Link>
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
@@ -641,7 +605,7 @@ function LandingPageContent() {
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Priority Setup
+                  Everything Included
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -653,41 +617,6 @@ function LandingPageContent() {
                 </li>
               </ul>
               <a href="#features" className="mt-6 text-xs font-semibold text-paw-amber hover:underline block text-center">See all features →</a>
-            </div>
-
-            {/* Salon */}
-            <div className="glass-card p-8 rounded-[2rem] shadow-card hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-xl font-bold text-paw-brown mb-1">Salon</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-4xl font-extrabold">$349</span>
-                <span className="text-gray-500">/mo</span>
-              </div>
-              <p className="text-sm text-gray-500 mb-6 leading-snug">For small shops with multiple groomers and higher call volume.</p>
-              <Link
-                href="/auth?mode=signup"
-                className="block w-full py-3 text-center border-2 border-paw-brown rounded-full font-bold text-paw-brown hover:bg-paw-brown hover:text-white transition-colors"
-              >
-                Start Free Trial
-              </Link>
-              <ul className="mt-8 space-y-4 text-sm font-medium text-paw-brown/80">
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  500 Minutes / Month (~250 calls)
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Priority Support
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Multi-Groomer Routing
-                </li>
-                <li className="flex gap-3">
-                  <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  SMS Confirmations & Reminders
-                </li>
-              </ul>
-              <a href="#features" className="mt-6 text-xs font-semibold text-paw-orange hover:underline block text-center">See all features →</a>
             </div>
           </div>
 
@@ -782,7 +711,7 @@ function LandingPageContent() {
         {/* Footer CTA */}
         <div className="max-w-2xl mx-auto text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">Ready to stop missing calls?</h2>
-          <p className="text-white/60 mb-6">Set up in 5 minutes. Card required · only charged after your first booking.</p>
+          <p className="text-white/60 mb-6">No credit card needed · set up in 5 minutes.</p>
           <Link
             href="/demo"
             className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
