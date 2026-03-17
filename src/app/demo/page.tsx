@@ -178,6 +178,11 @@ function DemoPageInner() {
   const [leadError, setLeadError] = useState("");
   const [leadSubmitted, setLeadSubmitted] = useState(false);
 
+  // Countdown timer for in-progress calls (3-minute demo cap)
+  const DEMO_DURATION_S = 180; // 3 minutes
+  const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(DEMO_DURATION_S);
+
   const phaseRef = useRef<LivePhase>("loading");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const esRef = useRef<EventSource | null>(null);
@@ -185,6 +190,18 @@ function DemoPageInner() {
   const liveDemoRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { phaseRef.current = livePhase; }, [livePhase]);
+
+  // Tick the countdown every second while the call is in progress
+  useEffect(() => {
+    if (livePhase !== "in_progress" || !callStartedAt) return;
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - callStartedAt) / 1000);
+      setTimeLeft(Math.max(0, DEMO_DURATION_S - elapsed));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [livePhase, callStartedAt]);
 
   // On mount: check for saved session or provision a new demo number
   useEffect(() => {
@@ -210,6 +227,7 @@ function DemoPageInner() {
                 setLivePhase("completed");
               } else if (data.phase === "in_progress") {
                 setLivePhase("in_progress");
+                setCallStartedAt(Date.now());
                 startSSE(token);
               } else {
                 setLivePhase("waiting");
@@ -306,6 +324,7 @@ function DemoPageInner() {
         };
         if (data.phase === "in_progress" && phaseRef.current === "waiting") {
           setLivePhase("in_progress");
+          setCallStartedAt(Date.now());
         } else if (data.phase === "completed") {
           setSummary(data.summary ?? null);
           setTranscriptObject(data.transcriptObject ?? null);
@@ -343,7 +362,7 @@ function DemoPageInner() {
           summary: string | null;
           transcriptObject?: TranscriptTurn[] | null;
         };
-        if (data.phase === "in_progress" && phaseRef.current === "waiting") setLivePhase("in_progress");
+        if (data.phase === "in_progress" && phaseRef.current === "waiting") { setLivePhase("in_progress"); setCallStartedAt(Date.now()); }
         else if (data.phase === "completed") {
           setSummary(data.summary);
           setTranscriptObject(data.transcriptObject ?? null);
@@ -478,7 +497,7 @@ function DemoPageInner() {
 
           {/* Active demo — waiting / in_progress / completed */}
           {inActiveCall && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-8 animate-in fade-in duration-300">
+            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-5 sm:p-8 animate-in fade-in duration-300">
               <div className="text-center mb-6">
                 {/* Hero heading for waiting state */}
                 {livePhase === "waiting" && (
@@ -524,7 +543,7 @@ function DemoPageInner() {
                     <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
                     <a
                       href={`tel:${number}`}
-                      className="block text-5xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
+                      className="block text-4xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
                     >
                       {formattedNumber}
                     </a>
@@ -534,7 +553,10 @@ function DemoPageInner() {
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
                     <p className="text-lg font-bold text-amber-600 mb-1">Your AI is on the call!</p>
-                    <p className="text-sm text-paw-brown/50">We&apos;ll show the full transcript when it ends.</p>
+                    <p className="text-3xl font-extrabold text-amber-600 tabular-nums tracking-wide">
+                      {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                    </p>
+                    <p className="text-xs text-paw-brown/40 mt-1">remaining in demo</p>
                   </div>
                 )}
                 {livePhase === "completed" && (
@@ -688,6 +710,7 @@ function DemoPageInner() {
                               stopPolling();
                             } else if (data.phase === "in_progress") {
                               setLivePhase("in_progress");
+                              setCallStartedAt(Date.now());
                             }
                           })
                           .catch(() => { /* stay on waiting */ });
@@ -831,8 +854,8 @@ function DemoPageInner() {
         </div>
       </main>
 
-      {/* Post-demo conversion CTA */}
-      <section className="relative z-10 px-4 pb-12">
+      {/* Post-demo conversion CTA — hidden when completed (lead form is the CTA) */}
+      {livePhase !== "completed" && <section className="relative z-10 px-4 pb-12">
         <div className="max-w-xl mx-auto">
           <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
             <div className="absolute -right-16 -top-16 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
@@ -858,7 +881,7 @@ function DemoPageInner() {
             </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* Sticky CTA — appears on scroll, hidden during completed state (which has its own CTA) */}
       {showStickyCta && livePhase !== "completed" && (
