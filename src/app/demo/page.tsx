@@ -801,16 +801,79 @@ function DemoPageInner() {
             <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-10 text-center animate-in fade-in duration-300">
               <div className="text-4xl mb-4">⏳</div>
               <h2 className="text-2xl font-extrabold text-paw-brown mb-3">You&apos;ve already tried the live demo</h2>
-              <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
+              <p className="text-paw-brown/60 font-medium mb-6 leading-relaxed">
                 Live demos are limited to prevent abuse. Ready to set it up for your shop?
               </p>
               <Link
                 href="/onboarding"
-                className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft mb-3"
+                className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
               >
                 Start my free trial →
               </Link>
-              <Link href="/" className="text-sm text-paw-brown/50 hover:text-paw-brown transition-colors">Back to home</Link>
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-paw-brown/10" />
+                <span className="text-xs font-bold text-paw-brown/30 uppercase">or</span>
+                <div className="flex-1 h-px bg-paw-brown/10" />
+              </div>
+              <div id="lead-form" className="space-y-4">
+                {leadSubmitted ? (
+                  <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
+                    <div className="text-3xl mb-2">🎉</div>
+                    <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                    <p className="text-sm text-green-700">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
+                      <p className="text-sm font-bold text-paw-brown mb-1">Want us to set it up for you?</p>
+                      <p className="text-xs text-paw-brown/50">Leave your info and we&apos;ll get you live personally.</p>
+                    </div>
+                    <form onSubmit={handleLeadSubmit} className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Your name"
+                        required
+                        value={leadName}
+                        onChange={(e) => setLeadName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        required
+                        value={leadEmail}
+                        onChange={(e) => setLeadEmail(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Phone number"
+                        required
+                        value={leadPhone}
+                        onChange={(e) => setLeadPhone(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Business name"
+                        required
+                        value={leadBusiness}
+                        onChange={(e) => setLeadBusiness(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      />
+                      {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
+                      <button
+                        type="submit"
+                        disabled={leadLoading}
+                        className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                      >
+                        {leadLoading ? "Sending..." : "Get in Touch"}
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+              <Link href="/" className="block mt-4 text-sm text-paw-brown/50 hover:text-paw-brown transition-colors">Back to home</Link>
             </div>
           )}
 
@@ -855,7 +918,7 @@ function DemoPageInner() {
       </main>
 
       {/* Post-demo conversion CTA — hidden when completed (lead form is the CTA) */}
-      {livePhase !== "completed" && <section className="relative z-10 px-4 pb-12">
+      {livePhase !== "completed" && livePhase !== "cooldown" && <section className="relative z-10 px-4 pb-12">
         <div className="max-w-xl mx-auto">
           <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
             <div className="absolute -right-16 -top-16 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
@@ -868,15 +931,15 @@ function DemoPageInner() {
               <p className="text-white/60 text-base mb-6">
                 Set up in 5 minutes. Pip starts answering your calls today.
               </p>
-              <button
-                onClick={() => document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth" })}
+              <Link
+                href="/onboarding"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
               >
                 Get in Touch
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
-              </button>
+              </Link>
               <p className="text-white/40 text-xs mt-4">Free to set up · no credit card needed · cancel anytime</p>
             </div>
           </div>
@@ -884,7 +947,7 @@ function DemoPageInner() {
       </section>}
 
       {/* Sticky CTA — appears on scroll, hidden during completed state (which has its own CTA) */}
-      {showStickyCta && livePhase !== "completed" && (
+      {showStickyCta && livePhase !== "completed" && livePhase !== "cooldown" && (
         <div className="fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="max-w-xl mx-auto px-4 pb-4">
             <Link
