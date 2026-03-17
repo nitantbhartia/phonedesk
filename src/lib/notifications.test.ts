@@ -71,7 +71,23 @@ describe("notifications", () => {
     );
   });
 
-  it("sends customer confirmations with the confirm link for pending appointments", async () => {
+  it("sends customer confirmations with reply-based confirm for pending appointments", async () => {
+    await sendBookingConfirmationToCustomer(
+      business as never,
+      {
+        ...appointment,
+        status: "PENDING",
+      } as never
+    );
+
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      expect.stringContaining("Reply CONFIRM to lock in your spot, or CANCEL to cancel."),
+      "+16195559999"
+    );
+  });
+
+  it("does not include any URLs in the customer confirmation SMS", async () => {
     await sendBookingConfirmationToCustomer(
       business as never,
       {
@@ -81,11 +97,19 @@ describe("notifications", () => {
       } as never
     );
 
-    expect(sendSms).toHaveBeenCalledWith(
-      "+16195550100",
-      expect.stringContaining("Please confirm: https://confirm.test/appt_1"),
-      "+16195559999"
+    const smsBody = vi.mocked(sendSms).mock.calls[0][1];
+    expect(smsBody).not.toMatch(/https?:\/\//);
+  });
+
+  it("sends 'See you soon' instead of CONFIRM prompt for confirmed bookings", async () => {
+    await sendBookingConfirmationToCustomer(
+      business as never,
+      { ...appointment, status: "CONFIRMED" } as never
     );
+
+    const smsBody = vi.mocked(sendSms).mock.calls[0][1];
+    expect(smsBody).toContain("Reply CANCEL to cancel. See you soon!");
+    expect(smsBody).not.toContain("Reply CONFIRM");
   });
 
   it("handles missed call notifications for both owner and caller", async () => {
@@ -160,7 +184,6 @@ describe("notifications", () => {
       ...appointment,
       startTime: new Date("2026-05-22T16:00:00.000Z"),
       status: "PENDING",
-      confirmLink: "https://confirm.test/appt_2",
     };
 
     await sendRescheduleNotificationToOwner(
@@ -184,9 +207,28 @@ describe("notifications", () => {
     expect(sendSms).toHaveBeenNthCalledWith(
       2,
       "+16195550100",
-      expect.stringContaining("Please confirm the updated time"),
+      expect.stringContaining("Reply CONFIRM to lock in the new time, or CANCEL to change it again."),
       "+16195559999"
     );
+  });
+
+  it("does not include any URLs in the reschedule confirmation SMS", async () => {
+    const newAppointment = {
+      ...appointment,
+      startTime: new Date("2026-05-22T16:00:00.000Z"),
+      status: "PENDING",
+      confirmLink: "https://confirm.test/appt_1",
+    };
+
+    await sendRescheduleConfirmationToCustomer(
+      business as never,
+      appointment as never,
+      newAppointment as never
+    );
+
+    const smsBody = vi.mocked(sendSms).mock.calls[0][1];
+    expect(smsBody).not.toMatch(/https?:\/\//);
+    expect(smsBody).toContain("Reply CONFIRM to lock in the new time");
   });
 
   it("includes waitlist details in cancellation notices when available", async () => {

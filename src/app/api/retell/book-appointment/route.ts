@@ -416,9 +416,9 @@ export async function POST(req: NextRequest) {
       console.warn("[SMS] Could not fetch business with phoneNumber for notifications, businessId:", business.id);
     }
 
-    // Auto-send intake form for new clients
+    // Auto-send intake form for new clients (skip for test/demo bookings)
     const custPhone = normalizedCustomerPhone || customerPhone || call?.from_number;
-    if (custPhone) {
+    if (custPhone && !isTestBooking) {
       try {
         const existingCustomer = await prisma.customer.findUnique({
           where: {

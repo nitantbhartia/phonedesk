@@ -804,8 +804,10 @@ export async function bookAppointment(
     throw new Error("Requested slot is no longer available");
   }
 
-  const bookingMode: BookingMode =
-    matchedService?.bookingMode || business.bookingMode;
+  // Demo/test bookings always use HARD mode (auto-confirm) since all slots are open
+  const bookingMode: BookingMode = details.isTestBooking
+    ? "HARD"
+    : matchedService?.bookingMode || business.bookingMode;
 
   const appointment = await prisma.$transaction(async (tx) => {
     const conflictingAppointment = await tx.appointment.findFirst({
