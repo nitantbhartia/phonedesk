@@ -113,16 +113,16 @@ function LandingPageContent() {
               className="min-w-0 max-w-[156px] sm:max-w-[236px]"
             />
             <div className="hidden md:flex gap-8 font-medium text-paw-brown/80">
-              <a href="#how-it-works" className="hover:text-paw-brown transition-colors">How it Works</a>
-              <a href="#features" className="hover:text-paw-brown transition-colors">Features</a>
-              <a href="#pricing" className="hover:text-paw-brown transition-colors">Pricing</a>
+              <a href="#how-it-works" className="nav-link-hover hover:text-paw-brown transition-colors">How it Works</a>
+              <a href="#features" className="nav-link-hover hover:text-paw-brown transition-colors">Features</a>
+              <a href="#pricing" className="nav-link-hover hover:text-paw-brown transition-colors">Pricing</a>
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/auth?mode=signup"
+                href="/demo"
                 className="hidden sm:block px-5 py-2.5 sm:px-6 sm:py-3 bg-paw-brown text-paw-cream rounded-full font-semibold text-sm sm:text-base hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
               >
-                Start Free Trial
+                Try the Demo
               </Link>
               {/* Mobile hamburger */}
               <button
@@ -149,11 +149,11 @@ function LandingPageContent() {
               <a href="#features" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Features</a>
               <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-paw-brown/80 hover:text-paw-brown transition-colors py-1">Pricing</a>
               <Link
-                href="/auth?mode=signup"
+                href="/demo"
                 onClick={() => setMobileMenuOpen(false)}
                 className="mt-1 px-6 py-3 bg-paw-brown text-paw-cream rounded-full font-bold text-center hover:bg-opacity-90 transition-all shadow-lg"
               >
-                Start Free Trial
+                Try the Demo
               </Link>
             </div>
           )}
@@ -233,6 +233,41 @@ function LandingPageContent() {
         </div>
       </header>
 
+      {/* Demo caller reactions */}
+      <section className="py-8 sm:py-12 px-4 sm:px-6 relative z-10">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-center text-xs font-bold tracking-widest text-paw-brown/40 uppercase mb-6">
+            What people say after trying the demo
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-2xl p-6">
+              <p className="text-paw-brown/80 text-base leading-relaxed mb-3 italic">
+                &ldquo;I called the demo and honestly forgot it was AI. It knew my dog&apos;s breed pricing and everything.&rdquo;
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-paw-amber/30 flex items-center justify-center text-sm font-bold text-paw-brown">J</div>
+                <div>
+                  <p className="text-sm font-bold text-paw-brown">Jessica M.</p>
+                  <p className="text-xs text-paw-brown/50">Salon owner, tried the demo</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-2xl p-6">
+              <p className="text-paw-brown/80 text-base leading-relaxed mb-3 italic">
+                &ldquo;I was skeptical, but it booked an appointment for my made-up dog in about 40 seconds.&rdquo;
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-paw-sky flex items-center justify-center text-sm font-bold text-paw-brown">R</div>
+                <div>
+                  <p className="text-sm font-bold text-paw-brown">Ryan T.</p>
+                  <p className="text-xs text-paw-brown/50">Mobile groomer, tried the demo</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Stats bar */}
       <section className="py-8 sm:py-12 glass-card border-y border-white/60 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-3 gap-3 sm:gap-8 text-center">
@@ -279,10 +314,10 @@ function LandingPageContent() {
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-paw-amber/10 rounded-full blur-3xl" />
             <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-paw-orange/10 rounded-full blur-3xl" />
             <div className="relative z-10">
-              <h2 className="text-sm font-bold tracking-widest text-paw-amber uppercase mb-4">The Real Cost of Missed Calls</h2>
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-2">
+              <p className="text-sm font-bold tracking-widest text-paw-amber uppercase mb-4">The Real Cost of Missed Calls</p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-2">
                 Most callers don&apos;t leave voicemails. They just call the next groomer.
-              </h3>
+              </h2>
               <p className="text-white/60 text-base mb-8">See what you&apos;re leaving on the table.</p>
 
               {/* Sliders */}
@@ -346,10 +381,10 @@ function LandingPageContent() {
       <section id="how-it-works" className="py-12 sm:py-24 px-4 sm:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Workflow</h2>
-            <h3 className="text-4xl font-extrabold text-paw-brown">
+            <p className="text-sm font-bold tracking-widest text-paw-orange uppercase mb-3">Workflow</p>
+            <h2 className="text-4xl font-extrabold text-paw-brown">
               It handles the phone, <br />you handle the scissors.
-            </h3>
+            </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {/* Step 1 */}
