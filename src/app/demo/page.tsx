@@ -388,7 +388,7 @@ function DemoPageInner() {
           <BrandLogo mobileWidth={120} desktopWidth={140} priority />
         </Link>
         <Link
-          href="/auth?mode=signup"
+          href="/onboarding"
           className="px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
         >
           Start Free Trial
@@ -672,7 +672,7 @@ function DemoPageInner() {
                     <p className="text-xs text-paw-brown/50">Setup takes 5 minutes. Pip starts answering today.</p>
                   </div>
                   <Link
-                    href="/auth?mode=signup"
+                    href="/onboarding"
                     className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-center text-lg hover:bg-opacity-90 transition-all shadow-soft"
                   >
                     Set this up for my shop
@@ -696,7 +696,7 @@ function DemoPageInner() {
                 Live demos are limited to prevent abuse. Ready to set it up for your shop?
               </p>
               <Link
-                href="/auth?mode=signup"
+                href="/onboarding"
                 className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft mb-3"
               >
                 Start my free trial →
@@ -720,7 +720,7 @@ function DemoPageInner() {
                 >
                   Try again
                 </button>
-                <Link href="/auth?mode=signup" className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors">
+                <Link href="/onboarding" className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors">
                   Sign up instead
                 </Link>
               </div>
@@ -760,7 +760,7 @@ function DemoPageInner() {
                 Set up in 5 minutes. Pip starts answering your calls today.
               </p>
               <Link
-                href="/auth?mode=signup"
+                href="/onboarding"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
               >
                 Set up in 5 minutes
@@ -779,7 +779,7 @@ function DemoPageInner() {
         <div className="fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="max-w-xl mx-auto px-4 pb-4">
             <Link
-              href="/auth?mode=signup"
+              href="/onboarding"
               className="flex items-center justify-center gap-2 w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all"
             >
               Ready to get Pip for your shop?
