@@ -172,10 +172,16 @@ async function handleCallStarted(call: RetellCallPayload) {
           },
         });
         if (previousCall) {
-          await endRetellCall(call.call_id).catch((e) => {
-            console.error("[webhook] Failed to end repeat demo call:", e);
-          });
-          return new NextResponse(null, { status: 204 });
+          try {
+            await endRetellCall(call.call_id);
+            // Call was successfully ended — skip creating a call record
+            return new NextResponse(null, { status: 204 });
+          } catch (e) {
+            // Retell doesn't support ending ongoing phone calls via REST API.
+            // If end fails, let the call proceed normally so the call record is
+            // created with isTestCall=true and the browser can detect the call.
+            console.warn("[webhook] Could not end repeat demo call, allowing it to proceed:", e);
+          }
         }
       }
     }

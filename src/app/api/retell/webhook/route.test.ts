@@ -581,9 +581,10 @@ describe("POST /api/retell/webhook", () => {
     );
   });
 
-  // ── Demo rate limit: blocks repeat calls within same session ───────
-  it("ends the call when the same phone already completed a demo call in the current session", async () => {
+  // ── Demo rate limit: blocks repeat calls when endRetellCall succeeds ─
+  it("ends the call and returns early when a repeat demo call is successfully ended", async () => {
     const { endRetellCall } = await import("@/lib/retell");
+    vi.mocked(endRetellCall).mockResolvedValue(undefined);
     process.env.DEMO_BUSINESS_ID = "demo_biz";
     vi.mocked(resolveDemoSession).mockResolvedValue({
       businessId: "demo_biz",
@@ -591,7 +592,6 @@ describe("POST /api/retell/webhook", () => {
       demoNumberId: "demo_num_1",
       publicAttemptId: "attempt_1",
       leadId: null,
-      // callerPhone already set from first call
       callerPhone: "+16195550100",
     });
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
@@ -603,7 +603,6 @@ describe("POST /api/retell/webhook", () => {
       .mockResolvedValueOnce({
         onboardingComplete: true,
       } as never);
-    // A previous completed call (>30s) exists for this phone
     vi.mocked(prisma.call.findFirst).mockResolvedValue({
       id: "prev_call",
       duration: 120,
@@ -623,8 +622,57 @@ describe("POST /api/retell/webhook", () => {
 
     expect(response.status).toBe(204);
     expect(endRetellCall).toHaveBeenCalledWith("call_repeat");
-    // Should NOT create a call record
     expect(prisma.call.upsert).not.toHaveBeenCalled();
+  });
+
+  // ── Demo rate limit: proceeds normally when endRetellCall fails ─────
+  it("proceeds with normal call flow when endRetellCall fails for a repeat demo call", async () => {
+    const { endRetellCall } = await import("@/lib/retell");
+    vi.mocked(endRetellCall).mockRejectedValue(new Error("Cannot delete an ongoing call"));
+    process.env.DEMO_BUSINESS_ID = "demo_biz";
+    vi.mocked(resolveDemoSession).mockResolvedValue({
+      businessId: "demo_biz",
+      source: "public",
+      demoNumberId: "demo_num_1",
+      publicAttemptId: "attempt_1",
+      leadId: null,
+      callerPhone: "+16195550100",
+    });
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({
+        id: "demo_biz",
+        timezone: "America/Los_Angeles",
+        retellConfig: { llmId: "llm_demo" },
+      } as never)
+      .mockResolvedValueOnce({
+        onboardingComplete: true,
+      } as never);
+    vi.mocked(prisma.call.findFirst).mockResolvedValue({
+      id: "prev_call",
+      duration: 120,
+      callerPhone: "+16195550100",
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        event: "call_started",
+        call: {
+          call_id: "call_repeat_fail",
+          from_number: "(619) 555-0100",
+          to_number: "+1 (716) 576-3523",
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(204);
+    // Should still create the call record with isTestCall so call_analyzed
+    // doesn't send missed-call notifications
+    expect(prisma.call.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ isTestCall: true }),
+      })
+    );
   });
 
   it("uses the customer number for outbound analyzed calls", async () => {
