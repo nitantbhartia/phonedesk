@@ -138,7 +138,7 @@ export default function BillingPage() {
   const activePlan = subscriptionActive ? (PLANS.find((p) => p.id === currentPlan) || PLANS[0]) : null;
   const nextPlan = activePlan && currentPlanIndex < PLANS.length - 1 ? PLANS[currentPlanIndex + 1] : null;
   const minutesUsed = usage?.minutesUsed ?? 0;
-  const minutesLimit = usage?.minutesLimit ?? (PLANS.find((p) => p.id === currentPlan)?.minutes ?? 120);
+  const minutesLimit = usage?.minutesLimit ?? (PLANS.find((p) => p.id === currentPlan)?.minutes ?? 75);
   const percentUsed = usage?.percentUsed ?? 0;
   const isAtLimit = percentUsed >= 100;
   const isNearLimit = percentUsed >= 80 && !isAtLimit;

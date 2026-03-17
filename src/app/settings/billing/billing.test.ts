@@ -11,9 +11,9 @@ const BILLING_PLANS = [
     id: "STARTER",
     name: "Solo",
     price: 99,
-    minutes: 120,
+    minutes: 75,
     features: [
-      "120 minutes/month (~60 calls)",
+      "75 minutes/month (~38 calls)",
       "Everything included",
       "Calendar integration",
     ],
