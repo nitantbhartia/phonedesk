@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
     start_time: startTime,
     square_customer_id: squareCustomerId,
     groomer_name: groomerName,
+    vaccine_status: vaccineStatus,
   } = args || {};
 
   if (!customerName || !startTime || (!serviceId?.trim() && !svcName?.trim())) {
@@ -226,6 +227,16 @@ export async function POST(req: NextRequest) {
       ? service.price + addonService.price
       : service.price;
 
+    // Build vaccine status note if provided
+    const VACCINE_NOTES: Record<string, string> = {
+      confirmed: "Vaccine status: Owner confirmed rabies current, Bordetella current",
+      uncertain: "Vaccine status: Owner uncertain — requested to bring proof day-of",
+      unvaccinated_flagged: "Vaccine status: Owner reported not vaccinated — flagged for groomer",
+      exemption_bordetella: "Vaccine status: Bordetella medical exemption — groomer follow-up needed",
+      exemption_rabies: "Vaccine status: Rabies medical exemption — groomer follow-up needed",
+    };
+    const vaccineNote = vaccineStatus ? VACCINE_NOTES[vaccineStatus] : undefined;
+
     const appointment = await bookAppointment(business.id, {
       customerName,
       customerPhone: normalizedCustomerPhone || customerPhone || call?.from_number,
@@ -236,9 +247,18 @@ export async function POST(req: NextRequest) {
       servicePrice: combinedServicePrice,
       startTime: start,
       endTime: end,
+      notes: vaccineNote,
       groomerId: groomer?.id,
       isTestBooking,
     });
+
+    // Persist structured vaccineStatus on the appointment record
+    if (vaccineStatus) {
+      await prisma.appointment.update({
+        where: { id: appointment.id },
+        data: { vaccineStatus },
+      }).catch((err) => console.error("[book-appointment] vaccineStatus update failed (non-fatal):", err));
+    }
 
     // Save groomer preference on customer record
     if (groomer) {
