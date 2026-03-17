@@ -167,10 +167,13 @@ function DemoPageInner() {
   const [selectedScenario, setSelectedScenario] = useState<ScenarioId>("new_booking");
   const [completedTab, setCompletedTab] = useState<"summary" | "transcript">("summary");
 
+  const [showStickyCta, setShowStickyCta] = useState(false);
+
   const phaseRef = useRef<LivePhase>("loading");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const esRef = useRef<EventSource | null>(null);
   const startedRef = useRef(false);
+  const liveDemoRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { phaseRef.current = livePhase; }, [livePhase]);
 
@@ -221,6 +224,18 @@ function DemoPageInner() {
       stopSSE();
       stopPolling();
     };
+  }, []);
+
+  // Show sticky CTA once user scrolls past the live-demo section
+  useEffect(() => {
+    const el = liveDemoRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyCta(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   // ── Live demo provisioning ────────────────────────────────────────────────
@@ -409,7 +424,7 @@ function DemoPageInner() {
         )}
 
         {/* ── Tier 2: Live demo — number displayed immediately ── */}
-        <div id="live-demo" className="w-full max-w-xl scroll-mt-4">
+        <div id="live-demo" ref={liveDemoRef} className="w-full max-w-xl scroll-mt-4">
 
           {/* Loading */}
           {livePhase === "loading" && (
@@ -729,6 +744,21 @@ function DemoPageInner() {
 
         </div>
       </main>
+
+      {/* Sticky CTA — appears on scroll, hidden during completed state (which has its own CTA) */}
+      {showStickyCta && livePhase !== "completed" && (
+        <div className="fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div className="max-w-xl mx-auto px-4 pb-4">
+            <Link
+              href="/auth?mode=signup"
+              className="flex items-center justify-center gap-2 w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all"
+            >
+              Ready to get Pip for your shop?
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+            </Link>
+          </div>
+        </div>
+      )}
 
       <footer className="relative z-10 text-center py-6 text-xs text-paw-brown/40 font-medium">
         © {new Date().getFullYear()} RingPaw · <Link href="/" className="hover:text-paw-brown transition-colors">ringpaw.com</Link>
