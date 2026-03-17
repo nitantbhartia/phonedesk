@@ -138,14 +138,12 @@ interface UsageStats {
   plan: string;
 }
 
-export function computeShowSubBanner(business: {
+export function computeShowSubBanner(_business: {
   stripeSubscriptionStatus?: string | null;
   onboardingComplete?: boolean | null;
 } | null | undefined): boolean {
-  if (!business) return false;
-  const subscriptionActive = ["active", "trialing"].includes(business.stripeSubscriptionStatus ?? "");
-  const onboardingComplete = business.onboardingComplete ?? true;
-  return !subscriptionActive && onboardingComplete;
+  // Hidden during free launch mode — no Stripe subscriptions required
+  return false;
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
