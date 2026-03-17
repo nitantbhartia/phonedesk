@@ -459,6 +459,59 @@ describe("POST /api/sms/webhook", () => {
     expect(bookAppointment).not.toHaveBeenCalled();
   });
 
+  // ── Issue 1: CONFIRM with no appointment sends a reply ──────────────
+  it("replies when CONFIRM finds no upcoming appointment", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550100",
+        to_number: "+16195559999",
+        message: "CONFIRM",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "No upcoming appointment found to confirm. Call Paw House if you need help!",
+      "+16195559999"
+    );
+  });
+
+  // ── Issue 2+6: BOOK failure sends a reply instead of crashing ──────
+  it("replies with slot-taken message when BOOK bookAppointment throws", async () => {
+    vi.mocked(prisma.waitlistEntry.findFirst).mockResolvedValue({
+      id: "wait_1",
+      customerName: "Jamie",
+      customerPhone: "+16195550100",
+      petName: "Bella",
+      petBreed: "Poodle",
+      petSize: "SMALL",
+      serviceName: "Bath",
+      preferredDate: new Date("2026-05-21T16:00:00.000Z"),
+    } as never);
+    vi.mocked(isSlotAvailable).mockResolvedValue(true);
+    vi.mocked(bookAppointment).mockRejectedValue(new Error("Unique constraint failed"));
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550100",
+        to_number: "+16195559999",
+        message: "BOOK",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "Sorry, that slot was just taken. We'll let you know when the next opening comes up!",
+      "+16195559999"
+    );
+    // Waitlist entry should NOT be marked as booked
+    expect(prisma.waitlistEntry.update).not.toHaveBeenCalled();
+  });
+
   it("offers a rebooking nudge based on the last completed appointment", async () => {
     vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
       petName: "Bella",

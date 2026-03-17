@@ -101,6 +101,40 @@ describe("appointments/confirm", () => {
     expect(response.headers.get("location")).toContain("appointment-confirmed");
   });
 
+  // ── Issue 3: sendSms failure doesn't crash the redirect ─────────────
+  it("still redirects when owner notification SMS fails on GET confirm", async () => {
+    vi.mocked(verifyAppointmentToken).mockReturnValue(true);
+    vi.mocked(prisma.appointment.findUnique).mockResolvedValue({
+      id: "appt_1",
+      customerName: "Jamie",
+      serviceName: "Full Groom",
+      startTime: new Date("2026-05-21T16:00:00.000Z"),
+      status: "PENDING",
+      business: {
+        name: "Paw House",
+        phone: "+16195550000",
+        phoneNumber: { number: "+16195559999" },
+      },
+    } as never);
+    vi.mocked(sendSms).mockRejectedValue(new Error("Twilio down"));
+
+    const response = await GET(
+      makeGetRequest("http://localhost/api/appointments/confirm?id=appt_1&token=ok") as never
+    );
+
+    // Appointment should still be confirmed
+    expect(prisma.appointment.update).toHaveBeenCalledWith({
+      where: { id: "appt_1" },
+      data: {
+        status: "CONFIRMED",
+        confirmedAt: expect.any(Date),
+      },
+    });
+    // Should redirect despite SMS failure
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("appointment-confirmed");
+  });
+
   it("requires auth for dashboard POST confirmation without a token", async () => {
     vi.mocked(getServerSession).mockResolvedValue(null as never);
 
