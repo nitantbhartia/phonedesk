@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
           .map((a) => a.demoNumberId)
           .filter((id): id is string => Boolean(id));
 
-        const available = await tx.demoNumber.findFirst({
+        let available = await tx.demoNumber.findFirst({
           where: {
             sessions: { none: { expiresAt: { gt: now } } },
             ...(occupiedPublicDemoNumberIds.length > 0
@@ -117,6 +117,48 @@ export async function POST(req: NextRequest) {
               : {}),
           },
         });
+
+        // Auto-reclaim: if all numbers are busy, expire the oldest idle session
+        // (one whose call has already completed or never started).
+        if (!available && occupiedPublicDemoNumberIds.length > 0) {
+          const staleAttempt = await tx.publicDemoAttempt.findFirst({
+            where: {
+              expiresAt: { gt: now },
+              demoNumberId: { not: null },
+            },
+            orderBy: { startedAt: "asc" },
+            include: { demoNumber: true },
+          });
+
+          if (staleAttempt?.demoNumberId) {
+            // Check if this session has an active (in-progress) call
+            const activeCall = demoBizId
+              ? await tx.call.findFirst({
+                  where: {
+                    businessId: demoBizId,
+                    createdAt: { gte: staleAttempt.startedAt },
+                    status: "IN_PROGRESS",
+                    ...(staleAttempt.callerPhone
+                      ? { callerPhone: staleAttempt.callerPhone }
+                      : {}),
+                  },
+                })
+              : null;
+
+            if (!activeCall) {
+              // No active call — safe to reclaim this number
+              await tx.publicDemoAttempt.update({
+                where: { id: staleAttempt.id },
+                data: { expiresAt: now },
+              });
+              available = staleAttempt.demoNumber;
+              console.log(
+                `[demo/public/start] Auto-reclaimed demo number ${available?.number} from idle session ${staleAttempt.id}`
+              );
+            }
+          }
+        }
+
         if (!available) throw new Error("demo_unavailable");
         const created = await tx.publicDemoAttempt.create({
           data: { ip, demoNumberId: available.id, expiresAt },
