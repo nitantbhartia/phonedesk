@@ -102,12 +102,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Find an available demo number (not in any active, unexpired session)
+  // Find an available demo number (not in any active private session or public attempt)
+  const activePublicAttempts = await prisma.publicDemoAttempt.findMany({
+    where: { expiresAt: { gt: now }, demoNumberId: { not: null } },
+    select: { demoNumberId: true },
+  });
+  const occupiedByPublic = activePublicAttempts
+    .map((a) => a.demoNumberId)
+    .filter((id): id is string => Boolean(id));
+
   const available = await prisma.demoNumber.findFirst({
     where: {
-      sessions: {
-        none: { expiresAt: { gt: now } },
-      },
+      sessions: { none: { expiresAt: { gt: now } } },
+      ...(occupiedByPublic.length > 0
+        ? { id: { notIn: occupiedByPublic } }
+        : {}),
     },
   });
 

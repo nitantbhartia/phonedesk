@@ -23,6 +23,9 @@ vi.mock("@/lib/prisma", () => ({
     demoNumber: {
       findFirst: vi.fn(),
     },
+    publicDemoAttempt: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -52,6 +55,8 @@ describe("POST /api/demo/start", () => {
     vi.mocked(prisma.demoSession.findUnique).mockReset();
     vi.mocked(prisma.demoSession.upsert).mockReset();
     vi.mocked(prisma.demoNumber.findFirst).mockReset();
+    vi.mocked(prisma.publicDemoAttempt.findMany).mockReset();
+    vi.mocked(prisma.publicDemoAttempt.findMany).mockResolvedValue([]);
     vi.mocked(syncRetellAgent).mockReset();
     vi.mocked(updateRetellPhoneNumber).mockReset();
     vi.mocked(updateRetellAgent).mockReset();
