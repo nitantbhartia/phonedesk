@@ -802,19 +802,8 @@ function DemoPageInner() {
               <div className="text-4xl mb-4">⏳</div>
               <h2 className="text-2xl font-extrabold text-paw-brown mb-3">You&apos;ve already tried the live demo</h2>
               <p className="text-paw-brown/60 font-medium mb-6 leading-relaxed">
-                Live demos are limited to prevent abuse. Ready to set it up for your shop?
+                Liked what you heard? Leave your info and we&apos;ll set you up personally.
               </p>
-              <Link
-                href="/onboarding"
-                className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
-              >
-                Start my free trial →
-              </Link>
-              <div className="flex items-center gap-3 my-5">
-                <div className="flex-1 h-px bg-paw-brown/10" />
-                <span className="text-xs font-bold text-paw-brown/30 uppercase">or</span>
-                <div className="flex-1 h-px bg-paw-brown/10" />
-              </div>
               <div id="lead-form" className="space-y-4">
                 {leadSubmitted ? (
                   <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
@@ -823,57 +812,56 @@ function DemoPageInner() {
                     <p className="text-sm text-green-700">We&apos;ll reach out to set up RingPaw for your shop.</p>
                   </div>
                 ) : (
-                  <>
-                    <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
-                      <p className="text-sm font-bold text-paw-brown mb-1">Want us to set it up for you?</p>
-                      <p className="text-xs text-paw-brown/50">Leave your info and we&apos;ll get you live personally.</p>
-                    </div>
-                    <form onSubmit={handleLeadSubmit} className="space-y-3">
-                      <input
-                        type="text"
-                        placeholder="Your name"
-                        required
-                        value={leadName}
-                        onChange={(e) => setLeadName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Email address"
-                        required
-                        value={leadEmail}
-                        onChange={(e) => setLeadEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                      />
-                      <input
-                        type="tel"
-                        placeholder="Phone number"
-                        required
-                        value={leadPhone}
-                        onChange={(e) => setLeadPhone(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Business name"
-                        required
-                        value={leadBusiness}
-                        onChange={(e) => setLeadBusiness(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                      />
-                      {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
-                      <button
-                        type="submit"
-                        disabled={leadLoading}
-                        className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
-                      >
-                        {leadLoading ? "Sending..." : "Get in Touch"}
-                      </button>
-                    </form>
-                  </>
+                  <form onSubmit={handleLeadSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      required
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      required
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone number"
+                      required
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Business name"
+                      required
+                      value={leadBusiness}
+                      onChange={(e) => setLeadBusiness(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
+                    <button
+                      type="submit"
+                      disabled={leadLoading}
+                      className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                    >
+                      {leadLoading ? "Sending..." : "Get in Touch"}
+                    </button>
+                  </form>
                 )}
               </div>
-              <Link href="/" className="block mt-4 text-sm text-paw-brown/50 hover:text-paw-brown transition-colors">Back to home</Link>
+              <Link
+                href="/onboarding"
+                className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
+              >
+                Or set it up yourself →
+              </Link>
             </div>
           )}
 
@@ -929,22 +917,8 @@ function DemoPageInner() {
                 Want this for your shop?
               </h2>
               <p className="text-white/60 text-base mb-6">
-                Set up in 5 minutes. Pip starts answering your calls today.
+                Leave your info and we&apos;ll set you up personally.
               </p>
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
-              >
-                Start my free trial
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-                </svg>
-              </Link>
-              <div className="flex items-center gap-3 my-5">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-xs font-bold text-white/30 uppercase">or</span>
-                <div className="flex-1 h-px bg-white/10" />
-              </div>
               <div id="bottom-lead-form">
                 {leadSubmitted ? (
                   <div className="bg-white/10 border-2 border-white/20 rounded-2xl p-6 text-center">
@@ -953,55 +927,57 @@ function DemoPageInner() {
                     <p className="text-sm text-white/60">We&apos;ll reach out to set up RingPaw for your shop.</p>
                   </div>
                 ) : (
-                  <>
-                    <p className="text-sm font-bold text-white/80 mb-1">Want us to set it up for you?</p>
-                    <p className="text-xs text-white/40 mb-4">Leave your info and we&apos;ll get you live personally.</p>
-                    <form onSubmit={handleLeadSubmit} className="space-y-3">
-                      <input
-                        type="text"
-                        placeholder="Your name"
-                        required
-                        value={leadName}
-                        onChange={(e) => setLeadName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Email address"
-                        required
-                        value={leadEmail}
-                        onChange={(e) => setLeadEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
-                      />
-                      <input
-                        type="tel"
-                        placeholder="Phone number"
-                        required
-                        value={leadPhone}
-                        onChange={(e) => setLeadPhone(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Business name"
-                        required
-                        value={leadBusiness}
-                        onChange={(e) => setLeadBusiness(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
-                      />
-                      {leadError && <p className="text-sm font-medium text-red-300 text-center">{leadError}</p>}
-                      <button
-                        type="submit"
-                        disabled={leadLoading}
-                        className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-all shadow-lg disabled:opacity-50"
-                      >
-                        {leadLoading ? "Sending..." : "Get in Touch"}
-                      </button>
-                    </form>
-                  </>
+                  <form onSubmit={handleLeadSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      required
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      required
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone number"
+                      required
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Business name"
+                      required
+                      value={leadBusiness}
+                      onChange={(e) => setLeadBusiness(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    {leadError && <p className="text-sm font-medium text-red-300 text-center">{leadError}</p>}
+                    <button
+                      type="submit"
+                      disabled={leadLoading}
+                      className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-all shadow-lg disabled:opacity-50"
+                    >
+                      {leadLoading ? "Sending..." : "Get in Touch"}
+                    </button>
+                  </form>
                 )}
               </div>
-              <p className="text-white/40 text-xs mt-4">Free to set up · no credit card needed · cancel anytime</p>
+              <Link
+                href="/onboarding"
+                className="block mt-4 text-sm font-bold text-white/50 hover:text-white transition-colors"
+              >
+                Or set it up yourself →
+              </Link>
+              <p className="text-white/40 text-xs mt-3">Free to set up · no credit card needed · cancel anytime</p>
             </div>
           </div>
         </div>

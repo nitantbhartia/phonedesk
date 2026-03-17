@@ -177,7 +177,6 @@ describe("POST /api/retell/webhook", () => {
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.call.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.publicDemoAttempt.update).mockResolvedValue({ id: "attempt_1" } as never);
-    vi.mocked(prisma.demoLead.update).mockResolvedValue({ id: "lead_1" } as never);
 
     const response = await POST(
       makeRequest({
@@ -195,10 +194,6 @@ describe("POST /api/retell/webhook", () => {
     expect(prisma.publicDemoAttempt.update).toHaveBeenCalledWith({
       where: { id: "attempt_1" },
       data: { callerPhone: "+16195550100" },
-    });
-    expect(prisma.demoLead.update).toHaveBeenCalledWith({
-      where: { id: "lead_1" },
-      data: { cooldownUntil: expect.any(Date) },
     });
     expect(prisma.call.upsert).toHaveBeenCalledWith({
       where: { retellCallId: "call_demo_1" },
@@ -992,7 +987,6 @@ describe("POST /api/retell/webhook", () => {
         duration: 200,
       } as never);
       vi.mocked(prisma.publicDemoAttempt.update).mockResolvedValue({} as never);
-      vi.mocked(prisma.demoLead.update).mockResolvedValue({} as never);
 
       await POST(makeDemoCallStarted("call_browser_detect") as never);
 
@@ -1000,11 +994,6 @@ describe("POST /api/retell/webhook", () => {
       expect(prisma.publicDemoAttempt.update).toHaveBeenCalledWith({
         where: { id: "attempt_browser" },
         data: { callerPhone: "+16195550100" },
-      });
-      // cooldown should also be set
-      expect(prisma.demoLead.update).toHaveBeenCalledWith({
-        where: { id: "lead_browser" },
-        data: { cooldownUntil: expect.any(Date) },
       });
     });
 
