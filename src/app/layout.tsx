@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { Providers } from "@/components/providers";
@@ -45,7 +46,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${outfit.className} font-sans antialiased`}>
         {googleAnalyticsId ? (
-          <GoogleAnalytics measurementId={googleAnalyticsId} />
+          <Suspense fallback={null}>
+            <GoogleAnalytics measurementId={googleAnalyticsId} />
+          </Suspense>
         ) : null}
         <Providers>{children}</Providers>
       </body>
