@@ -917,7 +917,7 @@ function DemoPageInner() {
         </div>
       </main>
 
-      {/* Post-demo conversion CTA — hidden when completed (lead form is the CTA) */}
+      {/* Post-demo conversion CTA — hidden when completed or cooldown (they have their own CTAs) */}
       {livePhase !== "completed" && livePhase !== "cooldown" && <section className="relative z-10 px-4 pb-12">
         <div className="max-w-xl mx-auto">
           <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
@@ -935,11 +935,72 @@ function DemoPageInner() {
                 href="/onboarding"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
               >
-                Get in Touch
+                Start my free trial
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
               </Link>
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-xs font-bold text-white/30 uppercase">or</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+              <div id="bottom-lead-form">
+                {leadSubmitted ? (
+                  <div className="bg-white/10 border-2 border-white/20 rounded-2xl p-6 text-center">
+                    <div className="text-3xl mb-2">🎉</div>
+                    <p className="text-lg font-bold text-white mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                    <p className="text-sm text-white/60">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-white/80 mb-1">Want us to set it up for you?</p>
+                    <p className="text-xs text-white/40 mb-4">Leave your info and we&apos;ll get you live personally.</p>
+                    <form onSubmit={handleLeadSubmit} className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Your name"
+                        required
+                        value={leadName}
+                        onChange={(e) => setLeadName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        required
+                        value={leadEmail}
+                        onChange={(e) => setLeadEmail(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Phone number"
+                        required
+                        value={leadPhone}
+                        onChange={(e) => setLeadPhone(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Business name"
+                        required
+                        value={leadBusiness}
+                        onChange={(e) => setLeadBusiness(e.target.value)}
+                        className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      />
+                      {leadError && <p className="text-sm font-medium text-red-300 text-center">{leadError}</p>}
+                      <button
+                        type="submit"
+                        disabled={leadLoading}
+                        className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-all shadow-lg disabled:opacity-50"
+                      >
+                        {leadLoading ? "Sending..." : "Get in Touch"}
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
               <p className="text-white/40 text-xs mt-4">Free to set up · no credit card needed · cancel anytime</p>
             </div>
           </div>
@@ -950,13 +1011,13 @@ function DemoPageInner() {
       {showStickyCta && livePhase !== "completed" && livePhase !== "cooldown" && (
         <div className="fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="max-w-xl mx-auto px-4 pb-4">
-            <Link
-              href="/onboarding"
+            <button
+              onClick={() => document.getElementById("bottom-lead-form")?.scrollIntoView({ behavior: "smooth" })}
               className="flex items-center justify-center gap-2 w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all"
             >
               Ready to get Pip for your shop?
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-            </Link>
+            </button>
           </div>
         </div>
       )}
