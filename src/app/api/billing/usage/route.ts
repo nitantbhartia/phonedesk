@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 // Minutes included per plan
 const PLAN_MINUTES: Record<string, number> = {
-  STARTER: 120,
+  STARTER: 75,
   PRO: 300,
   BUSINESS: 500,
 };
@@ -49,7 +49,7 @@ export async function GET() {
 
   const secondsUsed = result._sum.duration ?? 0;
   const minutesUsed = Math.round(secondsUsed / 60);
-  const minutesLimit = PLAN_MINUTES[business.plan] ?? 120;
+  const minutesLimit = PLAN_MINUTES[business.plan] ?? 75;
   const minutesRemaining = Math.max(0, minutesLimit - minutesUsed);
   const overageMinutes = Math.max(0, minutesUsed - minutesLimit);
   const percentUsed = minutesLimit > 0 ? Math.min((minutesUsed / minutesLimit) * 100, 999) : 0;
