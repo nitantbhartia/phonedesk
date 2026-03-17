@@ -158,6 +158,39 @@ describe("POST /api/retell/lookup-customer", () => {
     expect(lookupCustomerContext).not.toHaveBeenCalled();
   });
 
+  it("bypasses subscription gate for demo calls even without active subscription", async () => {
+    vi.mocked(resolveDemoSession).mockResolvedValue({
+      businessId: "demo_biz",
+      source: "public",
+      demoNumberId: "demo_num_1",
+      publicAttemptId: "attempt_1",
+      leadId: null,
+      callerPhone: null,
+    });
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "demo_biz",
+      timezone: "America/Los_Angeles",
+      onboardingComplete: true,
+      isActive: false,
+      stripeSubscriptionStatus: null,
+      ownerName: "Bella",
+    } as never);
+
+    const response = await POST(
+      makeRequest({
+        args: { caller_phone: "+16195550100" },
+        call: { to_number: "+16195559999", from_number: "+16195550100" },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.found).toBe(false);
+    expect(payload.result).toContain("demo call");
+    expect(payload.subscription_inactive).toBeUndefined();
+  });
+
   it("returns a subscription inactive message when the business should not take calls", async () => {
     vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
       business: {
