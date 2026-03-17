@@ -88,7 +88,7 @@ export default function SmsConsentPage() {
             </div>
           </div>
           <div className="mt-5 flex items-start gap-3 border-t border-[#e4e0d8] pt-5">
-            <div className="mt-0.5 flex h-[18px] w-[18px] min-w-[18px] items-center justify-center rounded-[3px] border-2 border-[#2d6a4f] bg-[#e8f5ee] text-xs text-[#2d6a4f]">
+            <div className="mt-0.5 flex h-[18px] w-[18px] min-w-[18px] items-center justify-center rounded-[3px] border-2 border-[#aaa] bg-white text-xs text-transparent">
               &#10003;
             </div>
             <div className="text-sm leading-relaxed text-[#2e2e2e]">
