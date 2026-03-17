@@ -8,6 +8,9 @@ vi.mock("@/lib/prisma", () => ({
     business: {
       findUnique: vi.fn(),
     },
+    appointment: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
