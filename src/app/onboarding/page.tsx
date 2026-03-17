@@ -257,6 +257,7 @@ export default function OnboardingPage() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupError, setSignupError] = useState("");
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
   const formattedProvisionedNumber = provisionedNumber
     ? formatPhoneNumber(provisionedNumber)
@@ -753,8 +754,6 @@ export default function OnboardingPage() {
       setLoading(false);
     }
   }
-
-  const [awaitingApproval, setAwaitingApproval] = useState(false);
 
   async function goLive() {
     setLoading(true);
