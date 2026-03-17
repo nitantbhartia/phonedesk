@@ -79,13 +79,12 @@ describe("POST /api/provision-number", () => {
     expect(response.status).toBe(429);
   });
 
-  it("requires an active subscription or billing consent", async () => {
+  it("requires admin approval before provisioning", async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { email: "owner@example.com" } } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       id: "biz_1",
-      billingConsentGiven: false,
-      stripeSubscriptionId: null,
+      adminApprovedGoLive: false,
       phoneNumber: null,
       services: [],
       retellConfig: null,
@@ -94,8 +93,8 @@ describe("POST /api/provision-number", () => {
 
     const response = await POST(new Request("http://localhost/api/provision-number", { method: "POST" }) as never);
 
-    expect(response.status).toBe(402);
-    await expect(response.json()).resolves.toEqual({ error: "subscription_required" });
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: "admin_approval_required" });
   });
 
   it("returns the existing number when the business is already provisioned", async () => {
@@ -103,8 +102,7 @@ describe("POST /api/provision-number", () => {
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       id: "biz_1",
-      billingConsentGiven: true,
-      stripeSubscriptionId: null,
+      adminApprovedGoLive: true,
       phoneNumber: { number: "+16195559999" },
       services: [],
       retellConfig: null,
@@ -125,8 +123,7 @@ describe("POST /api/provision-number", () => {
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       id: "biz_1",
       name: "Paw House",
-      billingConsentGiven: true,
-      stripeSubscriptionId: null,
+      adminApprovedGoLive: true,
       phoneNumber: null,
       services: [],
       retellConfig: { agentId: "agent_1" },
@@ -172,8 +169,7 @@ describe("POST /api/provision-number", () => {
     vi.mocked(prisma.business.findUnique).mockResolvedValue({
       id: "biz_1",
       name: "Paw House",
-      billingConsentGiven: true,
-      stripeSubscriptionId: null,
+      adminApprovedGoLive: true,
       phoneNumber: null,
       services: [],
       retellConfig: { agentId: "agent_1" },

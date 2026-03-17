@@ -169,6 +169,15 @@ function DemoPageInner() {
 
   const [showStickyCta, setShowStickyCta] = useState(false);
 
+  // Lead form state
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadBusiness, setLeadBusiness] = useState("");
+  const [leadLoading, setLeadLoading] = useState(false);
+  const [leadError, setLeadError] = useState("");
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
+
   const phaseRef = useRef<LivePhase>("loading");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const esRef = useRef<EventSource | null>(null);
@@ -358,6 +367,33 @@ function DemoPageInner() {
     startLiveDemo();
   }
 
+  async function handleLeadSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLeadError("");
+    setLeadLoading(true);
+    try {
+      const res = await fetch("/api/demo/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: leadName,
+          email: leadEmail,
+          phone: leadPhone,
+          businessName: leadBusiness,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        throw new Error(data.error || "Something went wrong. Please try again.");
+      }
+      setLeadSubmitted(true);
+    } catch (error) {
+      setLeadError(error instanceof Error ? error.message : "Something went wrong.");
+    } finally {
+      setLeadLoading(false);
+    }
+  }
+
   const formattedNumber = number ? formatPhone(number) : "";
   const inActiveCall = livePhase === "waiting" || livePhase === "in_progress" || livePhase === "completed";
   const currentScenario = SCENARIOS.find((s) => s.id === selectedScenario) ?? SCENARIOS[0];
@@ -451,7 +487,7 @@ function DemoPageInner() {
                       Call Pip, our AI receptionist
                     </h1>
                     <p className="text-paw-brown/60 font-medium text-base max-w-sm mx-auto">
-                      Talk to a real AI that books grooming appointments. 2-minute demo, one call per number.
+                      Talk to a real AI that books grooming appointments. 3-minute demo, one call per number.
                     </p>
                   </div>
                 )}
@@ -632,7 +668,7 @@ function DemoPageInner() {
                     Waiting for your call
                   </div>
                   <div className="flex items-center justify-center gap-3 text-xs text-paw-brown/40 font-semibold">
-                    <span>2-min demo call</span>
+                    <span>3-min demo call</span>
                     <span className="text-paw-brown/20">&middot;</span>
                     <span>1 call per number</span>
                     <span className="text-paw-brown/20">&middot;</span>
@@ -664,21 +700,71 @@ function DemoPageInner() {
                 </div>
               )}
 
-              {/* ── Completed CTA ── */}
+              {/* ── Completed CTA — lead form ── */}
               {livePhase === "completed" && (
-                <div className="mt-2 space-y-4 animate-in fade-in duration-400">
-                  <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
-                    <p className="text-sm font-bold text-paw-brown mb-1">Imagine this answering every call you miss.</p>
-                    <p className="text-xs text-paw-brown/50">Setup takes 5 minutes. Pip starts answering today.</p>
-                  </div>
+                <div id="lead-form" className="mt-2 space-y-4 animate-in fade-in duration-400">
+                  {leadSubmitted ? (
+                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
+                      <div className="text-3xl mb-2">🎉</div>
+                      <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                      <p className="text-sm text-green-700">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
+                        <p className="text-sm font-bold text-paw-brown mb-1">Want this for your shop?</p>
+                        <p className="text-xs text-paw-brown/50">Leave your info and we&apos;ll set you up personally.</p>
+                      </div>
+                      <form onSubmit={handleLeadSubmit} className="space-y-3">
+                        <input
+                          type="text"
+                          placeholder="Your name"
+                          required
+                          value={leadName}
+                          onChange={(e) => setLeadName(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email address"
+                          required
+                          value={leadEmail}
+                          onChange={(e) => setLeadEmail(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Phone number"
+                          required
+                          value={leadPhone}
+                          onChange={(e) => setLeadPhone(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Business name"
+                          required
+                          value={leadBusiness}
+                          onChange={(e) => setLeadBusiness(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
+                        <button
+                          type="submit"
+                          disabled={leadLoading}
+                          className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                        >
+                          {leadLoading ? "Sending..." : "Get in Touch"}
+                        </button>
+                      </form>
+                    </>
+                  )}
                   <Link
                     href="/onboarding"
-                    className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-center text-lg hover:bg-opacity-90 transition-all shadow-soft"
+                    className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
                   >
-                    Set this up for my shop
-                    <svg className="inline-block ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                    Or set it up yourself →
                   </Link>
-                  <p className="text-xs text-paw-brown/40 text-center">Card required · only charged after your first booking · cancel anytime</p>
                   <button onClick={resetDemo} className="w-full py-2 text-xs text-paw-brown/40 hover:text-paw-brown/60 transition-colors">
                     Start over
                   </button>
@@ -759,16 +845,16 @@ function DemoPageInner() {
               <p className="text-white/60 text-base mb-6">
                 Set up in 5 minutes. Pip starts answering your calls today.
               </p>
-              <Link
-                href="/onboarding"
+              <button
+                onClick={() => document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth" })}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
               >
-                Set up in 5 minutes
+                Get in Touch
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
-              </Link>
-              <p className="text-white/40 text-xs mt-4">Card required · only charged after first booking · cancel anytime</p>
+              </button>
+              <p className="text-white/40 text-xs mt-4">Free to set up · no credit card needed · cancel anytime</p>
             </div>
           </div>
         </div>

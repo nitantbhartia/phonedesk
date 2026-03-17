@@ -7,17 +7,6 @@ import { CheckCircle, CreditCard, Zap } from "lucide-react";
 
 const PLANS = [
   {
-    id: "STARTER",
-    name: "Solo",
-    price: 99,
-    minutes: 120,
-    features: [
-      "120 minutes/month (~60 calls)",
-      "Everything included",
-      "Calendar integration",
-    ],
-  },
-  {
     id: "PRO",
     name: "Studio",
     price: 199,
@@ -25,19 +14,8 @@ const PLANS = [
     popular: true,
     features: [
       "300 minutes/month (~150 calls)",
-      "Priority setup",
+      "Everything included",
       "Square + Google Calendar",
-    ],
-  },
-  {
-    id: "BUSINESS",
-    name: "Salon",
-    price: 349,
-    minutes: 500,
-    features: [
-      "500 minutes/month (~250 calls)",
-      "Priority support",
-      "Multi-groomer routing",
     ],
   },
 ];
@@ -178,7 +156,7 @@ export default function BillingPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-extrabold text-paw-brown">Billing & Plan</h1>
-        <p className="text-paw-brown/60 font-medium mt-1">View your plan, monthly usage, and payment method. Upgrade or cancel anytime.</p>
+        <p className="text-paw-brown/60 font-medium mt-1">View your plan and monthly usage.</p>
       </div>
 
       {/* Current Plan Usage */}
@@ -256,7 +234,7 @@ export default function BillingPage() {
       </section>
 
       {/* Plan Comparison */}
-      <section className="grid md:grid-cols-3 gap-6">
+      <section className="max-w-md mx-auto">
         {PLANS.map((plan) => {
           const isCurrent = subscriptionActive && plan.id === currentPlan;
           const planIndex = PLANS.findIndex((p) => p.id === plan.id);
@@ -352,32 +330,28 @@ export default function BillingPage() {
         </div>
       ) : null}
 
-      {/* Billing Info */}
-      <section className="bg-white rounded-3xl shadow-card border border-white p-6 sm:p-8">
-        <div className="flex items-center gap-2 mb-2">
-          <CreditCard className="w-5 h-5 text-paw-brown" />
-          <h2 className="text-xl font-bold text-paw-brown">Payment Method</h2>
-        </div>
-        <div className="text-center py-8 text-paw-brown/70">
-          <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="font-medium text-paw-brown">
-            {hasStripeCustomer ? "Manage your payment details" : "No payment method on file"}
-          </p>
-          <p className="text-sm mt-1">
-            {hasStripeCustomer
-              ? "Open Stripe customer portal to update payment method, invoices, and subscription."
-              : "Choose a plan above to start your free trial and add your payment method."}
-          </p>
-          {hasStripeCustomer ? (
+      {/* Billing Info — only shown when Stripe customer exists */}
+      {hasStripeCustomer && (
+        <section className="bg-white rounded-3xl shadow-card border border-white p-6 sm:p-8">
+          <div className="flex items-center gap-2 mb-2">
+            <CreditCard className="w-5 h-5 text-paw-brown" />
+            <h2 className="text-xl font-bold text-paw-brown">Payment Method</h2>
+          </div>
+          <div className="text-center py-8 text-paw-brown/70">
+            <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p className="font-medium text-paw-brown">Manage your payment details</p>
+            <p className="text-sm mt-1">
+              Open Stripe customer portal to update payment method, invoices, and subscription.
+            </p>
             <button
               className="mt-4 inline-flex items-center px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft hover:bg-opacity-90 transition-colors"
               onClick={() => void openBillingPortal()}
             >
               <Zap className="w-4 h-4 mr-2" /> Open Billing Portal
             </button>
-          ) : null}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
