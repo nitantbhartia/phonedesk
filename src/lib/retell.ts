@@ -4,6 +4,7 @@ import type { Business, BreedRecommendation, RetellConfig, Service, Groomer } fr
 const RETELL_BASE_URL = "https://api.retellai.com";
 const RETELL_MODEL = process.env.RETELL_MODEL || "claude-4.6-sonnet";
 const DEFAULT_VOICE_ID = "11labs-Grace";
+const DEFAULT_VOICE_MODEL = "eleven_turbo_v2_5";
 const DEFAULT_VOICE_SPEED = 0.95; // slightly under 1.0 — more unhurried, natural pacing
 const DEFAULT_VOLUME = 1.0;
 
@@ -490,6 +491,7 @@ export async function createRetellAgent(config: {
       },
       agent_name: config.agentName,
       voice_id: config.voiceId || DEFAULT_VOICE_ID,
+      voice_model: DEFAULT_VOICE_MODEL,
       voice_speed: DEFAULT_VOICE_SPEED,
       volume: DEFAULT_VOLUME,
       webhook_url: config.webhookUrl,
@@ -531,6 +533,7 @@ export async function updateRetellAgent(
     reminder_trigger_ms: 6000,
     reminder_max_count: 1,
     normalize_for_speech: true,
+    voice_model: DEFAULT_VOICE_MODEL,
     max_call_duration_ms: updates.maxCallDurationMs ?? MAX_CALL_DURATION_MS,
     end_call_after_silence_ms: 75_000, // 75s silence → drop dead calls (phone left down, solicitor went quiet)
     voicemail_option: { action: { type: "hangup" } }, // hang up immediately on voicemail / IVR — don't burn minutes
