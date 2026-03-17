@@ -745,6 +745,35 @@ function DemoPageInner() {
         </div>
       </main>
 
+      {/* Post-demo conversion CTA */}
+      <section className="relative z-10 px-4 pb-12">
+        <div className="max-w-xl mx-auto">
+          <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
+            <div className="absolute -right-16 -top-16 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
+            <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-paw-orange/10 rounded-full blur-3xl" />
+            <div className="relative z-10">
+              <p className="text-paw-amber text-sm font-bold uppercase tracking-widest mb-3">Ready to go live?</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight mb-3">
+                Want this for your shop?
+              </h2>
+              <p className="text-white/60 text-base mb-6">
+                Set up in 5 minutes. Pip starts answering your calls today.
+              </p>
+              <Link
+                href="/auth?mode=signup"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
+              >
+                Set up in 5 minutes
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                </svg>
+              </Link>
+              <p className="text-white/40 text-xs mt-4">Card required · only charged after first booking · cancel anytime</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Sticky CTA — appears on scroll, hidden during completed state (which has its own CTA) */}
       {showStickyCta && livePhase !== "completed" && (
         <div className="fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
