@@ -410,15 +410,19 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
         data: { status: "NO_BOOKING" },
       });
 
-      await sendMissedCallNotification(
-        refreshedCall.business as Parameters<
-          typeof sendMissedCallNotification
-        >[0],
-        (isOutbound ? call.to_number : call.from_number) ||
-          refreshedCall.callerPhone ||
-          "Unknown",
-        refreshedCall.callerName || undefined
-      );
+      try {
+        await sendMissedCallNotification(
+          refreshedCall.business as Parameters<
+            typeof sendMissedCallNotification
+          >[0],
+          (isOutbound ? call.to_number : call.from_number) ||
+            refreshedCall.callerPhone ||
+            "Unknown",
+          refreshedCall.callerName || undefined
+        );
+      } catch (notifyErr) {
+        console.error("[webhook] sendMissedCallNotification failed (non-fatal):", notifyErr);
+      }
     }
   }
 

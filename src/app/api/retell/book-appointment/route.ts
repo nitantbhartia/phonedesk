@@ -330,12 +330,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Link call to appointment
+    // Link call to appointment (non-fatal — booking already succeeded)
     if (call?.call_id) {
-      await prisma.call.updateMany({
-        where: { retellCallId: call.call_id },
-        data: { appointmentId: appointment.id },
-      });
+      try {
+        await prisma.call.updateMany({
+          where: { retellCallId: call.call_id },
+          data: { appointmentId: appointment.id },
+        });
+      } catch (linkErr) {
+        console.error("[book-appointment] Failed to link call to appointment (non-fatal):", linkErr);
+      }
     }
 
     // Send notifications
