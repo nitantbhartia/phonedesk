@@ -17,9 +17,14 @@ vi.mock("@/lib/prisma", () => ({
     },
     call: {
       upsert: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    demoNumber: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -31,6 +36,8 @@ vi.mock("@/lib/customer-memory", () => ({
 
 vi.mock("@/lib/retell", () => ({
   refreshRetellLLMForCall: vi.fn(),
+  endRetellCall: vi.fn().mockResolvedValue(undefined),
+  updateRetellPhoneNumber: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/notifications", () => ({
@@ -147,6 +154,7 @@ describe("POST /api/retell/webhook", () => {
   });
 
   it("treats public demo callers as new, records the caller phone, and starts cooldown on call_started", async () => {
+    process.env.DEMO_BUSINESS_ID = "demo_biz";
     vi.mocked(resolveDemoSession).mockResolvedValue({
       businessId: "demo_biz",
       source: "public",
@@ -165,7 +173,9 @@ describe("POST /api/retell/webhook", () => {
       .mockResolvedValueOnce({
         onboardingComplete: true,
       } as never);
+    // No previous attempts with this phone, no previous calls
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.call.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.publicDemoAttempt.update).mockResolvedValue({ id: "attempt_1" } as never);
     vi.mocked(prisma.demoLead.update).mockResolvedValue({ id: "lead_1" } as never);
 
@@ -207,6 +217,57 @@ describe("POST /api/retell/webhook", () => {
         isTestCall: true,
       },
     });
+  });
+
+  it("still sets callerPhone when a previous short/blocked demo call exists for the same phone", async () => {
+    process.env.DEMO_BUSINESS_ID = "demo_biz";
+    vi.mocked(resolveDemoSession).mockResolvedValue({
+      businessId: "demo_biz",
+      source: "public",
+      demoNumberId: "demo_num_1",
+      publicAttemptId: "attempt_2",
+      leadId: null,
+      callerPhone: null,
+    });
+    vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({
+        id: "demo_biz",
+        timezone: "America/Los_Angeles",
+        retellConfig: { llmId: "llm_demo" },
+      } as never)
+      .mockResolvedValueOnce({
+        onboardingComplete: true,
+      } as never);
+    // A previous attempt exists with same callerPhone (from the broken call)
+    vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue({
+      id: "attempt_1",
+      callerPhone: "+16195550100",
+      startedAt: new Date(),
+    } as never);
+    // But the previous call was short (blocked by subscription gate: ~5 seconds)
+    vi.mocked(prisma.call.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.publicDemoAttempt.update).mockResolvedValue({ id: "attempt_2" } as never);
+
+    const response = await POST(
+      makeRequest({
+        event: "call_started",
+        call: {
+          call_id: "call_demo_retry",
+          from_number: "(619) 555-0100",
+          to_number: "+1 (716) 576-3523",
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(204);
+    // callerPhone should be set on the NEW attempt so the page can detect the call
+    expect(prisma.publicDemoAttempt.update).toHaveBeenCalledWith({
+      where: { id: "attempt_2" },
+      data: { callerPhone: "+16195550100" },
+    });
+    // Call record should still be created
+    expect(prisma.call.upsert).toHaveBeenCalled();
   });
 
   it("creates a completed call with computed duration on call_ended when no record exists", async () => {
