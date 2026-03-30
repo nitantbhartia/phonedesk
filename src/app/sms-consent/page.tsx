@@ -45,7 +45,7 @@ export default function SmsConsentPage() {
           <p className="text-[17px] leading-[1.8] text-[#1a1a1a]">
             By providing your phone number when booking an appointment at a RingPaw-powered grooming
             salon, you agree to receive SMS appointment confirmations, reminders, and booking-related
-            notifications from that salon. Message and data rates may apply. Reply{" "}
+            notifications from <strong>RingPaw</strong> on behalf of your grooming salon. Message and data rates may apply. Reply{" "}
             <strong>STOP</strong> to opt out at any time. Reply <strong>HELP</strong> for help.
           </p>
         </div>
@@ -92,9 +92,9 @@ export default function SmsConsentPage() {
               &#10003;
             </div>
             <div className="text-sm leading-relaxed text-[#2e2e2e]">
-              I agree to receive SMS appointment confirmations and reminders from this salon via
-              RingPaw. Message &amp; data rates may apply. I can reply <strong>STOP</strong> to opt
-              out at any time.
+              I agree to receive SMS appointment confirmations and reminders from{" "}
+              <strong>RingPaw</strong> on behalf of my grooming salon. Message &amp; data rates may
+              apply. I can reply <strong>STOP</strong> to opt out at any time.
             </div>
           </div>
         </div>
@@ -132,15 +132,15 @@ export default function SmsConsentPage() {
         </h2>
         <ul className="mb-3.5 ml-5 list-disc">
           <li className="mb-2 text-[#2e2e2e]">
-            Hi [Name], this is [Salon] confirming [Pet]&apos;s grooming on [Date] at [Time]. Reply
-            STOP to opt out.
+            Hi [Name], this is RingPaw confirming your grooming appointment for [Pet] on [Date] at
+            [Time]. Reply STOP to opt out.
           </li>
           <li className="mb-2 text-[#2e2e2e]">
-            Reminder from [Salon]: [Pet]&apos;s appointment is tomorrow at [Time]. Reply STOP to opt
+            Reminder from RingPaw: [Pet]&apos;s appointment is tomorrow at [Time]. Reply STOP to opt
             out.
           </li>
           <li className="mb-2 text-[#2e2e2e]">
-            [Salon]: [Pet] is ready for pickup! Reply STOP to opt out.
+            RingPaw: [Pet] is ready for pickup! Reply STOP to opt out.
           </li>
         </ul>
 
