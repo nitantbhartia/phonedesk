@@ -139,6 +139,41 @@ describe("business/profile", () => {
     expect(payload.demoPhoneNumber).toBeNull();
   });
 
+  it("returns the active demo phone number when a live demo session exists", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({
+      id: "biz_1",
+      services: [],
+      groomers: [],
+      phoneNumber: null,
+      calendarConnections: [],
+      retellConfig: null,
+    } as never);
+    vi.mocked(prisma.call.count)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(0);
+    vi.mocked(prisma.appointment.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.call.aggregate)
+      .mockResolvedValueOnce({ _avg: { duration: 120 } } as never)
+      .mockResolvedValueOnce({ _sum: { duration: 300 } } as never);
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.demoSession.findUnique).mockResolvedValue({
+      expiresAt: new Date(Date.now() + 60_000),
+      demoNumber: { number: "+16195550123" },
+    } as never);
+
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(payload.demoPhoneNumber).toBe("+16195550123");
+    expect(payload.stats.revenueProtected).toBe(65);
+  });
+
   it("returns null nextAppointment when no upcoming appointments exist", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
@@ -242,6 +277,81 @@ describe("business/profile", () => {
     expect(payload.synced).toBe(true);
   });
 
+  it("requires name and ownerName when creating a new business", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce(null);
+
+    const response = await POST(
+      new Request("http://localhost/api/business/profile", {
+        method: "POST",
+        body: JSON.stringify({ name: "Paw House" }),
+      }) as never
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "name and ownerName are required when creating a business profile",
+    });
+    expect(prisma.business.create).not.toHaveBeenCalled();
+  });
+
+  it("saves successfully without syncing when no retell config exists yet", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({ id: "biz_1" } as never)
+      .mockResolvedValueOnce({
+        id: "biz_1",
+        bookingMode: "SOFT",
+        services: [],
+        groomers: [],
+        breedRecommendations: [],
+        retellConfig: null,
+      } as never);
+    vi.mocked(prisma.business.update).mockResolvedValue({ id: "biz_1" } as never);
+
+    const response = await POST(
+      new Request("http://localhost/api/business/profile", {
+        method: "POST",
+        body: JSON.stringify({ name: "Paw House Updated" }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(syncRetellAgent).not.toHaveBeenCalled();
+    expect(payload.synced).toBe(false);
+  });
+
+  it("returns 500 when the profile saves but the full business reload fails", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique)
+      .mockResolvedValueOnce({ id: "biz_1" } as never)
+      .mockResolvedValueOnce(null);
+    vi.mocked(prisma.business.update).mockResolvedValue({ id: "biz_1" } as never);
+
+    const response = await POST(
+      new Request("http://localhost/api/business/profile", {
+        method: "POST",
+        body: JSON.stringify({ name: "Paw House Updated" }),
+      }) as never
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      business: { id: "biz_1" },
+      error: "Business profile saved, but failed to reload profile for voice sync.",
+    });
+  });
+
   it("returns 502 when retell sync fails after saving", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
@@ -314,5 +424,57 @@ describe("business/profile", () => {
       data: { name: "Updated" },
     });
     expect(payload.business).toEqual({ id: "biz_1", name: "Updated" });
+  });
+
+  it("blocks enabling the agent from PATCH without admin approval", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({
+      id: "biz_1",
+      adminApprovedGoLive: false,
+    } as never);
+
+    const response = await PATCH(
+      new Request("http://localhost/api/business/profile", {
+        method: "PATCH",
+        body: JSON.stringify({ agentActive: true }),
+      }) as never
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "Admin approval is required to enable live call answering.",
+    });
+    expect(prisma.retellConfig.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("strips isActive from PATCH when not admin-approved but preserves other safe fields", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner" },
+    } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({
+      adminApprovedGoLive: false,
+    } as never);
+    vi.mocked(prisma.business.update).mockResolvedValue({
+      id: "biz_1",
+      onboardingComplete: true,
+    } as never);
+
+    const response = await PATCH(
+      new Request("http://localhost/api/business/profile", {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: true, onboardingComplete: true }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(prisma.business.update).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+      data: { onboardingComplete: true },
+    });
+    expect(payload.business).toEqual({ id: "biz_1", onboardingComplete: true });
   });
 });

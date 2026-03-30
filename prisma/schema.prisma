@@ -71,6 +71,7 @@ model Business {
   timezone        String   @default("America/Los_Angeles")
   businessHours   Json?    // { mon: { open: "09:00", close: "17:00" }, ... }
   bookingMode     BookingMode @default(SOFT)
+  vaccinePolicy   VaccinePolicy @default(OFF)
   isActive        Boolean  @default(false)
   onboardingStep  Int      @default(1)
   onboardingComplete Boolean @default(false)
@@ -98,6 +99,7 @@ model Business {
   stripeSubscriptionStatus String?
   bookingsCount    Int     @default(0) // total bookings Pip has ever made for this business
   billingConsentGiven Boolean @default(false) // groomer checked the billing consent box at checkout
+  adminApprovedGoLive Boolean @default(false) // admin must approve before business can go live
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -112,6 +114,12 @@ enum Plan {
 enum BookingMode {
   HARD
   SOFT
+}
+
+enum VaccinePolicy {
+  OFF        // No vaccine check (default, existing behavior)
+  FLAG_ONLY  // Ask about vaccines, always book, note status
+  REQUIRE    // Ask about vaccines, block booking if hard no
 }
 
 model PhoneNumber {
@@ -166,35 +174,19 @@ model PublicDemoAttempt {
   @@index([leadId])
 }
 
-// A qualified prospect who has verified their email to access the live demo
+// A prospect who submitted the "Get in Touch" lead form after the demo
 model DemoLead {
   id            String               @id @default(cuid())
   email         String               @unique
+  contactName   String?
   businessName  String?
+  phone         String?
   ipAtCreation  String
-  verifiedAt    DateTime?            // set when magic link is clicked
-  lastDemoAt    DateTime?            // set when they successfully start a live demo
-  cooldownUntil DateTime?            // they cannot start another demo until this time
   attempts      PublicDemoAttempt[]
-  tokens        DemoMagicToken[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
   @@index([email])
-  @@index([cooldownUntil])
-}
-
-// Single-use email magic link token for verifying a DemoLead
-model DemoMagicToken {
-  id        String    @id @default(cuid())
-  leadId    String
-  lead      DemoLead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  token     String    @unique @default(cuid())
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([token])
 }
 
 model Service {
@@ -303,6 +295,7 @@ model Appointment {
   calendarEventId String?           // external calendar event ID
   confirmLink     String?
   notes           String?           @db.Text
+  vaccineStatus   String?           // confirmed, uncertain, unvaccinated_flagged, exemption_bordetella, exemption_rabies
   reminderSent    Boolean           @default(false)
   reminder48hSent Boolean           @default(false)
   onMyWaySent     Boolean           @default(false)

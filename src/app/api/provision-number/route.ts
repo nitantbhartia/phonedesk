@@ -10,7 +10,7 @@ import {
   syncRetellAgent,
 } from "@/lib/retell";
 import { buildRetellWebhookUrl } from "@/lib/retell-auth";
-import { isSmsEnabled } from "@/lib/sms";
+import { shouldAttachRetellSmsWebhook } from "@/lib/sms";
 
 async function resolveUserId(session: {
   user?: {
@@ -83,16 +83,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
-  // Require payment before provisioning a real number
+  // Require admin approval before provisioning a real number
   const stripeBypass = process.env.STRIPE_BYPASS === "true";
-  const hasPaid =
+  const isApproved =
     stripeBypass ||
-    business.billingConsentGiven ||
-    !!business.stripeSubscriptionId;
-  if (!hasPaid) {
+    business.adminApprovedGoLive;
+  if (!isApproved) {
     return NextResponse.json(
-      { error: "subscription_required" },
-      { status: 402 }
+      { error: "admin_approval_required" },
+      { status: 403 }
     );
   }
 
@@ -135,7 +134,7 @@ export async function POST(req: Request) {
       agentId,
       areaCode,
       nickname: `${business.name} - RingPaw`,
-      smsWebhookUrl: isSmsEnabled()
+      smsWebhookUrl: shouldAttachRetellSmsWebhook()
         ? buildRetellWebhookUrl(appUrl, "/api/sms/webhook")
         : undefined,
     });

@@ -174,11 +174,8 @@ const STEP_CONFIG = [
     subtitle: "Call the number below and have a real conversation. Ask about pricing, availability, or try to book — your AI is ready.",
     proTip: "The more naturally you talk, the better. Say your dog's name, ask follow-up questions, be a real caller — your AI can handle it.",
   },
-  {
-    title: "Choose your plan",
-    subtitle: "RingPaw pays for itself with just one extra booking a month. You can change plans anytime.",
-    proTip: "Most solo groomers start on the Solo plan and upgrade to Studio once they see how many calls they were missing.",
-  },
+  // Step 6 is skipped (no billing during free launch) — placeholder kept to preserve indices
+  { title: "", subtitle: "", proTip: "" },
   {
     title: "Ready to launch!",
     subtitle: "Everything's configured. Hit Go Live and your AI starts answering calls immediately.",
@@ -188,31 +185,6 @@ const STEP_CONFIG = [
     title: "Set up call forwarding",
     subtitle: "Forward unanswered calls from your business phone to RingPaw — your clients never hear voicemail again.",
     proTip: "Conditional forwarding only kicks in when you don't answer, so you still take calls normally when you're free.",
-  },
-];
-
-const ONBOARDING_PLANS = [
-  {
-    id: "STARTER",
-    name: "Solo",
-    price: 99,
-    features: ["120 minutes/month (~60 calls)", "Everything included", "Calendar integration"],
-    description: "For solo groomers tired of missing calls between clients.",
-  },
-  {
-    id: "PRO",
-    name: "Studio",
-    price: 199,
-    popular: true,
-    features: ["300 minutes/month (~150 calls)", "Priority setup", "Square + Google Calendar"],
-    description: "For full-time groomers who want RingPaw handling every missed call.",
-  },
-  {
-    id: "BUSINESS",
-    name: "Salon",
-    price: 349,
-    features: ["500 minutes/month (~250 calls)", "Priority support", "Multi-groomer routing"],
-    description: "For small shops with multiple groomers and higher call volume.",
   },
 ];
 
@@ -269,11 +241,6 @@ export default function OnboardingPage() {
   // Prevents the resumeOnboarding effect from resetting step during inline auth (step 3).
   const skipNextResumeRef = useRef(false);
 
-  // Step 6: Subscription
-  const [subscribed, setSubscribed] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [billingConsent, setBillingConsent] = useState(false);
-
   // Auth step (step 3) state — shown inline for guests at step 2→3 transition
   const [profileError, setProfileError] = useState("");
   const [showWebsiteImport, setShowWebsiteImport] = useState(false);
@@ -290,6 +257,7 @@ export default function OnboardingPage() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupError, setSignupError] = useState("");
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
   const formattedProvisionedNumber = provisionedNumber
     ? formatPhoneNumber(provisionedNumber)
@@ -312,7 +280,6 @@ export default function OnboardingPage() {
           ? new URLSearchParams()
           : new URLSearchParams(window.location.search);
       const requestedStep = Number(params.get("step") || "0");
-      const subscribedParam = params.get("subscribed") === "true";
       const restoreDraft = params.get("restoreDraft") === "1";
 
       try {
@@ -344,7 +311,6 @@ export default function OnboardingPage() {
             // dashboard "Set up now" banner when a user completed onboarding but never
             // provisioned a real number (e.g. payment was skipped or failed).
             if (requestedStep === 7 && !business?.phoneNumber?.number) {
-              setSubscribed(Boolean(business?.stripeSubscriptionId));
               setStep(7);
               return;
             }
@@ -374,8 +340,6 @@ export default function OnboardingPage() {
           }
           setCalendarConnected(hasCalendarConnection);
           setProvisionedNumber(business?.phoneNumber?.number || "");
-          setSubscribed(subscribedParam || Boolean(business?.stripeSubscriptionId));
-
           // Restore draft saved before Google OAuth redirect and auto-save
           if (restoreDraft && !business?.name) {
             try {
@@ -791,67 +755,51 @@ export default function OnboardingPage() {
     }
   }
 
-  async function startCheckout(planId: string) {
-    setCheckoutLoading(planId);
-    try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: planId,
-          successUrl: "/onboarding?step=7&subscribed=true",
-          cancelUrl: "/onboarding?step=6",
-        }),
-      });
-      const data = await res.json() as { url?: string };
-      if (data.url) window.location.href = data.url;
-    } catch {
-      // User stays on step 6
-    } finally {
-      setCheckoutLoading(null);
-    }
-  }
-
   async function goLive() {
     setLoading(true);
     try {
-      // Provision the real dedicated number (payment-gated on the server)
-      if (subscribed) {
-        const phoneDigits = phone.replace(/\D/g, "");
-        const areaCode = phoneDigits.length >= 10
-          ? phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3)
-          : undefined;
-        const provRes = await fetch("/api/provision-number", {
-          method: "POST",
+      // Try to provision the real dedicated number (admin-approval-gated on the server)
+      const phoneDigits = phone.replace(/\D/g, "");
+      const areaCode = phoneDigits.length >= 10
+        ? phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3)
+        : undefined;
+      const provRes = await fetch("/api/provision-number", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ areaCode }),
+      });
+      const provData = await provRes.json() as { phoneNumber?: string; alreadyProvisioned?: boolean; error?: string };
+
+      if (provRes.status === 403 && provData.error === "admin_approval_required") {
+        // Admin hasn't approved yet — mark onboarding complete and show approval-pending message
+        await fetch("/api/business/profile", {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ areaCode }),
+          body: JSON.stringify({ onboardingComplete: true }),
         });
-        const provData = await provRes.json() as { phoneNumber?: string; alreadyProvisioned?: boolean; error?: string };
-        if (provRes.ok && provData.phoneNumber) {
-          setProvisionedNumber(provData.phoneNumber);
-        } else if (!provData.alreadyProvisioned) {
-          // Provisioning failed and this isn't a duplicate request — stop here.
-          // Don't mark onboarding complete without a real number.
-          console.error("[goLive] Number provisioning failed:", provData.error);
-          throw new Error(provData.error || "Failed to provision your RingPaw number. Please try again.");
-        }
-        // End the demo session now that we have a real number
-        await fetch("/api/demo/end", { method: "POST" }).catch(() => {
-          // Non-fatal — demo session will expire on its own
-        });
+        setAwaitingApproval(true);
+        setLoading(false);
+        return;
       }
+
+      if (provRes.ok && provData.phoneNumber) {
+        setProvisionedNumber(provData.phoneNumber);
+      } else if (!provData.alreadyProvisioned) {
+        console.error("[goLive] Number provisioning failed:", provData.error);
+        throw new Error(provData.error || "Failed to provision your RingPaw number. Please try again.");
+      }
+
+      // End the demo session now that we have a real number
+      await fetch("/api/demo/end", { method: "POST" }).catch(() => {
+        // Non-fatal — demo session will expire on its own
+      });
 
       await fetch("/api/business/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        // Only activate live call answering when subscribed; always mark onboarding done
-        body: JSON.stringify({ isActive: subscribed, onboardingComplete: true }),
+        body: JSON.stringify({ isActive: true, onboardingComplete: true }),
       });
-      if (subscribed) {
-        navigate(8);
-      } else {
-        router.push("/dashboard");
-      }
+      navigate(8);
     } catch (error) {
       console.error("Error going live:", error);
       router.push("/dashboard");
@@ -940,7 +888,7 @@ export default function OnboardingPage() {
               <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
             </svg>
           </button>
-          <p className="text-xs text-paw-brown/35 mt-4">Card saved at checkout · only charged after your first booking</p>
+          <p className="text-xs text-paw-brown/35 mt-4">Free to set up · no credit card needed</p>
         </main>
       </div>
     );
@@ -1909,8 +1857,8 @@ export default function OnboardingPage() {
 
           <OnboardingFooter
             onBack={() => navigate(4)}
-            onNext={() => navigate(6)}
-            nextLabel={provisionedNumber ? "Choose Plan" : "Continue Setup"}
+            onNext={() => navigate(7)}
+            nextLabel={provisionedNumber ? "Continue" : "Continue Setup"}
             nextDisabled={!provisionedNumber || callPhase === "waiting"}
           />
         </div>
@@ -1992,87 +1940,7 @@ export default function OnboardingPage() {
       )}
 
       {/* Step 6: Choose Plan */}
-      {step === 6 && (
-        <div className="space-y-6">
-          {subscribed ? (
-            <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-6 py-4">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <p className="font-bold text-green-800">You&apos;re subscribed! Ready to go live.</p>
-            </div>
-          ) : (
-            <div className="bg-paw-amber/10 border border-paw-amber/30 rounded-2xl px-5 py-4 text-sm text-paw-brown/80 leading-relaxed">
-              <p className="font-bold text-paw-brown mb-1">30-day outcome guarantee</p>
-              Your card is collected now but <strong>not charged</strong> until RingPaw books your first appointment. If RingPaw doesn&apos;t book a single appointment in 30 days, your subscription is automatically cancelled — no charge, no hard feelings.
-            </div>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            {ONBOARDING_PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative bg-white rounded-3xl p-6 border-2 flex flex-col ${plan.popular ? "border-paw-brown shadow-soft" : "border-paw-brown/10"}`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-paw-brown text-paw-cream text-xs font-bold rounded-full whitespace-nowrap">
-                    Recommended
-                  </div>
-                )}
-                <div className="mb-2">
-                  <p className="font-extrabold text-paw-brown text-lg">{plan.name}</p>
-                  <p className="text-3xl font-extrabold text-paw-brown mt-1">
-                    ${plan.price}<span className="text-base font-medium text-paw-brown/50">/mo</span>
-                  </p>
-                </div>
-                {plan.description && (
-                  <p className="text-xs text-paw-brown/60 mb-3 leading-snug">{plan.description}</p>
-                )}
-                <ul className="space-y-2 mb-6 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-paw-brown/70 font-medium">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-paw-amber shrink-0 mt-0.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => void startCheckout(plan.id)}
-                  disabled={checkoutLoading !== null || subscribed || !billingConsent}
-                  className={`w-full py-3 rounded-full font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${plan.popular ? "bg-paw-brown text-paw-cream hover:bg-opacity-90" : "border-2 border-paw-brown text-paw-brown hover:bg-paw-brown hover:text-paw-cream"}`}
-                >
-                  {checkoutLoading === plan.id ? "Redirecting..." : subscribed ? "Selected" : "Choose Plan"}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Billing consent checkbox — must be checked before any plan can be selected */}
-          {!subscribed && (
-            <label className="flex items-start gap-3 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={billingConsent}
-                onChange={(e) => setBillingConsent(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-paw-brown shrink-0"
-              />
-              <span className="text-xs text-paw-brown/70 leading-relaxed">
-                I understand that my card will be saved now but <strong>not charged</strong> until RingPaw successfully books my first appointment. If no appointment is booked within 30 days, my subscription will be cancelled automatically at no cost. Once RingPaw books my first appointment, my selected plan price will be charged immediately and will recur monthly until I cancel.
-              </span>
-            </label>
-          )}
-
-          <OnboardingFooter
-            onBack={() => navigate(5)}
-            onNext={() => navigate(7)}
-            nextLabel={subscribed ? "Continue" : "Skip for Now"}
-          />
-        </div>
-      )}
-
-      {/* Step 7: Go Live */}
+      {/* Step 7: Go Live (step 6 skipped — no billing) */}
       {step === 7 && (
         <div className="space-y-8">
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
@@ -2154,37 +2022,47 @@ export default function OnboardingPage() {
             ))}
           </div>
 
-          {!subscribed && (
-            <div className="flex items-center gap-3 bg-amber-50 border-2 border-amber-200 rounded-2xl px-6 py-4">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <p className="text-sm font-bold text-amber-800">
-                Live call answering requires a subscription.{" "}
-                <button onClick={() => navigate(6)} className="underline hover:no-underline">
-                  Choose a plan
-                </button>{" "}
-                to activate it — or explore the dashboard first.
+          {awaitingApproval && (
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-3xl p-8 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-blue-900 mb-2">
+                Your setup is complete!
+              </h3>
+              <p className="text-blue-700 font-medium leading-relaxed">
+                We&apos;re reviewing your account and will activate your line shortly.
+                {phone && <> We&apos;ll text you at <strong>{formatPhoneNumber(phone)}</strong> when you&apos;re live.</>}
               </p>
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard")}
+                className="mt-6 px-8 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft"
+              >
+                Go to Dashboard
+              </button>
             </div>
           )}
 
-          <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => navigate(6)}
-              className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              onClick={goLive}
-              disabled={loading}
-              className="px-10 py-4 bg-green-600 text-white rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Setting up..." : subscribed ? "Go Live!" : "Go to Dashboard"}
+          {!awaitingApproval && (
+            <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => navigate(5)}
+                className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={goLive}
+                disabled={loading}
+                className="px-10 py-4 bg-green-600 text-white rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Setting up..." : "Go Live!"}
               <svg
                 width="20"
                 height="20"
@@ -2201,7 +2079,8 @@ export default function OnboardingPage() {
                 <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
               </svg>
             </button>
-          </div>
+            </div>
+          )}
         </div>
       )}
     </OnboardingLayout>

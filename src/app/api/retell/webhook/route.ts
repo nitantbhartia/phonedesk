@@ -137,34 +137,41 @@ async function handleCallStarted(call: RetellCallPayload) {
     // Public demo phone-number rate limit: detect repeat callers by phone
     if (demoResolution?.source === "public" && normalizedCaller && call.call_id) {
       const now = new Date();
-      const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-      const repeat = await prisma.publicDemoAttempt.findFirst({
-        where: {
-          callerPhone: normalizedCaller,
-          startedAt: { gte: windowStart },
-          id: { not: demoResolution.publicAttemptId },
-        },
-      });
-      if (repeat) {
-        await endRetellCall(call.call_id).catch((e) => {
-          console.error("[webhook] Failed to end repeat demo call:", e);
-        });
-        return new NextResponse(null, { status: 204 });
-      }
 
+      // Always record the caller's phone on the current attempt first, so the
+      // status/stream endpoints can detect the call regardless of rate limiting.
       if (!demoResolution.callerPhone) {
-        const cooldownUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
         await prisma.publicDemoAttempt.update({
           where: { id: demoResolution.publicAttemptId },
           data: { callerPhone: normalizedCaller },
         });
-        if (demoResolution.leadId) {
-          await prisma.demoLead.update({
-            where: { id: demoResolution.leadId },
-            data: { cooldownUntil },
-          }).catch((e) => {
-            console.error("[webhook] Failed to set demo lead cooldown:", e);
-          });
+      }
+
+      // Check if this phone has already completed a real demo call (duration > 30s)
+      // within the rate-limit window.  Calls blocked by the subscription gate or
+      // ended immediately don't count — the caller deserves a real attempt.
+      // Check both the current session AND previous sessions.
+      const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      const demoBizId = process.env.DEMO_BUSINESS_ID;
+      if (demoBizId) {
+        const previousCall = await prisma.call.findFirst({
+          where: {
+            businessId: demoBizId,
+            callerPhone: normalizedCaller,
+            createdAt: { gte: windowStart },
+            duration: { gt: 30 },
+          },
+        });
+        if (previousCall) {
+          try {
+            await endRetellCall(call.call_id);
+            // Call was successfully ended — skip creating a call record
+            return new NextResponse(null, { status: 204 });
+          } catch (e) {
+            // If end fails (e.g. call already finished), let it proceed so the
+            // call record is created with isTestCall=true and the browser can detect the call.
+            console.warn("[webhook] Could not end repeat demo call, allowing it to proceed:", e);
+          }
         }
       }
     }
@@ -308,6 +315,8 @@ async function handleCallEnded(call: RetellCallPayload) {
     }
   } catch (err) {
     console.error("[webhook] handleCallEnded DB error:", err);
+    // Return 500 so Retell retries — a 204 here would silently lose the call record
+    return new NextResponse(null, { status: 500 });
   }
 
   return new NextResponse(null, { status: 204 });
@@ -342,38 +351,42 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
     });
 
     if (callerName && !existingCall.isTestCall) {
-      await upsertCustomerMemoryFromCall({
-        businessId: existingCall.businessId,
-        customerName: callerName,
-        customerPhone: customerPhone || existingCall.callerPhone,
-        petName:
-          extracted.petName ||
-          extracted.pet_name ||
-          extracted.dogName ||
-          extracted.dog_name ||
-          null,
-        petBreed:
-          extracted.petBreed ||
-          extracted.pet_breed ||
-          extracted.dogBreed ||
-          extracted.dog_breed ||
-          null,
-        petSize:
-          (extracted.petSize ||
-            extracted.pet_size ||
-            extracted.dogSize ||
-            extracted.dog_size ||
-            null) as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE" | null,
-        serviceName: extracted.serviceName || extracted.service_name || null,
-        summary,
-        notes:
-          extracted.notes ||
-          extracted.specialNotes ||
-          extracted.special_handling_notes ||
-          null,
-        outcome: existingCall.appointmentId ? "BOOKED" : "NO_BOOKING",
-        contactedAt: new Date(),
-      });
+      try {
+        await upsertCustomerMemoryFromCall({
+          businessId: existingCall.businessId,
+          customerName: callerName,
+          customerPhone: customerPhone || existingCall.callerPhone,
+          petName:
+            extracted.petName ||
+            extracted.pet_name ||
+            extracted.dogName ||
+            extracted.dog_name ||
+            null,
+          petBreed:
+            extracted.petBreed ||
+            extracted.pet_breed ||
+            extracted.dogBreed ||
+            extracted.dog_breed ||
+            null,
+          petSize:
+            (extracted.petSize ||
+              extracted.pet_size ||
+              extracted.dogSize ||
+              extracted.dog_size ||
+              null) as "SMALL" | "MEDIUM" | "LARGE" | "XLARGE" | null,
+          serviceName: extracted.serviceName || extracted.service_name || null,
+          summary,
+          notes:
+            extracted.notes ||
+            extracted.specialNotes ||
+            extracted.special_handling_notes ||
+            null,
+          outcome: existingCall.appointmentId ? "BOOKED" : "NO_BOOKING",
+          contactedAt: new Date(),
+        });
+      } catch (memErr) {
+        console.error("[webhook] upsertCustomerMemoryFromCall failed (non-fatal):", memErr);
+      }
     }
 
     const refreshedCall = await prisma.call.findUnique({
@@ -392,15 +405,19 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
         data: { status: "NO_BOOKING" },
       });
 
-      await sendMissedCallNotification(
-        refreshedCall.business as Parameters<
-          typeof sendMissedCallNotification
-        >[0],
-        (isOutbound ? call.to_number : call.from_number) ||
-          refreshedCall.callerPhone ||
-          "Unknown",
-        refreshedCall.callerName || undefined
-      );
+      try {
+        await sendMissedCallNotification(
+          refreshedCall.business as Parameters<
+            typeof sendMissedCallNotification
+          >[0],
+          (isOutbound ? call.to_number : call.from_number) ||
+            refreshedCall.callerPhone ||
+            "Unknown",
+          refreshedCall.callerName || undefined
+        );
+      } catch (notifyErr) {
+        console.error("[webhook] sendMissedCallNotification failed (non-fatal):", notifyErr);
+      }
     }
   }
 

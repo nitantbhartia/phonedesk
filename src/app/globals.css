@@ -58,6 +58,24 @@
   }
 }
 
+/* Nav link animated underline */
+.nav-link-hover {
+  position: relative;
+}
+.nav-link-hover::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  height: 2px;
+  width: 0;
+  background-color: var(--paw-orange, #F4A261);
+  transition: width 0.2s ease;
+}
+.nav-link-hover:hover::after {
+  width: 100%;
+}
+
 /* Landing page styles */
 .paw-shape {
   position: absolute;

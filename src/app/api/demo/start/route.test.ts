@@ -23,6 +23,9 @@ vi.mock("@/lib/prisma", () => ({
     demoNumber: {
       findFirst: vi.fn(),
     },
+    publicDemoAttempt: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -52,6 +55,8 @@ describe("POST /api/demo/start", () => {
     vi.mocked(prisma.demoSession.findUnique).mockReset();
     vi.mocked(prisma.demoSession.upsert).mockReset();
     vi.mocked(prisma.demoNumber.findFirst).mockReset();
+    vi.mocked(prisma.publicDemoAttempt.findMany).mockReset();
+    vi.mocked(prisma.publicDemoAttempt.findMany).mockResolvedValue([]);
     vi.mocked(syncRetellAgent).mockReset();
     vi.mocked(updateRetellPhoneNumber).mockReset();
     vi.mocked(updateRetellAgent).mockReset();
@@ -81,6 +86,42 @@ describe("POST /api/demo/start", () => {
 
     await expect(response.json()).resolves.toEqual({ demoNumber: "+16195559999" });
     expect(prisma.demoNumber.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("excludes demo numbers occupied by active public demo sessions", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { email: "owner@example.com" } } as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      business: {
+        id: "biz_1",
+        services: [],
+        retellConfig: { agentId: "agent_1" },
+        breedRecommendations: [],
+        groomers: [],
+      },
+    } as never);
+    vi.mocked(prisma.call.count).mockResolvedValue(0 as never);
+    vi.mocked(prisma.demoSession.findUnique).mockResolvedValue(null);
+    // A public demo attempt is using demo_1
+    vi.mocked(prisma.publicDemoAttempt.findMany).mockResolvedValue([
+      { demoNumberId: "demo_1" },
+    ] as never);
+    vi.mocked(prisma.demoNumber.findFirst).mockResolvedValue({
+      id: "demo_2",
+      number: "+16195558888",
+      retellPhoneNumber: "retell_demo_2",
+    } as never);
+    vi.mocked(prisma.demoSession.upsert).mockResolvedValue({ id: "session_1" } as never);
+
+    const response = await POST(new Request("http://localhost/api/demo/start") as never);
+
+    await expect(response.json()).resolves.toEqual({ demoNumber: "+16195558888" });
+    // Verify the query excluded the occupied number
+    expect(prisma.demoNumber.findFirst).toHaveBeenCalledWith({
+      where: {
+        sessions: { none: { expiresAt: { gt: expect.any(Date) } } },
+        id: { notIn: ["demo_1"] },
+      },
+    });
   });
 
   it("provisions a demo number and refreshes the session when needed", async () => {

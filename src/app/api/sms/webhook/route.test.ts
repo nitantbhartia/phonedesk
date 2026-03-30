@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({
@@ -35,9 +36,6 @@ vi.mock("@/lib/retell-auth", () => ({
 
 vi.mock("@/lib/sms", () => ({
   isSmsEnabled: vi.fn(() => true),
-}));
-
-vi.mock("@/lib/retell", () => ({
   sendSms: vi.fn(),
 }));
 
@@ -55,7 +53,7 @@ import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
-import { sendSms } from "@/lib/retell";
+import { isSmsEnabled, sendSms } from "@/lib/sms";
 import { bookAppointment, isSlotAvailable } from "@/lib/calendar";
 
 function makeJsonRequest(body: unknown) {
@@ -83,6 +81,7 @@ describe("POST /api/sms/webhook", () => {
     delete process.env.TWILIO_AUTH_TOKEN;
     delete process.env.TWILIO_PHONE_NUMBER;
 
+    vi.mocked(isSmsEnabled).mockReturnValue(true);
     vi.mocked(isRetellAuthorized).mockReturnValue(true);
     vi.mocked(rateLimit).mockReturnValue({ allowed: true } as never);
     vi.mocked(prisma.smsLog.create).mockReset();
@@ -121,6 +120,69 @@ describe("POST /api/sms/webhook", () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: "Unauthorized" });
+  });
+
+  it("returns a no-op response immediately when sms is disabled", async () => {
+    vi.mocked(isSmsEnabled).mockReturnValue(false);
+    vi.mocked(isRetellAuthorized).mockReturnValue(false);
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550100",
+        to_number: "+16195559999",
+        message: "STATUS",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(prisma.smsLog.create).not.toHaveBeenCalled();
+  });
+
+  it("parses textbelt reply payloads using webhookData as the business number", async () => {
+    process.env.TEXTBELT_API_KEY = "textbelt-key";
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_today",
+      petName: "Bella",
+      groomingStatus: "READY_FOR_PICKUP",
+      startTime: new Date("2026-05-21T16:00:00.000Z"),
+    } as never);
+    const payload = JSON.stringify({
+      fromNumber: "+16195550100",
+      text: "STATUS",
+      data: "+16195559999",
+    });
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const signature = createHmac("sha256", "textbelt-key")
+      .update(timestamp + payload)
+      .digest("hex");
+
+    const response = await POST(
+      new Request("http://localhost/api/sms/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-textbelt-timestamp": timestamp,
+          "x-textbelt-signature": signature,
+        },
+        body: payload,
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(prisma.smsLog.create).toHaveBeenCalledWith({
+      data: {
+        direction: "INBOUND",
+        fromNumber: "+16195550100",
+        toNumber: "+16195559999",
+        body: "STATUS",
+      },
+    });
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "Bella is ready for pickup! Head to 123 Bark St.",
+      "+16195559999"
+    );
   });
 
   it("parses and executes owner commands when the owner texts from the business phone", async () => {
@@ -395,6 +457,59 @@ describe("POST /api/sms/webhook", () => {
       "+16195559999"
     );
     expect(bookAppointment).not.toHaveBeenCalled();
+  });
+
+  // ── Issue 1: CONFIRM with no appointment sends a reply ──────────────
+  it("replies when CONFIRM finds no upcoming appointment", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null);
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550100",
+        to_number: "+16195559999",
+        message: "CONFIRM",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "No upcoming appointment found to confirm. Call Paw House if you need help!",
+      "+16195559999"
+    );
+  });
+
+  // ── Issue 2+6: BOOK failure sends a reply instead of crashing ──────
+  it("replies with slot-taken message when BOOK bookAppointment throws", async () => {
+    vi.mocked(prisma.waitlistEntry.findFirst).mockResolvedValue({
+      id: "wait_1",
+      customerName: "Jamie",
+      customerPhone: "+16195550100",
+      petName: "Bella",
+      petBreed: "Poodle",
+      petSize: "SMALL",
+      serviceName: "Bath",
+      preferredDate: new Date("2026-05-21T16:00:00.000Z"),
+    } as never);
+    vi.mocked(isSlotAvailable).mockResolvedValue(true);
+    vi.mocked(bookAppointment).mockRejectedValue(new Error("Unique constraint failed"));
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550100",
+        to_number: "+16195559999",
+        message: "BOOK",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "Sorry, that slot was just taken. We'll let you know when the next opening comes up!",
+      "+16195559999"
+    );
+    // Waitlist entry should NOT be marked as booked
+    expect(prisma.waitlistEntry.update).not.toHaveBeenCalled();
   });
 
   it("offers a rebooking nudge based on the last completed appointment", async () => {

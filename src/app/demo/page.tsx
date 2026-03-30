@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { DemoCallPlayer } from "@/components/demo-call-player";
@@ -9,17 +8,13 @@ import { DemoCallPlayer } from "@/components/demo-call-player";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type LivePhase =
-  | "gate"         // qualification form
-  | "sent"         // magic link sent, waiting for click
   | "loading"      // provisioning demo number
   | "waiting"      // number assigned, waiting for call
   | "in_progress"  // call in progress
   | "completed"    // call done
-  | "cooldown"     // cooldown active
+  | "cooldown"     // rate-limited
   | "unavailable"  // no demo numbers free
   | "error";
-
-type GateError = "invalid_email" | "cooldown_active" | "other" | null;
 
 type TranscriptTurn =
   | { role: "agent" | "user"; content: string }
@@ -93,7 +88,6 @@ function formatPhone(raw: string) {
 // ─── Transcript viewer ─────────────────────────────────────────────────────
 
 function TranscriptViewer({ turns }: { turns: TranscriptTurn[] }) {
-  // Filter out tool_call_result (verbose JSON noise) and unknown roles
   const visible = turns.filter(
     (t) => t.role === "agent" || t.role === "user" || t.role === "tool_call_invocation"
   );
@@ -162,13 +156,10 @@ function TranscriptViewer({ turns }: { turns: TranscriptTurn[] }) {
   );
 }
 
-// ─── Inner component (uses useSearchParams) ───────────────────────────────────
+// ─── Inner component ───────────────────────────────────────────────────────
 
 function DemoPageInner() {
-  const searchParams = useSearchParams();
-
-  const [livePhase, setLivePhase] = useState<LivePhase>("gate");
-  const [ldt, setLdt] = useState<string | null>(null);
+  const [livePhase, setLivePhase] = useState<LivePhase>("loading");
   const [number, setNumber] = useState("");
   const [summary, setSummary] = useState<string | null>(null);
   const [transcriptObject, setTranscriptObject] = useState<TranscriptTurn[] | null>(null);
@@ -176,85 +167,55 @@ function DemoPageInner() {
   const [selectedScenario, setSelectedScenario] = useState<ScenarioId>("new_booking");
   const [completedTab, setCompletedTab] = useState<"summary" | "transcript">("summary");
 
-  const [email, setEmail] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [gateLoading, setGateLoading] = useState(false);
-  const [gateError, setGateError] = useState<GateError>(null);
-  const [gateErrorMsg, setGateErrorMsg] = useState("");
+  const [showStickyCta, setShowStickyCta] = useState(false);
 
-  const phaseRef = useRef<LivePhase>("gate");
+  // Lead form state
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadBusiness, setLeadBusiness] = useState("");
+  const [leadLoading, setLeadLoading] = useState(false);
+  const [leadError, setLeadError] = useState("");
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
+
+  // Countdown timer for in-progress calls (3-minute demo cap)
+  const DEMO_DURATION_S = 180; // 3 minutes
+  const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(DEMO_DURATION_S);
+
+  const phaseRef = useRef<LivePhase>("loading");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const esRef = useRef<EventSource | null>(null);
+  const startedRef = useRef(false);
+  const liveDemoRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { phaseRef.current = livePhase; }, [livePhase]);
 
-  // On mount: check for ?ldt= (magic link verified) or ?error=
+  // Tick the countdown every second while the call is in progress
   useEffect(() => {
-    const ldtParam = searchParams.get("ldt");
-    const errorParam = searchParams.get("error");
+    if (livePhase !== "in_progress" || !callStartedAt) return;
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - callStartedAt) / 1000);
+      setTimeLeft(Math.max(0, DEMO_DURATION_S - elapsed));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [livePhase, callStartedAt]);
 
-    if (errorParam) {
-      if (errorParam === "token_expired") {
-        setGateError("other");
-        setGateErrorMsg("That link expired. Enter your email again and we'll send a new one.");
-      } else if (errorParam === "token_used") {
-        setGateError("other");
-        setGateErrorMsg("That link was already used. Enter your email to get a new one.");
-      } else {
-        setGateError("other");
-        setGateErrorMsg("Something went wrong with the link. Please try again.");
-      }
-      return;
-    }
+  // On mount: check for saved session or provision a new demo number
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
 
-    if (ldtParam) {
-      setLdt(ldtParam);
-      // Check for a saved active session tied to this ldt
-      const saved = localStorage.getItem("demoSession");
-      if (saved) {
-        try {
-          const { token, number: num, startedAt, savedLdt } = JSON.parse(saved) as {
-            token: string; number: string; startedAt: string; savedLdt?: string;
-          };
-          const age = Date.now() - new Date(startedAt).getTime();
-          if (age <= 30 * 60 * 1000 && savedLdt === ldtParam) {
-            setSessionToken(token);
-            setNumber(num);
-            fetch(`/api/demo/public/status?token=${token}`, { cache: "no-store" })
-              .then((r) => r.json())
-              .then((data: { phase: string; summary: string | null; transcriptObject?: TranscriptTurn[] | null }) => {
-                if (data.phase === "completed") {
-                  setSummary(data.summary);
-                  setTranscriptObject(data.transcriptObject ?? null);
-                  setLivePhase("completed");
-                } else if (data.phase === "in_progress") {
-                  setLivePhase("in_progress");
-                  startSSE(token);
-                } else {
-                  setLivePhase("waiting");
-                  startSSE(token);
-                }
-              })
-              .catch(() => { setLivePhase("waiting"); startSSE(token); });
-            return;
-          }
-        } catch { /* ignore */ }
-      }
-      setLivePhase("loading");
-      startLiveDemo(ldtParam);
-      return;
-    }
-
-    // Restore saved session without ldt param (tab reload after demo started)
     const saved = localStorage.getItem("demoSession");
     if (saved) {
       try {
-        const { token, number: num, startedAt, savedLdt: sl } = JSON.parse(saved) as {
-          token: string; number: string; startedAt: string; savedLdt?: string;
+        const { token, number: num, startedAt } = JSON.parse(saved) as {
+          token: string; number: string; startedAt: string;
         };
         const age = Date.now() - new Date(startedAt).getTime();
-        if (age <= 30 * 60 * 1000 && sl) {
-          setLdt(sl);
+        if (age <= 30 * 60 * 1000) {
           setSessionToken(token);
           setNumber(num);
           fetch(`/api/demo/public/status?token=${token}`, { cache: "no-store" })
@@ -266,18 +227,21 @@ function DemoPageInner() {
                 setLivePhase("completed");
               } else if (data.phase === "in_progress") {
                 setLivePhase("in_progress");
+                setCallStartedAt(Date.now());
                 startSSE(token);
               } else {
                 setLivePhase("waiting");
                 startSSE(token);
               }
             })
-            .catch(() => setLivePhase("gate"));
-        } else {
-          localStorage.removeItem("demoSession");
+            .catch(() => { startLiveDemo(); });
+          return;
         }
-      } catch { localStorage.removeItem("demoSession"); }
+      } catch { /* ignore */ }
+      localStorage.removeItem("demoSession");
     }
+
+    startLiveDemo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -289,61 +253,34 @@ function DemoPageInner() {
     };
   }, []);
 
-  // ── Gate: submit qualification form ──────────────────────────────────────
-
-  async function submitQualify(e: React.FormEvent) {
-    e.preventDefault();
-    setGateLoading(true);
-    setGateError(null);
-    setGateErrorMsg("");
-    try {
-      const res = await fetch("/api/demo/qualify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), businessName: businessName.trim() }),
-      });
-      const data = await res.json() as { sent?: boolean; error?: string; message?: string };
-      if (res.ok && data.sent) { setLivePhase("sent"); return; }
-      if (data.error === "invalid_email") {
-        setGateError("invalid_email");
-        setGateErrorMsg(data.message ?? "Please use a valid business email.");
-      } else if (data.error === "cooldown_active") {
-        setGateError("cooldown_active");
-        setGateErrorMsg(data.message ?? "You've recently used the live demo.");
-      } else {
-        setGateError("other");
-        setGateErrorMsg(data.message ?? "Something went wrong. Please try again.");
-      }
-    } catch {
-      setGateError("other");
-      setGateErrorMsg("Network error. Please try again.");
-    } finally {
-      setGateLoading(false);
-    }
-  }
+  // Show sticky CTA once user scrolls past the live-demo section
+  useEffect(() => {
+    const el = liveDemoRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyCta(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // ── Live demo provisioning ────────────────────────────────────────────────
 
-  async function startLiveDemo(token: string) {
+  async function startLiveDemo() {
     setLivePhase("loading");
     try {
       const res = await fetch("/api/demo/public/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ldt: token }),
+        body: JSON.stringify({}),
       });
       const data = await res.json() as {
         sessionToken?: string; number?: string; startedAt?: string;
-        error?: string; message?: string; cooldownUntil?: string;
+        error?: string; message?: string;
       };
-      if (res.status === 401) {
-        setLivePhase("gate");
-        setGateError("other");
-        setGateErrorMsg("Your session expired. Enter your email again for a new link.");
-        return;
-      }
       if (res.status === 429) {
-        setLivePhase(data.error === "cooldown_active" ? "cooldown" : "error");
+        setLivePhase("cooldown");
         return;
       }
       if (res.status === 503) {
@@ -355,7 +292,7 @@ function DemoPageInner() {
       const sToken = data.sessionToken!;
       const num = data.number;
       const startedAt = data.startedAt ?? new Date().toISOString();
-      localStorage.setItem("demoSession", JSON.stringify({ token: sToken, number: num, startedAt, savedLdt: token }));
+      localStorage.setItem("demoSession", JSON.stringify({ token: sToken, number: num, startedAt }));
       setSessionToken(sToken);
       setNumber(num);
       setLivePhase("waiting");
@@ -387,6 +324,7 @@ function DemoPageInner() {
         };
         if (data.phase === "in_progress" && phaseRef.current === "waiting") {
           setLivePhase("in_progress");
+          setCallStartedAt(Date.now());
         } else if (data.phase === "completed") {
           setSummary(data.summary ?? null);
           setTranscriptObject(data.transcriptObject ?? null);
@@ -394,7 +332,6 @@ function DemoPageInner() {
           es.close();
           esRef.current = null;
         } else if (data.phase === "timeout") {
-          // SSE timed out — reconnect silently
           es.close();
           esRef.current = null;
           if (phaseRef.current !== "completed") startSSE(token);
@@ -405,7 +342,6 @@ function DemoPageInner() {
     es.onerror = () => {
       es.close();
       esRef.current = null;
-      // Fallback to polling if SSE fails (e.g. proxy strips streaming)
       if (phaseRef.current !== "completed") startPolling(token);
     };
   }
@@ -426,7 +362,7 @@ function DemoPageInner() {
           summary: string | null;
           transcriptObject?: TranscriptTurn[] | null;
         };
-        if (data.phase === "in_progress" && phaseRef.current === "waiting") setLivePhase("in_progress");
+        if (data.phase === "in_progress" && phaseRef.current === "waiting") { setLivePhase("in_progress"); setCallStartedAt(Date.now()); }
         else if (data.phase === "completed") {
           setSummary(data.summary);
           setTranscriptObject(data.transcriptObject ?? null);
@@ -437,21 +373,44 @@ function DemoPageInner() {
     }, 3000);
   }
 
-  function resetToGate() {
+  function resetDemo() {
     stopSSE();
     stopPolling();
     localStorage.removeItem("demoSession");
-    setLivePhase("gate");
-    setLdt(null);
     setNumber("");
     setSummary(null);
     setTranscriptObject(null);
     setSessionToken(null);
-    setGateError(null);
-    setGateErrorMsg("");
     setSelectedScenario("new_booking");
     setCompletedTab("summary");
-    window.history.replaceState({}, "", "/demo");
+    startLiveDemo();
+  }
+
+  async function handleLeadSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLeadError("");
+    setLeadLoading(true);
+    try {
+      const res = await fetch("/api/demo/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: leadName,
+          email: leadEmail,
+          phone: leadPhone,
+          businessName: leadBusiness,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        throw new Error(data.error || "Something went wrong. Please try again.");
+      }
+      setLeadSubmitted(true);
+    } catch (error) {
+      setLeadError(error instanceof Error ? error.message : "Something went wrong.");
+    } finally {
+      setLeadLoading(false);
+    }
   }
 
   const formattedNumber = number ? formatPhone(number) : "";
@@ -484,7 +443,7 @@ function DemoPageInner() {
           <BrandLogo mobileWidth={120} desktopWidth={140} priority />
         </Link>
         <Link
-          href="/auth?mode=signup"
+          href="/onboarding"
           className="px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
         >
           Start Free Trial
@@ -509,134 +468,18 @@ function DemoPageInner() {
               <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-3 text-center">Real booking call</p>
               <DemoCallPlayer audioSrc="/luna-call.wav" />
             </div>
+            <button
+              onClick={() => document.getElementById("live-demo")?.scrollIntoView({ behavior: "smooth" })}
+              className="flex flex-col items-center gap-1 w-full py-3 group"
+            >
+              <span className="text-sm font-bold text-paw-brown/60 group-hover:text-paw-brown transition-colors">Now try it live with your voice</span>
+              <svg className="w-5 h-5 text-paw-orange animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
           </div>
         )}
 
-        {/* ── Tier 2: Live demo gate / active session ── */}
-        <div className="w-full max-w-xl">
-
-          {/* Gate — scenario preview + explainer + qualification form */}
-          {livePhase === "gate" && (
-            <div className="animate-in fade-in duration-300 space-y-6">
-              {/* Scenario preview — builds curiosity before the gate */}
-              <div className="text-center">
-                <h2 className="text-2xl font-extrabold text-paw-brown mb-2">Now try it with your voice</h2>
-                <p className="text-paw-brown/60 text-sm font-medium max-w-sm mx-auto">
-                  Pick a scenario, call a real number, and talk to Pip — our AI receptionist. It takes about 2 minutes.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {SCENARIOS.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setSelectedScenario(s.id)}
-                    className={`flex flex-col items-center gap-1 px-2 py-3 rounded-2xl border-2 text-center transition-all ${
-                      selectedScenario === s.id
-                        ? "border-paw-brown bg-paw-brown/5 shadow-soft"
-                        : "border-paw-brown/10 bg-white hover:border-paw-brown/25"
-                    }`}
-                  >
-                    <span className="text-xl">{s.emoji}</span>
-                    <span className={`text-xs font-bold leading-tight ${selectedScenario === s.id ? "text-paw-brown" : "text-paw-brown/60"}`}>
-                      {s.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8 transition-all duration-300">
-                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">You&apos;ll say something like →</p>
-                <p className="text-sm text-paw-brown/80 italic leading-relaxed">
-                  &ldquo;{currentScenario.script}&rdquo;
-                </p>
-              </div>
-
-              {/* Explainer: what happens */}
-              <div className="flex items-center gap-4 text-xs text-paw-brown/50 font-semibold justify-center">
-                <span className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72" /></svg>
-                  Real phone call
-                </span>
-                <span className="text-paw-brown/20">&middot;</span>
-                <span>~2 min</span>
-                <span className="text-paw-brown/20">&middot;</span>
-                <span>Full transcript after</span>
-              </div>
-
-              {/* Gate form */}
-              <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-8">
-                <div className="text-center mb-5">
-                  <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-paw-orange animate-pulse" />
-                    Live AI Demo
-                  </div>
-                  <p className="text-paw-brown/60 text-sm font-medium">
-                    Enter your email to get a demo number. No signup required.
-                  </p>
-                </div>
-                <form onSubmit={submitQualify} className="space-y-3">
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@yourbusiness.com"
-                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium text-sm placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                  />
-                  <input
-                    type="text"
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="Business name (optional)"
-                    className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium text-sm placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
-                  />
-                  {gateError && (
-                    <p className="text-sm text-red-600 font-medium px-1">{gateErrorMsg}</p>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={gateLoading || !email}
-                    className="w-full px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-base hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {gateLoading ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                        </svg>
-                        Sending link…
-                      </>
-                    ) : (
-                      <>
-                        Send me the demo link
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                  <p className="text-xs text-paw-brown/40 text-center">No signup required · 1 live demo every 3 days</p>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Sent — waiting for magic link click */}
-          {livePhase === "sent" && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-10 text-center animate-in fade-in duration-300">
-              <div className="text-5xl mb-4">📬</div>
-              <h2 className="text-2xl font-extrabold text-paw-brown mb-3">Check your inbox</h2>
-              <p className="text-paw-brown/60 font-medium mb-2 leading-relaxed">
-                We sent a magic link to <strong className="text-paw-brown">{email}</strong>.
-              </p>
-              <p className="text-paw-brown/50 text-sm mb-8">Click it to launch your live demo. Expires in 1 hour.</p>
-              <button
-                onClick={() => { setLivePhase("gate"); setGateError(null); setGateErrorMsg(""); }}
-                className="text-sm text-paw-brown/50 hover:text-paw-brown transition-colors"
-              >
-                Wrong email? Go back
-              </button>
-            </div>
-          )}
+        {/* ── Tier 2: Live demo — number displayed immediately ── */}
+        <div id="live-demo" ref={liveDemoRef} className="w-full max-w-xl scroll-mt-4">
 
           {/* Loading */}
           {livePhase === "loading" && (
@@ -654,8 +497,20 @@ function DemoPageInner() {
 
           {/* Active demo — waiting / in_progress / completed */}
           {inActiveCall && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-8 animate-in fade-in duration-300">
+            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-5 sm:p-8 animate-in fade-in duration-300">
               <div className="text-center mb-6">
+                {/* Hero heading for waiting state */}
+                {livePhase === "waiting" && (
+                  <div className="mb-6">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-paw-brown leading-tight mb-2">
+                      Call Pip, our AI receptionist
+                    </h1>
+                    <p className="text-paw-brown/60 font-medium text-base max-w-sm mx-auto">
+                      Talk to a real AI that books grooming appointments. 3-minute demo, one call per number.
+                    </p>
+                  </div>
+                )}
+
                 <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-4">
                   {livePhase === "waiting" && (
                     <>
@@ -688,22 +543,25 @@ function DemoPageInner() {
                     <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
                     <a
                       href={`tel:${number}`}
-                      className="block text-4xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
+                      className="block text-4xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
                     >
                       {formattedNumber}
                     </a>
-                    <p className="text-xs text-paw-brown/40 mt-1">Tap to dial on mobile · or enter manually</p>
+                    <p className="text-xs text-paw-brown/40 mt-2">Tap to dial on mobile · or enter manually</p>
                   </>
                 )}
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
                     <p className="text-lg font-bold text-amber-600 mb-1">Your AI is on the call!</p>
-                    <p className="text-sm text-paw-brown/50">We&apos;ll show the full transcript when it ends.</p>
+                    <p className="text-3xl font-extrabold text-amber-600 tabular-nums tracking-wide">
+                      {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                    </p>
+                    <p className="text-xs text-paw-brown/40 mt-1">remaining in demo</p>
                   </div>
                 )}
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-extrabold text-green-700 mb-1">🎉 That was your AI!</p>
+                    <p className="text-xl font-extrabold text-green-700 mb-1">That was your AI!</p>
                     <p className="text-sm text-paw-brown/50">Natural, fast, and ready to book 24/7.</p>
                   </div>
                 )}
@@ -831,9 +689,15 @@ function DemoPageInner() {
                     </span>
                     Waiting for your call
                   </div>
+                  <div className="flex items-center justify-center gap-3 text-xs text-paw-brown/40 font-semibold">
+                    <span>3-min demo call</span>
+                    <span className="text-paw-brown/20">&middot;</span>
+                    <span>1 call per number</span>
+                    <span className="text-paw-brown/20">&middot;</span>
+                    <span>Full transcript after</span>
+                  </div>
                   <button
                     onClick={() => {
-                      // Force a status check instead of blindly skipping to completed
                       if (sessionToken) {
                         fetch(`/api/demo/public/status?token=${sessionToken}`, { cache: "no-store" })
                           .then((r) => r.json())
@@ -846,8 +710,8 @@ function DemoPageInner() {
                               stopPolling();
                             } else if (data.phase === "in_progress") {
                               setLivePhase("in_progress");
+                              setCallStartedAt(Date.now());
                             }
-                            // If still waiting, stay on waiting — call hasn't been detected yet
                           })
                           .catch(() => { /* stay on waiting */ });
                       }
@@ -859,22 +723,72 @@ function DemoPageInner() {
                 </div>
               )}
 
-              {/* ── Completed CTA ── */}
+              {/* ── Completed CTA — lead form ── */}
               {livePhase === "completed" && (
-                <div className="mt-2 space-y-4 animate-in fade-in duration-400">
-                  <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
-                    <p className="text-sm font-bold text-paw-brown mb-1">Imagine this answering every call you miss.</p>
-                    <p className="text-xs text-paw-brown/50">Setup takes 5 minutes. Pip starts answering today.</p>
-                  </div>
+                <div id="lead-form" className="mt-2 space-y-4 animate-in fade-in duration-400">
+                  {leadSubmitted ? (
+                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
+                      <div className="text-3xl mb-2">🎉</div>
+                      <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                      <p className="text-sm text-green-700">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
+                        <p className="text-sm font-bold text-paw-brown mb-1">Want this for your shop?</p>
+                        <p className="text-xs text-paw-brown/50">Leave your info and we&apos;ll set you up personally.</p>
+                      </div>
+                      <form onSubmit={handleLeadSubmit} className="space-y-3">
+                        <input
+                          type="text"
+                          placeholder="Your name"
+                          required
+                          value={leadName}
+                          onChange={(e) => setLeadName(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email address"
+                          required
+                          value={leadEmail}
+                          onChange={(e) => setLeadEmail(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Phone number"
+                          required
+                          value={leadPhone}
+                          onChange={(e) => setLeadPhone(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Business name"
+                          required
+                          value={leadBusiness}
+                          onChange={(e) => setLeadBusiness(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
+                        <button
+                          type="submit"
+                          disabled={leadLoading}
+                          className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                        >
+                          {leadLoading ? "Sending..." : "Get in Touch"}
+                        </button>
+                      </form>
+                    </>
+                  )}
                   <Link
-                    href="/auth?mode=signup"
-                    className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-center text-lg hover:bg-opacity-90 transition-all shadow-soft"
+                    href="/onboarding"
+                    className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
                   >
-                    Set this up for my shop
-                    <svg className="inline-block ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                    Or set it up yourself →
                   </Link>
-                  <p className="text-xs text-paw-brown/40 text-center">Card required · only charged after your first booking · cancel anytime</p>
-                  <button onClick={resetToGate} className="w-full py-2 text-xs text-paw-brown/40 hover:text-paw-brown/60 transition-colors">
+                  <button onClick={resetDemo} className="w-full py-2 text-xs text-paw-brown/40 hover:text-paw-brown/60 transition-colors">
                     Start over
                   </button>
                 </div>
@@ -886,17 +800,68 @@ function DemoPageInner() {
           {livePhase === "cooldown" && (
             <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-10 text-center animate-in fade-in duration-300">
               <div className="text-4xl mb-4">⏳</div>
-              <h2 className="text-2xl font-extrabold text-paw-brown mb-3">You&apos;ve already tried the live demo!</h2>
-              <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
-                Live demos are limited to once every 3 days. Ready to set it up for your shop?
+              <h2 className="text-2xl font-extrabold text-paw-brown mb-3">You&apos;ve already tried the live demo</h2>
+              <p className="text-paw-brown/60 font-medium mb-6 leading-relaxed">
+                Liked what you heard? Leave your info and we&apos;ll set you up personally.
               </p>
+              <div id="lead-form" className="space-y-4">
+                {leadSubmitted ? (
+                  <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
+                    <div className="text-3xl mb-2">🎉</div>
+                    <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                    <p className="text-sm text-green-700">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleLeadSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      required
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      required
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone number"
+                      required
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Business name"
+                      required
+                      value={leadBusiness}
+                      onChange={(e) => setLeadBusiness(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
+                    <button
+                      type="submit"
+                      disabled={leadLoading}
+                      className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                    >
+                      {leadLoading ? "Sending..." : "Get in Touch"}
+                    </button>
+                  </form>
+                )}
+              </div>
               <Link
-                href="/auth?mode=signup"
-                className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft mb-3"
+                href="/onboarding"
+                className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
               >
-                Start my free trial →
+                Or set it up yourself →
               </Link>
-              <Link href="/" className="text-sm text-paw-brown/50 hover:text-paw-brown transition-colors">Back to home</Link>
             </div>
           )}
 
@@ -910,12 +875,12 @@ function DemoPageInner() {
               </p>
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => ldt && startLiveDemo(ldt)}
+                  onClick={() => startLiveDemo()}
                   className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
                 >
                   Try again
                 </button>
-                <Link href="/auth?mode=signup" className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors">
+                <Link href="/onboarding" className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors">
                   Sign up instead
                 </Link>
               </div>
@@ -929,7 +894,7 @@ function DemoPageInner() {
               <h2 className="text-2xl font-extrabold text-paw-brown mb-3">Something went wrong</h2>
               <p className="text-paw-brown/60 font-medium mb-8">Couldn&apos;t start the demo. Please try again.</p>
               <button
-                onClick={() => ldt ? startLiveDemo(ldt) : setLivePhase("gate")}
+                onClick={() => startLiveDemo()}
                 className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
               >
                 Try again
@@ -939,6 +904,99 @@ function DemoPageInner() {
 
         </div>
       </main>
+
+      {/* Post-demo conversion CTA — hidden when completed or cooldown (they have their own CTAs) */}
+      {livePhase !== "completed" && livePhase !== "cooldown" && <section className="relative z-10 px-4 pb-12">
+        <div className="max-w-xl mx-auto">
+          <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
+            <div className="absolute -right-16 -top-16 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
+            <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-paw-orange/10 rounded-full blur-3xl" />
+            <div className="relative z-10">
+              <p className="text-paw-amber text-sm font-bold uppercase tracking-widest mb-3">Ready to go live?</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight mb-3">
+                Want this for your shop?
+              </h2>
+              <p className="text-white/60 text-base mb-6">
+                Leave your info and we&apos;ll set you up personally.
+              </p>
+              <div id="bottom-lead-form">
+                {leadSubmitted ? (
+                  <div className="bg-white/10 border-2 border-white/20 rounded-2xl p-6 text-center">
+                    <div className="text-3xl mb-2">🎉</div>
+                    <p className="text-lg font-bold text-white mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                    <p className="text-sm text-white/60">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleLeadSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      required
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      required
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone number"
+                      required
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Business name"
+                      required
+                      value={leadBusiness}
+                      onChange={(e) => setLeadBusiness(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    {leadError && <p className="text-sm font-medium text-red-300 text-center">{leadError}</p>}
+                    <button
+                      type="submit"
+                      disabled={leadLoading}
+                      className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-all shadow-lg disabled:opacity-50"
+                    >
+                      {leadLoading ? "Sending..." : "Get in Touch"}
+                    </button>
+                  </form>
+                )}
+              </div>
+              <Link
+                href="/onboarding"
+                className="block mt-4 text-sm font-bold text-white/50 hover:text-white transition-colors"
+              >
+                Or set it up yourself →
+              </Link>
+              <p className="text-white/40 text-xs mt-3">Free to set up · no credit card needed · cancel anytime</p>
+            </div>
+          </div>
+        </div>
+      </section>}
+
+      {/* Sticky CTA — appears on scroll, hidden during completed state (which has its own CTA) */}
+      {showStickyCta && livePhase !== "completed" && livePhase !== "cooldown" && (
+        <div className="fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div className="max-w-xl mx-auto px-4 pb-4">
+            <button
+              onClick={() => document.getElementById("bottom-lead-form")?.scrollIntoView({ behavior: "smooth" })}
+              className="flex items-center justify-center gap-2 w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all"
+            >
+              Ready to get Pip for your shop?
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       <footer className="relative z-10 text-center py-6 text-xs text-paw-brown/40 font-medium">
         © {new Date().getFullYear()} RingPaw · <Link href="/" className="hover:text-paw-brown transition-colors">ringpaw.com</Link>

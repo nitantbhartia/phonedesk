@@ -69,11 +69,12 @@ export async function POST(req: NextRequest) {
   // stripeSubscriptionStatus='active' is the authoritative check and overrides
   // isActive so that existing subscribers who didn't go through the post-deploy
   // goLive path are never accidentally blocked.
+  // Demo calls always bypass this gate — the demo business has no subscription.
   // Set STRIPE_BYPASS=true to skip this gate for testing.
   const biz = phoneRecord.business;
   // Accept "active" (paid) or "trialing" (30-day outcome trial — card on file, not yet charged)
   const hasActiveSub = ["active", "trialing"].includes(biz.stripeSubscriptionStatus ?? "") || process.env.STRIPE_BYPASS === "true";
-  if (biz.onboardingComplete && !biz.isActive && !hasActiveSub) {
+  if (!demoResolution && biz.onboardingComplete && !biz.isActive && !hasActiveSub) {
     return NextResponse.json({
       result: `This line is temporarily inactive. Please apologize warmly and tell the caller to reach ${biz.ownerName} directly at the business phone number. Then call end_call immediately.`,
       found: false,
@@ -158,6 +159,24 @@ export async function POST(req: NextRequest) {
     result = buildCustomerContextSummary(context);
   }
 
+  // Look up the most recent vaccine status from prior appointments
+  let lastVaccineStatus: string | null = null;
+  if (found) {
+    const normalizedCaller = normalizePhoneNumber(callerPhone);
+    if (normalizedCaller) {
+      const recentAppt = await prisma.appointment.findFirst({
+        where: {
+          businessId,
+          customerPhone: normalizedCaller,
+          vaccineStatus: { not: null },
+        },
+        orderBy: { startTime: "desc" },
+        select: { vaccineStatus: true },
+      });
+      lastVaccineStatus = recentAppt?.vaccineStatus ?? null;
+    }
+  }
+
   console.log("[lookup-customer] result: found=", found, "customer=", customerName, "pets=", context.pets.map(p => p.name));
 
   return NextResponse.json({
@@ -175,6 +194,7 @@ export async function POST(req: NextRequest) {
       size: pet.size,
     })),
     preferred_groomer: (context.customer as { preferredGroomer?: { name: string } | null })?.preferredGroomer?.name || null,
+    vaccineStatus: lastVaccineStatus,
     current_date: todayStr,
   });
 }

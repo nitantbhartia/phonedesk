@@ -144,7 +144,7 @@ export default function DashboardPage() {
   const [transcriptCall, setTranscriptCall] = useState<RecentCall | null>(null);
   const [fetchError, setFetchError] = useState("");
   const [usageMinutesUsed, setUsageMinutesUsed] = useState(0);
-  const [usageMinutesLimit, setUsageMinutesLimit] = useState(120);
+  const [usageMinutesLimit, setUsageMinutesLimit] = useState(75);
   const [sendingDigest, setSendingDigest] = useState(false);
   const [digestSent, setDigestSent] = useState(false);
   const [digestError, setDigestError] = useState("");
@@ -195,7 +195,7 @@ export default function DashboardPage() {
       if (usageRes.ok) {
         const data = await usageRes.json();
         setUsageMinutesUsed(data.minutesUsed ?? 0);
-        setUsageMinutesLimit(data.minutesLimit ?? 120);
+        setUsageMinutesLimit(data.minutesLimit ?? 75);
         setUsagePlanName(data.planName ?? "");
       }
     } catch (error) {
