@@ -15,7 +15,7 @@ function twimlOk() {
   );
 }
 
-type InboundSource = "retell" | "twilio" | "textbelt";
+type InboundSource = "retell" | "twilio";
 
 type InboundPayload = {
   source: InboundSource;
@@ -23,7 +23,6 @@ type InboundPayload = {
   to: string;
   messageBody: string;
   twilioFormData?: FormData;
-  rawBody?: string;
 };
 
 function getPublicRequestUrl(req: NextRequest) {
@@ -87,19 +86,6 @@ async function parseInboundPayload(req: NextRequest): Promise<InboundPayload> {
         }
       })())
     : {};
-  if (
-    typeof body.fromNumber === "string" &&
-    typeof body.text === "string"
-  ) {
-    return {
-      source: "textbelt",
-      from: body.fromNumber.trim(),
-      to: String(body.data || new URL(req.url).searchParams.get("to") || "").trim(),
-      messageBody: body.text.trim(),
-      rawBody,
-    };
-  }
-
   return {
     source: "retell",
     from: String(body.from_number || body.chat_inbound?.from_number || "").trim(),
@@ -107,7 +93,6 @@ async function parseInboundPayload(req: NextRequest): Promise<InboundPayload> {
     messageBody: String(
       body.message || body.text || body.chat_inbound?.message || ""
     ).trim(),
-    rawBody,
   };
 }
 
@@ -116,48 +101,13 @@ async function sendSmsReply(to: string, body: string, from: string) {
   await sendSms(to, body, from);
 }
 
-function verifyTextbeltSignature(req: NextRequest, rawBody: string) {
-  const apiKey = process.env.TEXTBELT_API_KEY;
-  if (!apiKey) {
-    return true;
-  }
-
-  const signature = req.headers.get("x-textbelt-signature");
-  const timestamp = req.headers.get("x-textbelt-timestamp");
-  if (!signature || !timestamp) {
-    return false;
-  }
-
-  const timestampNumber = Number(timestamp);
-  if (!Number.isFinite(timestampNumber)) {
-    return false;
-  }
-
-  const ageSeconds = Math.abs(Math.floor(Date.now() / 1000) - timestampNumber);
-  if (ageSeconds > 15 * 60) {
-    return false;
-  }
-
-  const expected = createHmac("sha256", apiKey)
-    .update(timestamp + rawBody)
-    .digest("hex");
-
-  const sigBuf = Buffer.from(signature, "utf8");
-  const expBuf = Buffer.from(expected, "utf8");
-  if (sigBuf.length !== expBuf.length) {
-    return false;
-  }
-
-  return timingSafeEqual(sigBuf, expBuf);
-}
-
 export async function POST(req: NextRequest) {
   if (!isSmsEnabled()) {
     return NextResponse.json({ ok: true });
   }
 
   const inbound = await parseInboundPayload(req);
-  const { source, from, to, messageBody, twilioFormData, rawBody } = inbound;
+  const { source, from, to, messageBody, twilioFormData } = inbound;
 
   if (source === "retell" && !isRetellAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -174,15 +124,6 @@ export async function POST(req: NextRequest) {
   ) {
     console.warn("[SMS Webhook] Twilio signature verification failed — rejecting request");
     return twimlOk();
-  }
-
-  if (
-    source === "textbelt" &&
-    rawBody &&
-    !verifyTextbeltSignature(req, rawBody)
-  ) {
-    console.warn("[SMS Webhook] Textbelt signature verification failed — rejecting request");
-    return NextResponse.json({ ok: true });
   }
 
   const { allowed } = rateLimit(`sms:${from}`, { limit: 20, windowMs: 60_000 });
