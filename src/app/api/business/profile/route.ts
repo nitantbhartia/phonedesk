@@ -330,14 +330,14 @@ export async function PATCH(req: NextRequest) {
   if (hasRetellUpdates) {
     const business = await prisma.business.findUnique({
       where: { userId },
-      select: { id: true, stripeSubscriptionStatus: true },
+      select: { id: true, stripeSubscriptionStatus: true, adminApprovedGoLive: true },
     });
     if (business) {
-      // Turning the agent ON requires an active subscription (unless bypassed for testing)
-      if (body.agentActive === true && !stripeBypass && business.stripeSubscriptionStatus !== "active") {
+      // Turning the agent ON requires admin approval (unless bypassed for testing)
+      if (body.agentActive === true && !stripeBypass && !business.adminApprovedGoLive) {
         return NextResponse.json(
-          { error: "An active subscription is required to enable live call answering." },
-          { status: 402 }
+          { error: "Admin approval is required to enable live call answering." },
+          { status: 403 }
         );
       }
       const retellData: Record<string, unknown> = {};
@@ -375,21 +375,21 @@ export async function PATCH(req: NextRequest) {
   // Only allow safe fields to be updated
   const allowedFields = ["name", "ownerName", "city", "state", "phone", "address",
     "timezone", "businessHours", "bookingMode", "vaccinePolicy", "isActive", "onboardingComplete",
-    "onboardingStep", "googleReviewUrl"];
+    "onboardingStep", "googleReviewUrl", "plan"];
   const safeData: Record<string, unknown> = {};
   for (const key of allowedFields) {
     if (key in body) safeData[key] = body[key];
   }
 
-  // Turning isActive on requires an active subscription (unless bypassed for testing)
+  // Turning isActive on requires admin approval (unless bypassed for testing)
   if (safeData.isActive === true && !stripeBypass) {
     const biz = await prisma.business.findUnique({
       where: { userId },
-      select: { stripeSubscriptionStatus: true },
+      select: { adminApprovedGoLive: true },
     });
-    if (biz?.stripeSubscriptionStatus !== "active") {
+    if (!biz?.adminApprovedGoLive) {
       // Strip isActive from the update — don't reject outright so
-      // onboardingComplete can still be set (e.g. goLive with no sub)
+      // onboardingComplete can still be set (e.g. goLive without approval)
       delete safeData.isActive;
     }
   }

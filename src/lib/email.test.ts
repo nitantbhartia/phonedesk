@@ -41,22 +41,4 @@ describe("email helpers", () => {
     logSpy.mockRestore();
   });
 
-  it("sends the demo magic link email through Resend when configured", async () => {
-    process.env.RESEND_API_KEY = "re_test";
-    process.env.NODE_ENV = "production";
-    const { sendDemoMagicLink } = await import("./email");
-
-    await sendDemoMagicLink({
-      to: "owner@example.com",
-      magicLink: "https://app.example.com/demo",
-      businessName: "Paw House",
-    });
-
-    expect(send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: "owner@example.com",
-        subject: "Your RingPaw demo link",
-      })
-    );
-  });
 });

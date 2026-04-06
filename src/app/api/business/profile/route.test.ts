@@ -426,14 +426,14 @@ describe("business/profile", () => {
     expect(payload.business).toEqual({ id: "biz_1", name: "Updated" });
   });
 
-  it("blocks enabling the agent from PATCH without an active subscription", async () => {
+  it("blocks enabling the agent from PATCH without admin approval", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({
       id: "biz_1",
-      stripeSubscriptionStatus: "trialing",
+      adminApprovedGoLive: false,
     } as never);
 
     const response = await PATCH(
@@ -443,20 +443,20 @@ describe("business/profile", () => {
       }) as never
     );
 
-    expect(response.status).toBe(402);
+    expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "An active subscription is required to enable live call answering.",
+      error: "Admin approval is required to enable live call answering.",
     });
     expect(prisma.retellConfig.updateMany).not.toHaveBeenCalled();
   });
 
-  it("strips isActive from PATCH when the subscription is inactive but preserves other safe fields", async () => {
+  it("strips isActive from PATCH when not admin-approved but preserves other safe fields", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
     vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({
-      stripeSubscriptionStatus: "past_due",
+      adminApprovedGoLive: false,
     } as never);
     vi.mocked(prisma.business.update).mockResolvedValue({
       id: "biz_1",

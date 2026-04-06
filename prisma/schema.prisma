@@ -99,6 +99,7 @@ model Business {
   stripeSubscriptionStatus String?
   bookingsCount    Int     @default(0) // total bookings Pip has ever made for this business
   billingConsentGiven Boolean @default(false) // groomer checked the billing consent box at checkout
+  adminApprovedGoLive Boolean @default(false) // admin must approve before business can go live
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -173,35 +174,19 @@ model PublicDemoAttempt {
   @@index([leadId])
 }
 
-// A qualified prospect who has verified their email to access the live demo
+// A prospect who submitted the "Get in Touch" lead form after the demo
 model DemoLead {
   id            String               @id @default(cuid())
   email         String               @unique
+  contactName   String?
   businessName  String?
+  phone         String?
   ipAtCreation  String
-  verifiedAt    DateTime?            // set when magic link is clicked
-  lastDemoAt    DateTime?            // set when they successfully start a live demo
-  cooldownUntil DateTime?            // they cannot start another demo until this time
   attempts      PublicDemoAttempt[]
-  tokens        DemoMagicToken[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
   @@index([email])
-  @@index([cooldownUntil])
-}
-
-// Single-use email magic link token for verifying a DemoLead
-model DemoMagicToken {
-  id        String    @id @default(cuid())
-  leadId    String
-  lead      DemoLead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  token     String    @unique @default(cuid())
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([token])
 }
 
 model Service {

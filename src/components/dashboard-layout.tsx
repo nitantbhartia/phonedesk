@@ -138,14 +138,12 @@ interface UsageStats {
   plan: string;
 }
 
-export function computeShowSubBanner(business: {
+export function computeShowSubBanner(_business: {
   stripeSubscriptionStatus?: string | null;
   onboardingComplete?: boolean | null;
 } | null | undefined): boolean {
-  if (!business) return false;
-  const subscriptionActive = ["active", "trialing"].includes(business.stripeSubscriptionStatus ?? "");
-  const onboardingComplete = business.onboardingComplete ?? true;
-  return !subscriptionActive && onboardingComplete;
+  // Hidden during free launch mode — no Stripe subscriptions required
+  return false;
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -168,15 +166,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         if (usageData) {
           setUsage({
             minutesUsed: usageData.minutesUsed ?? 0,
-            minutesLimit: usageData.minutesLimit ?? 120,
+            minutesLimit: usageData.minutesLimit ?? 75,
             plan: usageData.plan ?? "STARTER",
           });
         } else if (profile?.business) {
           const plan = profile.business.plan || "STARTER";
-          const limits: Record<string, number> = { STARTER: 120, PRO: 300, BUSINESS: 500 };
+          const limits: Record<string, number> = { STARTER: 75, PRO: 300, BUSINESS: 500 };
           setUsage({
             minutesUsed: profile.stats?.totalCallMinutes ?? 0,
-            minutesLimit: limits[plan] ?? 120,
+            minutesLimit: limits[plan] ?? 75,
             plan,
           });
         }

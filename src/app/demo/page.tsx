@@ -169,6 +169,20 @@ function DemoPageInner() {
 
   const [showStickyCta, setShowStickyCta] = useState(false);
 
+  // Lead form state
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadBusiness, setLeadBusiness] = useState("");
+  const [leadLoading, setLeadLoading] = useState(false);
+  const [leadError, setLeadError] = useState("");
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
+
+  // Countdown timer for in-progress calls (3-minute demo cap)
+  const DEMO_DURATION_S = 180; // 3 minutes
+  const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(DEMO_DURATION_S);
+
   const phaseRef = useRef<LivePhase>("loading");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const esRef = useRef<EventSource | null>(null);
@@ -176,6 +190,18 @@ function DemoPageInner() {
   const liveDemoRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { phaseRef.current = livePhase; }, [livePhase]);
+
+  // Tick the countdown every second while the call is in progress
+  useEffect(() => {
+    if (livePhase !== "in_progress" || !callStartedAt) return;
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - callStartedAt) / 1000);
+      setTimeLeft(Math.max(0, DEMO_DURATION_S - elapsed));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [livePhase, callStartedAt]);
 
   // On mount: check for saved session or provision a new demo number
   useEffect(() => {
@@ -201,6 +227,7 @@ function DemoPageInner() {
                 setLivePhase("completed");
               } else if (data.phase === "in_progress") {
                 setLivePhase("in_progress");
+                setCallStartedAt(Date.now());
                 startSSE(token);
               } else {
                 setLivePhase("waiting");
@@ -297,6 +324,7 @@ function DemoPageInner() {
         };
         if (data.phase === "in_progress" && phaseRef.current === "waiting") {
           setLivePhase("in_progress");
+          setCallStartedAt(Date.now());
         } else if (data.phase === "completed") {
           setSummary(data.summary ?? null);
           setTranscriptObject(data.transcriptObject ?? null);
@@ -334,7 +362,7 @@ function DemoPageInner() {
           summary: string | null;
           transcriptObject?: TranscriptTurn[] | null;
         };
-        if (data.phase === "in_progress" && phaseRef.current === "waiting") setLivePhase("in_progress");
+        if (data.phase === "in_progress" && phaseRef.current === "waiting") { setLivePhase("in_progress"); setCallStartedAt(Date.now()); }
         else if (data.phase === "completed") {
           setSummary(data.summary);
           setTranscriptObject(data.transcriptObject ?? null);
@@ -356,6 +384,33 @@ function DemoPageInner() {
     setSelectedScenario("new_booking");
     setCompletedTab("summary");
     startLiveDemo();
+  }
+
+  async function handleLeadSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLeadError("");
+    setLeadLoading(true);
+    try {
+      const res = await fetch("/api/demo/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: leadName,
+          email: leadEmail,
+          phone: leadPhone,
+          businessName: leadBusiness,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        throw new Error(data.error || "Something went wrong. Please try again.");
+      }
+      setLeadSubmitted(true);
+    } catch (error) {
+      setLeadError(error instanceof Error ? error.message : "Something went wrong.");
+    } finally {
+      setLeadLoading(false);
+    }
   }
 
   const formattedNumber = number ? formatPhone(number) : "";
@@ -442,7 +497,7 @@ function DemoPageInner() {
 
           {/* Active demo — waiting / in_progress / completed */}
           {inActiveCall && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-8 animate-in fade-in duration-300">
+            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-5 sm:p-8 animate-in fade-in duration-300">
               <div className="text-center mb-6">
                 {/* Hero heading for waiting state */}
                 {livePhase === "waiting" && (
@@ -451,7 +506,7 @@ function DemoPageInner() {
                       Call Pip, our AI receptionist
                     </h1>
                     <p className="text-paw-brown/60 font-medium text-base max-w-sm mx-auto">
-                      Talk to a real AI that books grooming appointments. 2-minute demo, one call per number.
+                      Talk to a real AI that books grooming appointments. 3-minute demo, one call per number.
                     </p>
                   </div>
                 )}
@@ -488,7 +543,7 @@ function DemoPageInner() {
                     <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
                     <a
                       href={`tel:${number}`}
-                      className="block text-5xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
+                      className="block text-4xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
                     >
                       {formattedNumber}
                     </a>
@@ -498,7 +553,10 @@ function DemoPageInner() {
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
                     <p className="text-lg font-bold text-amber-600 mb-1">Your AI is on the call!</p>
-                    <p className="text-sm text-paw-brown/50">We&apos;ll show the full transcript when it ends.</p>
+                    <p className="text-3xl font-extrabold text-amber-600 tabular-nums tracking-wide">
+                      {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                    </p>
+                    <p className="text-xs text-paw-brown/40 mt-1">remaining in demo</p>
                   </div>
                 )}
                 {livePhase === "completed" && (
@@ -632,7 +690,7 @@ function DemoPageInner() {
                     Waiting for your call
                   </div>
                   <div className="flex items-center justify-center gap-3 text-xs text-paw-brown/40 font-semibold">
-                    <span>2-min demo call</span>
+                    <span>3-min demo call</span>
                     <span className="text-paw-brown/20">&middot;</span>
                     <span>1 call per number</span>
                     <span className="text-paw-brown/20">&middot;</span>
@@ -652,6 +710,7 @@ function DemoPageInner() {
                               stopPolling();
                             } else if (data.phase === "in_progress") {
                               setLivePhase("in_progress");
+                              setCallStartedAt(Date.now());
                             }
                           })
                           .catch(() => { /* stay on waiting */ });
@@ -664,21 +723,71 @@ function DemoPageInner() {
                 </div>
               )}
 
-              {/* ── Completed CTA ── */}
+              {/* ── Completed CTA — lead form ── */}
               {livePhase === "completed" && (
-                <div className="mt-2 space-y-4 animate-in fade-in duration-400">
-                  <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
-                    <p className="text-sm font-bold text-paw-brown mb-1">Imagine this answering every call you miss.</p>
-                    <p className="text-xs text-paw-brown/50">Setup takes 5 minutes. Pip starts answering today.</p>
-                  </div>
+                <div id="lead-form" className="mt-2 space-y-4 animate-in fade-in duration-400">
+                  {leadSubmitted ? (
+                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
+                      <div className="text-3xl mb-2">🎉</div>
+                      <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                      <p className="text-sm text-green-700">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
+                        <p className="text-sm font-bold text-paw-brown mb-1">Want this for your shop?</p>
+                        <p className="text-xs text-paw-brown/50">Leave your info and we&apos;ll set you up personally.</p>
+                      </div>
+                      <form onSubmit={handleLeadSubmit} className="space-y-3">
+                        <input
+                          type="text"
+                          placeholder="Your name"
+                          required
+                          value={leadName}
+                          onChange={(e) => setLeadName(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email address"
+                          required
+                          value={leadEmail}
+                          onChange={(e) => setLeadEmail(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Phone number"
+                          required
+                          value={leadPhone}
+                          onChange={(e) => setLeadPhone(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Business name"
+                          required
+                          value={leadBusiness}
+                          onChange={(e) => setLeadBusiness(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                        />
+                        {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
+                        <button
+                          type="submit"
+                          disabled={leadLoading}
+                          className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                        >
+                          {leadLoading ? "Sending..." : "Get in Touch"}
+                        </button>
+                      </form>
+                    </>
+                  )}
                   <Link
                     href="/onboarding"
-                    className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-center text-lg hover:bg-opacity-90 transition-all shadow-soft"
+                    className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
                   >
-                    Set this up for my shop
-                    <svg className="inline-block ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                    Or set it up yourself →
                   </Link>
-                  <p className="text-xs text-paw-brown/40 text-center">Card required · only charged after your first booking · cancel anytime</p>
                   <button onClick={resetDemo} className="w-full py-2 text-xs text-paw-brown/40 hover:text-paw-brown/60 transition-colors">
                     Start over
                   </button>
@@ -692,16 +801,67 @@ function DemoPageInner() {
             <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-10 text-center animate-in fade-in duration-300">
               <div className="text-4xl mb-4">⏳</div>
               <h2 className="text-2xl font-extrabold text-paw-brown mb-3">You&apos;ve already tried the live demo</h2>
-              <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
-                Live demos are limited to prevent abuse. Ready to set it up for your shop?
+              <p className="text-paw-brown/60 font-medium mb-6 leading-relaxed">
+                Liked what you heard? Leave your info and we&apos;ll set you up personally.
               </p>
+              <div id="lead-form" className="space-y-4">
+                {leadSubmitted ? (
+                  <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
+                    <div className="text-3xl mb-2">🎉</div>
+                    <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                    <p className="text-sm text-green-700">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleLeadSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      required
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      required
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone number"
+                      required
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Business name"
+                      required
+                      value={leadBusiness}
+                      onChange={(e) => setLeadBusiness(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                    />
+                    {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
+                    <button
+                      type="submit"
+                      disabled={leadLoading}
+                      className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                    >
+                      {leadLoading ? "Sending..." : "Get in Touch"}
+                    </button>
+                  </form>
+                )}
+              </div>
               <Link
                 href="/onboarding"
-                className="block w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft mb-3"
+                className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
               >
-                Start my free trial →
+                Or set it up yourself →
               </Link>
-              <Link href="/" className="text-sm text-paw-brown/50 hover:text-paw-brown transition-colors">Back to home</Link>
             </div>
           )}
 
@@ -745,8 +905,8 @@ function DemoPageInner() {
         </div>
       </main>
 
-      {/* Post-demo conversion CTA */}
-      <section className="relative z-10 px-4 pb-12">
+      {/* Post-demo conversion CTA — hidden when completed or cooldown (they have their own CTAs) */}
+      {livePhase !== "completed" && livePhase !== "cooldown" && <section className="relative z-10 px-4 pb-12">
         <div className="max-w-xl mx-auto">
           <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
             <div className="absolute -right-16 -top-16 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
@@ -757,34 +917,83 @@ function DemoPageInner() {
                 Want this for your shop?
               </h2>
               <p className="text-white/60 text-base mb-6">
-                Set up in 5 minutes. Pip starts answering your calls today.
+                Leave your info and we&apos;ll set you up personally.
               </p>
+              <div id="bottom-lead-form">
+                {leadSubmitted ? (
+                  <div className="bg-white/10 border-2 border-white/20 rounded-2xl p-6 text-center">
+                    <div className="text-3xl mb-2">🎉</div>
+                    <p className="text-lg font-bold text-white mb-1">Thanks! We&apos;ll be in touch soon.</p>
+                    <p className="text-sm text-white/60">We&apos;ll reach out to set up RingPaw for your shop.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleLeadSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      required
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      required
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone number"
+                      required
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Business name"
+                      required
+                      value={leadBusiness}
+                      onChange={(e) => setLeadBusiness(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                    />
+                    {leadError && <p className="text-sm font-medium text-red-300 text-center">{leadError}</p>}
+                    <button
+                      type="submit"
+                      disabled={leadLoading}
+                      className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-all shadow-lg disabled:opacity-50"
+                    >
+                      {leadLoading ? "Sending..." : "Get in Touch"}
+                    </button>
+                  </form>
+                )}
+              </div>
               <Link
                 href="/onboarding"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-colors shadow-lg btn-shimmer"
+                className="block mt-4 text-sm font-bold text-white/50 hover:text-white transition-colors"
               >
-                Set up in 5 minutes
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-                </svg>
+                Or set it up yourself →
               </Link>
-              <p className="text-white/40 text-xs mt-4">Card required · only charged after first booking · cancel anytime</p>
+              <p className="text-white/40 text-xs mt-3">Free to set up · no credit card needed · cancel anytime</p>
             </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* Sticky CTA — appears on scroll, hidden during completed state (which has its own CTA) */}
-      {showStickyCta && livePhase !== "completed" && (
+      {showStickyCta && livePhase !== "completed" && livePhase !== "cooldown" && (
         <div className="fixed bottom-0 inset-x-0 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="max-w-xl mx-auto px-4 pb-4">
-            <Link
-              href="/onboarding"
+            <button
+              onClick={() => document.getElementById("bottom-lead-form")?.scrollIntoView({ behavior: "smooth" })}
               className="flex items-center justify-center gap-2 w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all"
             >
               Ready to get Pip for your shop?
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-            </Link>
+            </button>
           </div>
         </div>
       )}

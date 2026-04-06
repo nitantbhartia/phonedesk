@@ -57,15 +57,14 @@ export async function sendBookingConfirmationToCustomer(
   const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
-    `Hi ${appointment.customerName}! Your appointment at ${business.name} is ${appointment.status === "CONFIRMED" ? "confirmed" : "tentatively booked"}.`,
+    `Hi ${appointment.customerName}, this is RingPaw confirming your grooming appointment for ${appointment.petName || "your pet"} on ${time}.`,
     "",
-    `${appointment.petName || "Your pet"} - ${appointment.serviceName || "Grooming"}`,
-    time,
+    `${appointment.serviceName || "Grooming"}`,
     business.address ? business.address : "",
     "",
     appointment.status === "PENDING"
       ? "Reply CONFIRM to lock in your spot, or CANCEL to cancel."
-      : "Reply CANCEL to cancel. See you soon!",
+      : "Reply STOP to opt out.",
   ]
     .filter(Boolean)
     .join("\n");

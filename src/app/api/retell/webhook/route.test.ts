@@ -177,7 +177,6 @@ describe("POST /api/retell/webhook", () => {
     vi.mocked(prisma.publicDemoAttempt.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.call.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.publicDemoAttempt.update).mockResolvedValue({ id: "attempt_1" } as never);
-    vi.mocked(prisma.demoLead.update).mockResolvedValue({ id: "lead_1" } as never);
 
     const response = await POST(
       makeRequest({
@@ -195,10 +194,6 @@ describe("POST /api/retell/webhook", () => {
     expect(prisma.publicDemoAttempt.update).toHaveBeenCalledWith({
       where: { id: "attempt_1" },
       data: { callerPhone: "+16195550100" },
-    });
-    expect(prisma.demoLead.update).toHaveBeenCalledWith({
-      where: { id: "lead_1" },
-      data: { cooldownUntil: expect.any(Date) },
     });
     expect(prisma.call.upsert).toHaveBeenCalledWith({
       where: { retellCallId: "call_demo_1" },
@@ -992,7 +987,6 @@ describe("POST /api/retell/webhook", () => {
         duration: 200,
       } as never);
       vi.mocked(prisma.publicDemoAttempt.update).mockResolvedValue({} as never);
-      vi.mocked(prisma.demoLead.update).mockResolvedValue({} as never);
 
       await POST(makeDemoCallStarted("call_browser_detect") as never);
 
@@ -1000,11 +994,6 @@ describe("POST /api/retell/webhook", () => {
       expect(prisma.publicDemoAttempt.update).toHaveBeenCalledWith({
         where: { id: "attempt_browser" },
         data: { callerPhone: "+16195550100" },
-      });
-      // cooldown should also be set
-      expect(prisma.demoLead.update).toHaveBeenCalledWith({
-        where: { id: "lead_browser" },
-        data: { cooldownUntil: expect.any(Date) },
       });
     });
 
@@ -1070,6 +1059,634 @@ describe("POST /api/retell/webhook", () => {
         "America/Los_Angeles"
       );
     });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // OUTBOUND CALL LIFECYCLE
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe("outbound call lifecycle (critical path)", () => {
+    it("upserts an IN_PROGRESS call with isOutbound=true on outbound call_started", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+        businessId: "biz_1",
+      } as never);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_started",
+          call: {
+            call_id: "call_outbound_1",
+            direction: "outbound",
+            from_number: "+16195559999",  // our number
+            to_number: "+16195550100",     // customer
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.upsert).toHaveBeenCalledWith({
+        where: { retellCallId: "call_outbound_1" },
+        create: {
+          businessId: "biz_1",
+          retellCallId: "call_outbound_1",
+          callerPhone: "+16195550100",
+          status: "IN_PROGRESS",
+          isOutbound: true,
+        },
+        update: { status: "IN_PROGRESS" },
+      });
+      // Outbound call_started should NOT look up customer context or refresh LLM
+      expect(lookupCustomerContext).not.toHaveBeenCalled();
+      expect(refreshRetellLLMForCall).not.toHaveBeenCalled();
+    });
+
+    it("does not upsert an outbound call if our number has no phoneNumber record", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_started",
+          call: {
+            call_id: "call_outbound_orphan",
+            direction: "outbound",
+            from_number: "+16195559999",
+            to_number: "+16195550100",
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.upsert).not.toHaveBeenCalled();
+    });
+
+    it("updates outbound call via updateMany on call_ended (not create)", async () => {
+      const response = await POST(
+        makeRequest({
+          event: "call_ended",
+          call: {
+            call_id: "call_outbound_ended",
+            direction: "outbound",
+            from_number: "+16195559999",
+            to_number: "+16195550100",
+            duration_ms: 45000,
+            transcript: "Left a voicemail for rebooking.",
+            recording_url: "https://example.com/outbound.mp3",
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.updateMany).toHaveBeenCalledWith({
+        where: { retellCallId: "call_outbound_ended" },
+        data: {
+          duration: 45,
+          transcript: "Left a voicemail for rebooking.",
+          transcriptObject: undefined,
+          status: "COMPLETED",
+          recordingUrl: "https://example.com/outbound.mp3",
+        },
+      });
+      // Should NOT attempt to look up business or create a new call record
+      expect(prisma.phoneNumber.findFirst).not.toHaveBeenCalled();
+      expect(prisma.call.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SESSIONLESS DEMO NUMBER REJECTION
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe("sessionless demo number rejection", () => {
+    it("ends the call and clears inboundAgentId when a demo number has no active session", async () => {
+      const { endRetellCall, updateRetellPhoneNumber } = await import("@/lib/retell");
+      vi.mocked(endRetellCall).mockResolvedValue(undefined);
+      vi.mocked(updateRetellPhoneNumber).mockResolvedValue(undefined);
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+      vi.mocked(resolveDemoSession).mockResolvedValue(null);
+      vi.mocked(prisma.demoNumber.findUnique).mockResolvedValue({
+        id: "demo_num_1",
+        retellPhoneNumber: "retell_phone_1",
+      } as never);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_started",
+          call: {
+            call_id: "call_no_session",
+            from_number: "+16195550100",
+            to_number: "+17165763523",
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(endRetellCall).toHaveBeenCalledWith("call_no_session");
+      expect(updateRetellPhoneNumber).toHaveBeenCalledWith("retell_phone_1", { inboundAgentId: null });
+      expect(prisma.call.upsert).not.toHaveBeenCalled();
+    });
+
+    it("still returns 204 when the demo number has no retellPhoneNumber to clear", async () => {
+      const { endRetellCall, updateRetellPhoneNumber } = await import("@/lib/retell");
+      vi.mocked(endRetellCall).mockResolvedValue(undefined);
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+      vi.mocked(resolveDemoSession).mockResolvedValue(null);
+      vi.mocked(prisma.demoNumber.findUnique).mockResolvedValue({
+        id: "demo_num_1",
+        retellPhoneNumber: null,
+      } as never);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_started",
+          call: {
+            call_id: "call_no_retell_phone",
+            from_number: "+16195550100",
+            to_number: "+17165763523",
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(endRetellCall).toHaveBeenCalledWith("call_no_retell_phone");
+      expect(updateRetellPhoneNumber).not.toHaveBeenCalled();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // INPUT VALIDATION & EDGE CASES
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe("input validation and edge cases", () => {
+    it("returns 400 for invalid JSON body", async () => {
+      const req = new Request("http://localhost/api/retell/webhook", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-retell-signature": "sig" },
+        body: "not valid json {{{",
+      });
+
+      const response = await POST(req as never);
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({ error: "Invalid JSON" });
+    });
+
+    it("returns 200 ok when event or call is missing from the payload", async () => {
+      const response = await POST(makeRequest({ event: "call_started" }) as never);
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({ ok: true });
+    });
+
+    it("returns 200 ok for unknown event types", async () => {
+      const response = await POST(
+        makeRequest({
+          event: "call_transferred",
+          call: { call_id: "call_unknown" },
+        }) as never
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({ ok: true });
+    });
+
+    it("handles call_started gracefully when call_id is missing", async () => {
+      const response = await POST(
+        makeRequest({
+          event: "call_started",
+          call: {
+            from_number: "+16195550100",
+            to_number: "+16195559999",
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.upsert).not.toHaveBeenCalled();
+    });
+
+    it("handles call_analyzed gracefully when call_id is missing", async () => {
+      const response = await POST(
+        makeRequest({
+          event: "call_analyzed",
+          call: {
+            from_number: "+16195550100",
+            call_analysis: { call_summary: "Some summary" },
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("handles call_analyzed gracefully when no existing call record is found", async () => {
+      vi.mocked(prisma.call.findUnique).mockResolvedValue(null);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_analyzed",
+          call: {
+            call_id: "call_orphan",
+            from_number: "+16195550100",
+            call_analysis: { call_summary: "No record exists." },
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.update).not.toHaveBeenCalled();
+      expect(upsertCustomerMemoryFromCall).not.toHaveBeenCalled();
+      expect(sendMissedCallNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CALL_ENDED REGRESSION: existing record vs new record
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe("call_ended record handling", () => {
+    it("updates an existing call record instead of creating a new one", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+        business: { id: "biz_1", phoneNumber: { number: "+16195559999" } },
+      } as never);
+      vi.mocked(prisma.call.findUnique).mockResolvedValue({
+        id: "existing_call",
+        retellCallId: "call_existing",
+      } as never);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_ended",
+          call: {
+            call_id: "call_existing",
+            from_number: "+16195550100",
+            to_number: "+16195559999",
+            duration_ms: 120000,
+            transcript: "Booked a groom for Buddy.",
+            recording_url: "https://example.com/rec.mp3",
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.update).toHaveBeenCalledWith({
+        where: { retellCallId: "call_existing" },
+        data: {
+          callerPhone: "+16195550100",
+          duration: 120,
+          transcript: "Booked a groom for Buddy.",
+          transcriptObject: undefined,
+          status: "COMPLETED",
+          recordingUrl: "https://example.com/rec.mp3",
+        },
+      });
+      expect(prisma.call.create).not.toHaveBeenCalled();
+    });
+
+    it("prefers duration_ms over timestamp calculation", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+        business: { id: "biz_1", phoneNumber: { number: "+16195559999" } },
+      } as never);
+      vi.mocked(prisma.call.findUnique).mockResolvedValue(null);
+
+      await POST(
+        makeRequest({
+          event: "call_ended",
+          call: {
+            call_id: "call_duration",
+            from_number: "+16195550100",
+            to_number: "+16195559999",
+            duration_ms: 75000,
+            start_timestamp: 1000,
+            end_timestamp: 200000, // would be 199s — should be ignored
+          },
+        }) as never
+      );
+
+      expect(prisma.call.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            duration: 75, // from duration_ms, not timestamps
+          }),
+        })
+      );
+    });
+
+    it("falls back to timestamp calculation when duration_ms is absent", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+        business: { id: "biz_1", phoneNumber: { number: "+16195559999" } },
+      } as never);
+      vi.mocked(prisma.call.findUnique).mockResolvedValue(null);
+
+      await POST(
+        makeRequest({
+          event: "call_ended",
+          call: {
+            call_id: "call_ts_fallback",
+            from_number: "+16195550100",
+            to_number: "+16195559999",
+            start_timestamp: 10000,
+            end_timestamp: 130000,
+          },
+        }) as never
+      );
+
+      expect(prisma.call.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            duration: 120, // (130000 - 10000) / 1000
+          }),
+        })
+      );
+    });
+
+    it("sets duration to null when neither duration_ms nor timestamps are present", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+        business: { id: "biz_1", phoneNumber: { number: "+16195559999" } },
+      } as never);
+      vi.mocked(prisma.call.findUnique).mockResolvedValue(null);
+
+      await POST(
+        makeRequest({
+          event: "call_ended",
+          call: {
+            call_id: "call_no_duration",
+            from_number: "+16195550100",
+            to_number: "+16195559999",
+          },
+        }) as never
+      );
+
+      expect(prisma.call.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            duration: null,
+          }),
+        })
+      );
+    });
+
+    it("resolves business via demo session fallback when phoneNumber is missing", async () => {
+      const { resolveBusinessFromDemo } = await import("@/lib/demo-session");
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+      vi.mocked(resolveBusinessFromDemo).mockResolvedValue("demo_biz");
+      vi.mocked(prisma.business.findUnique).mockResolvedValue({
+        id: "demo_biz",
+        phoneNumber: null,
+      } as never);
+      vi.mocked(prisma.call.findUnique).mockResolvedValue(null);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_ended",
+          call: {
+            call_id: "call_demo_ended",
+            from_number: "+16195550100",
+            to_number: "+17165763523",
+            duration_ms: 60000,
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            businessId: "demo_biz",
+          }),
+        })
+      );
+    });
+
+    it("returns 204 silently when no business can be resolved for call_ended", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue(null);
+
+      const response = await POST(
+        makeRequest({
+          event: "call_ended",
+          call: {
+            call_id: "call_no_biz",
+            from_number: "+16195550100",
+            to_number: "+10000000000",
+          },
+        }) as never
+      );
+
+      expect(response.status).toBe(204);
+      expect(prisma.call.create).not.toHaveBeenCalled();
+      expect(prisma.call.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CALL_ANALYZED: name extraction priority regression
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe("call_analyzed name extraction", () => {
+    it("prefers AI-extracted customerName over pre-filled callerName", async () => {
+      vi.mocked(prisma.call.findUnique)
+        .mockResolvedValueOnce({
+          id: "db_call_name",
+          businessId: "biz_1",
+          retellCallId: "call_name_pref",
+          callerName: "Old Pre-filled Name",
+          callerPhone: "+16195550100",
+          appointmentId: "appt_1",
+          status: "COMPLETED",
+          isTestCall: false,
+        } as never)
+        .mockResolvedValueOnce({
+          id: "db_call_name",
+          businessId: "biz_1",
+          retellCallId: "call_name_pref",
+          callerName: "AI-Extracted Name",
+          callerPhone: "+16195550100",
+          appointmentId: "appt_1",
+          status: "COMPLETED",
+          isTestCall: false,
+          business: {
+            id: "biz_1",
+            name: "Paw House",
+            phone: "+16195550000",
+            phoneNumber: { number: "+16195559999" },
+          },
+        } as never);
+
+      await POST(
+        makeRequest({
+          event: "call_analyzed",
+          call: {
+            call_id: "call_name_pref",
+            from_number: "+16195550100",
+            call_analysis: {
+              call_summary: "Booked groom.",
+              custom_analysis_data: {
+                customerName: "AI-Extracted Name",
+              },
+            },
+          },
+        }) as never
+      );
+
+      expect(prisma.call.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            callerName: "AI-Extracted Name",
+          }),
+        })
+      );
+    });
+
+    it("falls back to pre-filled callerName when AI extraction returns nothing", async () => {
+      vi.mocked(prisma.call.findUnique)
+        .mockResolvedValueOnce({
+          id: "db_call_fallback",
+          businessId: "biz_1",
+          retellCallId: "call_name_fallback",
+          callerName: "Pre-filled Sarah",
+          callerPhone: "+16195550100",
+          appointmentId: null,
+          status: "COMPLETED",
+          isTestCall: false,
+        } as never)
+        .mockResolvedValueOnce({
+          id: "db_call_fallback",
+          businessId: "biz_1",
+          retellCallId: "call_name_fallback",
+          callerName: "Pre-filled Sarah",
+          callerPhone: "+16195550100",
+          appointmentId: null,
+          status: "COMPLETED",
+          isTestCall: false,
+          business: {
+            id: "biz_1",
+            name: "Paw House",
+            phone: "+16195550000",
+            phoneNumber: { number: "+16195559999" },
+          },
+        } as never);
+
+      await POST(
+        makeRequest({
+          event: "call_analyzed",
+          call: {
+            call_id: "call_name_fallback",
+            from_number: "+16195550100",
+            call_analysis: {
+              call_summary: "Asked for pricing.",
+              custom_analysis_data: {},
+            },
+          },
+        }) as never
+      );
+
+      expect(prisma.call.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            callerName: "Pre-filled Sarah",
+          }),
+        })
+      );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ONBOARDING TEST CALL HANDLING
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe("onboarding test call handling", () => {
+    it("marks call as isTestCall=true when onboarding is incomplete", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+        businessId: "biz_onboarding",
+        business: {
+          timezone: "America/New_York",
+          retellConfig: null,
+        },
+      } as never);
+      vi.mocked(prisma.business.findUnique).mockResolvedValue({
+        onboardingComplete: false,
+      } as never);
+      vi.mocked(lookupCustomerContext).mockResolvedValue({
+        customer: null,
+      } as never);
+
+      await POST(
+        makeRequest({
+          event: "call_started",
+          call: {
+            call_id: "call_onboarding",
+            from_number: "+16195550100",
+            to_number: "+16195559999",
+          },
+        }) as never
+      );
+
+      expect(prisma.call.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            isTestCall: true,
+          }),
+        })
+      );
+    });
+
+    it("marks call as isTestCall=false when onboarding is complete", async () => {
+      vi.mocked(prisma.phoneNumber.findFirst).mockResolvedValue({
+        businessId: "biz_live",
+        business: {
+          timezone: "America/New_York",
+          retellConfig: null,
+        },
+      } as never);
+      vi.mocked(prisma.business.findUnique).mockResolvedValue({
+        onboardingComplete: true,
+      } as never);
+      vi.mocked(lookupCustomerContext).mockResolvedValue({
+        customer: null,
+      } as never);
+
+      await POST(
+        makeRequest({
+          event: "call_started",
+          call: {
+            call_id: "call_live",
+            from_number: "+16195550100",
+            to_number: "+16195559999",
+          },
+        }) as never
+      );
+
+      expect(prisma.call.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            isTestCall: false,
+          }),
+        })
+      );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // UNHANDLED ERROR RECOVERY
+  // ═══════════════════════════════════════════════════════════════════
+
+  it("returns 204 (not 500) for unhandled errors in call_started to prevent retries", async () => {
+    vi.mocked(prisma.phoneNumber.findFirst).mockRejectedValue(
+      new Error("unexpected DB crash")
+    );
+
+    const response = await POST(
+      makeRequest({
+        event: "call_started",
+        call: {
+          call_id: "call_crash",
+          from_number: "+16195550100",
+          to_number: "+16195559999",
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(204);
   });
 
   it("uses the customer number for outbound analyzed calls", async () => {
