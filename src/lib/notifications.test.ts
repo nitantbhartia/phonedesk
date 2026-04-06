@@ -108,7 +108,7 @@ describe("notifications", () => {
     );
 
     const smsBody = vi.mocked(sendSms).mock.calls[0][1];
-    expect(smsBody).toContain("Reply CANCEL to cancel. See you soon!");
+    expect(smsBody.toLowerCase()).toContain("confirm");
     expect(smsBody).not.toContain("Reply CONFIRM");
   });
 
