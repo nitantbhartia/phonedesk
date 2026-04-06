@@ -2,38 +2,20 @@ import twilio from "twilio";
 
 let _client: ReturnType<typeof twilio> | null = null;
 
-export type SmsProvider = "disabled" | "twilio" | "textbelt";
+export type SmsProvider = "disabled" | "twilio";
 
 export function getSmsProvider(): SmsProvider {
   if (process.env.SMS_ENABLED === "false") {
     return "disabled";
   }
 
-  const preferredProvider = process.env.SMS_PROVIDER?.toLowerCase();
-  const twilioReady = Boolean(
+  return Boolean(
     process.env.TWILIO_ACCOUNT_SID &&
       process.env.TWILIO_AUTH_TOKEN &&
       process.env.TWILIO_PHONE_NUMBER
-  );
-  const textbeltReady = Boolean(process.env.TEXTBELT_API_KEY);
-
-  if (preferredProvider === "twilio") {
-    return twilioReady ? "twilio" : "disabled";
-  }
-
-  if (preferredProvider === "textbelt") {
-    return textbeltReady ? "textbelt" : "disabled";
-  }
-
-  if (twilioReady) {
-    return "twilio";
-  }
-
-  if (textbeltReady) {
-    return "textbelt";
-  }
-
-  return "disabled";
+  )
+    ? "twilio"
+    : "disabled";
 }
 
 export function isSmsEnabled(): boolean {
@@ -41,7 +23,7 @@ export function isSmsEnabled(): boolean {
 }
 
 export function shouldAttachRetellSmsWebhook(): boolean {
-  return getSmsProvider() === "twilio";
+  return isSmsEnabled();
 }
 
 function getClient() {
@@ -57,45 +39,8 @@ function getClient() {
   return _client;
 }
 
-async function sendTextbeltSms(to: string, body: string, from?: string) {
-  const apiKey = process.env.TEXTBELT_API_KEY;
-  if (!apiKey) {
-    throw new Error("TEXTBELT_API_KEY must be set");
-  }
-
-  const params = new URLSearchParams({
-    phone: to,
-    message: body,
-    key: apiKey,
-    sender: process.env.TEXTBELT_SENDER || "RingPaw",
-  });
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (appUrl && from) {
-    params.set("replyWebhookUrl", `${appUrl}/api/sms/webhook`);
-    params.set("webhookData", from);
-  }
-
-  const response = await fetch("https://textbelt.com/text", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: params.toString(),
-  });
-
-  const payload = (await response.json().catch(() => null)) as
-    | { success?: boolean; error?: string }
-    | null;
-
-  if (!response.ok || !payload?.success) {
-    throw new Error(payload?.error || `Textbelt SMS error (${response.status})`);
-  }
-}
-
 /**
  * Send an outbound SMS via Twilio.
- * Temporary provider abstraction while Twilio registration is pending.
  */
 export async function sendSms(
   to: string,
@@ -106,11 +51,6 @@ export async function sendSms(
   const provider = getSmsProvider();
   if (provider === "disabled") {
     console.log("[SMS] disabled - skipping send to:", to);
-    return;
-  }
-
-  if (provider === "textbelt") {
-    await sendTextbeltSms(to, body, from);
     return;
   }
 
