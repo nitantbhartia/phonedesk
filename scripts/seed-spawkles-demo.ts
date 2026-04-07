@@ -21,8 +21,10 @@ import {
   buildAgentTools,
 } from "../src/lib/retell";
 import { seedBreedRecommendations } from "../src/lib/breed-recommendations";
+import { hashPassword } from "../src/lib/password";
 
-const SPAWKLES_EMAIL = "spawkles@ringpaw.internal";
+const SPAWKLES_EMAIL = "info@spawkles.com";
+const SPAWKLES_TEMP_PASSWORD = "Spawkles2024!";
 
 const CUSTOM_GREETING =
   "Thanks for calling Spawkles Mobile Dog Grooming! This is Pip, how can I help you today?";
@@ -165,10 +167,11 @@ async function main() {
   console.log("🐾 Seeding Spawkles Mobile Dog Grooming demo...\n");
 
   // 1. Demo user (internal account, no password needed)
+  const passwordHash = hashPassword(SPAWKLES_TEMP_PASSWORD);
   const user = await prisma.user.upsert({
     where: { email: SPAWKLES_EMAIL },
-    create: { email: SPAWKLES_EMAIL, name: "Spawkles Demo" },
-    update: {},
+    create: { email: SPAWKLES_EMAIL, name: "Shirine", passwordHash },
+    update: { name: "Shirine", passwordHash },
   });
   console.log(`✔ User:     ${user.email} (${user.id})`);
 
@@ -407,7 +410,11 @@ Add these to your production environment:
 Demo phone number: ${formatted}
 Agent ID: ${retellConfig.agentId}
 
-Demo page will be live at: /demo/spawkles
+Demo page: /demo/spawkles
+
+Dashboard login:
+  Email:    ${SPAWKLES_EMAIL}
+  Password: ${SPAWKLES_TEMP_PASSWORD}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 }
 
