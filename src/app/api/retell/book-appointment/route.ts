@@ -103,9 +103,12 @@ export async function POST(req: NextRequest) {
           timeZone: timezone,
         });
         const isConfirmed = existing.status === "CONFIRMED";
-        const resultMessage = isConfirmed
-          ? `I've booked ${existing.petName || "your pet"} for a ${existing.serviceName || "grooming"} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
-          : `I've got ${timeStr} held for ${existing.petName || "your pet"}'s ${existing.serviceName || "grooming"} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
+        const isSoftBooking = business.bookingMode === "SOFT" && !isConfirmed;
+        const resultMessage = isSoftBooking
+          ? `I've got everything for ${business.ownerName || "the owner"}'s team. They'll reach out shortly to confirm the appointment details and pricing for ${existing.petName || "your pet"}'s ${existing.serviceName || "grooming"} on ${timeStr}.`
+          : isConfirmed
+            ? `I've booked ${existing.petName || "your pet"} for a ${existing.serviceName || "grooming"} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
+            : `I've got ${timeStr} held for ${existing.petName || "your pet"}'s ${existing.serviceName || "grooming"} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
         console.log("[book-appointment] Returning existing booking for call", call.call_id, "appointment", existing.id);
         return NextResponse.json({
           result: resultMessage,
@@ -516,10 +519,13 @@ export async function POST(req: NextRequest) {
     });
 
     const isConfirmed = appointment.status === "CONFIRMED";
+    const isSoftBooking = business.bookingMode === "SOFT" && !isConfirmed;
     const serviceDisplay = combinedServiceName || "grooming";
-    const resultMessage = isConfirmed
-      ? `I've booked ${petName || "your pet"} for a ${serviceDisplay} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
-      : `I've got ${timeStr} held for ${petName || "your pet"}'s ${serviceDisplay} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
+    const resultMessage = isSoftBooking
+      ? `I've got everything for ${business.ownerName || "the owner"}'s team. They'll reach out shortly to confirm the appointment details and pricing for ${petName || "your pet"}'s ${serviceDisplay} on ${timeStr}.`
+      : isConfirmed
+        ? `I've booked ${petName || "your pet"} for a ${serviceDisplay} appointment on ${timeStr}. You're all set! You'll receive a confirmation text shortly.`
+        : `I've got ${timeStr} held for ${petName || "your pet"}'s ${serviceDisplay} appointment. The groomer will send you a confirmation text shortly to lock it in.`;
 
     return NextResponse.json({
       result: resultMessage,
