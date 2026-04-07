@@ -166,8 +166,20 @@ function patchSystemPrompt(basePrompt: string, fullBusiness: {
 async function main() {
   console.log("🐾 Seeding Spawkles Mobile Dog Grooming demo...\n");
 
-  // 1. Demo user (internal account, no password needed)
+  // 1. Demo user — migrate from old internal email if it exists
+  const OLD_EMAIL = "spawkles@ringpaw.internal";
   const passwordHash = hashPassword(SPAWKLES_TEMP_PASSWORD);
+
+  // If the old internal-email user exists, update it to the real email
+  const oldUser = await prisma.user.findUnique({ where: { email: OLD_EMAIL } });
+  if (oldUser) {
+    await prisma.user.update({
+      where: { id: oldUser.id },
+      data: { email: SPAWKLES_EMAIL, name: "Shirine", passwordHash },
+    });
+    console.log(`✔ Migrated user from ${OLD_EMAIL} → ${SPAWKLES_EMAIL}`);
+  }
+
   const user = await prisma.user.upsert({
     where: { email: SPAWKLES_EMAIL },
     create: { email: SPAWKLES_EMAIL, name: "Shirine", passwordHash },
