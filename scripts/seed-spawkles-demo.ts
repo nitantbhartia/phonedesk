@@ -23,6 +23,7 @@ import {
 import { seedBreedRecommendations } from "../src/lib/breed-recommendations";
 
 const SPAWKLES_EMAIL = "spawkles@ringpaw.internal";
+const SPAWKLES_BUSINESS_NAME = "Spawkles Mobile Dog Grooming";
 
 const CUSTOM_GREETING =
   "Thanks for calling Spawkles Mobile Dog Grooming! This is Pip, how can I help you today?";
@@ -102,7 +103,7 @@ async function main() {
     where: { userId: user.id },
     create: {
       userId: user.id,
-      name: "Spawkles Mobile Dog Grooming",
+      name: SPAWKLES_BUSINESS_NAME,
       ownerName: "Shirine",
       phone: "6193208837",
       email: "info@spawkles.com",
@@ -124,7 +125,7 @@ async function main() {
       },
     },
     update: {
-      name: "Spawkles Mobile Dog Grooming",
+      name: SPAWKLES_BUSINESS_NAME,
       ownerName: "Shirine",
       phone: "6193208837",
       email: "info@spawkles.com",
@@ -292,9 +293,31 @@ async function main() {
     throw new Error("Failed to resolve an active phone number for Spawkles");
   }
 
+  // 10. Detach any legacy Spawkles phone numbers so only the active line is routed.
+  const legacySpawklesBusinesses = await prisma.business.findMany({
+    where: {
+      name: SPAWKLES_BUSINESS_NAME,
+      id: { not: business.id },
+    },
+    include: {
+      phoneNumber: true,
+    },
+  });
+
+  for (const legacyBusiness of legacySpawklesBusinesses) {
+    const legacyNumber = legacyBusiness.phoneNumber?.retellPhoneNumber;
+    if (!legacyNumber || legacyNumber === activePhoneNumber) continue;
+
+    await updateRetellPhoneNumber(legacyNumber, {
+      inboundAgentId: null,
+      nickname: "Spawkles Demo — RingPaw (Detached)",
+    });
+    console.log(`✔ Detached legacy Spawkles number: ${formatPhone(legacyNumber)}`);
+  }
+
   const formatted = formatPhone(activePhoneNumber);
 
-  // 10. Done
+  // 11. Done
   console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅  Spawkles demo ready!
