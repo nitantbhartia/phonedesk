@@ -20,7 +20,7 @@ export async function sendBookingNotificationToOwner(
     return;
   }
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
@@ -53,7 +53,7 @@ export async function sendBookingConfirmationToCustomer(
     return;
   }
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
@@ -82,7 +82,7 @@ export async function sendMissedCallNotification(
     return;
   }
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const ownerPhone = normalizePhoneNumber(business.phone);
   const callerE164 = normalizePhoneNumber(callerPhone);
 
@@ -113,7 +113,7 @@ export async function sendAppointmentReminder(
   const customerPhone = normalizePhoneNumber(appointment.customerPhone);
   if (!customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
@@ -142,7 +142,7 @@ export async function send48hReminder(
   const customerPhone = normalizePhoneNumber(appointment.customerPhone);
   if (!customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -173,7 +173,7 @@ export async function sendWaitlistOpeningNotification(
   const customerPhone = normalizePhoneNumber(entry.customerPhone);
   if (!customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
 
   const message = [
     `Great news, ${entry.customerName}! A spot just opened up at ${business.name}:`,
@@ -197,7 +197,7 @@ export async function sendNoResponseFollowUp(
   const customerPhone = normalizePhoneNumber(appointment.customerPhone);
   if (!customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
@@ -219,7 +219,7 @@ export async function sendOnMyWayReminder(
   const customerPhone = normalizePhoneNumber(appointment.customerPhone);
   if (!customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = `Heads up! ${appointment.petName || "Your pet"}'s appointment at ${business.name} is in 30 minutes (${time}). See you soon! 🐾`;
@@ -242,7 +242,7 @@ export async function sendCancellationWithWaitlistNotification(
   const ownerPhone = normalizePhoneNumber(business.phone);
   if (!ownerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(cancelledAppt.startTime, business.timezone);
 
   const message = waitlistCustomerName
@@ -267,7 +267,7 @@ export async function sendRescheduleNotificationToOwner(
   const ownerPhone = normalizePhoneNumber(business.phone);
   if (!ownerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const oldTime = formatDateTime(originalAppt.startTime, business.timezone);
   const newTime = formatDateTime(newAppt.startTime, business.timezone);
 
@@ -292,7 +292,7 @@ export async function sendRescheduleConfirmationToCustomer(
   const customerPhone = normalizePhoneNumber(newAppt.customerPhone);
   if (!customerPhone || !business.phoneNumber) return;
 
-  const fromNumber = business.phoneNumber.number || process.env.TWILIO_PHONE_NUMBER;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const oldTime = formatDateTime(originalAppt.startTime, business.timezone);
   const newTime = formatDateTime(newAppt.startTime, business.timezone);
 
