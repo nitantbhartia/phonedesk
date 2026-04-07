@@ -203,6 +203,10 @@ async function main() {
   });
 
   // 7. Patch system prompt with mobile grooming specifics
+  if (!retellConfig.llmId || !retellConfig.agentId) {
+    throw new Error("Retell agent sync did not return llmId or agentId");
+  }
+
   const basePrompt = generateSystemPrompt(fullBusiness);
   const patchedPrompt = patchSystemPrompt(basePrompt);
 
