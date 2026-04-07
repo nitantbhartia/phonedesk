@@ -216,11 +216,11 @@ async function main() {
   });
   console.log("✔ Custom greeting and mobile grooming prompt applied");
 
-  // 8. Set 2-minute call cap for demo
+  // 8. Set 4-minute call cap for demo
   await updateRetellAgent(retellConfig.agentId, {
-    maxCallDurationMs: 120_000,
+    maxCallDurationMs: 240_000,
   });
-  console.log("✔ Call cap set to 2 minutes");
+  console.log("✔ Call cap set to 4 minutes");
 
   // 9. Provision a dedicated phone number (prefer 619 San Diego area code)
   const SD_AREA_CODES = [619, 858, 760];
@@ -258,13 +258,13 @@ async function main() {
     where: { businessId: business.id },
     create: {
       businessId: business.id,
-      number: phoneResult.phone_number.replace(/\D/g, ""),
+      number: phoneResult.phone_number,
       retellPhoneNumber: phoneResult.phone_number,
       provider: "RETELL",
       isActive: true,
     },
     update: {
-      number: phoneResult.phone_number.replace(/\D/g, ""),
+      number: phoneResult.phone_number,
       retellPhoneNumber: phoneResult.phone_number,
       isActive: true,
     },
