@@ -18,6 +18,7 @@ import {
   updateRetellAgent,
   provisionRetellPhoneNumber,
   updateRetellPhoneNumber,
+  buildAgentTools,
 } from "../src/lib/retell";
 import { seedBreedRecommendations } from "../src/lib/breed-recommendations";
 
@@ -284,11 +285,26 @@ async function main() {
 
   const spawklesPrompt = patchSystemPrompt("", fullBusiness);
 
+  // Strip booking tools — Spawkles is intake-only (Shirine books in GrooMore)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const INTAKE_ONLY_TOOLS = new Set([
+    "get_current_datetime",
+    "lookup_customer_context",
+    "get_services",
+    "add_call_note",
+    "business_faq",
+    "end_call",
+  ]);
+  const filteredTools = buildAgentTools(appUrl).filter(
+    (t) => INTAKE_ONLY_TOOLS.has(t.name)
+  );
+
   await updateRetellLLM(retellConfig.llmId, {
     generalPrompt: spawklesPrompt,
     beginMessage: CUSTOM_GREETING,
+    tools: filteredTools,
   });
-  console.log("✔ Custom Spawkles intake prompt applied");
+  console.log(`✔ Custom Spawkles intake prompt applied (${filteredTools.length} tools, no booking)`);
 
   // 8. Override LLM temperature (shared updateRetellLLM doesn't expose this)
   await retellPatch(`/update-retell-llm/${retellConfig.llmId}`, {
