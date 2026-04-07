@@ -383,7 +383,7 @@ function LandingPageContent() {
               </div>
               <div className="px-6 pb-8">
                 <div className="w-8 h-8 rounded-full bg-paw-orange text-white flex items-center justify-center font-bold mb-4">2</div>
-                <h4 className="text-xl font-bold mb-2">AI Answers Instantly</h4>
+                <h4 className="text-xl font-bold mb-2">Pip Answers Instantly</h4>
                 <p className="text-paw-brown/70 leading-relaxed">RingPaw answers in seconds. Warm, natural conversation. Asks for their dog&apos;s name, breed, and what service they need.</p>
               </div>
             </div>
@@ -625,7 +625,7 @@ function LandingPageContent() {
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
-              What happens if the AI makes a mistake?
+              What happens if Pip can&apos;t answer something?
               <span className="group-open:rotate-180 transition-transform">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
