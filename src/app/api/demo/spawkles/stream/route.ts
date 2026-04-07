@@ -65,21 +65,20 @@ export async function GET(req: NextRequest) {
             ? normalizePhoneNumber(attempt.callerPhone)
             : null;
 
-          if (!callerPhone) {
-            enqueue({ phase: "waiting" });
-            await sleep(POLL_INTERVAL_MS);
-            continue;
-          }
-
+          // Look up the most recent call for this business since the session started.
+          // When callerPhone is not yet set (Spawkles uses PhoneNumber table, not DemoNumber,
+          // so the webhook never populates it), fall back to a business + time-window query.
           const call = await prisma.call.findFirst({
-            where: {
-              businessId: bizId,
-              createdAt: { gte: attempt.startedAt },
-              OR: [
-                { callerPhone },
-                { callerPhone: attempt.callerPhone },
-              ],
-            },
+            where: callerPhone
+              ? {
+                  businessId: bizId,
+                  createdAt: { gte: attempt.startedAt },
+                  OR: [{ callerPhone }, { callerPhone: attempt.callerPhone }],
+                }
+              : {
+                  businessId: bizId,
+                  createdAt: { gte: attempt.startedAt },
+                },
             orderBy: { createdAt: "desc" },
           });
 

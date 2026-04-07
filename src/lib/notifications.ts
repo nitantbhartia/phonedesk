@@ -56,15 +56,23 @@ export async function sendBookingConfirmationToCustomer(
   const fromNumber = process.env.TWILIO_PHONE_NUMBER || business.phoneNumber.number;
   const time = formatDateTime(appointment.startTime, business.timezone);
 
+  const isSoftPending =
+    appointment.status === "PENDING" && business.bookingMode === "SOFT";
+
   const message = [
-    `Hi ${appointment.customerName}, this is RingPaw confirming your grooming appointment for ${appointment.petName || "your pet"} on ${time}.`,
+    isSoftPending
+      ? `Hi ${appointment.customerName}, thanks for calling ${business.name}! We've got your request for ${appointment.petName || "your pet"}'s ${appointment.serviceName || "grooming"} appointment on ${time}.`
+      : `Hi ${appointment.customerName}, this is RingPaw confirming your grooming appointment for ${appointment.petName || "your pet"} on ${time}.`,
     "",
-    `${appointment.serviceName || "Grooming"}`,
-    business.address ? business.address : "",
+    ...(isSoftPending
+      ? []
+      : [`${appointment.serviceName || "Grooming"}`, business.address || ""]),
     "",
-    appointment.status === "PENDING"
-      ? "Reply CONFIRM to lock in your spot, or CANCEL to cancel."
-      : "Reply STOP to opt out.",
+    isSoftPending
+      ? `${business.ownerName || "The owner"} will reach out shortly to confirm the details and final pricing. Reply CANCEL if you need to cancel.`
+      : appointment.status === "PENDING"
+        ? "Reply CONFIRM to lock in your spot, or CANCEL to cancel."
+        : "Reply STOP to opt out.",
   ]
     .filter(Boolean)
     .join("\n");

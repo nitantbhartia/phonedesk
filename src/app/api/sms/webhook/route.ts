@@ -140,10 +140,31 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const phoneRecord = await prisma.phoneNumber.findFirst({
+  let phoneRecord = await prisma.phoneNumber.findFirst({
     where: { number: to },
     include: { business: true },
   });
+
+  // When the reply arrives at the shared TWILIO_PHONE_NUMBER (not in PhoneNumber
+  // table), resolve the business from the customer's most recent call instead.
+  if (!phoneRecord?.business) {
+    const normalizedFrom = normalizePhoneNumber(from);
+    if (normalizedFrom) {
+      const recentCall = await prisma.call.findFirst({
+        where: {
+          callerPhone: { in: [from, normalizedFrom] },
+        },
+        orderBy: { createdAt: "desc" },
+        include: { business: { include: { phoneNumber: true } } },
+      });
+      if (recentCall?.business?.phoneNumber) {
+        phoneRecord = {
+          ...recentCall.business.phoneNumber,
+          business: recentCall.business,
+        } as typeof phoneRecord;
+      }
+    }
+  }
 
   if (!phoneRecord?.business) {
     return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });

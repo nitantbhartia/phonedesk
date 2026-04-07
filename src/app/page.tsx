@@ -233,41 +233,6 @@ function LandingPageContent() {
         </div>
       </header>
 
-      {/* Demo caller reactions */}
-      <section className="py-8 sm:py-12 px-4 sm:px-6 relative z-10">
-        <div className="max-w-4xl mx-auto">
-          <p className="text-center text-xs font-bold tracking-widest text-paw-brown/40 uppercase mb-6">
-            What people say after trying the demo
-          </p>
-          <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
-            <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-2xl p-6">
-              <p className="text-paw-brown/80 text-base leading-relaxed mb-3 italic">
-                &ldquo;I called the demo and honestly forgot it was AI. It knew my dog&apos;s breed pricing and everything.&rdquo;
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-paw-amber/30 flex items-center justify-center text-sm font-bold text-paw-brown">J</div>
-                <div>
-                  <p className="text-sm font-bold text-paw-brown">Jessica M.</p>
-                  <p className="text-xs text-paw-brown/50">Salon owner, tried the demo</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-2xl p-6">
-              <p className="text-paw-brown/80 text-base leading-relaxed mb-3 italic">
-                &ldquo;I was skeptical, but it booked an appointment for my made-up dog in about 40 seconds.&rdquo;
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-paw-sky flex items-center justify-center text-sm font-bold text-paw-brown">R</div>
-                <div>
-                  <p className="text-sm font-bold text-paw-brown">Ryan T.</p>
-                  <p className="text-xs text-paw-brown/50">Mobile groomer, tried the demo</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Stats bar */}
       <section className="py-8 sm:py-12 glass-card border-y border-white/60 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-3 gap-3 sm:gap-8 text-center">
