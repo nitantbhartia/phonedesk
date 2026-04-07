@@ -398,7 +398,8 @@ async function handleCallAnalyzed(call: RetellCallPayload) {
       refreshedCall &&
       !refreshedCall.isTestCall &&
       !refreshedCall.appointmentId &&
-      refreshedCall.status !== "NO_BOOKING"
+      refreshedCall.status !== "NO_BOOKING" &&
+      refreshedCall.business?.bookingMode !== "SOFT"
     ) {
       await prisma.call.update({
         where: { id: refreshedCall.id },
