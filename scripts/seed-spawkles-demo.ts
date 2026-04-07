@@ -18,6 +18,7 @@ import {
   updateRetellAgent,
   generateSystemPrompt,
   provisionRetellPhoneNumber,
+  updateRetellPhoneNumber,
 } from "../src/lib/retell";
 import { seedBreedRecommendations } from "../src/lib/breed-recommendations";
 
@@ -222,56 +223,76 @@ async function main() {
   });
   console.log("✔ Call cap set to 2 minutes");
 
-  // 9. Provision a dedicated phone number (prefer 619 San Diego area code)
-  const SD_AREA_CODES = [619, 858, 760];
-  let phoneResult: { phone_number: string } | null = null;
-
-  for (const areaCode of SD_AREA_CODES) {
-    try {
-      phoneResult = await provisionRetellPhoneNumber({
-        agentId: retellConfig.agentId,
-        areaCode,
-        nickname: "Spawkles Demo — RingPaw",
-      });
-      break;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("No phone numbers")) {
-        console.log(`  ⚠ No numbers available for area code ${areaCode}, trying next...`);
-        continue;
-      }
-      throw err;
-    }
-  }
-
-  // Fallback to generic provisioning if all SD codes fail
-  if (!phoneResult) {
-    console.log("  ⚠ No San Diego area codes available, using fallback...");
-    phoneResult = await provisionRetellPhoneNumber({
-      agentId: retellConfig.agentId,
-      nickname: "Spawkles Demo — RingPaw",
-    });
-  }
-
-  // Store the phone number in the database
-  await prisma.phoneNumber.upsert({
+  // 9. Reuse an existing dedicated phone number when present.
+  // Only provision a new number the very first time this demo is created.
+  const existingPhone = await prisma.phoneNumber.findUnique({
     where: { businessId: business.id },
-    create: {
-      businessId: business.id,
-      number: phoneResult.phone_number.replace(/\D/g, ""),
-      retellPhoneNumber: phoneResult.phone_number,
-      provider: "RETELL",
-      isActive: true,
-    },
-    update: {
-      number: phoneResult.phone_number.replace(/\D/g, ""),
-      retellPhoneNumber: phoneResult.phone_number,
-      isActive: true,
-    },
   });
 
-  const formatted = formatPhone(phoneResult.phone_number);
-  console.log(`✔ Phone number provisioned: ${formatted}`);
+  let activePhoneNumber = existingPhone?.retellPhoneNumber || existingPhone?.number || null;
+
+  if (existingPhone?.retellPhoneNumber) {
+    await updateRetellPhoneNumber(existingPhone.retellPhoneNumber, {
+      inboundAgentId: retellConfig.agentId,
+      nickname: "Spawkles Demo — RingPaw",
+    });
+    console.log(`✔ Reused existing phone number: ${formatPhone(existingPhone.retellPhoneNumber)}`);
+  } else {
+    const SD_AREA_CODES = [619, 858, 760];
+    let phoneResult: { phone_number: string } | null = null;
+
+    for (const areaCode of SD_AREA_CODES) {
+      try {
+        phoneResult = await provisionRetellPhoneNumber({
+          agentId: retellConfig.agentId,
+          areaCode,
+          nickname: "Spawkles Demo — RingPaw",
+        });
+        break;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("No phone numbers")) {
+          console.log(`  ⚠ No numbers available for area code ${areaCode}, trying next...`);
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!phoneResult) {
+      console.log("  ⚠ No San Diego area codes available, using fallback...");
+      phoneResult = await provisionRetellPhoneNumber({
+        agentId: retellConfig.agentId,
+        nickname: "Spawkles Demo — RingPaw",
+      });
+    }
+
+    activePhoneNumber = phoneResult.phone_number;
+
+    await prisma.phoneNumber.upsert({
+      where: { businessId: business.id },
+      create: {
+        businessId: business.id,
+        number: phoneResult.phone_number.replace(/\D/g, ""),
+        retellPhoneNumber: phoneResult.phone_number,
+        provider: "RETELL",
+        isActive: true,
+      },
+      update: {
+        number: phoneResult.phone_number.replace(/\D/g, ""),
+        retellPhoneNumber: phoneResult.phone_number,
+        isActive: true,
+      },
+    });
+
+    console.log(`✔ Phone number provisioned: ${formatPhone(phoneResult.phone_number)}`);
+  }
+
+  if (!activePhoneNumber) {
+    throw new Error("Failed to resolve an active phone number for Spawkles");
+  }
+
+  const formatted = formatPhone(activePhoneNumber);
 
   // 10. Done
   console.log(`
