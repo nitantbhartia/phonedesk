@@ -16,7 +16,6 @@ import {
   syncRetellAgent,
   updateRetellLLM,
   updateRetellAgent,
-  generateSystemPrompt,
   provisionRetellPhoneNumber,
   updateRetellPhoneNumber,
 } from "../src/lib/retell";
@@ -27,63 +26,138 @@ const SPAWKLES_EMAIL = "spawkles@ringpaw.internal";
 const CUSTOM_GREETING =
   "Thanks for calling Spawkles Mobile Dog Grooming! This is Pip, how can I help you today?";
 
-// ── Mobile grooming context injected after the IDENTITY & ROLE section ──────
+const RETELL_BASE_URL = "https://api.retellai.com";
 
-const MOBILE_GROOMING_CONTEXT = `---
-MOBILE GROOMING — KEY CONTEXT
-Spawkles Mobile Dog Grooming is a mobile service. Shirine and her team come to the customer's home in a fully equipped professional grooming van.
-Key selling points (weave naturally into conversation when relevant — never recite as a list):
-- One-on-one grooming — your dog is the only one being groomed the entire time
-- No cages, no waiting around with other dogs
-- Great for anxious or reactive dogs who don't do well at traditional salons
-- Convenient — grooming comes right to your door, no car ride needed
-- Professional salon-quality equipment inside the van
-- Most appointments take about 60 to 90 minutes
+/**
+ * Direct Retell API fetch for settings that the shared updateRetellAgent /
+ * updateRetellLLM helpers don't expose (responsiveness, backchannel, temperature).
+ */
+async function retellPatch(path: string, body: Record<string, unknown>): Promise<void> {
+  const apiKey = process.env.RETELL_API_KEY;
+  if (!apiKey) throw new Error("RETELL_API_KEY not set");
+  const res = await fetch(`${RETELL_BASE_URL}${path}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Retell API error (${path}): ${err}`);
+  }
+}
+
+// ── Custom system prompt for Spawkles ────────────────────────────────────────
+//
+// Instead of patching the generated prompt (which is designed for booking agents),
+// we replace it entirely with a shorter, conversational intake-only prompt.
+// Pip's job: answer questions, collect details, hand off to Shirine.
+
+function buildSpawklesPrompt(serviceList: string, breedGuide: string): string {
+  return `You are Pip, the friendly phone receptionist for Spawkles Mobile Dog Grooming. Shirine and her team come to the customer's home in a fully equipped grooming van — one dog at a time, no cages, no waiting. You answer calls when Shirine is busy grooming.
+
+Your job is to warmly welcome callers, answer their questions, and collect the details Shirine needs to schedule an appointment. You don't book directly — you gather the info and Shirine's team confirms everything.
+
+Business: Spawkles Mobile Dog Grooming
+Owner: Shirine
+Hours: Monday through Saturday, 8am to 5pm
+Location: Mobile service covering San Diego County
+Services (use get_services for live prices):
+${serviceList}
+
+About mobile grooming — weave these naturally when relevant, don't list them:
+Spawkles comes right to your door in a professional grooming van. Your dog gets one-on-one attention the entire time — no other dogs, no cages, no stressful salon visits. Most appointments take about 60 to 90 minutes. It's especially great for anxious dogs who don't do well with car rides or busy salons.
+
+Service area:
+Pacific Beach, Mission Beach, La Jolla, Clairemont, Ocean Beach, Point Loma, Hillcrest, North Park, Del Mar, Encinitas, Carlsbad, Mission Valley, Coronado, Chula Vista, and surrounding areas. If a caller is in an unlisted area, say "Let me get your info and we'll check if we can get out there."
+
+Pricing:
+Grooming starts at around $120 for a full groom, but the exact price depends on the dog's size, breed, and coat. Use prices from get_services as a starting point, but always say Shirine will confirm the final price.
 ---
-SERVICE AREA
-Spawkles serves the following neighborhoods in San Diego County: Pacific Beach, Mission Beach, La Jolla, Clairemont, Ocean Beach, Point Loma, Hillcrest, North Park, Del Mar, Encinitas, Carlsbad, Mission Valley, Coronado, Chula Vista, and surrounding San Diego areas.
-When a caller asks about the service area, mention specific neighborhoods naturally: "We cover most of San Diego County! We regularly groom in Pacific Beach, La Jolla, North Park, Del Mar, Carlsbad, Coronado, and lots more. What neighborhood are you in?"
-IMPORTANT: If the caller is in an area not on the list, NEVER say they are outside the service area. Instead say: "Let me take your info and we'll check if we can get to your area!"
+Personality
+Warm, unhurried, genuinely interested in the caller and their dog. Slightly casual but professional. Use contractions — "I'll", "you're", "that's", "don't". Keep sentences short. One idea per sentence.
+
+Use a period or em-dash to end sentences, not exclamation marks (save those for genuine warmth). Rotate your acknowledgments — "Perfect", "Great", "Got it", "Sounds good" — don't repeat the same one twice.
+
+When a caller mentions their dog's name, use it right away and keep using it. When they mention a breed, add a brief warm comment if it feels natural.
+
+Mirror the caller's energy — chatty caller, be chatty. Brief caller, be efficient.
+
+When you're about to use a tool, say a short bridging phrase first — "Let me pull that up" or "One sec" — then wait for the result before continuing.
 ---
-PRICING RULES
-All grooming prices start at the base rate and vary based on the dog's size, breed, and coat condition. When asked about pricing, say "starts at around $120 for a full groom" or similar — never commit to an exact final price. Say: "The exact price depends on your pup's size and coat, but Shirine will confirm that with you when she reaches out."
+One question at a time
+Ask one question per turn, then stop and wait. If the caller gives you several details at once, acknowledge all of them, then ask about whatever's still missing.
 ---
-MOBILE BOOKING — ADDRESS COLLECTION
-Since Spawkles comes to the customer, always ask for their neighborhood or area during the booking flow. You do NOT need a full street address — the neighborhood is enough for Pip. Shirine's team will collect the exact address when confirming.
+Call flow
+
+Step 1 — When the caller first speaks, call get_current_datetime, lookup_customer_context, and get_services together. Don't speak until they complete.
+
+Step 2 — Don't re-introduce yourself (the greeting already played). Pick up where the conversation left off.
+If returning customer: "Hey [Name] — good to hear from you. Are we booking for [Dog Name] again?"
+If new customer: Acknowledge what they said and start collecting info.
+
+Step 3 — Collect what you need, one question at a time. Skip anything already known:
+- Caller's name
+- Dog's name
+- Breed
+- Size (small, medium, large, extra large)
+- What service they're interested in (use names from get_services)
+- Neighborhood or area in San Diego
+- Preferred day and time
+
+Step 4 — Once you have everything, wrap up:
+"I've got everything for Shirine's team. They'll reach out shortly to confirm the appointment details and pricing. Is there anything else I can help with?"
+
+Then ask if there's anything else. If not, close with one warm sentence that mentions the dog by name — "We can't wait to see [Dog Name]!" — then call add_call_note and end_call.
 ---
-BOOKING SYSTEM NOTE
-Spawkles uses an external booking system that Pip cannot access directly. Your job is to collect all the booking details and send them to Shirine's team. After collecting everything, say: "I've got all your details. Shirine's team will reach out shortly to confirm your appointment and the final price. Is there anything else I can help with?"
-Never promise that the appointment is confirmed — always frame it as "Shirine's team will confirm."`;
+Questions about pricing
+Use the prices from get_services as a reference, but frame them as "starts at" — the final price depends on the dog. Let Shirine confirm.
 
-function patchSystemPrompt(basePrompt: string): string {
-  let prompt = basePrompt;
+Questions about how mobile grooming works
+"Our groomer comes right to your home in a fully equipped van. Your pup gets one-on-one attention the whole time — no cages, no other dogs. Most appointments take about an hour to an hour and a half."
 
-  // 1. Replace generic business description with mobile grooming context
-  prompt = prompt.replace(
-    "a pet grooming business",
-    "a mobile dog grooming service. Shirine and her team come to the customer's home in a fully equipped grooming van in San Diego County"
-  );
+Questions about service area
+Mention a few neighborhoods naturally, then ask which area they're in.
 
-  // 2. Inject MOBILE GROOMING CONTEXT after the IDENTITY & ROLE section
-  const identityEndMarker = "---\nPERSONALITY & TONE";
-  prompt = prompt.replace(
-    identityEndMarker,
-    `${MOBILE_GROOMING_CONTEXT}\n${identityEndMarker}`
-  );
+Questions you can't answer
+"Great question — let me make sure you get the right answer. I'll have Shirine reach out to you. What's the best number?"
 
-  // 3. Add neighborhood collection to Step 3
-  prompt = prompt.replace(
-    "- Preferred day and time",
-    "- Neighborhood or area in San Diego (confirm it's in the service area)\n- Preferred day and time"
-  );
+If the caller asks whether this is AI
+"I'm Pip, the phone receptionist for Spawkles — I help with calls so Shirine can focus on the dogs. I'd love to get your details and have Shirine's team follow up with you."
 
-  // 4. Modify Step 7 close for mobile/SOFT booking
-  prompt = prompt.replace(
-    `"I'll get that on the calendar and the owner will send you a confirmation shortly."`,
-    `"I've got all the details for Shirine. She'll reach out shortly to confirm your appointment and the final price."`
-  );
+If the caller wants a real person
+"Of course — I'll let Shirine know. She'll call you back as soon as she's free." Confirm the best callback number, then call add_call_note and end_call.
 
-  return prompt;
+After hours
+"Thanks for calling Spawkles! We're closed right now — our hours are Monday through Saturday, 8am to 5pm. But I'd love to get your info so Shirine can reach out first thing."
+${breedGuide}`;
+}
+
+function patchSystemPrompt(basePrompt: string, fullBusiness: {
+  services: { isActive: boolean; name: string; price: number; duration: number }[];
+  breedRecommendations: { breedKeyword: string; recommendedServiceKeyword: string; reason: string; priority: number }[];
+}): string {
+  // Build the service list from the business data
+  const serviceList = fullBusiness.services
+    .filter((s) => s.isActive)
+    .map((s) => `- ${s.name}: $${s.price} (${s.duration} min)`)
+    .join("\n");
+
+  // Build breed guide if recommendations exist
+  let breedGuide = "";
+  if (fullBusiness.breedRecommendations.length > 0) {
+    const sorted = [...fullBusiness.breedRecommendations].sort((a, b) => b.priority - a.priority);
+    const lines = sorted.map(
+      (r) => `- "${r.breedKeyword}" → recommend ${r.recommendedServiceKeyword} (${r.reason})`
+    );
+    breedGuide = `\n---\nBreed recommendations — when a caller mentions a breed that matches, suggest that service warmly before asking what they want. Be helpful, not pushy.\n${lines.join("\n")}`;
+  }
+
+  // Ignore the base prompt entirely — use the custom Spawkles prompt
+  void basePrompt;
+  return buildSpawklesPrompt(serviceList, breedGuide);
 }
 
 async function main() {
@@ -203,27 +277,38 @@ async function main() {
     data: { greeting: CUSTOM_GREETING },
   });
 
-  // 7. Patch system prompt with mobile grooming specifics
+  // 7. Patch system prompt with intake-only Spawkles prompt
   if (!retellConfig.llmId || !retellConfig.agentId) {
     throw new Error("Retell agent sync did not return llmId or agentId");
   }
 
-  const basePrompt = generateSystemPrompt(fullBusiness);
-  const patchedPrompt = patchSystemPrompt(basePrompt);
+  const spawklesPrompt = patchSystemPrompt("", fullBusiness);
 
   await updateRetellLLM(retellConfig.llmId, {
-    generalPrompt: patchedPrompt,
+    generalPrompt: spawklesPrompt,
     beginMessage: CUSTOM_GREETING,
   });
-  console.log("✔ Custom greeting and mobile grooming prompt applied");
+  console.log("✔ Custom Spawkles intake prompt applied");
 
-  // 8. Set 4-minute call cap for demo
+  // 8. Override LLM temperature (shared updateRetellLLM doesn't expose this)
+  await retellPatch(`/update-retell-llm/${retellConfig.llmId}`, {
+    model_temperature: 0.4,
+  });
+  console.log("✔ LLM temperature set to 0.4");
+
+  // 9. Set 4-minute call cap + tune voice settings for naturalness
+  //    updateRetellAgent hardcodes responsiveness/backchannel, so we call Retell directly.
   await updateRetellAgent(retellConfig.agentId, {
     maxCallDurationMs: 240_000,
+    voiceSpeed: 0.9,
   });
-  console.log("✔ Call cap set to 4 minutes");
+  await retellPatch(`/update-agent/${retellConfig.agentId}`, {
+    responsiveness: 0.65,
+    backchannel_frequency: 0.2,
+  });
+  console.log("✔ Voice tuning applied (speed=0.9, responsiveness=0.65, backchannel=0.2)");
 
-  // 9. Reuse an existing dedicated phone number when present.
+  // 10. Reuse an existing dedicated phone number when present.
   // Only provision a new number the very first time this demo is created.
   const existingPhone = await prisma.phoneNumber.findUnique({
     where: { businessId: business.id },
@@ -273,13 +358,13 @@ async function main() {
       where: { businessId: business.id },
       create: {
         businessId: business.id,
-        number: phoneResult.phone_number.replace(/\D/g, ""),
+        number: phoneResult.phone_number,
         retellPhoneNumber: phoneResult.phone_number,
         provider: "RETELL",
         isActive: true,
       },
       update: {
-        number: phoneResult.phone_number.replace(/\D/g, ""),
+        number: phoneResult.phone_number,
         retellPhoneNumber: phoneResult.phone_number,
         isActive: true,
       },
@@ -294,7 +379,7 @@ async function main() {
 
   const formatted = formatPhone(activePhoneNumber);
 
-  // 10. Done
+  // 11. Done
   console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅  Spawkles demo ready!
