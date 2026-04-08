@@ -203,7 +203,7 @@ async function main() {
       timezone: "America/Los_Angeles",
       bookingMode: "SOFT",
       vaccinePolicy: "FLAG_ONLY",
-      isActive: false,
+      isActive: true,
       onboardingComplete: true,
       businessHours: {
         mon: { open: "08:00", close: "17:00" },
@@ -225,6 +225,7 @@ async function main() {
       timezone: "America/Los_Angeles",
       bookingMode: "SOFT",
       vaccinePolicy: "FLAG_ONLY",
+      isActive: true,
       businessHours: {
         mon: { open: "08:00", close: "17:00" },
         tue: { open: "08:00", close: "17:00" },
