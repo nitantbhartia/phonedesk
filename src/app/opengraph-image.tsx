@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "RingPaw - AI Receptionist for Pet Groomers";
+export const alt = "RingPaw - Phone Receptionist for Pet Groomers";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -94,7 +94,7 @@ export default function OgImage() {
               marginTop: -4,
             }}
           >
-            AI Receptionist for Pet Groomers
+            Phone Receptionist for Pet Groomers
           </div>
 
           {/* Description */}

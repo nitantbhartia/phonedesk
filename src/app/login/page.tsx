@@ -87,7 +87,7 @@ function AuthPageContent() {
           </p>
           <ul className="space-y-3">
             {[
-              "AI receptionist picks up in seconds, 24/7",
+              "Pip picks up in seconds, 24/7",
               "Books appointments and texts confirmations automatically",
               "Setup takes 5 minutes, no tech skills needed",
             ].map((item) => (
