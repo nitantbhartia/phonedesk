@@ -11,8 +11,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -22,15 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { InfoIcon } from "@/components/ui/info-icon";
 import { toast } from "@/components/ui/toast";
 import {
   Bot,
   Volume2,
   MessageSquare,
   Save,
-  Plus,
-  Trash2,
   ShieldCheck,
 } from "lucide-react";
 
@@ -41,14 +36,6 @@ interface BusinessData {
   bookingMode: string;
   vaccinePolicy: string;
   isActive: boolean;
-  services: Array<{
-    id: string;
-    name: string;
-    price: number;
-    duration: number;
-    isActive: boolean;
-    isAddon: boolean;
-  }>;
   retellConfig: {
     greeting: string;
     voiceId: string;
@@ -69,9 +56,6 @@ export default function AgentSettingsPage() {
   const [bookingMode, setBookingMode] = useState("SOFT");
   const [vaccinePolicy, setVaccinePolicy] = useState("OFF");
   const [isActive, setIsActive] = useState(true);
-  const [services, setServices] = useState<
-    Array<{ id?: string; name: string; price: string; duration: string; isAddon: boolean }>
-  >([]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -92,17 +76,6 @@ export default function AgentSettingsPage() {
           setBookingMode(data.business.bookingMode);
           setVaccinePolicy(data.business.vaccinePolicy || "OFF");
           setIsActive(data.business.isActive);
-          setServices(
-            data.business.services.map(
-              (s: { id: string; name: string; price: number; duration: number; isAddon: boolean }) => ({
-                id: s.id,
-                name: s.name,
-                price: s.price.toString(),
-                duration: s.duration.toString(),
-                isAddon: Boolean(s.isAddon),
-              })
-            )
-          );
         }
       }
     } catch {
@@ -123,7 +96,6 @@ export default function AgentSettingsPage() {
           ownerName: business?.ownerName,
           bookingMode,
           vaccinePolicy,
-          services: services.filter((s) => s.name.trim()),
           agentActive: isActive,
           greeting,
         }),
@@ -157,7 +129,7 @@ export default function AgentSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold">AI Agent Settings</h1>
           <p className="text-muted-foreground">
-            Manage your AI receptionist&apos;s greeting, services, and booking behavior. Changes sync to your live agent automatically.
+            Manage your AI receptionist&apos;s greeting, booking mode, and vaccine policy. Manage services and pricing from the <a href="/settings/pricing" className="underline underline-offset-2 font-medium">Services &amp; Pricing</a> page.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -291,98 +263,6 @@ export default function AgentSettingsPage() {
                 ? "Pip asks about rabies and Bordetella before booking. If the owner says no or is unsure, Pip books anyway and notes the status for your review."
                 : "Pip asks about rabies and Bordetella before booking. If the owner says their dog isn't vaccinated, Pip will not book and will ask them to call back after getting updated."}
           </p>
-        </CardContent>
-      </Card>
-
-      {/* Services */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Services & Pricing</CardTitle>
-          <CardDescription>
-            The AI shares these with callers when asked about services. Toggle &ldquo;Add-on&rdquo; to let the AI upsell that service to returning customers after confirming their primary booking.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {services.map((service, i) => (
-            <div key={i} className="flex flex-col sm:flex-row sm:items-end gap-3">
-              <div className="flex-1 space-y-1">
-                <Label className="inline-flex items-center gap-1.5">
-                  Service
-                  <InfoIcon text="The service name spoken to callers (e.g. 'Full Groom', 'Bath & Brush', 'Nail Trim'). Keep names short and recognizable — callers will hear exactly what you type here." />
-                </Label>
-                <Input
-                  value={service.name}
-                  onChange={(e) => {
-                    const updated = [...services];
-                    updated[i] = { ...service, name: e.target.value };
-                    setServices(updated);
-                  }}
-                />
-              </div>
-              <div className="flex items-end gap-3">
-                <div className="flex-1 sm:w-24 sm:flex-none space-y-1">
-                  <Label className="inline-flex items-center gap-1.5">
-                    Price ($)
-                    <InfoIcon text="Base price quoted to callers for this service. If you have breed- or size-specific pricing, set those overrides in the Pricing tab — this is the default fallback." />
-                  </Label>
-                  <Input
-                    type="number"
-                    value={service.price}
-                    onChange={(e) => {
-                      const updated = [...services];
-                      updated[i] = { ...service, price: e.target.value };
-                      setServices(updated);
-                    }}
-                  />
-                </div>
-                <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
-                  <Label className="inline-flex items-center gap-1.5">
-                    Duration (min)
-                    <InfoIcon text="How long this service takes in minutes. The AI uses this to block the right amount of time on your calendar and avoid back-to-back conflicts." />
-                  </Label>
-                  <Input
-                    type="number"
-                    value={service.duration}
-                    onChange={(e) => {
-                      const updated = [...services];
-                      updated[i] = { ...service, duration: e.target.value };
-                      setServices(updated);
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col items-center gap-1 shrink-0">
-                  <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
-                    Add-on
-                  </Label>
-                  <Switch
-                    checked={service.isAddon}
-                    onCheckedChange={(checked) => {
-                      const updated = [...services];
-                      updated[i] = { ...service, isAddon: checked };
-                      setServices(updated);
-                    }}
-                  />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setServices(services.filter((_, j) => j !== i))}
-                  disabled={services.length <= 1}
-                  className="shrink-0"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-          <Button
-            variant="outline"
-            onClick={() =>
-              setServices([...services, { name: "", price: "", duration: "60", isAddon: false }])
-            }
-          >
-            <Plus className="w-4 h-4 mr-2" /> Add Service
-          </Button>
         </CardContent>
       </Card>
 
