@@ -21,13 +21,29 @@ interface Service {
   id: string;
   name: string;
   price: number;
+  duration: number;
+  isAddon: boolean;
+  isActive: boolean;
 }
+
+type ServiceForm = {
+  id?: string;
+  name: string;
+  price: string;
+  duration: string;
+  isAddon: boolean;
+};
 
 export default function PricingPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const [rules, setRules] = useState<PricingRule[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  // Services split in two: savedServices reflects what's in the DB (used to
+  // populate the pricing-rule dropdown so rules always reference real services),
+  // while services is the editable form state.
+  const [savedServices, setSavedServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<ServiceForm[]>([]);
+  const [savingServices, setSavingServices] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -70,10 +86,22 @@ export default function PricingPage() {
       if (profileRes.ok) {
         const data = await profileRes.json();
         if (data.business?.services) {
-          setServices(data.business.services.filter((s: Service & { isActive: boolean }) => s.isActive));
+          const active = data.business.services.filter(
+            (s: Service) => s.isActive
+          );
+          setSavedServices(active);
+          setServices(
+            active.map((s: Service) => ({
+              id: s.id,
+              name: s.name,
+              price: s.price.toString(),
+              duration: s.duration.toString(),
+              isAddon: Boolean(s.isAddon),
+            }))
+          );
         }
       } else {
-        setPageError((current) => current || "Failed to load active services.");
+        setPageError((current) => current || "Failed to load services.");
       }
     } catch {
       setPageError("Failed to load pricing data. Please refresh.");
@@ -82,10 +110,38 @@ export default function PricingPage() {
     }
   }
 
+  async function saveServices() {
+    // Strip blank rows and validate there's at least one real service
+    const valid = services.filter((s) => s.name.trim());
+    if (valid.length === 0) {
+      toast.error("Add at least one service before saving.");
+      return;
+    }
+    setSavingServices(true);
+    try {
+      const res = await fetch("/api/business/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ services: valid }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Failed to save services");
+      } else {
+        toast.success(data.synced ? "Saved and synced to voice agent" : "Services saved");
+        await fetchData();
+      }
+    } catch {
+      toast.error("Network error — check your connection");
+    } finally {
+      setSavingServices(false);
+    }
+  }
+
   async function addRule() {
     setFormError("");
-    if (services.length === 0) {
-      setFormError("Add an active service before creating pricing rules.");
+    if (savedServices.length === 0) {
+      setFormError("Add and save at least one service before creating pricing rules.");
       return;
     }
     if (!form.serviceId || !form.price) {
@@ -178,9 +234,9 @@ export default function PricingPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-paw-brown">Pricing Matrix</h1>
+          <h1 className="text-4xl font-extrabold text-paw-brown">Services &amp; Pricing</h1>
           <p className="text-paw-brown/60 font-medium mt-1">
-            Set breed and size-specific pricing. Your AI agent uses this for accurate quotes.
+            Manage the services you offer and any breed- or size-specific pricing overrides. Your AI agent quotes these to callers.
           </p>
         </div>
         <button
@@ -188,7 +244,7 @@ export default function PricingPage() {
             setFormError("");
             setShowForm(true);
           }}
-          disabled={services.length === 0}
+          disabled={savedServices.length === 0}
           className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft flex items-center gap-2 hover:bg-opacity-90 transition-colors disabled:opacity-50"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -199,24 +255,142 @@ export default function PricingPage() {
         </button>
       </div>
 
-      {/* Base service prices */}
+      {/* Services — editable list */}
       <div className="bg-white rounded-3xl shadow-card border border-white p-6">
-        <h2 className="font-bold text-paw-brown mb-4">Base Service Prices</h2>
-        {services.length === 0 && (
-          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
-            No active services found. Add services in Agent Settings before creating pricing rules.
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-bold text-paw-brown">Your Services</h2>
+            <p className="text-xs text-paw-brown/60 mt-1">
+              Base prices quoted to callers. Toggle &ldquo;Add-on&rdquo; to let your AI upsell that service after a primary booking.
+            </p>
           </div>
-        )}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-          {services.map((service) => (
-            <div key={service.id} className="bg-paw-cream/50 rounded-2xl p-4">
-              <p className="font-bold text-paw-brown text-sm">{service.name}</p>
-              <p className="text-2xl font-extrabold text-paw-brown mt-1">
-                {formatCurrency(service.price)}
-              </p>
+          <button
+            onClick={saveServices}
+            disabled={savingServices}
+            className="px-4 py-2 bg-paw-brown text-white rounded-full font-bold text-xs shadow-soft hover:bg-opacity-90 transition-colors disabled:opacity-50 shrink-0"
+          >
+            {savingServices ? "Saving..." : "Save Services"}
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {services.map((service, i) => (
+            <div key={i} className="flex flex-col sm:flex-row sm:items-end gap-3">
+              <div className="flex-1 space-y-1">
+                <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide">
+                  Service
+                  <InfoIcon text="The service name spoken to callers (e.g. 'Full Groom', 'Bath & Brush', 'Nail Trim'). Keep names short and recognizable — callers will hear exactly what you type here." />
+                </label>
+                <input
+                  type="text"
+                  value={service.name}
+                  onChange={(e) => {
+                    const updated = [...services];
+                    updated[i] = { ...service, name: e.target.value };
+                    setServices(updated);
+                  }}
+                  className="w-full px-4 py-2.5 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                />
+              </div>
+              <div className="flex items-end gap-3">
+                <div className="flex-1 sm:w-24 sm:flex-none space-y-1">
+                  <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide">
+                    Price ($)
+                    <InfoIcon text="Base price quoted to callers for this service. Use the breed/size overrides below if you need more specific pricing." />
+                  </label>
+                  <input
+                    type="number"
+                    value={service.price}
+                    onChange={(e) => {
+                      const updated = [...services];
+                      updated[i] = { ...service, price: e.target.value };
+                      setServices(updated);
+                    }}
+                    className="w-full px-4 py-2.5 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                  />
+                </div>
+                <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
+                  <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide">
+                    Duration (min)
+                    <InfoIcon text="How long this service takes in minutes. The AI uses this to block the right amount of time on your calendar." />
+                  </label>
+                  <input
+                    type="number"
+                    value={service.duration}
+                    onChange={(e) => {
+                      const updated = [...services];
+                      updated[i] = { ...service, duration: e.target.value };
+                      setServices(updated);
+                    }}
+                    className="w-full px-4 py-2.5 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                  />
+                </div>
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <label className="text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide whitespace-nowrap">
+                    Add-on
+                  </label>
+                  <label className="relative inline-flex items-center cursor-pointer h-10">
+                    <input
+                      type="checkbox"
+                      checked={service.isAddon}
+                      onChange={(e) => {
+                        const updated = [...services];
+                        updated[i] = { ...service, isAddon: e.target.checked };
+                        setServices(updated);
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-10 h-5 bg-paw-brown/20 rounded-full peer peer-checked:bg-paw-amber transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:after:translate-x-5" />
+                  </label>
+                </div>
+                <button
+                  onClick={() => setServices(services.filter((_, j) => j !== i))}
+                  disabled={services.length <= 1}
+                  className="h-10 w-10 shrink-0 rounded-xl text-paw-brown/50 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-paw-brown/50 flex items-center justify-center"
+                  aria-label="Remove service"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </div>
             </div>
           ))}
+          <button
+            onClick={() =>
+              setServices([
+                ...services,
+                { name: "", price: "", duration: "60", isAddon: false },
+              ])
+            }
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-paw-brown/10 bg-paw-cream/50 text-paw-brown font-bold text-xs hover:bg-paw-cream transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Service
+          </button>
         </div>
+
+        {savedServices.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-paw-brown/5">
+            <p className="text-[10px] font-semibold text-paw-brown/50 uppercase tracking-wide mb-2">
+              Currently quoting
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {savedServices.map((service) => (
+                <div key={service.id} className="bg-paw-cream/40 rounded-xl px-3 py-2">
+                  <p className="font-semibold text-paw-brown text-xs truncate">{service.name}</p>
+                  <p className="text-sm font-extrabold text-paw-brown">
+                    {formatCurrency(service.price)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Breed/Size overrides */}
@@ -298,7 +472,7 @@ export default function PricingPage() {
                   className="w-full px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
                 >
                   <option value="">Select service...</option>
-                  {services.map((s) => (
+                  {savedServices.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name} (base: {formatCurrency(s.price)})
                     </option>
