@@ -457,7 +457,7 @@ function DemoPageInner() {
           <div className="w-full max-w-xl animate-in fade-in duration-300">
             <div className="text-center mb-6">
               <h1 className="text-4xl sm:text-5xl font-extrabold text-paw-brown leading-tight mb-3">
-                Hear your AI receptionist.<br />
+                Hear Pip in action.<br />
                 <span className="text-paw-orange">No setup needed.</span>
               </h1>
               <p className="text-paw-brown/60 font-medium text-lg max-w-md mx-auto leading-relaxed">
@@ -503,10 +503,10 @@ function DemoPageInner() {
                 {livePhase === "waiting" && (
                   <div className="mb-6">
                     <h1 className="text-3xl sm:text-4xl font-extrabold text-paw-brown leading-tight mb-2">
-                      Call Pip, our AI receptionist
+                      Call Pip, your phone receptionist
                     </h1>
                     <p className="text-paw-brown/60 font-medium text-base max-w-sm mx-auto">
-                      Talk to a real AI that books grooming appointments. 3-minute demo, one call per number.
+                      Talk to a real receptionist that books grooming appointments. 3-minute demo, one call per number.
                     </p>
                   </div>
                 )}
@@ -552,7 +552,7 @@ function DemoPageInner() {
                 )}
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-lg font-bold text-amber-600 mb-1">Your AI is on the call!</p>
+                    <p className="text-lg font-bold text-amber-600 mb-1">Pip is on the call!</p>
                     <p className="text-3xl font-extrabold text-amber-600 tabular-nums tracking-wide">
                       {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                     </p>
@@ -561,7 +561,7 @@ function DemoPageInner() {
                 )}
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-extrabold text-green-700 mb-1">That was your AI!</p>
+                    <p className="text-xl font-extrabold text-green-700 mb-1">That was Pip!</p>
                     <p className="text-sm text-paw-brown/50">Natural, fast, and ready to book 24/7.</p>
                   </div>
                 )}
@@ -649,7 +649,7 @@ function DemoPageInner() {
                   {/* Summary tab */}
                   {completedTab === "summary" && (
                     <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4">
-                      <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">AI Call Summary</p>
+                      <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Call Summary</p>
                       {summary ? (
                         <p className="text-sm text-paw-brown/80 leading-relaxed">{summary}</p>
                       ) : (
@@ -664,7 +664,7 @@ function DemoPageInner() {
                   {completedTab === "transcript" && (
                     <div className="bg-white border-2 border-paw-brown/8 rounded-2xl p-4">
                       <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider mb-3">
-                        Conversation · AI actions highlighted
+                        Conversation · actions highlighted
                       </p>
                       {transcriptObject && transcriptObject.length > 0 ? (
                         <TranscriptViewer turns={transcriptObject} />

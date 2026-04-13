@@ -33,6 +33,25 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const now = new Date();
 
+  // Optional body: { reset: true } — set when the user clicks "Try another call".
+  // Expires any active attempts for this IP so the new attempt gets a fresh
+  // startedAt (otherwise the stream/status time-window would still match the
+  // previously completed Call and we'd flip straight back to the completed view).
+  let reset = false;
+  try {
+    const body = (await req.json()) as { reset?: boolean } | null;
+    reset = !!body?.reset;
+  } catch {
+    // empty / malformed body is fine
+  }
+
+  if (reset) {
+    await prisma.publicDemoAttempt.updateMany({
+      where: { ip, expiresAt: { gt: now } },
+      data: { expiresAt: now },
+    });
+  }
+
   // Check for existing active session from this IP
   const existing = await prisma.publicDemoAttempt.findFirst({
     where: { ip, expiresAt: { gt: now } },

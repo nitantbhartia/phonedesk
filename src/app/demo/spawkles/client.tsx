@@ -238,13 +238,13 @@ export function SpawklesDemoClient() {
 
   // ── Demo provisioning ────────────────────────────────────────────────────
 
-  async function startDemo() {
+  async function startDemo(opts?: { reset?: boolean }) {
     setLivePhase("loading");
     try {
       const res = await fetch("/api/demo/spawkles/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ reset: !!opts?.reset }),
       });
       const data = await res.json() as {
         sessionToken?: string; number?: string; startedAt?: string;
@@ -348,7 +348,9 @@ export function SpawklesDemoClient() {
     setSessionToken(null);
     setSelectedScenario("booking");
     setCompletedTab("summary");
-    startDemo();
+    // reset: true → server expires the old attempt and issues a fresh one with
+    // a new startedAt so the status/stream endpoints don't match the prior call.
+    startDemo({ reset: true });
   }
 
   const formattedNumber = number ? formatPhone(number) : "";

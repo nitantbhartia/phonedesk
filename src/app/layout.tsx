@@ -14,14 +14,14 @@ const outfit = Outfit({
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com";
 
 export const metadata: Metadata = {
-  title: "RingPaw - Voice AI Receptionist for Pet Groomers",
+  title: "RingPaw - Phone Receptionist for Pet Groomers",
   description:
-    "Never miss a booking. AI answers your calls, books appointments, and texts you summaries.",
+    "Never miss a booking. Pip answers your calls, books appointments, and texts you summaries — 24/7.",
   metadataBase: new URL(APP_URL),
   openGraph: {
-    title: "RingPaw - AI Receptionist for Pet Groomers",
+    title: "RingPaw - Phone Receptionist for Pet Groomers",
     description:
-      "Never miss a booking. AI answers your calls, books appointments, and texts confirmations — 24/7.",
+      "Never miss a booking. Pip answers your calls, books appointments, and texts confirmations — 24/7.",
     url: APP_URL,
     siteName: "RingPaw",
     type: "website",
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "RingPaw - AI Receptionist for Pet Groomers",
+    title: "RingPaw - Phone Receptionist for Pet Groomers",
     description:
-      "Never miss a booking. AI answers your calls, books appointments, and texts confirmations — 24/7.",
+      "Never miss a booking. Pip answers your calls, books appointments, and texts confirmations — 24/7.",
   },
 };
 
