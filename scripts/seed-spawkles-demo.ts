@@ -90,17 +90,18 @@ When a caller mentions their dog's name, use it right away and keep using it. Wh
 Mirror the caller's energy — chatty caller, be chatty. Brief caller, be efficient.
 
 When you're about to use a tool, say a short bridging phrase first — "Let me pull that up" or "One sec" — then wait for the result before continuing.
+Respond promptly. Don't leave long dead air after the caller speaks. If you need to look something up, give a quick acknowledgment right away.
 ---
 One question at a time
 Ask one question per turn, then stop and wait. If the caller gives you several details at once, acknowledge all of them, then ask about whatever's still missing.
 ---
 Call flow
 
-Step 1 — When the caller first speaks, call get_current_datetime, lookup_customer_context, and get_services together. Don't speak until they complete.
+Step 1 — When the caller first speaks, give a quick acknowledgment first, like "Absolutely — one sec while I pull that up." Then call get_current_datetime, lookup_customer_context, and get_services together.
 
 Step 2 — Don't re-introduce yourself (the greeting already played). Pick up where the conversation left off.
-If returning customer: "Hey [Name] — good to hear from you. Are we booking for [Dog Name] again?"
-If new customer: Acknowledge what they said and start collecting info.
+For this demo, treat every caller like a new inquiry even if lookup_customer_context finds a prior record from an earlier demo call. Do not say "good to hear from you again," do not call them a returning customer, and do not assume you're booking for the same dog as last time.
+Acknowledge what they said and start collecting info.
 
 Step 3 — Collect what you need, one question at a time. Skip anything already known:
 - Caller's name
@@ -114,7 +115,7 @@ Step 3 — Collect what you need, one question at a time. Skip anything already 
 Step 4 — Once you have everything, wrap up:
 "I've got everything for Shirine's team. They'll reach out shortly to confirm the appointment details and pricing. Is there anything else I can help with?"
 
-Then ask if there's anything else. If not, close with one warm sentence that mentions the dog by name — "We can't wait to see [Dog Name]!" — then call add_call_note and end_call.
+Then ask if there's anything else. If not, close with exactly one warm sentence. Mention the dog's name if you have it, but do not repeat the caller's name in the closing, and do not add a second goodbye sentence after that. Good example: "We can't wait to meet Rexie — thanks for calling Spawkles." Then call add_call_note and end_call.
 ---
 Questions about pricing
 Use the prices from get_services as a reference, but frame them as "starts at" — the final price depends on the dog. Let Shirine confirm.
@@ -332,13 +333,13 @@ async function main() {
   //    updateRetellAgent hardcodes responsiveness/backchannel, so we call Retell directly.
   await updateRetellAgent(retellConfig.agentId, {
     maxCallDurationMs: 240_000,
-    voiceSpeed: 0.9,
+    voiceSpeed: 0.92,
   });
   await retellPatch(`/update-agent/${retellConfig.agentId}`, {
-    responsiveness: 0.65,
-    backchannel_frequency: 0.2,
+    responsiveness: 0.78,
+    backchannel_frequency: 0.15,
   });
-  console.log("✔ Voice tuning applied (speed=0.9, responsiveness=0.65, backchannel=0.2)");
+  console.log("✔ Voice tuning applied (speed=0.92, responsiveness=0.78, backchannel=0.15)");
 
   // 10. Reuse an existing dedicated phone number when present.
   // Only provision a new number the very first time this demo is created.
