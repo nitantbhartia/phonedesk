@@ -171,32 +171,9 @@ async function main() {
   const OLD_EMAIL = "spawkles@ringpaw.internal";
   const passwordHash = hashPassword(SPAWKLES_TEMP_PASSWORD);
 
-  // Handle three cases:
-  //  a) only old user exists → rename it
-  //  b) only new user exists → nothing to migrate
-  //  c) both exist (partial prior run) → transfer old user's business to new user, delete old
+  // If the old internal-email user exists, update it to the real email
   const oldUser = await prisma.user.findUnique({ where: { email: OLD_EMAIL } });
-  const existingNewUser = await prisma.user.findUnique({ where: { email: SPAWKLES_EMAIL } });
-
-  if (oldUser && existingNewUser && oldUser.id !== existingNewUser.id) {
-    // Both exist — reassign any Business owned by oldUser to newUser, then delete oldUser.
-    // Business.userId is @unique, so if newUser already owns a business, drop that one
-    // first (the oldUser's business is the canonical record with phone/config history).
-    const oldBiz = await prisma.business.findUnique({ where: { userId: oldUser.id } });
-    const newBiz = await prisma.business.findUnique({ where: { userId: existingNewUser.id } });
-    if (oldBiz && newBiz) {
-      // Prefer oldUser's business (has live Retell/phone linkage). Delete newUser's empty stub.
-      await prisma.business.delete({ where: { id: newBiz.id } });
-    }
-    if (oldBiz) {
-      await prisma.business.update({
-        where: { id: oldBiz.id },
-        data: { userId: existingNewUser.id },
-      });
-    }
-    await prisma.user.delete({ where: { id: oldUser.id } });
-    console.log(`✔ Merged legacy user ${OLD_EMAIL} into ${SPAWKLES_EMAIL}`);
-  } else if (oldUser && !existingNewUser) {
+  if (oldUser) {
     await prisma.user.update({
       where: { id: oldUser.id },
       data: { email: SPAWKLES_EMAIL, name: "Shirine", passwordHash },
