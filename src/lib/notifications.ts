@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { sendSms } from "./sms";
+import { sendSms, sendCustomerSms } from "./sms";
 import { formatDateTime } from "./utils";
 import { normalizePhoneNumber } from "./phone";
 import type { Appointment, Business, PhoneNumber } from "@prisma/client";
@@ -72,12 +72,12 @@ export async function sendBookingConfirmationToCustomer(
       ? `${business.ownerName || "The owner"} will reach out shortly to confirm the details and final pricing. Reply CANCEL if you need to cancel.`
       : appointment.status === "PENDING"
         ? "Reply CONFIRM to lock in your spot, or CANCEL to cancel."
-        : "Reply STOP to opt out.",
+        : "",
   ]
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(customerPhone, message, fromNumber);
+  await sendCustomerSms(customerPhone, message, fromNumber, { businessId: business.id });
 }
 
 export async function sendMissedCallNotification(
@@ -110,7 +110,7 @@ export async function sendMissedCallNotification(
       `Hi${callerName ? ` ${callerName}` : ""}! Sorry we missed your call to ${business.name}.`,
       `Reply BOOK to schedule an appointment, or call us back anytime. We'd love to help! 🐾`,
     ].join(" ");
-    await sendSms(callerE164, callerMessage, fromNumber);
+    await sendCustomerSms(callerE164, callerMessage, fromNumber, { businessId: business.id });
   }
 }
 
@@ -133,7 +133,7 @@ export async function sendAppointmentReminder(
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(customerPhone, message, fromNumber);
+  await sendCustomerSms(customerPhone, message, fromNumber, { businessId: business.id });
 
   await prisma.appointment.update({
     where: { id: appointment.id },
@@ -163,7 +163,7 @@ export async function send48hReminder(
     `We appreciate the heads up! 🐾`,
   ].join("\n");
 
-  await sendSms(customerPhone, message, fromNumber);
+  await sendCustomerSms(customerPhone, message, fromNumber, { businessId: business.id });
 
   await prisma.appointment.update({
     where: { id: appointment.id },
@@ -193,7 +193,7 @@ export async function sendWaitlistOpeningNotification(
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(customerPhone, message, fromNumber);
+  await sendCustomerSms(customerPhone, message, fromNumber, { businessId: business.id });
 }
 
 // --- No-Show Protection: No-response follow-up call ---
@@ -215,7 +215,7 @@ export async function sendNoResponseFollowUp(
     `Please reply CONFIRM or CANCEL so we can plan accordingly. If we don't hear back, we may need to release the slot. Thank you!`,
   ].join("\n");
 
-  await sendSms(customerPhone, message, fromNumber);
+  await sendCustomerSms(customerPhone, message, fromNumber, { businessId: business.id });
 }
 
 // --- 30-Minute "On My Way" Reminder ---
@@ -232,7 +232,7 @@ export async function sendOnMyWayReminder(
 
   const message = `Heads up! ${appointment.petName || "Your pet"}'s appointment at ${business.name} is in 30 minutes (${time}). See you soon! 🐾`;
 
-  await sendSms(customerPhone, message, fromNumber);
+  await sendCustomerSms(customerPhone, message, fromNumber, { businessId: business.id });
 
   await prisma.appointment.update({
     where: { id: appointment.id },
@@ -319,5 +319,5 @@ export async function sendRescheduleConfirmationToCustomer(
     .filter(Boolean)
     .join("\n");
 
-  await sendSms(customerPhone, message, fromNumber);
+  await sendCustomerSms(customerPhone, message, fromNumber, { businessId: business.id });
 }

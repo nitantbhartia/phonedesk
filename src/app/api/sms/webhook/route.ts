@@ -430,6 +430,36 @@ export async function POST(req: NextRequest) {
           to
         );
       }
+    } else if (upperBody === "STOP") {
+      if (normalizedFrom) {
+        await prisma.customer.updateMany({
+          where: {
+            businessId: business.id,
+            phone: { in: [from, normalizedFrom] },
+          },
+          data: { smsOptOut: true },
+        });
+      }
+      await sendSmsReply(
+        from,
+        `You've been unsubscribed from ${business.name} texts. Reply START to re-subscribe.`,
+        to
+      );
+    } else if (upperBody === "START") {
+      if (normalizedFrom) {
+        await prisma.customer.updateMany({
+          where: {
+            businessId: business.id,
+            phone: { in: [from, normalizedFrom] },
+          },
+          data: { smsOptOut: false },
+        });
+      }
+      await sendSmsReply(
+        from,
+        `You've been re-subscribed to ${business.name} texts. Reply STOP to opt out.`,
+        to
+      );
     } else if (messageBody.trim()) {
       await sendSmsReply(
         from,

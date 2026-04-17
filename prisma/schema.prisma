@@ -72,6 +72,7 @@ model Business {
   businessHours   Json?    // { mon: { open: "09:00", close: "17:00" }, ... }
   bookingMode     BookingMode @default(SOFT)
   vaccinePolicy   VaccinePolicy @default(OFF)
+  policies        Json?    // { cancellationFee: "$25", depositRequired: false, latePolicyMinutes: 15, customPolicies: [...] }
   isActive        Boolean  @default(false)
   onboardingStep  Int      @default(1)
   onboardingComplete Boolean @default(false)
@@ -200,6 +201,7 @@ model Service {
   isActive     Boolean  @default(true)
   isAddon      Boolean  @default(false) // if true, AI will offer this as an upsell add-on
   bookingMode  BookingMode? // override business default
+  crmCatalogId String?  // canonical ID from CRM (Square catalog ID, MoeGo service ID)
   pricingRules PricingRule[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -332,6 +334,7 @@ model Customer {
   lastCallSummary String?  @db.Text
   lastOutcome     String?
   noShowCount     Int      @default(0)
+  smsOptOut        Boolean  @default(false)
   squareCustomerId String?  // Square CRM customer ID for write-back
   moegoCustomerId  String?  // MoeGo CRM customer ID for write-back
   preferredGroomerId String?
