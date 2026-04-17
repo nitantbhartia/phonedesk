@@ -73,7 +73,10 @@ export async function POST(req: NextRequest) {
 
     if (crmServices.length > 0) {
       const services = crmServices.flatMap((service) => {
-          const matchedLocalService = matchActiveService(dbServices, service.name);
+          const crmIdMatch = dbServices.find(
+            (s) => s.isActive && s.crmCatalogId && s.crmCatalogId === service.id
+          );
+          const matchedLocalService = crmIdMatch || matchActiveService(dbServices, service.name);
           if (!matchedLocalService) {
             return [];
           }

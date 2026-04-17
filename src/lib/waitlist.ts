@@ -15,7 +15,11 @@ type AppointmentForWaitlist = {
   business: BusinessForWaitlist;
 };
 
+const WAITLIST_HOLD_MINUTES = 30;
+
 export async function tryFillFromWaitlist(appointment: AppointmentForWaitlist) {
+  await expireStaleNotifications(appointment.businessId);
+
   const startOfDay = new Date(appointment.startTime);
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date(appointment.startTime);
@@ -48,4 +52,16 @@ export async function tryFillFromWaitlist(appointment: AppointmentForWaitlist) {
   }
 
   return entry;
+}
+
+async function expireStaleNotifications(businessId: string) {
+  const cutoff = new Date(Date.now() - WAITLIST_HOLD_MINUTES * 60 * 1000);
+  await prisma.waitlistEntry.updateMany({
+    where: {
+      businessId,
+      status: "NOTIFIED",
+      notifiedAt: { lt: cutoff },
+    },
+    data: { status: "EXPIRED" },
+  });
 }
