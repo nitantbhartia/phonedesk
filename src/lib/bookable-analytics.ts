@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const BOOKABLE_FUNNEL_EVENTS = [
@@ -28,7 +29,7 @@ export async function trackBookableEvent(input: {
   event: BookableFunnelEventName;
   digit?: string | null;
   callStartedAt?: Date | null;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 }) {
   const elapsedMs =
     input.callStartedAt != null
