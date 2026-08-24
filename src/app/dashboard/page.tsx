@@ -423,11 +423,7 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
-      <div className="mt-3 mb-10 text-right">
-        <Link href="/today" className="text-[12px] text-muted hover:text-ink">
-          Today&apos;s schedule
-        </Link>
-      </div>
+      <div className="mb-10" />
 
       <div className="mb-12 grid grid-cols-1 gap-10 lg:grid-cols-2">
         <div>
