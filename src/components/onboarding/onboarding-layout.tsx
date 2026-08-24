@@ -5,14 +5,12 @@ import { InfoIcon } from "@/components/ui/info-icon";
 import { BrandLogo } from "@/components/brand-logo";
 
 const STEPS = [
-  { number: 1, label: "Business Profile" },
-  { number: 2, label: "Services" },
-  { number: 3, label: "Create Account" },
-  { number: 4, label: "Calendar Sync" },
-  { number: 5, label: "Test Number" },
-  { number: 6, label: "Choose Plan" },
-  { number: 7, label: "Go Live" },
-  { number: 8, label: "Call Forwarding" },
+  { number: 1, label: "Shop name" },
+  { number: 2, label: "Google Calendar" },
+  { number: 3, label: "Hours" },
+  { number: 4, label: "Services" },
+  { number: 5, label: "Call forwarding" },
+  { number: 6, label: "Test Bookable" },
 ];
 
 interface OnboardingLayoutProps {

@@ -8,14 +8,15 @@ import { CheckCircle, CreditCard, Zap } from "lucide-react";
 const PLANS = [
   {
     id: "PRO",
-    name: "Studio",
-    price: 199,
+    name: "Bookable",
+    price: 79,
     minutes: 300,
     popular: true,
     features: [
-      "300 minutes/month (~150 calls)",
-      "Everything included",
-      "Square + Google Calendar",
+      "One location, one line",
+      "Voicemail that books by keypad",
+      "Google Calendar read + write",
+      "Owner + caller SMS confirmations",
     ],
   },
 ];
@@ -227,7 +228,7 @@ export default function BillingPage() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-paw-brown">No active plan</h2>
-              <p className="text-paw-brown/60 font-medium mt-1">Choose a plan below to activate your AI receptionist.</p>
+              <p className="text-paw-brown/60 font-medium mt-1">$79/mo — one location, one line. Set STRIPE_PRO_PRICE_ID in env for live checkout.</p>
             </div>
           </div>
         )}

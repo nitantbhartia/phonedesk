@@ -21,6 +21,20 @@ vi.mock("@/lib/calendar", () => ({
   bookAppointment: vi.fn(),
 }));
 
+vi.mock("@/lib/bookable-analytics", () => ({
+  trackBookableEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/calendar-health", () => ({
+  getCalendarHealth: vi.fn(async () => ({
+    connected: true,
+    canReadBusy: true,
+    canWriteEvents: true,
+    forceRequestMode: false,
+    message: "ok",
+  })),
+}));
+
 vi.mock("@/lib/notifications", () => ({
   sendBookableCallbackToOwner: vi.fn(async () => "sent"),
   sendBookableConfirmationToCustomer: vi.fn(async () => "sent"),
@@ -30,12 +44,14 @@ vi.mock("@/lib/notifications", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { bookAppointment, getNextOpenSlots, isSlotAvailable } from "@/lib/calendar";
+import { getCalendarHealth } from "@/lib/calendar-health";
 import { sendBookableConfirmationToCustomer } from "@/lib/notifications";
 import {
   BANNED_VOICE_COPY,
   buildBookedPrompt,
   buildCallbackPrompt,
   buildMenuPrompt,
+  buildPricingLine,
   buildServicePrompt,
   buildSlotPrompt,
   formatSpokenSlot,
@@ -107,6 +123,8 @@ describe("bookable copy", () => {
   it("never claims an AI receptionist", () => {
     const lines = [
       buildMenuPrompt("Spawkles"),
+      buildMenuPrompt("Spawkles", { isOpen: false }),
+      buildPricingLine(shop.services as never, { mon: { open: "09:00", close: "17:00" } }),
       buildServicePrompt(shop.services as never),
       buildSlotPrompt([slotA, slotB], true),
       buildBookedPrompt("Bath", "Tue 2pm", "AUTO"),
@@ -116,9 +134,12 @@ describe("bookable copy", () => {
     for (const line of lines) {
       expect(line).not.toMatch(BANNED_VOICE_COPY);
     }
-    expect(buildMenuPrompt("Spawkles")).toContain("To book, press 1");
+    expect(buildMenuPrompt("Spawkles")).toContain("Spawkles");
+    expect(buildMenuPrompt("Spawkles")).toContain("press 1");
+    expect(buildMenuPrompt("Spawkles")).toContain("press 2");
     expect(buildMenuPrompt("Spawkles")).toContain("press 9");
-    expect(buildMenuPrompt("Spawkles")).not.toContain("press 2");
+    expect(buildMenuPrompt("Spawkles")).toContain("Press 0");
+    expect(buildMenuPrompt("Spawkles", { isOpen: false })).toContain("currently closed");
   });
 
   it("speaks short shop-first slot labels", () => {
@@ -157,6 +178,7 @@ describe("startBookableCall", () => {
 
     expect(result.prompt.state).toBe("menu");
     expect(result.prompt.say).toContain("Spawkles");
+    expect(result.prompt.say).toContain("helping another customer");
     expect(getNextOpenSlots).toHaveBeenCalled();
     expect(prisma.bookableSession.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -340,6 +362,67 @@ describe("DTMF tree", () => {
       where: { id: "appt_fail" },
       data: expect.objectContaining({ status: "CANCELLED" }),
     });
+  });
+
+  it("press 0 repeats the menu", async () => {
+    const again = await handleBookableDigit(session(), "0");
+    expect(again.prompt.state).toBe("menu");
+    expect(again.prompt.say).toContain("Press 0");
+  });
+
+  it("press 2 plays pricing then service menu", async () => {
+    const result = await handleBookableDigit(session(), "2");
+    expect(result.prompt.say.toLowerCase()).toMatch(/open|hours/);
+    expect(result.prompt.state).toBe("service");
+  });
+
+  it("invalid digit repeats once then falls to callback", async () => {
+    const first = await handleBookableDigit(session({ state: "service" }), "8");
+    expect(first.prompt.state).toBe("service");
+    const second = await handleBookableDigit(
+      session({ state: "service", invalidAttempts: 1 }),
+      "8"
+    );
+    expect(second.prompt.state).toBe("callback");
+  });
+
+  it("known caller press 1 books usual service slots", async () => {
+    const result = await handleBookableDigit(
+      session({
+        knownCaller: true,
+        usualServiceId: "svc_bath",
+        usualPetName: "Max",
+      }),
+      "1"
+    );
+    expect(result.prompt.state).toBe("slots");
+    expect(result.prompt.say).toContain("press 1");
+  });
+
+  it("forces request mode when calendar write is unhealthy", async () => {
+    vi.mocked(getCalendarHealth).mockResolvedValue({
+      connected: true,
+      provider: "GOOGLE",
+      canReadBusy: true,
+      canWriteEvents: false,
+      tokenHealthy: true,
+      message: "request only",
+      forceRequestMode: true,
+    });
+    const result = await handleBookableDigit(
+      session({
+        state: "slots",
+        serviceId: "svc_bath",
+        slotsOffered: [slotA, slotB],
+        knownCaller: true,
+      }),
+      "1"
+    );
+    expect(bookAppointment).toHaveBeenCalledWith(
+      "biz_1",
+      expect.objectContaining({ bookingModeOverride: "SOFT" })
+    );
+    expect(result.prompt.say).toContain("requested");
   });
 
   it("press 9 notifies the shop and records a callback", async () => {

@@ -150,43 +150,46 @@ function formatPhoneNumber(value: string) {
 
 const STEP_CONFIG = [
   {
-    title: "Tell us about your shop",
-    subtitle: "Your AI learns your business name, hours, and location — so it sounds like part of your team from the very first call.",
-    proTip: "Accurate hours matter most: your AI will tell callers 'we're closed right now' and offer to take a message if they call after hours.",
+    title: "What's your shop called?",
+    subtitle: "Bookable answers your forwarded calls with your shop name first — like voicemail that books.",
+    proTip: "Use the name customers already know from your sign and Google listing.",
   },
   {
-    title: "What services do you offer?",
-    subtitle: "Add your services and prices — your AI will quote these to callers, recommend the right service, and book the right slot.",
-    proTip: "Adding duration estimates lets the AI block the correct amount of time and avoid back-to-back conflicts on your calendar.",
+    title: "Connect Google Calendar",
+    subtitle: "Bookable reads your real openings and writes confirmed bookings. Google Calendar is required for v1.",
+    proTip: "If you use Square or Acuity too, you can add them later in Settings.",
   },
   {
-    title: "Create your account",
-    subtitle: "Save your setup and unlock your test number — takes 10 seconds.",
-    proTip: "Your business info is already filled in. Once you sign up, we'll save everything and move you straight to the next step.",
+    title: "When are you open?",
+    subtitle: "Bookable only offers slots during these hours. After hours, callers still hear your shop name and can book the next openings.",
+    proTip: "Match the hours on your door — callers hear these times when they press 2 for pricing.",
   },
   {
-    title: "Connect your calendar",
-    subtitle: "Link your calendar and your AI checks real availability, books appointments, and never double-books.",
-    proTip: "Square Appointments is the most popular choice for groomers — RingPaw syncs instantly and keeps your schedule clean.",
+    title: "What can callers book by phone?",
+    subtitle: "Add up to three services with duration and optional starting price. Bookable keeps the menu short.",
+    proTip: "Bath, full groom, and nail trim cover most shops. You can edit these anytime.",
   },
   {
-    title: "Try your AI live",
-    subtitle: "Call the number below and have a real conversation. Ask about pricing, availability, or try to book — your AI is ready.",
-    proTip: "The more naturally you talk, the better. Say your dog's name, ask follow-up questions, be a real caller — your AI can handle it.",
-  },
-  // Step 6 is skipped (no billing during free launch) — placeholder kept to preserve indices
-  { title: "", subtitle: "", proTip: "" },
-  {
-    title: "Ready to launch!",
-    subtitle: "Everything's configured. Hit Go Live and your AI starts answering calls immediately.",
-    proTip: "You can adjust your greeting, services, and hours anytime from Settings — no need to get it perfect on day one.",
+    title: "Forward missed calls to Bookable",
+    subtitle: "Set up no-answer, busy, and after-hours forwarding on your existing shop line.",
+    proTip: "Conditional forwarding only kicks in when you don't answer — customers still call your usual number.",
   },
   {
-    title: "Set up call forwarding",
-    subtitle: "Forward unanswered calls from your business phone to RingPaw — your clients never hear voicemail again.",
-    proTip: "Conditional forwarding only kicks in when you don't answer, so you still take calls normally when you're free.",
+    title: "Walk through a test booking",
+    subtitle: "Press through the keypad tree like a caller would. Success means you're ready for real forwarded calls.",
+    proTip: "You can also curl /api/voice/simulate locally — see the dashboard empty state for an example.",
   },
 ];
+
+const DISPLAY_STEP: Record<number, number> = {
+  1: 1,
+  4: 2,
+  2: 4,
+  8: 5,
+  5: 6,
+  3: 1,
+  7: 6,
+};
 
 const websiteImportEnabled =
   process.env.NEXT_PUBLIC_ENABLE_WEBSITE_IMPORT === "true";
@@ -259,6 +262,41 @@ export default function OnboardingPage() {
   const [signupError, setSignupError] = useState("");
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
+  const [simulateSessionId, setSimulateSessionId] = useState("");
+  const [simulateLog, setSimulateLog] = useState<string[]>([]);
+  const [simulateLoading, setSimulateLoading] = useState(false);
+  async function runBookableSimulate(digit?: string) {
+    setSimulateLoading(true);
+    try {
+      const body = simulateSessionId
+        ? { sessionId: simulateSessionId, digit }
+        : { businessId: undefined, from: phone || "+15555550100" };
+      const res = await fetch("/api/voice/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Simulate failed");
+      if (data.sessionId) setSimulateSessionId(data.sessionId);
+      setSimulateLog((prev) => [...prev, data.say || JSON.stringify(data)]);
+      if (data.status === "BOOKED" || data.status === "REQUESTED" || data.status === "CALLBACK") {
+        await fetch("/api/business/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ onboardingComplete: true, isActive: true }),
+        });
+      }
+    } catch (error) {
+      setSimulateLog((prev) => [
+        ...prev,
+        error instanceof Error ? error.message : "Simulate failed",
+      ]);
+    } finally {
+      setSimulateLoading(false);
+    }
+  }
+
   const formattedProvisionedNumber = provisionedNumber
     ? formatPhoneNumber(provisionedNumber)
     : "";
@@ -509,7 +547,7 @@ export default function OnboardingPage() {
       setProfileError("Please enter a valid 10-digit US phone number.");
       return;
     }
-    navigate(2);
+    navigate(4);
   }
 
   async function importFromWebsite() {
@@ -619,7 +657,7 @@ export default function OnboardingPage() {
         });
       }
 
-      navigate(4);
+      navigate(8);
     } catch (error) {
       console.error("Error saving profile:", error);
     } finally {
@@ -809,6 +847,7 @@ export default function OnboardingPage() {
   }
 
   function addService() {
+    if (services.length >= 3) return;
     setServices([...services, { name: "", price: "", duration: "60" }]);
   }
 
@@ -826,7 +865,7 @@ export default function OnboardingPage() {
     setServices(updated);
   }
 
-  const config = STEP_CONFIG[step - 1];
+  const config = STEP_CONFIG[(DISPLAY_STEP[step] || Math.min(step, 6)) - 1] || STEP_CONFIG[0];
 
   // Welcome screen — shown once before the form steps
   if (step === 0) {
@@ -857,17 +896,18 @@ export default function OnboardingPage() {
             Hey, {firstName}! 👋
           </h1>
           <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
-            You&apos;re about to set up an AI receptionist that answers calls, books appointments, and texts you summaries — all while you&apos;re busy with clients.
+            Busy grooming? Your voicemail can book. Set up Bookable in about five minutes — forward missed calls, callers press 1 to book, you get text confirmations.
           </p>
 
           {/* What they'll set up */}
           <ul className="text-left space-y-3 mb-10">
             {[
-              { icon: "🏪", label: "Business info", desc: "Name, hours, location" },
-              { icon: "✂️", label: "Services & pricing", desc: "So your AI quotes correctly" },
-              { icon: "📅", label: "Calendar sync", desc: "Real availability, no double-books" },
-              { icon: "📞", label: "Live test call", desc: "Hear your AI answer right now" },
-              { icon: "🚀", label: "Go live", desc: "Calls start routing in minutes" },
+              { icon: "🏪", label: "Shop name", desc: "Your brand on every call" },
+              { icon: "📅", label: "Google Calendar", desc: "Real openings + writes" },
+              { icon: "🕐", label: "Hours", desc: "When callers can book" },
+              { icon: "✂️", label: "Up to 3 services", desc: "Short phone menu" },
+              { icon: "📞", label: "Call forwarding", desc: "No-answer → Bookable" },
+              { icon: "✅", label: "Test booking", desc: "Simulate press 1 → book" },
             ].map((item) => (
               <li key={item.label} className="flex items-center gap-3">
                 <span className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm text-base">
@@ -896,7 +936,7 @@ export default function OnboardingPage() {
 
   return (
     <OnboardingLayout
-      currentStep={step}
+      currentStep={DISPLAY_STEP[step] || Math.min(step, 6)}
       title={config.title}
       subtitle={config.subtitle}
       proTip={config.proTip}
@@ -1511,7 +1551,7 @@ export default function OnboardingPage() {
           </div>
 
           <OnboardingFooter
-            onBack={() => navigate(1)}
+            onBack={() => navigate(4)}
             onNext={saveBusinessProfile}
             nextLabel="Save Services"
             loading={loading}
@@ -1705,8 +1745,8 @@ export default function OnboardingPage() {
             </p>
           )}
           <OnboardingFooter
-            onBack={() => navigate(2)}
-            onNext={() => navigate(5)}
+            onBack={() => navigate(1)}
+            onNext={() => navigate(2)}
             nextLabel={calendarConnected ? "Continue Setup" : "Skip for Now"}
           />
         </div>
@@ -1715,6 +1755,49 @@ export default function OnboardingPage() {
       {/* Step 5: Get Number + Test Call (merged) */}
       {step === 5 && (
         <div className="space-y-5">
+          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 p-5 space-y-4">
+            <p className="text-sm font-bold text-paw-brown">Simulate a caller (no phone needed)</p>
+            <p className="text-sm text-paw-brown/60">
+              Walk the keypad tree: press 1 to book, 9 for callback. This is the same flow forwarded callers hear.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void runBookableSimulate()}
+                disabled={simulateLoading}
+                className="px-4 py-2 rounded-full bg-paw-brown text-paw-cream text-sm font-bold disabled:opacity-50"
+              >
+                {simulateSessionId ? "Replay menu" : "Start simulate"}
+              </button>
+              {["1", "2", "9"].map((digit) => (
+                <button
+                  key={digit}
+                  type="button"
+                  onClick={() => void runBookableSimulate(digit)}
+                  disabled={simulateLoading || !simulateSessionId}
+                  className="px-4 py-2 rounded-full border border-paw-brown/15 text-sm font-bold disabled:opacity-40"
+                >
+                  Press {digit}
+                </button>
+              ))}
+            </div>
+            {simulateLog.length > 0 && (
+              <div className="bg-paw-sky/40 rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto">
+                {simulateLog.map((line, index) => (
+                  <p key={`${index}-${line.slice(0, 12)}`} className="text-xs text-paw-brown/80 font-medium">
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+            {simulateLog.some((line) => line.includes("booked") || line.includes("requested") || line.includes("call you back")) && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                <p className="font-bold text-green-800">Success — Bookable is working!</p>
+                <p className="text-sm text-green-700/80 mt-1">Forward a real missed call to hear it on a handset, or head to your dashboard.</p>
+              </div>
+            )}
+          </div>
+
           {!provisionedNumber ? (
             <div className="text-center py-6">
               <div className="w-16 h-16 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1870,7 +1953,7 @@ export default function OnboardingPage() {
           {provisionedNumber && (
             <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">Your RingPaw Number</p>
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">Your Bookable number</p>
                 <p className="text-xl font-extrabold text-paw-brown">{formattedProvisionedNumber}</p>
               </div>
               <button
@@ -1883,7 +1966,7 @@ export default function OnboardingPage() {
           )}
 
           <p className="text-sm text-paw-brown/60 font-medium">
-            Set up <strong className="text-paw-brown">conditional call forwarding</strong> on your business phone so calls that go unanswered automatically route to RingPaw. Your number stays the same — customers still call you as usual.
+            Set up <strong className="text-paw-brown">conditional call forwarding</strong> on your business phone so unanswered, busy, and after-hours calls route to Bookable. Your shop number stays the same.
           </p>
 
           {/* iPhone instructions */}
@@ -1926,15 +2009,26 @@ export default function OnboardingPage() {
                 </button>
               </div>
               <p className="text-xs text-paw-brown/40 font-medium">
-                For busy-line forwarding use <code className="bg-paw-cream px-1 rounded">*67*…#</code>, or forward all calls with <code className="bg-paw-cream px-1 rounded">*21*…#</code>.
+                For busy-line forwarding use <code className="bg-paw-cream px-1 rounded">*67*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "NUMBER"}#</code>, or forward all calls with <code className="bg-paw-cream px-1 rounded">*21*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "NUMBER"}#</code>.
               </p>
             </div>
           </div>
 
+          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 overflow-hidden">
+            <div className="px-4 py-3 bg-paw-cream/50 border-b border-paw-brown/5">
+              <p className="text-xs font-bold text-paw-brown/60 uppercase tracking-wider">Common US carriers</p>
+            </div>
+            <div className="p-4 space-y-3 text-sm text-paw-brown/75 font-medium">
+              <p><strong>Verizon / AT&amp;T / T-Mobile:</strong> dial the codes above from your shop handset, or use Settings → Phone → Call Forwarding on iPhone.</p>
+              <p><strong>No-answer:</strong> <code className="bg-paw-cream px-1 rounded">*61*NUMBER#</code> · <strong>Busy:</strong> <code className="bg-paw-cream px-1 rounded">*67*NUMBER#</code> · <strong>All calls:</strong> <code className="bg-paw-cream px-1 rounded">*21*NUMBER#</code></p>
+              <p className="text-xs text-paw-brown/45">Replace NUMBER with your Bookable line digits only (no +1). To turn off: <code className="bg-paw-cream px-1 rounded">##61#</code> no-answer, <code className="bg-paw-cream px-1 rounded">##67#</code> busy, <code className="bg-paw-cream px-1 rounded">##21#</code> all.</p>
+            </div>
+          </div>
+
           <OnboardingFooter
-            onBack={() => navigate(7)}
-            onNext={() => router.push("/dashboard")}
-            nextLabel="Go to Dashboard"
+            onBack={() => navigate(2)}
+            onNext={() => navigate(5)}
+            nextLabel="Test Bookable"
           />
         </div>
       )}

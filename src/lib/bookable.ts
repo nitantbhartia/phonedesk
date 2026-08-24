@@ -5,6 +5,8 @@ import {
   isSlotAvailable,
   type TimeSlot,
 } from "@/lib/calendar";
+import { trackBookableEvent } from "@/lib/bookable-analytics";
+import { getCalendarHealth } from "@/lib/calendar-health";
 import { prisma } from "@/lib/prisma";
 import {
   sendBookableCallbackToOwner,
@@ -21,7 +23,14 @@ export const BOOKABLE_MAX_SLOTS_PER_CALL = 6;
 
 export const BANNED_VOICE_COPY = /\bAI\b|virtual receptionist|\bassistant\b/i;
 
-export type BookableState = "menu" | "service" | "slots" | "booked" | "callback" | "done";
+export type BookableState =
+  | "menu"
+  | "service"
+  | "slots"
+  | "booked"
+  | "callback"
+  | "pricing"
+  | "done";
 
 export type BookablePrompt = {
   say: string;
@@ -97,30 +106,127 @@ export function formatConfirmTime(start: Date, timezone: string) {
   }).format(start);
 }
 
-export function buildMenuPrompt(shopName: string) {
+type BusinessHoursMap = Record<string, { open: string; close: string }>;
+
+function parseHourMinute(value: string) {
+  const [hourRaw, minuteRaw] = value.split(":");
+  return { hour: Number(hourRaw), minute: Number(minuteRaw || "0") };
+}
+
+export function isShopOpenNow(
+  businessHours: BusinessHoursMap | null | undefined,
+  timezone: string,
+  at: Date = new Date()
+) {
+  if (!businessHours || Object.keys(businessHours).length === 0) {
+    return true;
+  }
+
+  const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(at);
+  const weekday = (parts.find((part) => part.type === "weekday")?.value || "").toLowerCase();
+  const dayKey = dayNames.find((key) => weekday.startsWith(key.slice(0, 3))) || "mon";
+  const hour = Number(parts.find((part) => part.type === "hour")?.value || "0");
+  const minute = Number(parts.find((part) => part.type === "minute")?.value || "0");
+  const nowMinutes = hour * 60 + minute;
+
+  const dayHours =
+    businessHours[dayKey] ||
+    businessHours["mon-fri"] ||
+    businessHours.mon;
+  if (!dayHours?.open || !dayHours?.close) {
+    return false;
+  }
+
+  const open = parseHourMinute(dayHours.open);
+  const close = parseHourMinute(dayHours.close);
+  const openMinutes = open.hour * 60 + open.minute;
+  const closeMinutes = close.hour * 60 + close.minute;
+  return nowMinutes >= openMinutes && nowMinutes < closeMinutes;
+}
+
+export function buildHoursSummary(businessHours: BusinessHoursMap | null | undefined) {
+  if (!businessHours || Object.keys(businessHours).length === 0) {
+    return "Hours vary — call back for details.";
+  }
+  const weekday = businessHours["mon-fri"] || businessHours.mon;
+  const saturday = businessHours.sat || businessHours.saturday;
+  const parts: string[] = [];
+  if (weekday?.open && weekday?.close) {
+    parts.push(`weekdays ${formatHourLabel(weekday.open)} to ${formatHourLabel(weekday.close)}`);
+  }
+  if (saturday?.open && saturday?.close) {
+    parts.push(`Saturdays ${formatHourLabel(saturday.open)} to ${formatHourLabel(saturday.close)}`);
+  }
+  return parts.length > 0 ? `We're open ${parts.join(", ")}.` : "Hours vary — call back for details.";
+}
+
+function formatHourLabel(value: string) {
+  const { hour, minute } = parseHourMinute(value);
+  const meridiem = hour >= 12 ? "pm" : "am";
+  const twelve = hour % 12 || 12;
+  return minute === 0 ? `${twelve}${meridiem}` : `${twelve}:${minute.toString().padStart(2, "0")}${meridiem}`;
+}
+
+export function buildPricingLine(services: Service[], businessHours: BusinessHoursMap | null | undefined) {
+  const hours = buildHoursSummary(businessHours);
+  const bookable = phoneBookableServices(services);
+  const priced = bookable
+    .filter((service) => Number(service.price) > 0)
+    .map((service) => `${service.name.toLowerCase()} from $${Math.round(Number(service.price))}`);
+  const pricing =
+    priced.length > 0 ? ` ${priced.join(". ")}.` : "";
+  return assertSafeCopy(`${hours}${pricing}`);
+}
+
+export function buildMenuPrompt(
+  shopName: string,
+  options: {
+    isOpen?: boolean;
+    knownUsual?: { petName: string; serviceName: string } | null;
+  } = {}
+) {
+  const statusLine = options.isOpen === false
+    ? "We're currently closed."
+    : "We're helping another customer right now.";
+  const base = `${shopName}. ${statusLine}`;
+  const usual = options.knownUsual
+    ? ` To book ${options.knownUsual.petName}'s usual ${options.knownUsual.serviceName}, press 1. For another service, press 3.`
+    : " To book, press 1.";
   return assertSafeCopy(
-    `Thanks for calling ${shopName}. To book, press 1. To leave a message, press 9.`
+    `${base}${usual} For hours and pricing, press 2. To leave a message, press 9. Press 0 to hear this again.`
   );
 }
 
 export function buildServicePrompt(services: Service[]) {
   if (services.length === 0) {
-    return assertSafeCopy("To leave a message, press 9.");
+    return assertSafeCopy("To leave a message, press 9. Press 0 to hear the menu again.");
   }
   const choices = services
     .map((service, index) => `For ${service.name}, press ${index + 1}.`)
     .join(" ");
-  return assertSafeCopy(`${choices} To leave a message, press 9.`);
+  return assertSafeCopy(`${choices} To leave a message, press 9. Press 0 to hear the menu again.`);
 }
 
-export function buildSlotPrompt(slots: SpokenSlot[], canOfferMore: boolean) {
+export function buildSlotPrompt(
+  slots: SpokenSlot[],
+  canOfferMore: boolean,
+  requestMode = false
+) {
   if (slots.length === 0) {
-    return assertSafeCopy("To leave a message, press 9.");
+    return assertSafeCopy("To leave a message, press 9. Press 0 to hear the menu again.");
   }
+  const prefix = requestMode ? "Next openings we can request: " : "Next openings: ";
   const first = `${slots[0].spoken}, press 1.`;
   const second = slots[1] ? ` ${slots[1].spoken}, press 2.` : "";
   const more = canOfferMore ? " More times, press 3." : " To leave a message, press 9.";
-  return assertSafeCopy(`${first}${second}${more}`);
+  return assertSafeCopy(`${prefix}${first}${second}${more} Press 0 to hear the menu again.`);
 }
 
 export function buildBookedPrompt(
@@ -197,6 +303,37 @@ function canOfferMore(session: BookableSession, serviceId: string) {
   return session.slotsHeard + BOOKABLE_SLOTS_PER_PROMPT < BOOKABLE_MAX_SLOTS_PER_CALL && remaining > 0;
 }
 
+async function resolveKnownUsual(
+  businessId: string,
+  callerPhone: string | null | undefined,
+  services: Service[]
+) {
+  if (!callerPhone) return null;
+  const customer = await prisma.customer.findUnique({
+    where: {
+      businessId_phone: { businessId, phone: callerPhone },
+    },
+    include: {
+      pets: { take: 1, orderBy: { updatedAt: "desc" } },
+    },
+  });
+  if (!customer?.lastServiceName) return null;
+
+  const usualService =
+    services.find(
+      (service) =>
+        service.name.toLowerCase() === customer.lastServiceName?.toLowerCase()
+    ) || services[0];
+  if (!usualService) return null;
+
+  return {
+    customer,
+    usualService,
+    petName: customer.pets[0]?.name || customer.name.split(" ")[0] || "your pet",
+    serviceName: usualService.name,
+  };
+}
+
 export async function startBookableCall(input: {
   businessId: string;
   callSid: string;
@@ -210,22 +347,15 @@ export async function startBookableCall(input: {
   }
 
   const callerPhone = normalizePhoneNumber(input.callerPhone) || input.callerPhone || null;
-  const known = callerPhone
-    ? await prisma.customer.findUnique({
-        where: {
-          businessId_phone: {
-            businessId: shop.id,
-            phone: callerPhone,
-          },
-        },
-      })
-    : null;
+  const knownUsual = await resolveKnownUsual(shop.id, callerPhone, shop.services);
+  const known = knownUsual?.customer || null;
 
   const prefetchedSlots = await prefetchSlots(shop).catch((error) => {
     console.error("[bookable] prefetch failed:", error);
     return {} as PrefetchedSlots;
   });
 
+  const callStartedAt = new Date();
   const existing = await prisma.bookableSession.findUnique({
     where: { callSid: input.callSid },
   });
@@ -241,12 +371,41 @@ export async function startBookableCall(input: {
         state: "menu",
         status: "IN_PROGRESS",
         knownCaller: Boolean(known),
+        usualServiceId: knownUsual?.usualService.id,
+        usualPetName: knownUsual?.petName,
         prefetchedSlots,
+        callStartedAt,
       },
     }));
 
+  const isOpen = isShopOpenNow(
+    shop.businessHours as BusinessHoursMap | null,
+    shop.timezone || "America/Los_Angeles"
+  );
+  const menuSay = buildMenuPrompt(shop.name, {
+    isOpen,
+    knownUsual: knownUsual
+      ? { petName: knownUsual.petName, serviceName: knownUsual.serviceName }
+      : null,
+  });
+
+  await trackBookableEvent({
+    businessId: shop.id,
+    sessionId: session.id,
+    callId: input.callId,
+    event: "call_forwarded",
+    callStartedAt: session.callStartedAt || callStartedAt,
+  });
+  await trackBookableEvent({
+    businessId: shop.id,
+    sessionId: session.id,
+    callId: input.callId,
+    event: "menu_started",
+    callStartedAt: session.callStartedAt || callStartedAt,
+  });
+
   const prompt: BookablePrompt = {
-    say: buildMenuPrompt(shop.name),
+    say: menuSay,
     gather: true,
     state: "menu",
     status: session.status,
@@ -272,7 +431,8 @@ async function offerSlots(
   session: BookableSession,
   shop: ShopContext,
   service: Service,
-  offset = 0
+  offset = 0,
+  requestMode = false
 ): Promise<{ session: BookableSession; prompt: BookablePrompt }> {
   const timezone = shop.timezone || "America/Los_Angeles";
   let pool = prefetchedForService(session, service.id);
@@ -300,13 +460,35 @@ async function offerSlots(
       slotsHeard,
       slotsOffered: next,
       status: "IN_PROGRESS",
+      invalidAttempts: 0,
     },
+  });
+
+  await trackBookableEvent({
+    businessId: shop.id,
+    sessionId: updated.id,
+    callId: updated.callId,
+    event: offset === 0 ? "slots_requested" : "slots_presented",
+    callStartedAt: updated.callStartedAt,
+    metadata: { serviceId: service.id, offset },
+  });
+  await trackBookableEvent({
+    businessId: shop.id,
+    sessionId: updated.id,
+    callId: updated.callId,
+    event: "slots_presented",
+    callStartedAt: updated.callStartedAt,
+    metadata: { slots: next.map((slot) => slot.spoken) },
   });
 
   return {
     session: updated,
     prompt: {
-      say: buildSlotPrompt(next, canOfferMore({ ...updated, prefetchedSlots: session.prefetchedSlots }, service.id)),
+      say: buildSlotPrompt(
+        next,
+        canOfferMore({ ...updated, prefetchedSlots: session.prefetchedSlots }, service.id),
+        requestMode
+      ),
       gather: true,
       state: "slots",
       status: "IN_PROGRESS",
@@ -318,7 +500,7 @@ async function offerSlots(
 async function fallToCallback(
   session: BookableSession,
   shop: ShopContext,
-  reason: "no_slots" | "calendar_failed" | "digit"
+  reason: "no_slots" | "calendar_failed" | "digit" | "invalid"
 ): Promise<{ session: BookableSession; prompt: BookablePrompt }> {
   const updated = await prisma.bookableSession.update({
     where: { id: session.id },
@@ -327,6 +509,16 @@ async function fallToCallback(
       status: reason === "no_slots" ? "NO_SLOTS" : "CALLBACK",
     },
   });
+
+  if (reason === "digit" || reason === "invalid") {
+    await trackBookableEvent({
+      businessId: shop.id,
+      sessionId: updated.id,
+      callId: updated.callId,
+      event: "callback_selected",
+      callStartedAt: updated.callStartedAt,
+    });
+  }
 
   await notifyCallback(shop, updated).catch((error) => {
     console.error("[bookable] callback notify failed:", error);
@@ -446,6 +638,24 @@ async function bookOfferedSlot(
     return fallToCallback(session, shop, "no_slots");
   }
 
+  await trackBookableEvent({
+    businessId: shop.id,
+    sessionId: session.id,
+    callId: session.callId,
+    event: "slot_selected",
+    digit: String(slotIndex + 1),
+    callStartedAt: session.callStartedAt,
+    metadata: { slot: selected.spoken, serviceId: service.id },
+  });
+  await trackBookableEvent({
+    businessId: shop.id,
+    sessionId: session.id,
+    callId: session.callId,
+    event: "booking_started",
+    callStartedAt: session.callStartedAt,
+  });
+
+  const calendarHealth = await getCalendarHealth(shop.id);
   const knownName = session.knownCaller && session.callerPhone
     ? (
         await prisma.customer.findUnique({
@@ -457,7 +667,10 @@ async function bookOfferedSlot(
       )?.name
     : null;
 
-  const bookingKind = session.knownCaller ? "AUTO" : "REQUEST";
+  const bookingKind =
+    session.knownCaller && calendarHealth.canWriteEvents && !calendarHealth.forceRequestMode
+      ? "AUTO"
+      : "REQUEST";
   let appointment: Appointment;
   try {
     appointment = await bookAppointment(shop.id, {
@@ -472,6 +685,13 @@ async function bookOfferedSlot(
     });
   } catch (error) {
     console.error("[bookable] bookAppointment failed:", error);
+    await trackBookableEvent({
+      businessId: shop.id,
+      sessionId: session.id,
+      callId: session.callId,
+      event: "booking_failed",
+      callStartedAt: session.callStartedAt,
+    });
     return fallToCallback(session, shop, "calendar_failed");
   }
 
@@ -507,9 +727,28 @@ async function bookOfferedSlot(
       calendarEventId: appointment.calendarEventId,
       smsCustomerStatus: smsCustomer,
       smsOwnerStatus: smsOwner,
-      slotsOffered: [selected],
+      slotsOffered: offered,
+      slotSelected: selected,
     },
   });
+
+  await trackBookableEvent({
+    businessId: shop.id,
+    sessionId: updated.id,
+    callId: updated.callId,
+    event: "booking_succeeded",
+    callStartedAt: updated.callStartedAt,
+    metadata: { appointmentId: appointment.id, bookingKind },
+  });
+  if (smsCustomer === "sent" || smsOwner === "sent") {
+    await trackBookableEvent({
+      businessId: shop.id,
+      sessionId: updated.id,
+      callId: updated.callId,
+      event: "sms_sent",
+      callStartedAt: updated.callStartedAt,
+    });
+  }
 
   if (updated.callId) {
     try {
@@ -540,6 +779,83 @@ async function bookOfferedSlot(
   };
 }
 
+async function menuPromptForSession(session: BookableSession, shop: ShopContext) {
+  const isOpen = isShopOpenNow(
+    shop.businessHours as BusinessHoursMap | null,
+    shop.timezone || "America/Los_Angeles"
+  );
+  const usual =
+    session.usualServiceId && session.usualPetName
+      ? {
+          petName: session.usualPetName,
+          serviceName:
+            shop.services.find((service) => service.id === session.usualServiceId)?.name ||
+            "appointment",
+        }
+      : null;
+  return buildMenuPrompt(shop.name, { isOpen, knownUsual: usual });
+}
+
+async function beginServiceSelection(
+  session: BookableSession,
+  shop: ShopContext,
+  requestMode = false
+) {
+  const services = phoneBookableServices(shop.services);
+  if (services.length === 0) {
+    return fallToCallback(session, shop, "no_slots");
+  }
+  if (services.length === 1) {
+    await trackBookableEvent({
+      businessId: shop.id,
+      sessionId: session.id,
+      callId: session.callId,
+      event: "service_selected",
+      callStartedAt: session.callStartedAt,
+      metadata: { serviceId: services[0].id },
+    });
+    return offerSlots(session, shop, services[0], 0, requestMode);
+  }
+  const updated = await prisma.bookableSession.update({
+    where: { id: session.id },
+    data: { state: "service", invalidAttempts: 0 },
+  });
+  return {
+    session: updated,
+    prompt: {
+      say: buildServicePrompt(services),
+      gather: true,
+      state: "service" as const,
+      status: "IN_PROGRESS" as const,
+    },
+  };
+}
+
+async function handleInvalidDigit(
+  session: BookableSession,
+  shop: ShopContext,
+  repeatSay: string,
+  state: BookableState
+): Promise<{ session: BookableSession; prompt: BookablePrompt }> {
+  const attempts = (session.invalidAttempts || 0) + 1;
+  if (attempts >= 2) {
+    return fallToCallback(session, shop, "invalid");
+  }
+  const updated = await prisma.bookableSession.update({
+    where: { id: session.id },
+    data: { invalidAttempts: attempts },
+  });
+  return {
+    session: updated,
+    prompt: {
+      say: repeatSay,
+      gather: true,
+      state,
+      status: updated.status,
+    },
+  };
+}
+
 export async function handleBookableDigit(
   session: BookableSession,
   digit: string | null
@@ -550,6 +866,9 @@ export async function handleBookableDigit(
   }
 
   const pressed = (digit || "").trim();
+  const calendarHealth = await getCalendarHealth(shop.id);
+  const requestMode = calendarHealth.forceRequestMode;
+
   if (
     (session.status === "BOOKED" || session.status === "REQUESTED") &&
     (pressed === "1" || pressed === "2")
@@ -568,65 +887,179 @@ export async function handleBookableDigit(
     };
   }
 
+  if (pressed && pressed !== "0") {
+    await trackBookableEvent({
+      businessId: shop.id,
+      sessionId: session.id,
+      callId: session.callId,
+      event: "menu_digit_pressed",
+      digit: pressed,
+      callStartedAt: session.callStartedAt,
+      metadata: { state: session.state },
+    });
+  }
+
   await prisma.bookableSession.update({
     where: { id: session.id },
     data: { lastDigit: pressed || null },
   });
 
-  if (session.state === "menu") {
-    if (pressed === "1") {
-      const services = phoneBookableServices(shop.services);
-      if (services.length === 0) {
-        return fallToCallback(session, shop, "no_slots");
-      }
-      if (services.length === 1) {
-        return offerSlots(session, shop, services[0], 0);
-      }
-      const updated = await prisma.bookableSession.update({
-        where: { id: session.id },
-        data: { state: "service" },
-      });
+  if (pressed === "0") {
+    if (session.state === "menu") {
       return {
-        session: updated,
+        session,
         prompt: {
-          say: buildServicePrompt(services),
+          say: await menuPromptForSession(session, shop),
           gather: true,
-          state: "service",
-          status: "IN_PROGRESS",
+          state: "menu",
+          status: session.status,
         },
       };
     }
-    if (pressed === "9") {
-      return fallToCallback(session, shop, "digit");
-    }
-    return {
-      session,
-      prompt: {
-        say: buildMenuPrompt(shop.name),
-        gather: true,
-        state: "menu",
-        status: "IN_PROGRESS",
-      },
-    };
-  }
-
-  if (session.state === "service") {
-    if (pressed === "9") {
-      return fallToCallback(session, shop, "digit");
-    }
-    const service = await resolveService(shop, pressed);
-    if (!service) {
+    if (session.state === "service") {
       return {
         session,
         prompt: {
           say: buildServicePrompt(phoneBookableServices(shop.services)),
           gather: true,
           state: "service",
-          status: "IN_PROGRESS",
+          status: session.status,
         },
       };
     }
-    return offerSlots(session, shop, service, 0);
+    if (session.state === "slots") {
+      const current = offeredSlots(session);
+      return {
+        session,
+        prompt: {
+          say: buildSlotPrompt(
+            current,
+            session.serviceId ? canOfferMore(session, session.serviceId) : false,
+            requestMode
+          ),
+          gather: true,
+          state: "slots",
+          status: session.status,
+          slots: current,
+        },
+      };
+    }
+    return {
+      session,
+      prompt: {
+        say: await menuPromptForSession(session, shop),
+        gather: true,
+        state: "menu",
+        status: session.status,
+      },
+    };
+  }
+
+  if (session.state === "menu") {
+    if (pressed === "1") {
+      await trackBookableEvent({
+        businessId: shop.id,
+        sessionId: session.id,
+        callId: session.callId,
+        event: "booking_selected",
+        digit: pressed,
+        callStartedAt: session.callStartedAt,
+      });
+      if (session.knownCaller && session.usualServiceId) {
+        const usual = shop.services.find((service) => service.id === session.usualServiceId);
+        if (usual) {
+          await trackBookableEvent({
+            businessId: shop.id,
+            sessionId: session.id,
+            callId: session.callId,
+            event: "service_selected",
+            callStartedAt: session.callStartedAt,
+            metadata: { serviceId: usual.id, usual: true },
+          });
+          return offerSlots(session, shop, usual, 0, requestMode);
+        }
+      }
+      return beginServiceSelection(session, shop, requestMode);
+    }
+    if (pressed === "2") {
+      const pricing = buildPricingLine(
+        shop.services,
+        shop.businessHours as BusinessHoursMap | null
+      );
+      await trackBookableEvent({
+        businessId: shop.id,
+        sessionId: session.id,
+        callId: session.callId,
+        event: "pricing_heard",
+        callStartedAt: session.callStartedAt,
+      });
+      const updated = await prisma.bookableSession.update({
+        where: { id: session.id },
+        data: { state: "pricing", invalidAttempts: 0 },
+      });
+      const selection = await beginServiceSelection(updated, shop, requestMode);
+      return {
+        session: selection.session,
+        prompt: {
+          say: `${pricing} ${selection.prompt.say}`,
+          gather: selection.prompt.gather,
+          state: selection.prompt.state,
+          status: selection.prompt.status,
+          slots: selection.prompt.slots,
+        },
+      };
+    }
+    if (pressed === "3" && session.knownCaller) {
+      await trackBookableEvent({
+        businessId: shop.id,
+        sessionId: session.id,
+        callId: session.callId,
+        event: "booking_selected",
+        digit: pressed,
+        callStartedAt: session.callStartedAt,
+        metadata: { otherService: true },
+      });
+      return beginServiceSelection(session, shop, requestMode);
+    }
+    if (pressed === "9") {
+      return fallToCallback(session, shop, "digit");
+    }
+    if (!pressed) {
+      return {
+        session,
+        prompt: {
+          say: await menuPromptForSession(session, shop),
+          gather: true,
+          state: "menu",
+          status: session.status,
+        },
+      };
+    }
+    return handleInvalidDigit(session, shop, await menuPromptForSession(session, shop), "menu");
+  }
+
+  if (session.state === "service" || session.state === "pricing") {
+    if (pressed === "9") {
+      return fallToCallback(session, shop, "digit");
+    }
+    const service = await resolveService(shop, pressed);
+    if (!service) {
+      return handleInvalidDigit(
+        session,
+        shop,
+        buildServicePrompt(phoneBookableServices(shop.services)),
+        "service"
+      );
+    }
+    await trackBookableEvent({
+      businessId: shop.id,
+      sessionId: session.id,
+      callId: session.callId,
+      event: "service_selected",
+      callStartedAt: session.callStartedAt,
+      metadata: { serviceId: service.id },
+    });
+    return offerSlots(session, shop, service, 0, requestMode);
   }
 
   if (session.state === "slots") {
@@ -644,22 +1077,19 @@ export async function handleBookableDigit(
       if (session.slotsHeard >= BOOKABLE_MAX_SLOTS_PER_CALL) {
         return fallToCallback(session, shop, "digit");
       }
-      return offerSlots(session, shop, service, session.slotOffset + BOOKABLE_SLOTS_PER_PROMPT);
+      return offerSlots(session, shop, service, session.slotOffset + BOOKABLE_SLOTS_PER_PROMPT, requestMode);
     }
     const current = offeredSlots(session);
-    return {
+    return handleInvalidDigit(
       session,
-      prompt: {
-        say: buildSlotPrompt(
-          current,
-          session.serviceId ? canOfferMore(session, session.serviceId) : false
-        ),
-        gather: true,
-        state: "slots",
-        status: "IN_PROGRESS",
-        slots: current,
-      },
-    };
+      shop,
+      buildSlotPrompt(
+        current,
+        session.serviceId ? canOfferMore(session, session.serviceId) : false,
+        requestMode
+      ),
+      "slots"
+    );
   }
 
   if (pressed === "9") {
@@ -669,7 +1099,7 @@ export async function handleBookableDigit(
   return {
     session,
     prompt: {
-      say: buildMenuPrompt(shop.name),
+      say: await menuPromptForSession(session, shop),
       gather: true,
       state: "menu",
       status: "IN_PROGRESS",
@@ -681,6 +1111,14 @@ export async function attachBookableRecording(sessionId: string, recordingUrl: s
   const session = await prisma.bookableSession.update({
     where: { id: sessionId },
     data: { recordingUrl, status: "CALLBACK", state: "callback" },
+  });
+  await trackBookableEvent({
+    businessId: session.businessId,
+    sessionId: session.id,
+    callId: session.callId,
+    event: "voicemail_recorded",
+    callStartedAt: session.callStartedAt,
+    metadata: { recordingUrl },
   });
   const shop = await loadShop(session.businessId);
   if (shop) {
