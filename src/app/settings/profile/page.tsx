@@ -287,7 +287,7 @@ export default function BusinessProfilePage() {
   return (
     <div className="space-y-6">
       {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
           <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
           <button
             onClick={() => void fetchBusiness()}

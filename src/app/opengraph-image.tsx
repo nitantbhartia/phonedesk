@@ -14,82 +14,53 @@ export default function OgImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #FAF9F6 0%, #E3F2F9 100%)",
-          fontFamily: "system-ui, sans-serif",
+          padding: 80,
+          background: "#F3EEE4",
+          color: "#1C1916",
         }}
       >
         <div
           style={{
+            fontSize: 28,
+            letterSpacing: 4,
+            textTransform: "uppercase",
+            color: "#6F675E",
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 16,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 80,
-              height: 80,
-              borderRadius: 20,
-              background: "#3E2919",
-              marginBottom: 8,
-            }}
-          >
-            <span style={{ fontSize: 36, color: "#FDD783", display: "flex" }}>☎</span>
-          </div>
-
-          <div
-            style={{
-              fontSize: 72,
-              fontWeight: 800,
-              color: "#3E2919",
-              letterSpacing: -2,
-              display: "flex",
-            }}
-          >
-            Call Slot
-          </div>
-
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 600,
-              color: "#F4A261",
-              display: "flex",
-              marginTop: -4,
-            }}
-          >
-            Your voicemail can book.
-          </div>
-
-          <div
-            style={{
-              fontSize: 22,
-              color: "#3E2919",
-              opacity: 0.6,
-              marginTop: 12,
-              display: "flex",
-              textAlign: "center",
-              maxWidth: 700,
-            }}
-          >
-            Missed calls pick a time on the keypad. Bookings write to your calendar.
-          </div>
+          Call Slot
         </div>
-
+        <div
+          style={{
+            marginTop: 24,
+            fontSize: 72,
+            lineHeight: 1.05,
+            display: "flex",
+            maxWidth: 900,
+          }}
+        >
+          Your voicemail can book.
+        </div>
+        <div
+          style={{
+            marginTop: 28,
+            fontSize: 24,
+            color: "#6F675E",
+            display: "flex",
+            maxWidth: 720,
+          }}
+        >
+          Missed calls pick a time on the keypad. Bookings write to your calendar.
+        </div>
         <div
           style={{
             position: "absolute",
             bottom: 0,
-            left: 0,
-            right: 0,
-            height: 6,
-            background: "linear-gradient(90deg, #F4A261, #FDD783, #F4A261)",
+            left: 80,
+            width: 80,
+            height: 4,
+            background: "#6E2C2C",
             display: "flex",
           }}
         />

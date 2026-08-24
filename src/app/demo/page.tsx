@@ -28,19 +28,19 @@ const SCENARIOS = [
   {
     id: "new_booking",
     label: "New client booking",
-    emoji: "🐾",
+    emoji: "",
     script: "Hi, I'm a new client — I have a golden retriever who needs a full groom. Do you have anything open next Thursday around 10am?",
   },
   {
     id: "reschedule",
     label: "Existing client reschedule",
-    emoji: "📅",
+    emoji: "",
     script: "Hey, I have an appointment booked for Saturday but something came up. Can I move it to next week?",
   },
   {
     id: "after_hours",
     label: "After-hours inquiry",
-    emoji: "🌙",
+    emoji: "",
     script: "Hi, I know it's late but I wanted to check — do you have any Saturday slots? My shih tzu is really overdue for a trim.",
   },
 ] as const;
@@ -94,7 +94,7 @@ function TranscriptViewer({ turns }: { turns: TranscriptTurn[] }) {
 
   if (visible.length === 0) {
     return (
-      <p className="text-sm text-paw-brown/40 text-center py-4">No transcript available.</p>
+      <p className="text-sm text-muted text-center py-4">No transcript available.</p>
     );
   }
 
@@ -130,25 +130,15 @@ function TranscriptViewer({ turns }: { turns: TranscriptTurn[] }) {
             className={`flex gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300 ${isAgent ? "justify-end" : "justify-start"}`}
             style={{ animationDelay: `${i * 40}ms` }}
           >
-            {!isAgent && (
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-paw-sky border-2 border-paw-brown/10 flex items-center justify-center mt-0.5">
-                <span className="text-xs">👤</span>
-              </div>
-            )}
             <div
-              className={`max-w-[78%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+              className={`max-w-[78%] px-3 py-2 rounded-sm text-sm leading-relaxed ${
                 isAgent
-                  ? "bg-paw-brown text-paw-cream rounded-br-sm"
-                  : "bg-white border-2 border-paw-brown/8 text-paw-brown rounded-bl-sm"
+                  ? "bg-ink text-surface"
+                  : "bg-paper border border-line text-ink"
               }`}
             >
               {content}
             </div>
-            {isAgent && (
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-paw-brown flex items-center justify-center mt-0.5">
-                <span className="text-xs">🤖</span>
-              </div>
-            )}
           </div>
         );
       })}
@@ -418,35 +408,16 @@ function DemoPageInner() {
   const currentScenario = SCENARIOS.find((s) => s.id === selectedScenario) ?? SCENARIOS[0];
 
   return (
-    <div className="min-h-screen bg-paw-sky antialiased flex flex-col relative">
-      {/* Background blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <svg className="paw-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber opacity-60" viewBox="0 0 200 200" fill="currentColor">
-          <ellipse cx="100" cy="130" rx="38" ry="32" />
-          <ellipse cx="62" cy="82" rx="16" ry="20" transform="rotate(-10 62 82)" />
-          <ellipse cx="138" cy="82" rx="16" ry="20" transform="rotate(10 138 82)" />
-          <ellipse cx="82" cy="62" rx="14" ry="18" transform="rotate(-5 82 62)" />
-          <ellipse cx="118" cy="62" rx="14" ry="18" transform="rotate(5 118 62)" />
-        </svg>
-        <svg className="paw-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-50" viewBox="0 0 200 200" fill="currentColor">
-          <ellipse cx="100" cy="130" rx="38" ry="32" />
-          <ellipse cx="62" cy="82" rx="16" ry="20" transform="rotate(-10 62 82)" />
-          <ellipse cx="138" cy="82" rx="16" ry="20" transform="rotate(10 138 82)" />
-          <ellipse cx="82" cy="62" rx="14" ry="18" transform="rotate(-5 82 62)" />
-          <ellipse cx="118" cy="62" rx="14" ry="18" transform="rotate(5 118 62)" />
-        </svg>
-      </div>
-
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-4xl mx-auto w-full">
+    <div className="min-h-screen bg-paper antialiased flex flex-col relative">
+      <nav className="relative z-10 flex items-center justify-between border-b border-line px-6 py-5 max-w-4xl mx-auto w-full">
         <Link href="/">
           <BrandLogo mobileWidth={120} desktopWidth={140} priority />
         </Link>
         <Link
-          href="/onboarding"
-          className="px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
+          href="/login"
+          className="bg-accent px-4 py-2 text-[13px] text-accent-foreground hover:bg-accent-hover"
         >
-          Start Free Trial
+          Start
         </Link>
       </nav>
 
@@ -456,24 +427,23 @@ function DemoPageInner() {
         {!inActiveCall && (
           <div className="w-full max-w-xl animate-in fade-in duration-300">
             <div className="text-center mb-6">
-              <h1 className="text-4xl sm:text-5xl font-extrabold text-paw-brown leading-tight mb-3">
-                Hear Call Slot in action.<br />
-                <span className="text-paw-orange">No setup needed.</span>
+              <h1 className="font-display text-4xl sm:text-5xl tracking-tight text-ink leading-tight mb-3">
+                Hear Call Slot in action.
               </h1>
-              <p className="text-paw-brown/60 font-medium text-lg max-w-md mx-auto leading-relaxed">
+              <p className="text-muted font-medium text-lg max-w-md mx-auto leading-relaxed">
                 Listen to a real booking call, then try it live with your own voice.
               </p>
             </div>
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-6 mb-2">
-              <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-3 text-center">Real booking call</p>
+            <div className="bg-surface rounded-sm border-4 border-white  p-6 mb-2">
+              <p className="text-xs font-bold text-muted uppercase tracking-widest mb-3 text-center">Real booking call</p>
               <DemoCallPlayer audioSrc="/luna-call.wav" />
             </div>
             <button
               onClick={() => document.getElementById("live-demo")?.scrollIntoView({ behavior: "smooth" })}
               className="flex flex-col items-center gap-1 w-full py-3 group"
             >
-              <span className="text-sm font-bold text-paw-brown/60 group-hover:text-paw-brown transition-colors">Now try it live with your voice</span>
-              <svg className="w-5 h-5 text-paw-orange animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+              <span className="text-sm font-bold text-muted group-hover:text-ink transition-colors">Now try it live with your voice</span>
+              <svg className="w-5 h-5 text-accent animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
             </button>
           </div>
         )}
@@ -484,28 +454,28 @@ function DemoPageInner() {
           {/* Loading */}
           {livePhase === "loading" && (
             <div className="text-center animate-in fade-in duration-300 py-8">
-              <div className="w-20 h-20 bg-paw-cream rounded-full flex items-center justify-center mx-auto mb-6 shadow-soft">
-                <svg className="animate-spin w-8 h-8 text-paw-brown/50" viewBox="0 0 24 24" fill="none">
+              <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6 ">
+                <svg className="animate-spin w-8 h-8 text-muted" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               </div>
-              <p className="text-xl font-bold text-paw-brown mb-2">Setting up your demo line…</p>
-              <p className="text-paw-brown/50 font-medium text-sm">Takes just a second</p>
+              <p className="text-xl font-bold text-ink mb-2">Setting up your demo line…</p>
+              <p className="text-muted font-medium text-sm">Takes just a second</p>
             </div>
           )}
 
           {/* Active demo — waiting / in_progress / completed */}
           {inActiveCall && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-5 sm:p-8 animate-in fade-in duration-300">
+            <div className="bg-surface rounded-sm border-4 border-white  p-5 sm:p-8 animate-in fade-in duration-300">
               <div className="text-center mb-6">
                 {/* Hero heading for waiting state */}
                 {livePhase === "waiting" && (
                   <div className="mb-6">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold text-paw-brown leading-tight mb-2">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-ink leading-tight mb-2">
                       Hear Call Slot pick up
                     </h1>
-                    <p className="text-paw-brown/60 font-medium text-base max-w-sm mx-auto">
+                    <p className="text-muted font-medium text-base max-w-sm mx-auto">
                       Talk through a booking call. 3-minute demo, one call per number.
                     </p>
                   </div>
@@ -514,8 +484,8 @@ function DemoPageInner() {
                 <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-4">
                   {livePhase === "waiting" && (
                     <>
-                      <div className="absolute inset-0 rounded-full bg-paw-orange/20 animate-ping" style={{ animationDuration: "1.8s" }} />
-                      <div className="absolute inset-3 rounded-full bg-paw-orange/15 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
+                      <div className="absolute inset-0 rounded-full bg-accent/10 animate-ping" style={{ animationDuration: "1.8s" }} />
+                      <div className="absolute inset-3 rounded-full bg-accent/10 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
                     </>
                   )}
                   {livePhase === "in_progress" && (
@@ -525,8 +495,8 @@ function DemoPageInner() {
                     </>
                   )}
                   {livePhase === "completed" && <div className="absolute inset-0 rounded-full bg-green-400/20" />}
-                  <div className={`relative w-20 h-20 rounded-full flex items-center justify-center shadow-soft transition-colors duration-500 ${
-                    livePhase === "completed" ? "bg-green-500" : livePhase === "in_progress" ? "bg-amber-500" : "bg-paw-brown"
+                  <div className={`relative w-20 h-20 rounded-full flex items-center justify-center  transition-colors duration-500 ${
+                    livePhase === "completed" ? "bg-green-500" : livePhase === "in_progress" ? "bg-amber-500" : "bg-ink"
                   }`}>
                     {livePhase === "completed" ? (
                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
@@ -540,14 +510,14 @@ function DemoPageInner() {
 
                 {livePhase === "waiting" && (
                   <>
-                    <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
+                    <p className="text-xs font-bold text-muted uppercase tracking-widest mb-2">Call this number now</p>
                     <a
                       href={`tel:${number}`}
-                      className="block text-4xl sm:text-6xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
+                      className="block text-4xl sm:text-6xl font-extrabold text-ink tracking-wide hover:text-accent transition-colors"
                     >
                       {formattedNumber}
                     </a>
-                    <p className="text-xs text-paw-brown/40 mt-2">Tap to dial on mobile · or enter manually</p>
+                    <p className="text-xs text-muted mt-2">Tap to dial on mobile · or enter manually</p>
                   </>
                 )}
                 {livePhase === "in_progress" && (
@@ -556,13 +526,13 @@ function DemoPageInner() {
                     <p className="text-3xl font-extrabold text-amber-600 tabular-nums tracking-wide">
                       {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                     </p>
-                    <p className="text-xs text-paw-brown/40 mt-1">remaining in demo</p>
+                    <p className="text-xs text-muted mt-1">remaining in demo</p>
                   </div>
                 )}
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
                     <p className="text-xl font-extrabold text-green-700 mb-1">That was Call Slot!</p>
-                    <p className="text-sm text-paw-brown/50">Natural, fast, and ready to book 24/7.</p>
+                    <p className="text-sm text-muted">Natural, fast, and ready to book 24/7.</p>
                   </div>
                 )}
               </div>
@@ -570,20 +540,19 @@ function DemoPageInner() {
               {/* ── Scenario selector (waiting only) ── */}
               {livePhase === "waiting" && (
                 <div className="mb-4">
-                  <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider mb-2 text-center">Pick a scenario to try</p>
+                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2 text-center">Pick a scenario to try</p>
                   <div className="grid grid-cols-3 gap-2">
                     {SCENARIOS.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setSelectedScenario(s.id)}
-                        className={`flex flex-col items-center gap-1 px-2 py-3 rounded-2xl border-2 text-center transition-all ${
+                        className={`flex flex-col items-center gap-1 px-2 py-3 rounded-sm border-2 text-center transition-all ${
                           selectedScenario === s.id
-                            ? "border-paw-brown bg-paw-brown/5 shadow-soft"
-                            : "border-paw-brown/10 bg-white hover:border-paw-brown/25"
+                            ? "border-ink bg-ink/5 "
+                            : "border-line bg-white hover:border-ink/25"
                         }`}
                       >
-                        <span className="text-xl">{s.emoji}</span>
-                        <span className={`text-xs font-bold leading-tight ${selectedScenario === s.id ? "text-paw-brown" : "text-paw-brown/60"}`}>
+                        <span className={`text-xs font-bold leading-tight ${selectedScenario === s.id ? "text-ink" : "text-muted"}`}>
                           {s.label}
                         </span>
                       </button>
@@ -594,9 +563,9 @@ function DemoPageInner() {
 
               {/* ── Try saying (waiting only) ── */}
               {livePhase === "waiting" && (
-                <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8 mb-4 transition-all duration-300">
-                  <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try saying →</p>
-                  <p className="text-sm text-paw-brown/80 italic leading-relaxed">
+                <div className="bg-paper/70 rounded-sm p-4 border border-line mb-4 transition-all duration-300">
+                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">Try saying →</p>
+                  <p className="text-sm text-ink/80 italic leading-relaxed">
                     &ldquo;{currentScenario.script}&rdquo;
                   </p>
                 </div>
@@ -604,7 +573,7 @@ function DemoPageInner() {
 
               {/* ── In progress indicator ── */}
               {livePhase === "in_progress" && (
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center mb-4 animate-in fade-in duration-300">
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-sm p-4 text-center mb-4 animate-in fade-in duration-300">
                   <div className="flex items-center justify-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                     <span className="text-sm font-bold text-amber-700">Listening live</span>
@@ -618,13 +587,13 @@ function DemoPageInner() {
               {livePhase === "completed" && (
                 <div className="mb-4 animate-in fade-in slide-in-from-bottom-3 duration-400">
                   {/* Tabs */}
-                  <div className="flex gap-1 bg-paw-sky/60 rounded-2xl p-1 mb-3">
+                  <div className="flex gap-1 bg-paper rounded-sm p-1 mb-3">
                     <button
                       onClick={() => setCompletedTab("summary")}
                       className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                         completedTab === "summary"
-                          ? "bg-white shadow-soft text-paw-brown"
-                          : "text-paw-brown/50 hover:text-paw-brown/80"
+                          ? "bg-white  text-ink"
+                          : "text-muted hover:text-ink/80"
                       }`}
                     >
                       Summary
@@ -633,13 +602,13 @@ function DemoPageInner() {
                       onClick={() => setCompletedTab("transcript")}
                       className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                         completedTab === "transcript"
-                          ? "bg-white shadow-soft text-paw-brown"
-                          : "text-paw-brown/50 hover:text-paw-brown/80"
+                          ? "bg-white  text-ink"
+                          : "text-muted hover:text-ink/80"
                       }`}
                     >
                       Full Transcript
                       {transcriptObject && transcriptObject.length > 0 && (
-                        <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-paw-orange/20 text-paw-orange text-[10px]">
+                        <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-accent/10 text-accent text-[10px]">
                           ✓
                         </span>
                       )}
@@ -648,12 +617,12 @@ function DemoPageInner() {
 
                   {/* Summary tab */}
                   {completedTab === "summary" && (
-                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4">
+                    <div className="bg-green-50 border-2 border-green-200 rounded-sm p-4">
                       <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Call Summary</p>
                       {summary ? (
-                        <p className="text-sm text-paw-brown/80 leading-relaxed">{summary}</p>
+                        <p className="text-sm text-ink/80 leading-relaxed">{summary}</p>
                       ) : (
-                        <p className="text-sm text-paw-brown/50 italic">
+                        <p className="text-sm text-muted italic">
                           Summary generates a few seconds after the call ends — refresh if it&apos;s missing.
                         </p>
                       )}
@@ -662,14 +631,14 @@ function DemoPageInner() {
 
                   {/* Transcript tab */}
                   {completedTab === "transcript" && (
-                    <div className="bg-white border-2 border-paw-brown/8 rounded-2xl p-4">
-                      <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider mb-3">
+                    <div className="bg-white border-2 border-line rounded-sm p-4">
+                      <p className="text-xs font-bold text-muted uppercase tracking-wider mb-3">
                         Conversation · actions highlighted
                       </p>
                       {transcriptObject && transcriptObject.length > 0 ? (
                         <TranscriptViewer turns={transcriptObject} />
                       ) : (
-                        <p className="text-sm text-paw-brown/40 text-center py-3 italic">
+                        <p className="text-sm text-muted text-center py-3 italic">
                           Transcript not captured for this call — it&apos;ll appear on your next demo.
                         </p>
                       )}
@@ -681,19 +650,19 @@ function DemoPageInner() {
               {/* ── Waiting footer ── */}
               {livePhase === "waiting" && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-center gap-3 py-1 text-paw-brown/40 text-xs font-bold">
+                  <div className="flex items-center justify-center gap-3 py-1 text-muted text-xs font-bold">
                     <span className="flex gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "120ms" }} />
-                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "240ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "120ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "240ms" }} />
                     </span>
                     Waiting for your call
                   </div>
-                  <div className="flex items-center justify-center gap-3 text-xs text-paw-brown/40 font-semibold">
+                  <div className="flex items-center justify-center gap-3 text-xs text-muted font-semibold">
                     <span>3-min demo call</span>
-                    <span className="text-paw-brown/20">&middot;</span>
+                    <span className="text-ink/20">&middot;</span>
                     <span>1 call per number</span>
-                    <span className="text-paw-brown/20">&middot;</span>
+                    <span className="text-ink/20">&middot;</span>
                     <span>Full transcript after</span>
                   </div>
                   <button
@@ -716,7 +685,7 @@ function DemoPageInner() {
                           .catch(() => { /* stay on waiting */ });
                       }
                     }}
-                    className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
+                    className="w-full py-3 rounded-full border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
                   >
                     I&apos;ve already called — check status
                   </button>
@@ -727,16 +696,16 @@ function DemoPageInner() {
               {livePhase === "completed" && (
                 <div id="lead-form" className="mt-2 space-y-4 animate-in fade-in duration-400">
                   {leadSubmitted ? (
-                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
-                      <div className="text-3xl mb-2">🎉</div>
+                    <div className="bg-green-50 border-2 border-green-200 rounded-sm p-6 text-center">
+                      <p className="font-display text-2xl text-ink mb-2">Received.</p>
                       <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
                       <p className="text-sm text-green-700">We&apos;ll reach out to set up Call Slot for your shop.</p>
                     </div>
                   ) : (
                     <>
-                      <div className="bg-paw-sky/60 rounded-2xl p-4 text-center">
-                        <p className="text-sm font-bold text-paw-brown mb-1">Want this for your shop?</p>
-                        <p className="text-xs text-paw-brown/50">Leave your info and we&apos;ll set you up personally.</p>
+                      <div className="bg-paper rounded-sm p-4 text-center">
+                        <p className="text-sm font-bold text-ink mb-1">Want this for your shop?</p>
+                        <p className="text-xs text-muted">Leave your info and we&apos;ll set you up personally.</p>
                       </div>
                       <form onSubmit={handleLeadSubmit} className="space-y-3">
                         <input
@@ -745,7 +714,7 @@ function DemoPageInner() {
                           required
                           value={leadName}
                           onChange={(e) => setLeadName(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                          className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                         />
                         <input
                           type="email"
@@ -753,7 +722,7 @@ function DemoPageInner() {
                           required
                           value={leadEmail}
                           onChange={(e) => setLeadEmail(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                          className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                         />
                         <input
                           type="tel"
@@ -761,7 +730,7 @@ function DemoPageInner() {
                           required
                           value={leadPhone}
                           onChange={(e) => setLeadPhone(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                          className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                         />
                         <input
                           type="text"
@@ -769,13 +738,13 @@ function DemoPageInner() {
                           required
                           value={leadBusiness}
                           onChange={(e) => setLeadBusiness(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                          className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                         />
                         {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
                         <button
                           type="submit"
                           disabled={leadLoading}
-                          className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                          className="w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all  disabled:opacity-50"
                         >
                           {leadLoading ? "Sending..." : "Get in Touch"}
                         </button>
@@ -784,11 +753,11 @@ function DemoPageInner() {
                   )}
                   <Link
                     href="/onboarding"
-                    className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
+                    className="block w-full py-3 text-center text-sm font-bold text-muted hover:text-ink transition-colors"
                   >
                     Or set it up yourself →
                   </Link>
-                  <button onClick={resetDemo} className="w-full py-2 text-xs text-paw-brown/40 hover:text-paw-brown/60 transition-colors">
+                  <button onClick={resetDemo} className="w-full py-2 text-xs text-muted hover:text-muted transition-colors">
                     Start over
                   </button>
                 </div>
@@ -798,16 +767,15 @@ function DemoPageInner() {
 
           {/* Cooldown */}
           {livePhase === "cooldown" && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-10 text-center animate-in fade-in duration-300">
-              <div className="text-4xl mb-4">⏳</div>
-              <h2 className="text-2xl font-extrabold text-paw-brown mb-3">You&apos;ve already tried the live demo</h2>
-              <p className="text-paw-brown/60 font-medium mb-6 leading-relaxed">
+            <div className="bg-surface rounded-sm border-4 border-white  p-10 text-center animate-in fade-in duration-300">
+              <h2 className="text-2xl font-extrabold text-ink mb-3">You&apos;ve already tried the live demo</h2>
+              <p className="text-muted font-medium mb-6 leading-relaxed">
                 Liked what you heard? Leave your info and we&apos;ll set you up personally.
               </p>
               <div id="lead-form" className="space-y-4">
                 {leadSubmitted ? (
-                  <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
-                    <div className="text-3xl mb-2">🎉</div>
+                  <div className="bg-green-50 border-2 border-green-200 rounded-sm p-6 text-center">
+                    <p className="font-display text-2xl text-ink mb-2">Received.</p>
                     <p className="text-lg font-bold text-green-800 mb-1">Thanks! We&apos;ll be in touch soon.</p>
                     <p className="text-sm text-green-700">We&apos;ll reach out to set up Call Slot for your shop.</p>
                   </div>
@@ -819,7 +787,7 @@ function DemoPageInner() {
                       required
                       value={leadName}
                       onChange={(e) => setLeadName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                     />
                     <input
                       type="email"
@@ -827,7 +795,7 @@ function DemoPageInner() {
                       required
                       value={leadEmail}
                       onChange={(e) => setLeadEmail(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                     />
                     <input
                       type="tel"
@@ -835,7 +803,7 @@ function DemoPageInner() {
                       required
                       value={leadPhone}
                       onChange={(e) => setLeadPhone(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                     />
                     <input
                       type="text"
@@ -843,13 +811,13 @@ function DemoPageInner() {
                       required
                       value={leadBusiness}
                       onChange={(e) => setLeadBusiness(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-paw-brown/10 bg-white text-paw-brown font-medium placeholder:text-paw-brown/30 focus:outline-none focus:border-paw-brown/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-line bg-white text-ink font-medium placeholder:text-muted focus:outline-none focus:border-ink/30 transition-colors"
                     />
                     {leadError && <p className="text-sm font-medium text-red-500 text-center">{leadError}</p>}
                     <button
                       type="submit"
                       disabled={leadLoading}
-                      className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                      className="w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all  disabled:opacity-50"
                     >
                       {leadLoading ? "Sending..." : "Get in Touch"}
                     </button>
@@ -858,7 +826,7 @@ function DemoPageInner() {
               </div>
               <Link
                 href="/onboarding"
-                className="block w-full py-3 text-center text-sm font-bold text-paw-brown/50 hover:text-paw-brown transition-colors"
+                className="block w-full py-3 text-center text-sm font-bold text-muted hover:text-ink transition-colors"
               >
                 Or set it up yourself →
               </Link>
@@ -867,20 +835,19 @@ function DemoPageInner() {
 
           {/* Demo unavailable */}
           {livePhase === "unavailable" && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-10 text-center animate-in fade-in duration-300">
-              <div className="text-4xl mb-4">😅</div>
-              <h2 className="text-2xl font-extrabold text-paw-brown mb-3">All demo lines are busy</h2>
-              <p className="text-paw-brown/60 font-medium mb-8">
+            <div className="bg-surface rounded-sm border-4 border-white  p-10 text-center animate-in fade-in duration-300">
+              <h2 className="text-2xl font-extrabold text-ink mb-3">All demo lines are busy</h2>
+              <p className="text-muted font-medium mb-8">
                 Every line is in use right now. Try again in a minute, or just sign up — setup takes 5 minutes.
               </p>
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => startLiveDemo()}
-                  className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
+                  className="w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all "
                 >
                   Try again
                 </button>
-                <Link href="/onboarding" className="block w-full py-3 rounded-full border-2 border-paw-brown/20 font-bold text-paw-brown text-center hover:bg-paw-sky transition-colors">
+                <Link href="/onboarding" className="block w-full py-3 rounded-full border-2 border-line font-bold text-ink text-center hover:bg-paper transition-colors">
                   Sign up instead
                 </Link>
               </div>
@@ -889,13 +856,12 @@ function DemoPageInner() {
 
           {/* Generic error */}
           {livePhase === "error" && (
-            <div className="bg-paw-cream rounded-[2rem] border-4 border-white shadow-soft p-10 text-center animate-in fade-in duration-300">
-              <div className="text-4xl mb-4">⚡</div>
-              <h2 className="text-2xl font-extrabold text-paw-brown mb-3">Something went wrong</h2>
-              <p className="text-paw-brown/60 font-medium mb-8">Couldn&apos;t start the demo. Please try again.</p>
+            <div className="bg-surface rounded-sm border-4 border-white  p-10 text-center animate-in fade-in duration-300">
+              <h2 className="text-2xl font-extrabold text-ink mb-3">Something went wrong</h2>
+              <p className="text-muted font-medium mb-8">Couldn&apos;t start the demo. Please try again.</p>
               <button
                 onClick={() => startLiveDemo()}
-                className="w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft"
+                className="w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all "
               >
                 Try again
               </button>
@@ -908,11 +874,11 @@ function DemoPageInner() {
       {/* Post-demo conversion CTA — hidden when completed or cooldown (they have their own CTAs) */}
       {livePhase !== "completed" && livePhase !== "cooldown" && <section className="relative z-10 px-4 pb-12">
         <div className="max-w-xl mx-auto">
-          <div className="bg-paw-brown rounded-[2rem] p-8 sm:p-10 text-center relative overflow-hidden">
-            <div className="absolute -right-16 -top-16 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
-            <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-paw-orange/10 rounded-full blur-3xl" />
+          <div className="bg-ink rounded-sm p-8 sm:p-10 text-center relative overflow-hidden">
+            <div className="absolute -right-16 -top-16 w-48 h-48 bg-line rounded-full blur-3xl" />
+            <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
             <div className="relative z-10">
-              <p className="text-paw-amber text-sm font-bold uppercase tracking-widest mb-3">Ready to go live?</p>
+              <p className="text-accent text-sm font-bold uppercase tracking-widest mb-3">Ready to go live?</p>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight mb-3">
                 Want this for your shop?
               </h2>
@@ -921,8 +887,8 @@ function DemoPageInner() {
               </p>
               <div id="bottom-lead-form">
                 {leadSubmitted ? (
-                  <div className="bg-white/10 border-2 border-white/20 rounded-2xl p-6 text-center">
-                    <div className="text-3xl mb-2">🎉</div>
+                  <div className="bg-white/10 border-2 border-white/20 rounded-sm p-6 text-center">
+                    <p className="font-display text-2xl text-ink mb-2">Received.</p>
                     <p className="text-lg font-bold text-white mb-1">Thanks! We&apos;ll be in touch soon.</p>
                     <p className="text-sm text-white/60">We&apos;ll reach out to set up Call Slot for your shop.</p>
                   </div>
@@ -934,7 +900,7 @@ function DemoPageInner() {
                       required
                       value={leadName}
                       onChange={(e) => setLeadName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
                     />
                     <input
                       type="email"
@@ -942,7 +908,7 @@ function DemoPageInner() {
                       required
                       value={leadEmail}
                       onChange={(e) => setLeadEmail(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
                     />
                     <input
                       type="tel"
@@ -950,7 +916,7 @@ function DemoPageInner() {
                       required
                       value={leadPhone}
                       onChange={(e) => setLeadPhone(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
                     />
                     <input
                       type="text"
@@ -958,13 +924,13 @@ function DemoPageInner() {
                       required
                       value={leadBusiness}
                       onChange={(e) => setLeadBusiness(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                      className="w-full px-4 py-3 rounded-sm border-2 border-white/10 bg-white/10 text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
                     />
                     {leadError && <p className="text-sm font-medium text-red-300 text-center">{leadError}</p>}
                     <button
                       type="submit"
                       disabled={leadLoading}
-                      className="w-full py-4 bg-paw-amber text-paw-brown rounded-full font-bold text-lg hover:bg-white transition-all shadow-lg disabled:opacity-50"
+                      className="w-full py-4 bg-line text-ink rounded-sm font-medium text-lg hover:bg-white transition-all  disabled:opacity-50"
                     >
                       {leadLoading ? "Sending..." : "Get in Touch"}
                     </button>
@@ -989,7 +955,7 @@ function DemoPageInner() {
           <div className="max-w-xl mx-auto px-4 pb-4">
             <button
               onClick={() => document.getElementById("bottom-lead-form")?.scrollIntoView({ behavior: "smooth" })}
-              className="flex items-center justify-center gap-2 w-full py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all"
+              className="flex items-center justify-center gap-2 w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg  hover:bg-opacity-90 transition-all"
             >
               Ready to get Call Slot for your shop?
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
@@ -998,8 +964,8 @@ function DemoPageInner() {
         </div>
       )}
 
-      <footer className="relative z-10 text-center py-6 text-xs text-paw-brown/40 font-medium">
-        © {new Date().getFullYear()} Call Slot · <Link href="/" className="hover:text-paw-brown transition-colors">ringpaw.com</Link>
+      <footer className="relative z-10 text-center py-6 text-xs text-muted font-medium">
+        © {new Date().getFullYear()} Call Slot · <Link href="/" className="hover:text-ink transition-colors">ringpaw.com</Link>
       </footer>
     </div>
   );

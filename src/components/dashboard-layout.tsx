@@ -13,7 +13,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/dashboard",
     label: "Dashboard",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="3" y="3" width="7" height="7" />
         <rect x="14" y="3" width="7" height="7" />
         <rect x="14" y="14" width="7" height="7" />
@@ -25,7 +25,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/calls",
     label: "Call Log",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     ),
@@ -34,7 +34,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/no-shows",
     label: "No-Shows",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
         <path d="M15 9l-6 6" />
         <path d="M9 9l6 6" />
@@ -46,7 +46,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     label: "Today",
     tourId: "tour-nav-today",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
       </svg>
     ),
@@ -55,7 +55,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/settings/profile",
     label: "Business",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
         <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
         <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
@@ -70,7 +70,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/settings/pricing",
     label: "Services & Pricing",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <line x1="12" y1="1" x2="12" y2="23" />
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
@@ -80,8 +80,8 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/settings/billing",
     label: "Billing",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="2" y="5" width="20" height="14" rx="1" />
         <line x1="2" y1="10" x2="22" y2="10" />
       </svg>
     ),
@@ -90,7 +90,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/settings/reviews",
     label: "Reviews",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
     ),
@@ -99,8 +99,8 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     href: "/settings/calendar",
     label: "Bookings",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="4" width="18" height="18" rx="1" ry="1" />
         <line x1="16" y1="2" x2="16" y2="6" />
         <line x1="8" y1="2" x2="8" y2="6" />
         <line x1="3" y1="10" x2="21" y2="10" />
@@ -112,7 +112,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
     label: "Call answering",
     tourId: "tour-nav-ai",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
@@ -128,7 +128,7 @@ const ownerNavItem: { href: string; label: string; tourId?: string; icon: React.
   href: "/owner",
   label: "Owner",
   icon: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M3 3v18h18" />
       <path d="M7 14l4-4 3 3 5-5" />
       <path d="M19 8v5h-5" />
@@ -188,26 +188,23 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  void usage;
+
   return (
-    <div className="min-h-screen bg-paw-sky flex">
-      {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-paw-cream/80 backdrop-blur-xl border-b border-white/50 px-4 py-3 flex items-center justify-between">
-        <BrandLogo
-          mobileWidth={138}
-          desktopWidth={172}
-          className="min-w-0 max-w-[138px]"
-        />
+    <div className="flex min-h-screen bg-paper">
+      <div className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between border-b border-line bg-paper px-4 py-3 lg:hidden">
+        <BrandLogo className="text-[1.35rem] sm:text-[1.35rem]" />
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 text-paw-brown"
+          className="p-2 text-ink"
         >
           {sidebarOpen ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="18" x2="21" y2="18" />
@@ -216,41 +213,34 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      {/* Sidebar */}
       <aside
-        className={`fixed left-4 right-4 top-20 bottom-4 z-50 w-auto rounded-[2rem] bg-paw-cream/90 backdrop-blur-xl border border-white/60 p-6 shadow-2xl flex flex-col gap-6 overflow-hidden transform transition-transform lg:translate-x-0 lg:static lg:inset-auto lg:left-auto lg:right-auto lg:top-auto lg:bottom-auto lg:z-auto lg:w-72 lg:rounded-none lg:border-r lg:border lg:border-white/50 lg:bg-paw-cream/50 lg:p-8 lg:shadow-none ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-[120%]"
+        className={`fixed bottom-0 left-0 top-14 z-50 flex w-64 flex-col gap-6 overflow-hidden border-r border-line bg-paper p-6 transition-transform lg:static lg:inset-auto lg:top-auto lg:z-auto lg:w-60 lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Logo and account */}
-        <div className="space-y-4">
-          <BrandLogo
-            mobileWidth={168}
-            desktopWidth={212}
-            className="max-w-[212px]"
-          />
+        <div className="space-y-5">
+          <div className="hidden lg:block">
+            <BrandLogo />
+          </div>
 
-          <div className="flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-paw-brown">
-                {session?.user?.name || "Call Slot account"}
-              </p>
-              <p className="truncate text-xs text-paw-brown/60">
-                {session?.user?.email || "Signed in"}
-              </p>
-            </div>
+          <div className="border-t border-line pt-4">
+            <p className="truncate text-[13px] font-medium text-ink">
+              {session?.user?.name || "Call Slot account"}
+            </p>
+            <p className="truncate text-[12px] text-muted">
+              {session?.user?.email || "Signed in"}
+            </p>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="ml-3 shrink-0 rounded-xl bg-paw-brown px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-paw-cream hover:opacity-90 transition-opacity"
+              className="mt-3 text-[12px] text-muted underline-offset-2 hover:text-ink hover:underline"
             >
-              Sign Out
+              Sign out
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain pr-1">
-          {/* Nav */}
-          <nav className="space-y-2">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <nav className="space-y-0.5">
             {finalNavItems.map((item) => {
               const isActive =
                 pathname === item.href ||
@@ -261,10 +251,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
                   {...(item.tourId ? { "data-tour": item.tourId } : {})}
-                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${
+                  className={`sidebar-link flex items-center gap-3 border border-transparent px-2 py-2 text-[13px] transition-colors ${
                     isActive
                       ? "active"
-                      : "text-paw-brown/60 hover:text-paw-brown hover:bg-white/50"
+                      : "text-muted hover:bg-surface hover:text-ink"
                   }`}
                 >
                   {item.icon}
@@ -273,33 +263,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-45 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-ink/30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Main content */}
-      <main className="flex-1 p-6 lg:p-10 overflow-y-auto min-h-screen pt-20 lg:pt-10">
+      <main className="min-h-screen flex-1 overflow-y-auto p-6 pt-20 lg:p-10 lg:pt-10">
         {showSubBanner && (
-          <div className="sticky top-20 lg:top-0 z-10 mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
-            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
+          <div className="sticky top-20 z-10 mb-6 flex items-center gap-4 border border-line bg-surface px-5 py-4 lg:top-0">
             <div className="flex-1">
-              <p className="font-bold text-amber-800 text-sm">No active subscription</p>
-              <p className="text-amber-700/70 text-sm">Call Slot is paused. Subscribe to start taking forwarded calls.</p>
+              <p className="text-sm font-medium text-ink">No active subscription</p>
+              <p className="text-sm text-muted">Call Slot is paused. Subscribe to start taking forwarded calls.</p>
             </div>
-            <Link href="/settings/billing" className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
+            <Link href="/settings/billing" className="shrink-0 bg-accent px-4 py-2 text-[13px] text-accent-foreground hover:bg-accent-hover">
               Subscribe
             </Link>
           </div>

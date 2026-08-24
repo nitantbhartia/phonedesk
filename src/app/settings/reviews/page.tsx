@@ -58,7 +58,7 @@ export default function ReviewsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-32 bg-white/50 rounded-3xl animate-pulse" />
+        <div className="h-32 bg-white/50 rounded-sm animate-pulse" />
       </div>
     );
   }
@@ -66,16 +66,16 @@ export default function ReviewsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-extrabold text-paw-brown">Google Reviews</h1>
-        <p className="text-paw-brown/60 font-medium mt-1">
+        <h1 className="font-display text-4xl tracking-tight text-ink">Reviews</h1>
+        <p className="text-muted font-medium mt-1">
           Automatically send a Google review request after each appointment. Paste your review link once and Call Slot handles the rest.
         </p>
       </div>
 
       {/* Setup */}
-      <div className="bg-white rounded-3xl shadow-card border border-white p-8">
-        <h2 className="font-bold text-paw-brown text-lg mb-4">Google Review Link</h2>
-        <p className="text-sm text-paw-brown/60 mb-4">
+      <div className="bg-white rounded-sm  border border-white p-8">
+        <h2 className="font-bold text-ink text-lg mb-4">Google Review Link</h2>
+        <p className="text-sm text-muted mb-4">
           Paste your direct Google review link. Customers will receive an SMS 2 hours after pickup with this link.
         </p>
         <div className="flex gap-3">
@@ -84,11 +84,11 @@ export default function ReviewsPage() {
             value={googleReviewUrl}
             onChange={(e) => setGoogleReviewUrl(e.target.value)}
             placeholder="https://g.page/r/your-business/review"
-            className="flex-1 px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+            className="flex-1 px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
           />
           <button
             onClick={saveConfig}
-            className="px-6 py-3 bg-paw-brown text-white rounded-xl font-bold text-sm shadow-soft hover:bg-opacity-90 transition-colors"
+            className="px-6 py-3 bg-ink text-white rounded-xl font-bold text-sm  hover:bg-opacity-90 transition-colors"
           >
             {saved ? "Saved!" : "Save"}
           </button>
@@ -97,26 +97,26 @@ export default function ReviewsPage() {
       </div>
 
       {/* How it works */}
-      <div className="bg-paw-brown rounded-4xl p-10 text-paw-cream relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
-        <h3 className="text-xl font-bold text-paw-amber mb-6">How Review Automation Works</h3>
+      <div className="bg-ink rounded-sm p-10 text-surface relative overflow-hidden">
+        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-line rounded-full blur-3xl" />
+        <h3 className="text-xl font-bold text-accent mb-6">How Review Automation Works</h3>
         <div className="grid md:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-paw-amber font-bold">1</div>
+            <div className="w-10 h-10 rounded-sm bg-white/10 flex items-center justify-center text-accent font-bold">1</div>
             <h4 className="font-bold text-sm">Auto-Trigger</h4>
             <p className="text-xs text-white/60">
               2 hours after you mark a pet as &quot;Picked Up&quot;, the system sends a friendly review request SMS.
             </p>
           </div>
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-paw-amber font-bold">2</div>
+            <div className="w-10 h-10 rounded-sm bg-white/10 flex items-center justify-center text-accent font-bold">2</div>
             <h4 className="font-bold text-sm">Smart Throttling</h4>
             <p className="text-xs text-white/60">
               Each customer is only asked once every 90 days. No spam, no annoying repeat requests.
             </p>
           </div>
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-paw-amber font-bold">3</div>
+            <div className="w-10 h-10 rounded-sm bg-white/10 flex items-center justify-center text-accent font-bold">3</div>
             <h4 className="font-bold text-sm">Direct Link</h4>
             <p className="text-xs text-white/60">
               Customers tap straight to the Google review box — no landing page, no friction. Maximum conversion.
@@ -126,14 +126,14 @@ export default function ReviewsPage() {
       </div>
 
       {/* Sample message preview */}
-      <div className="bg-white rounded-3xl shadow-card border border-white p-8">
-        <h2 className="font-bold text-paw-brown text-lg mb-4">Message Preview</h2>
-        <div className="bg-paw-cream/50 rounded-2xl p-6 border border-paw-brown/5">
-          <p className="text-sm text-paw-brown/80 leading-relaxed">
-            So glad Buddy got pampered today at Your Business! If you have 30 seconds, a Google review would mean the world to us: <span className="text-paw-orange underline">[your review link]</span>
+      <div className="bg-white rounded-sm  border border-white p-8">
+        <h2 className="font-bold text-ink text-lg mb-4">Message Preview</h2>
+        <div className="bg-surface rounded-sm p-6 border border-line">
+          <p className="text-sm text-ink/80 leading-relaxed">
+            So glad Buddy got pampered today at Your Business! If you have 30 seconds, a Google review would mean the world to us: <span className="text-accent underline">[your review link]</span>
           </p>
         </div>
-        <p className="text-xs text-paw-brown/40 mt-3">
+        <p className="text-xs text-muted mt-3">
           Sent automatically 2 hours after marking the pet as picked up
         </p>
       </div>

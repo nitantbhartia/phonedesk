@@ -38,13 +38,12 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
 
   if (!appointment) {
     return (
-      <div className="min-h-screen bg-paw-cream flex items-center justify-center px-4">
-        <div className="rounded-3xl bg-white p-10 shadow-soft text-center max-w-md w-full">
-          <div className="text-5xl mb-4">🐾</div>
-          <h1 className="text-xl font-bold text-paw-brown mb-2">
+      <div className="min-h-screen bg-surface flex items-center justify-center px-4">
+        <div className="rounded-sm border border-line bg-surface p-10 text-center max-w-md w-full">
+          <h1 className="font-display text-2xl tracking-tight text-ink mb-2">
             Appointment not found
           </h1>
-          <p className="text-paw-brown/60 text-sm">
+          <p className="text-muted text-sm">
             This confirmation link is invalid or has expired. Please contact
             your salon directly for assistance.
           </p>
@@ -78,90 +77,80 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
   );
 
   const prepTips = [
-    {
-      icon: "🛁",
-      tip: "Don't bathe your pet 24 hours before the appointment",
-    },
-    {
-      icon: "⏰",
-      tip: "Arrive 5 minutes early so your pet has time to settle",
-    },
-    {
-      icon: "💉",
-      tip: "Bring vaccination records if this is your first visit",
-    },
+    "Don't bathe your pet 24 hours before the appointment",
+    "Arrive 5 minutes early so your pet has time to settle",
+    "Bring vaccination records if this is your first visit",
   ];
 
   return (
-    <div className="min-h-screen bg-paw-cream py-10 px-4">
+    <div className="min-h-screen bg-surface py-10 px-4">
       <div className="mx-auto max-w-lg space-y-4">
 
         {/* Header card */}
-        <div className="rounded-4xl bg-paw-brown p-8 text-center shadow-soft">
-          <div className="text-5xl mb-3">🐾</div>
-          <h1 className="text-2xl font-extrabold text-paw-cream leading-tight">
-            Your appointment is confirmed!
+        <div className="rounded-sm border border-line bg-ink p-8 text-center">
+          <h1 className="font-display text-3xl tracking-tight text-surface leading-tight">
+            Your appointment is confirmed
           </h1>
           {appointment.customerName && (
-            <p className="text-paw-amber mt-1 font-medium">
+            <p className="text-accent mt-1 font-medium">
               Hi {appointment.customerName}, we can&apos;t wait to see you.
             </p>
           )}
         </div>
 
         {/* Appointment details card */}
-        <div className="rounded-4xl bg-white p-6 shadow-soft space-y-5">
+        <div className="rounded-sm bg-white p-6  space-y-5">
 
           {/* Pet + Service */}
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-paw-brown/40 mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted mb-0.5">
                 Pet
               </p>
-              <p className="text-2xl font-extrabold text-paw-brown">
+              <p className="text-2xl font-extrabold text-ink">
                 {appointment.petName ?? "Your Pet"}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs font-bold uppercase tracking-widest text-paw-brown/40 mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted mb-0.5">
                 Service
               </p>
-              <p className="text-lg font-bold text-paw-amber">
+              <p className="text-lg font-bold text-accent">
                 {appointment.serviceName ?? "Grooming"}
               </p>
             </div>
           </div>
 
-          <div className="h-px bg-paw-brown/10" />
+          <div className="h-px bg-ink/5" />
 
           {/* Date & time */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-paw-brown/40 mb-1">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-1">
               Date &amp; Time
             </p>
-            <p className="text-paw-brown font-semibold text-base">
+            <p className="text-ink font-semibold text-base">
               {formattedStart}
             </p>
-            <p className="text-paw-brown/50 text-sm">
+            <p className="text-muted text-sm">
               Until {formattedEnd}
             </p>
           </div>
 
-          <div className="h-px bg-paw-brown/10" />
+          <div className="h-px bg-ink/5" />
 
           {/* Salon info */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-paw-brown/40 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               Salon
             </p>
-            <p className="text-paw-brown font-bold text-lg">{business.name}</p>
+            <p className="text-ink font-bold text-lg">{business.name}</p>
             {businessAddress && (
-              <p className="text-paw-brown/60 text-sm mt-0.5">{businessAddress}</p>
+              <p className="text-muted text-sm mt-0.5">{businessAddress}</p>
             )}
             {business.phone && (
               <a
                 href={`tel:${business.phone}`}
-                className="inline-flex items-center gap-1.5 mt-1 text-paw-amber font-semibold text-sm hover:text-paw-brown transition-colors"
+                className="inline-flex items-center gap-1.5 mt-1 text-accent font-semibold text-sm hover:text-ink transition-colors"
               >
                 <svg
                   width="14"
@@ -186,7 +175,7 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
           href={calendarUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full rounded-4xl bg-paw-amber py-4 text-paw-brown font-bold text-base shadow-soft hover:bg-paw-amber/90 transition-colors"
+          className="flex items-center justify-center gap-2 w-full rounded-sm bg-accent py-3 text-accent-foreground text-[13px] hover:bg-accent-hover transition-colors"
         >
           <svg
             width="18"
@@ -207,35 +196,34 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
         </a>
 
         {/* Grooming prep tips */}
-        <div className="rounded-4xl bg-white p-6 shadow-soft">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-paw-brown/40 mb-4">
+        <div className="rounded-sm bg-white p-6 ">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted mb-4">
             Grooming Prep Tips
           </h2>
           <ul className="space-y-3">
-            {prepTips.map(({ icon, tip }) => (
-              <li key={tip} className="flex items-start gap-3">
-                <span className="text-xl leading-none mt-0.5">{icon}</span>
-                <p className="text-paw-brown/80 text-sm leading-relaxed">{tip}</p>
+            {prepTips.map((tip) => (
+              <li key={tip} className="text-ink/80 text-sm leading-relaxed">
+                {tip}
               </li>
             ))}
           </ul>
         </div>
 
         {/* See you soon message */}
-        <div className="rounded-4xl bg-paw-amber/20 border border-paw-amber/30 p-6 text-center shadow-soft">
-          <p className="text-paw-brown font-bold text-lg">
-            See you soon! 🐶
+        <div className="rounded-sm bg-line border border-line p-6 text-center ">
+          <p className="text-ink font-bold text-lg">
+            See you soon.
           </p>
-          <p className="text-paw-brown/60 text-sm mt-1">
+          <p className="text-muted text-sm mt-1">
             — The team at {business.name}
           </p>
         </div>
 
-        <p className="text-center text-paw-brown/30 text-xs pb-4">
+        <p className="text-center text-muted text-xs pb-4">
           Powered by{" "}
           <a
             href="https://ringpaw.com"
-            className="hover:text-paw-brown/60 transition-colors"
+            className="hover:text-muted transition-colors"
             target="_blank"
             rel="noopener noreferrer"
           >

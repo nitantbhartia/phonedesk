@@ -141,8 +141,8 @@ export default function CallLogPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-paw-brown">Call Log</h1>
-          <p className="text-paw-brown/60 font-medium mt-1">
+          <h1 className="font-display text-4xl tracking-tight text-ink">Call log</h1>
+          <p className="text-muted font-medium mt-1">
             Every forwarded call Call Slot picked up — tap any row to see what was booked.
           </p>
         </div>
@@ -150,7 +150,7 @@ export default function CallLogPage() {
           <button
             onClick={exportCSV}
             disabled={calls.length === 0}
-            className="px-5 py-2.5 bg-white rounded-full font-bold text-sm shadow-sm border border-paw-brown/5 flex items-center gap-2 hover:bg-paw-cream transition-colors disabled:opacity-40"
+            className="px-5 py-2.5 bg-white rounded-sm font-medium text-sm  border border-line flex items-center gap-2 hover:bg-surface transition-colors disabled:opacity-40"
           >
             <svg
               width="18"
@@ -170,7 +170,7 @@ export default function CallLogPage() {
       </div>
 
       {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
           <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
           <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
         </div>
@@ -193,7 +193,7 @@ export default function CallLogPage() {
             fill="none"
             stroke="currentColor"
             strokeWidth="2.5"
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-paw-brown/30 pointer-events-none"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
           >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -203,12 +203,12 @@ export default function CallLogPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by name, phone, or transcript…"
-            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full border border-paw-brown/10 text-sm font-medium focus:outline-none focus:border-paw-amber transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-surface rounded-sm border border-line text-sm font-medium focus:outline-none focus:border-ink transition-all"
           />
         </div>
         <button
           type="submit"
-          className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm hover:bg-opacity-90 transition-colors"
+          className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm hover:bg-opacity-90 transition-colors"
         >
           Search
         </button>
@@ -216,7 +216,7 @@ export default function CallLogPage() {
           <button
             type="button"
             onClick={() => { setSearch(""); setSearchInput(""); setPage(0); }}
-            className="px-4 py-2.5 bg-white rounded-full font-bold text-sm border border-paw-brown/10 hover:bg-paw-cream transition-colors text-paw-brown/60"
+            className="px-4 py-2.5 bg-white rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors text-muted"
           >
             Clear
           </button>
@@ -232,10 +232,10 @@ export default function CallLogPage() {
               setFilter(f.value);
               setPage(0);
             }}
-            className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
+            className={`px-5 py-2 rounded-sm text-sm font-medium transition-all ${
               filter === f.value
-                ? "bg-paw-brown text-white shadow-sm"
-                : "bg-white text-paw-brown/60 hover:bg-paw-cream border border-paw-brown/5"
+                ? "bg-ink text-white "
+                : "bg-white text-muted hover:bg-surface border border-line"
             }`}
           >
             {f.label}
@@ -244,73 +244,52 @@ export default function CallLogPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-4xl shadow-soft overflow-hidden border border-white">
+      <div className="bg-white rounded-sm  overflow-hidden border border-white">
         {loading ? (
           <div className="p-8 space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="h-16 bg-paw-cream/50 rounded-2xl animate-pulse"
+                className="h-16 bg-surface rounded-sm animate-pulse"
               />
             ))}
           </div>
         ) : calls.length === 0 ? (
-          <div className="text-center py-20 text-paw-brown/50">
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="mx-auto mb-4 opacity-50"
-            >
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-            </svg>
-            <p className="font-bold text-lg">No calls found</p>
-            <p className="text-sm mt-1">
+          <div className="px-8 py-12 text-muted">
+            <p className="text-sm">
               {filter !== "all"
-                ? "Try a different filter."
-                : "Make a test call to your Call Slot number to see it in action."}
+                ? "No calls match this filter."
+                : "No forwarded calls yet."}
             </p>
-            {filter === "all" && (
-              <a
-                href="/settings/agent"
-                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-paw-brown text-paw-cream rounded-full font-bold text-sm hover:bg-opacity-90 transition-all shadow-soft"
-              >
-                View your number
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-              </a>
-            )}
           </div>
         ) : (
           <table className="w-full text-left">
-            <thead className="bg-paw-cream/50 border-b border-paw-brown/5">
+            <thead className="bg-surface border-b border-line">
               <tr>
-                <th className="px-4 sm:px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                <th className="px-4 sm:px-8 py-5 text-xs font-bold text-muted uppercase tracking-wider">
                   Caller &amp; Pet
                 </th>
-                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-muted uppercase tracking-wider hidden sm:table-cell">
                   Service
                 </th>
-                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-muted uppercase tracking-wider hidden sm:table-cell">
                   Status
                 </th>
-                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden md:table-cell">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-muted uppercase tracking-wider hidden md:table-cell">
                   Duration
                 </th>
-                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden md:table-cell">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-muted uppercase tracking-wider hidden md:table-cell">
                   Time
                 </th>
-                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">
+                <th className="px-4 sm:px-6 py-5 text-xs font-bold text-muted uppercase tracking-wider hidden sm:table-cell">
                   Quality
                 </th>
-                <th className="px-4 sm:px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">
+                <th className="px-4 sm:px-8 py-5 text-xs font-bold text-muted uppercase tracking-wider text-right">
                   Action
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-paw-brown/5">
+            <tbody className="divide-y divide-line">
               {calls.map((call) => {
                 const displayName =
                   call.callerName || "Unknown Caller";
@@ -319,9 +298,9 @@ export default function CallLogPage() {
                     ? getInitials(call.callerName)
                     : "?";
                 const bgColors = [
-                  "bg-paw-sky",
-                  "bg-paw-orange/20",
-                  "bg-paw-amber/30",
+                  "bg-paper",
+                  "bg-accent/10",
+                  "bg-line",
                   "bg-gray-100",
                 ];
                 const bgColor =
@@ -332,13 +311,13 @@ export default function CallLogPage() {
                     : "bg-gray-100";
                 const textColor =
                   call.callerName
-                    ? "text-paw-brown"
+                    ? "text-ink"
                     : "text-gray-400";
 
                 return (
                   <tr
                     key={call.id}
-                    className="hover:bg-paw-cream/30 transition-colors"
+                    className="hover:bg-surface transition-colors"
                   >
                     <td className="px-4 sm:px-8 py-4 sm:py-6">
                       <div className="flex items-center gap-3">
@@ -348,10 +327,10 @@ export default function CallLogPage() {
                           {initials}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-paw-brown truncate">
+                          <p className="font-bold text-ink truncate">
                             {displayName}
                           </p>
-                          <p className="text-sm text-paw-brown/50 truncate">
+                          <p className="text-sm text-muted truncate">
                             {call.appointment?.petName
                               ? `${call.appointment.petName} · ${call.callerPhone ? formatPhoneNumber(call.callerPhone) : "No number"}`
                               : call.callerPhone
@@ -363,11 +342,11 @@ export default function CallLogPage() {
                     </td>
                     <td className="px-4 sm:px-6 py-4 sm:py-6 hidden sm:table-cell">
                       {call.appointment?.serviceName ? (
-                        <span className="px-3 py-1 bg-paw-amber/20 text-paw-brown text-xs font-bold rounded-full">
+                        <span className="px-3 py-1 bg-line text-ink text-xs font-bold rounded-full">
                           {call.appointment.serviceName}
                         </span>
                       ) : (
-                        <span className="text-sm text-paw-brown/40 italic">
+                        <span className="text-sm text-muted italic">
                           Inquiry Only
                         </span>
                       )}
@@ -390,7 +369,7 @@ export default function CallLogPage() {
                           </span>
                         </div>
                       ) : call.status === "COMPLETED" ? (
-                        <div className="flex items-center gap-2 text-paw-orange">
+                        <div className="flex items-center gap-2 text-accent">
                           <svg
                             width="16"
                             height="16"
@@ -413,7 +392,7 @@ export default function CallLogPage() {
                           </span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-paw-brown/30">
+                        <div className="flex items-center gap-2 text-muted">
                           <svg
                             width="16"
                             height="16"
@@ -431,12 +410,12 @@ export default function CallLogPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 sm:px-6 py-4 sm:py-6 text-sm font-medium text-paw-brown/70 hidden md:table-cell">
+                    <td className="px-4 sm:px-6 py-4 sm:py-6 text-sm font-medium text-muted hidden md:table-cell">
                       {call.duration != null
                         ? formatDuration(call.duration)
                         : "--"}
                     </td>
-                    <td className="px-4 sm:px-6 py-4 sm:py-6 text-sm font-medium text-paw-brown/70 hidden md:table-cell">
+                    <td className="px-4 sm:px-6 py-4 sm:py-6 text-sm font-medium text-muted hidden md:table-cell">
                       {formatDateTime(call.createdAt)}
                     </td>
                     <td className="px-4 sm:px-6 py-4 sm:py-6 hidden sm:table-cell">
@@ -445,7 +424,7 @@ export default function CallLogPage() {
                     <td className="px-4 sm:px-8 py-4 sm:py-6 text-right">
                       <button
                         onClick={() => setSelectedCall(call)}
-                        className="text-paw-orange font-bold text-sm hover:underline"
+                        className="text-accent font-bold text-sm hover:underline"
                       >
                         View Transcript
                       </button>
@@ -459,8 +438,8 @@ export default function CallLogPage() {
 
         {/* Pagination */}
         {!loading && total > 0 && (
-          <div className="px-8 py-5 bg-paw-cream/20 flex justify-between items-center border-t border-paw-brown/5">
-            <p className="text-sm font-medium text-paw-brown/50">
+          <div className="px-8 py-5 bg-surface flex justify-between items-center border-t border-line">
+            <p className="text-sm font-medium text-muted">
               Showing {page * pageSize + 1}–
               {Math.min((page + 1) * pageSize, total)} of {total} calls
             </p>
@@ -468,7 +447,7 @@ export default function CallLogPage() {
               <button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 0}
-                className="p-2 rounded-lg border border-paw-brown/10 hover:bg-white transition-colors disabled:opacity-30"
+                className="p-2 rounded-lg border border-line hover:bg-white transition-colors disabled:opacity-30"
               >
                 <svg
                   width="16"
@@ -484,7 +463,7 @@ export default function CallLogPage() {
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={page >= totalPages - 1}
-                className="p-2 rounded-lg border border-paw-brown/10 hover:bg-white transition-colors disabled:opacity-30"
+                className="p-2 rounded-lg border border-line hover:bg-white transition-colors disabled:opacity-30"
               >
                 <svg
                   width="16"
@@ -511,7 +490,7 @@ export default function CallLogPage() {
           {selectedCall && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-paw-brown">
+                <DialogTitle className="text-ink">
                   Call from {selectedCall.callerName || "Unknown"}
                 </DialogTitle>
                 <DialogDescription>
@@ -532,13 +511,13 @@ export default function CallLogPage() {
                       ? "bg-amber-100 text-amber-700 border-amber-200"
                       : "bg-red-100 text-red-600 border-red-200";
                   return (
-                    <div className="border rounded-2xl p-4 bg-white">
+                    <div className="border rounded-sm p-4 bg-white">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <span className="text-sm font-bold text-paw-brown">Call quality</span>
-                          <p className="text-xs text-paw-brown/50 mt-0.5">{label}</p>
+                          <span className="text-sm font-bold text-ink">Call quality</span>
+                          <p className="text-xs text-muted mt-0.5">{label}</p>
                         </div>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border tabular-nums ${badgeColor}`}>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-sm text-sm font-medium border tabular-nums ${badgeColor}`}>
                           {total}/{max}
                         </span>
                       </div>
@@ -549,15 +528,15 @@ export default function CallLogPage() {
                               {c.passed ? "✓" : "✗"}
                             </span>
                             <div className="min-w-0">
-                              <div className={c.passed ? "text-paw-brown/80" : "text-paw-brown/40"}>
+                              <div className={c.passed ? "text-ink/80" : "text-muted"}>
                                 {c.label}
                               </div>
                               {c.detail && (
-                                <div className="text-xs text-paw-brown/35">{c.detail}</div>
+                                <div className="text-xs text-muted">{c.detail}</div>
                               )}
                             </div>
                             {c.points > 1 && c.passed && (
-                              <span className="ml-auto text-xs font-bold text-paw-brown/30">+{c.points}</span>
+                              <span className="ml-auto text-xs font-bold text-muted">+{c.points}</span>
                             )}
                           </div>
                         ))}
@@ -569,20 +548,20 @@ export default function CallLogPage() {
                 {/* Call Info */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-paw-brown/50 font-bold uppercase">
+                    <div className="text-xs text-muted font-bold uppercase">
                       Caller
                     </div>
-                    <div className="font-bold text-paw-brown">
+                    <div className="font-bold text-ink">
                       {selectedCall.callerName || "Unknown"}
                     </div>
                     {selectedCall.callerPhone && (
-                      <div className="text-sm text-paw-brown/50">
+                      <div className="text-sm text-muted">
                         {formatPhoneNumber(selectedCall.callerPhone)}
                       </div>
                     )}
                   </div>
                   <div>
-                    <div className="text-xs text-paw-brown/50 font-bold uppercase">
+                    <div className="text-xs text-muted font-bold uppercase">
                       Status
                     </div>
                     {selectedCall.appointment ? (
@@ -600,7 +579,7 @@ export default function CallLogPage() {
                         Confirmed
                       </span>
                     ) : (
-                      <span className="font-bold text-paw-brown/60">
+                      <span className="font-bold text-muted">
                         {selectedCall.status}
                       </span>
                     )}
@@ -610,18 +589,18 @@ export default function CallLogPage() {
                 {/* Extracted Data */}
                 {selectedCall.extractedData && (
                   <div>
-                    <div className="text-sm font-bold text-paw-brown mb-2">
+                    <div className="text-sm font-bold text-ink mb-2">
                       Extracted Information
                     </div>
-                    <div className="bg-paw-cream rounded-2xl p-4 text-sm space-y-1">
+                    <div className="bg-surface rounded-sm p-4 text-sm space-y-1">
                       {Object.entries(selectedCall.extractedData).map(
                         ([key, value]) =>
                           value && (
                             <div key={key} className="flex gap-2">
-                              <span className="text-paw-brown/50 capitalize">
+                              <span className="text-muted capitalize">
                                 {key.replace(/([A-Z])/g, " $1").trim()}:
                               </span>
-                              <span className="font-medium text-paw-brown">
+                              <span className="font-medium text-ink">
                                 {value}
                               </span>
                             </div>
@@ -634,11 +613,11 @@ export default function CallLogPage() {
                 {/* Appointment */}
                 {selectedCall.appointment && (
                   <div>
-                    <div className="text-sm font-bold text-paw-brown mb-2">
+                    <div className="text-sm font-bold text-ink mb-2">
                       Appointment
                     </div>
-                    <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-sm">
-                      <div className="font-bold text-paw-brown">
+                    <div className="bg-green-50 border border-green-200 rounded-sm p-4 text-sm">
+                      <div className="font-bold text-ink">
                         {selectedCall.appointment.petName} –{" "}
                         {selectedCall.appointment.serviceName}
                       </div>
@@ -655,10 +634,10 @@ export default function CallLogPage() {
                 {/* Summary */}
                 {selectedCall.summary && (
                   <div>
-                    <div className="text-sm font-bold text-paw-brown mb-2">
+                    <div className="text-sm font-bold text-ink mb-2">
                       Summary
                     </div>
-                    <p className="text-sm text-paw-brown/60">
+                    <p className="text-sm text-muted">
                       {selectedCall.summary}
                     </p>
                   </div>
@@ -667,10 +646,10 @@ export default function CallLogPage() {
                 {/* Transcript */}
                 {selectedCall.transcript && (
                   <div>
-                    <div className="text-sm font-bold text-paw-brown mb-2">
+                    <div className="text-sm font-bold text-ink mb-2">
                       Transcript
                     </div>
-                    <div className="bg-paw-cream rounded-2xl p-4 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto text-paw-brown/70">
+                    <div className="bg-surface rounded-sm p-4 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto text-muted">
                       {selectedCall.transcript}
                     </div>
                   </div>

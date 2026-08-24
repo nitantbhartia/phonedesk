@@ -520,8 +520,8 @@ export default function OnboardingPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-paw-sky flex items-center justify-center">
-        <div className="animate-pulse text-paw-brown/50 font-medium">
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="animate-pulse text-muted font-medium">
           Loading...
         </div>
       </div>
@@ -871,31 +871,19 @@ export default function OnboardingPage() {
   if (step === 0) {
     const firstName = session?.user?.name?.split(" ")[0] ?? "there";
     return (
-      <div className="min-h-screen bg-paw-sky antialiased flex flex-col items-center justify-center py-12 px-6 relative">
-        {/* Background decorations */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <svg className="paw-shape absolute top-[-10%] left-[-5%] w-[500px] h-[500px] text-paw-amber" viewBox="0 0 200 200" fill="currentColor">
-            <path d="M100 0C60 40 20 80 0 140C40 130 80 110 100 200C120 110 160 130 200 140C180 80 140 40 100 0Z" />
-          </svg>
-          <svg className="paw-shape absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-white opacity-60" viewBox="0 0 200 200" fill="currentColor">
-            <path d="M100 200C140 160 180 120 200 60C160 70 120 90 100 0C80 90 40 70 0 60C20 120 60 160 100 200Z" />
-          </svg>
-        </div>
-
-        {/* Logo */}
+      <div className="min-h-screen bg-paper antialiased flex flex-col items-center justify-center py-12 px-6 relative">
         <div className="mb-6 relative z-10">
           <BrandLogo mobileWidth={140} desktopWidth={180} priority />
         </div>
 
-        {/* Welcome card */}
-        <main className="w-full max-w-lg bg-paw-cream rounded-[2.5rem] shadow-soft border-4 border-white relative z-10 p-10 sm:p-14 text-center">
-          <div className="inline-flex items-center gap-2 bg-paw-amber/20 border border-paw-amber/30 text-paw-brown text-xs font-bold px-4 py-1.5 rounded-full mb-6">
-            ⏱ About 5 minutes to set up
-          </div>
-          <h1 className="text-3xl font-extrabold text-paw-brown mb-3">
-            Hey, {firstName}! 👋
+        <main className="w-full max-w-lg bg-surface rounded-sm border border-line relative z-10 p-10 sm:p-14 text-center">
+          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+            About 5 minutes
+          </p>
+          <h1 className="font-display text-3xl tracking-tight text-ink mb-3">
+            Hey, {firstName}.
           </h1>
-          <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
+          <p className="text-muted font-medium mb-8 leading-relaxed">
             Your voicemail can book. Set up Call Slot in about five minutes — forward missed calls, callers press 1 to book, you get text confirmations.
           </p>
 
@@ -910,25 +898,25 @@ export default function OnboardingPage() {
               { icon: "✅", label: "Test booking", desc: "Simulate press 1 → book" },
             ].map((item) => (
               <li key={item.label} className="flex items-center gap-3">
-                <span className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm text-base">
+                <span className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shrink-0  text-base">
                   {item.icon}
                 </span>
-                <span className="text-sm font-bold text-paw-brown">{item.label}</span>
-                <span className="text-sm text-paw-brown/45 ml-auto">{item.desc}</span>
+                <span className="text-sm font-bold text-ink">{item.label}</span>
+                <span className="text-sm text-muted ml-auto">{item.desc}</span>
               </li>
             ))}
           </ul>
 
           <button
             onClick={() => navigate(1)}
-            className="w-full px-8 py-4 bg-paw-brown text-paw-cream rounded-full font-bold text-lg hover:bg-opacity-90 transition-all shadow-soft flex items-center justify-center gap-2"
+            className="w-full px-8 py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all  flex items-center justify-center gap-2"
           >
             Let&apos;s do this
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
             </svg>
           </button>
-          <p className="text-xs text-paw-brown/35 mt-4">Free to set up · no credit card needed</p>
+          <p className="text-xs text-muted mt-4">Free to set up · no credit card needed</p>
         </main>
       </div>
     );
@@ -946,18 +934,18 @@ export default function OnboardingPage() {
       {step === 3 && (
         <div className="space-y-5">
           {/* Tab toggle */}
-          <div className="flex rounded-2xl bg-paw-sky/60 p-1">
+          <div className="flex rounded-sm bg-paper p-1">
             <button
               type="button"
               onClick={() => { setSignupModalTab("signup"); setSignupError(""); }}
-              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signup" ? "bg-white shadow-sm text-paw-brown" : "text-paw-brown/50 hover:text-paw-brown"}`}
+              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signup" ? "bg-white  text-ink" : "text-muted hover:text-ink"}`}
             >
               Create account
             </button>
             <button
               type="button"
               onClick={() => { setSignupModalTab("signin"); setSignupError(""); }}
-              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signin" ? "bg-white shadow-sm text-paw-brown" : "text-paw-brown/50 hover:text-paw-brown"}`}
+              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${signupModalTab === "signin" ? "bg-white  text-ink" : "text-muted hover:text-ink"}`}
             >
               Sign in
             </button>
@@ -967,7 +955,7 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={handleGoogleSignup}
-            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border-2 border-paw-brown/10 bg-white font-semibold text-paw-brown hover:bg-paw-sky/40 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-sm border-2 border-line bg-white font-semibold text-ink hover:bg-paper/40 transition-all"
           >
             <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
               <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.2-2.7-.5-4z" fill="#FFC107"/>
@@ -979,15 +967,15 @@ export default function OnboardingPage() {
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-paw-brown/10" />
-            <span className="text-xs text-paw-brown/30 font-semibold">or</span>
-            <div className="flex-1 h-px bg-paw-brown/10" />
+            <div className="flex-1 h-px bg-ink/5" />
+            <span className="text-xs text-muted font-semibold">or</span>
+            <div className="flex-1 h-px bg-ink/5" />
           </div>
 
           {signupModalTab === "signup" ? (
             <form onSubmit={handleSignupAndContinue} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Your name</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Your name</label>
                 <OnboardingInput
                   type="text"
                   required
@@ -998,7 +986,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Email</label>
                 <OnboardingInput
                   type="email"
                   required
@@ -1009,7 +997,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Password</label>
                 <OnboardingInput
                   type="password"
                   required
@@ -1020,9 +1008,9 @@ export default function OnboardingPage() {
                 />
               </div>
               {signupError && <p className="text-sm font-medium text-red-500">{signupError}</p>}
-              <div className="pt-4 border-t border-paw-brown/5 flex items-center justify-between mt-2">
-                <button type="button" onClick={() => navigate(2)} className="text-sm text-paw-brown/60 font-bold hover:text-paw-brown transition-colors">Back</button>
-                <button type="submit" disabled={signupLoading} className="px-7 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50">
+              <div className="pt-4 border-t border-line flex items-center justify-between mt-2">
+                <button type="button" onClick={() => navigate(2)} className="text-sm text-muted font-bold hover:text-ink transition-colors">Back</button>
+                <button type="submit" disabled={signupLoading} className="px-7 py-3 bg-ink text-surface rounded-sm font-medium hover:bg-opacity-90 transition-all  flex items-center gap-2 disabled:opacity-50">
                   {signupLoading ? "Creating account…" : "Create account & continue"}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </button>
@@ -1031,7 +1019,7 @@ export default function OnboardingPage() {
           ) : (
             <form onSubmit={handleSigninAndContinue} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Email</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Email</label>
                 <OnboardingInput
                   type="email"
                   required
@@ -1042,7 +1030,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-paw-brown/60 uppercase tracking-wide">Password</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Password</label>
                 <OnboardingInput
                   type="password"
                   required
@@ -1053,9 +1041,9 @@ export default function OnboardingPage() {
                 />
               </div>
               {signupError && <p className="text-sm font-medium text-red-500">{signupError}</p>}
-              <div className="pt-4 border-t border-paw-brown/5 flex items-center justify-between mt-2">
-                <button type="button" onClick={() => navigate(2)} className="text-sm text-paw-brown/60 font-bold hover:text-paw-brown transition-colors">Back</button>
-                <button type="submit" disabled={signupLoading} className="px-7 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50">
+              <div className="pt-4 border-t border-line flex items-center justify-between mt-2">
+                <button type="button" onClick={() => navigate(2)} className="text-sm text-muted font-bold hover:text-ink transition-colors">Back</button>
+                <button type="submit" disabled={signupLoading} className="px-7 py-3 bg-ink text-surface rounded-sm font-medium hover:bg-opacity-90 transition-all  flex items-center gap-2 disabled:opacity-50">
                   {signupLoading ? "Signing in…" : "Sign in & continue"}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </button>
@@ -1075,16 +1063,16 @@ export default function OnboardingPage() {
           }}
         >
           {websiteImportEnabled && (
-            <div className="rounded-3xl border-2 border-paw-brown/5 bg-white px-5 py-5 shadow-sm">
+            <div className="rounded-sm border-2 border-line bg-white px-5 py-5 ">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-wider text-paw-brown/55">
+                  <p className="text-sm font-bold uppercase tracking-wider text-muted">
                     Import From Your Website
                   </p>
-                  <h3 className="mt-1 text-lg font-extrabold text-paw-brown">
+                  <h3 className="mt-1 text-lg font-extrabold text-ink">
                     Pull in your business info automatically
                   </h3>
-                  <p className="mt-1 text-sm font-medium leading-relaxed text-paw-brown/55">
+                  <p className="mt-1 text-sm font-medium leading-relaxed text-muted">
                     We can scan your site for your business name, hours, phone, address,
                     and priced services, then drop that into this form for you to review.
                   </p>
@@ -1092,14 +1080,14 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={() => setShowWebsiteImport((current) => !current)}
-                  className="rounded-full border border-paw-brown/10 px-4 py-2 text-sm font-bold text-paw-brown transition-colors hover:border-paw-brown/25 hover:bg-paw-sky/40"
+                  className="rounded-full border border-line px-4 py-2 text-sm font-bold text-ink transition-colors hover:border-ink/25 hover:bg-paper/40"
                 >
                   {showWebsiteImport ? "Hide importer" : "Use website importer"}
                 </button>
               </div>
 
               {showWebsiteImport && (
-                <div className="mt-5 space-y-4 border-t border-paw-brown/8 pt-5">
+                <div className="mt-5 space-y-4 border-t border-line pt-5">
                   <div className="space-y-2">
                     <OnboardingLabel
                       htmlFor="websiteUrl"
@@ -1118,7 +1106,7 @@ export default function OnboardingPage() {
                         type="button"
                         onClick={() => void importFromWebsite()}
                         disabled={websiteImportLoading || !websiteUrl.trim()}
-                        className="rounded-2xl bg-paw-brown px-5 py-4 text-sm font-bold text-paw-cream transition-all hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-sm bg-ink px-5 py-4 text-sm font-bold text-surface transition-all hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {websiteImportLoading ? "Importing..." : "Import"}
                       </button>
@@ -1126,13 +1114,13 @@ export default function OnboardingPage() {
                   </div>
 
                   {websiteImportError ? (
-                    <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    <p className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                       {websiteImportError}
                     </p>
                   ) : null}
 
                   {websiteImportSummary ? (
-                    <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                    <div className="rounded-sm border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
                       <p className="font-bold">
                         Imported {websiteImportSummary.importedFields.length} field
                         {websiteImportSummary.importedFields.length === 1 ? "" : "s"} from{" "}
@@ -1249,7 +1237,7 @@ export default function OnboardingPage() {
               <OnboardingSelect
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                className="w-full px-5 py-4 rounded-2xl"
+                className="w-full px-5 py-4 rounded-sm"
               >
                 <option value="America/New_York">Eastern</option>
                 <option value="America/Chicago">Central</option>
@@ -1264,7 +1252,7 @@ export default function OnboardingPage() {
             <OnboardingLabel info="Set the days and times you accept appointments. Call Slot will only offer slots within these hours. Toggle a day off to mark it closed.">
               Business Hours
             </OnboardingLabel>
-            <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
+            <div className="bg-white rounded-sm p-6 border-2 border-line space-y-4">
               {Object.entries(hours).map(([day, h]) => (
                 <div
                   key={day}
@@ -1273,7 +1261,7 @@ export default function OnboardingPage() {
                   <div className="flex items-center justify-between sm:justify-start">
                     <span
                       className={`font-bold w-24 ${
-                        h.enabled ? "text-paw-brown" : "text-paw-brown/40"
+                        h.enabled ? "text-ink" : "text-muted"
                       }`}
                     >
                       {day}
@@ -1290,7 +1278,7 @@ export default function OnboardingPage() {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
                     </label>
                   </div>
                   {h.enabled ? (
@@ -1310,7 +1298,7 @@ export default function OnboardingPage() {
                           </option>
                         ))}
                       </OnboardingSelect>
-                      <span className="text-paw-brown/30 font-bold">to</span>
+                      <span className="text-muted font-bold">to</span>
                       <OnboardingSelect
                         value={h.close}
                         onChange={(e) =>
@@ -1328,7 +1316,7 @@ export default function OnboardingPage() {
                       </OnboardingSelect>
                     </div>
                   ) : (
-                    <span className="text-sm font-bold text-paw-brown/40">
+                    <span className="text-sm font-bold text-muted">
                       Closed
                     </span>
                   )}
@@ -1344,7 +1332,7 @@ export default function OnboardingPage() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
                   </label>
                 </div>
               ))}
@@ -1376,18 +1364,18 @@ export default function OnboardingPage() {
               {services.map((service, i) => (
                 <div
                   key={i}
-                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-white p-3 rounded-2xl border-2 border-paw-brown/5 shadow-sm"
+                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-white p-3 rounded-sm border-2 border-line "
                 >
                   <input
                     type="text"
                     placeholder="Service Name (e.g. Full Groom)"
                     value={service.name}
                     onChange={(e) => updateService(i, "name", e.target.value)}
-                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none min-w-0"
+                    className="flex-1 bg-transparent border-none p-2 font-medium text-ink placeholder:text-muted focus:outline-none min-w-0"
                   />
                   <div className="flex items-center gap-3">
                     <div className="relative flex-1 sm:flex-none">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-paw-brown/50 font-bold">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted font-bold">
                         $
                       </span>
                       <input
@@ -1395,7 +1383,7 @@ export default function OnboardingPage() {
                         placeholder="0.00"
                         value={service.price}
                         onChange={(e) => updateService(i, "price", e.target.value)}
-                        className="w-full sm:w-24 pl-7 pr-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown focus:outline-none"
+                        className="w-full sm:w-24 pl-7 pr-3 py-2 bg-paper border-none rounded-xl font-bold text-ink focus:outline-none"
                       />
                     </div>
                     <div className="relative flex-1 sm:flex-none">
@@ -1406,9 +1394,9 @@ export default function OnboardingPage() {
                         onChange={(e) =>
                           updateService(i, "duration", e.target.value)
                         }
-                        className="w-full sm:w-20 px-3 py-2 bg-paw-sky/30 border-none rounded-xl font-bold text-paw-brown text-center focus:outline-none"
+                        className="w-full sm:w-20 px-3 py-2 bg-paper border-none rounded-xl font-bold text-ink text-center focus:outline-none"
                       />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-paw-brown/40 text-xs font-bold">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-xs font-bold">
                         min
                       </span>
                     </div>
@@ -1416,7 +1404,7 @@ export default function OnboardingPage() {
                       type="button"
                       onClick={() => removeService(i)}
                       disabled={services.length <= 1}
-                      className="p-2 text-paw-brown/30 hover:text-paw-orange transition-colors disabled:opacity-30 shrink-0"
+                      className="p-2 text-muted hover:text-accent transition-colors disabled:opacity-30 shrink-0"
                     >
                     <svg
                       width="20"
@@ -1435,7 +1423,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={addService}
-                className="flex items-center gap-2 text-sm font-bold text-paw-orange hover:text-paw-brown transition-colors px-2"
+                className="flex items-center gap-2 text-sm font-bold text-accent hover:text-ink transition-colors px-2"
               >
                 <svg
                   width="18"
@@ -1455,7 +1443,7 @@ export default function OnboardingPage() {
 
           {/* Optional settings — collapsed by default */}
           <details className="group">
-            <summary className="list-none flex items-center gap-2 cursor-pointer text-sm font-bold text-paw-brown/50 hover:text-paw-brown/80 transition-colors select-none">
+            <summary className="list-none flex items-center gap-2 cursor-pointer text-sm font-bold text-muted hover:text-ink/80 transition-colors select-none">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-open:rotate-90 transition-transform">
                 <path d="m9 18 6-6-6-6" />
               </svg>
@@ -1465,13 +1453,13 @@ export default function OnboardingPage() {
               <OnboardingLabel info="Soft booking holds the slot for 2 hours — you stay in control. Hard booking confirms immediately on your calendar. Most shops start with Soft Book.">
                 Default Booking Mode
               </OnboardingLabel>
-              <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5">
+              <div className="bg-white rounded-sm p-6 border-2 border-line">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-paw-brown">
+                    <p className="font-bold text-ink">
                       {bookingMode === "SOFT" ? "Soft Booking" : "Hard Booking"}
                     </p>
-                    <p className="text-sm text-paw-brown/50 mt-1">
+                    <p className="text-sm text-muted mt-1">
                       {bookingMode === "SOFT"
                         ? "Holds slot for 2 hours, sends confirmation link"
                         : "Confirms immediately on calendar"}
@@ -1482,7 +1470,7 @@ export default function OnboardingPage() {
                     onChange={(e) =>
                       setBookingMode(e.target.value as "SOFT" | "HARD")
                     }
-                    className="px-4 py-3 rounded-2xl"
+                    className="px-4 py-3 rounded-sm"
                   >
                     <option value="SOFT">Soft Book</option>
                     <option value="HARD">Hard Book</option>
@@ -1501,7 +1489,7 @@ export default function OnboardingPage() {
               {groomers.map((groomer, i) => (
                 <div
                   key={i}
-                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-white p-3 rounded-2xl border-2 border-paw-brown/5 shadow-sm"
+                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-white p-3 rounded-sm border-2 border-line "
                 >
                   <input
                     type="text"
@@ -1512,7 +1500,7 @@ export default function OnboardingPage() {
                       updated[i] = { ...groomer, name: e.target.value };
                       setGroomers(updated);
                     }}
-                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none min-w-0"
+                    className="flex-1 bg-transparent border-none p-2 font-medium text-ink placeholder:text-muted focus:outline-none min-w-0"
                   />
                   <input
                     type="text"
@@ -1523,12 +1511,12 @@ export default function OnboardingPage() {
                       updated[i] = { ...groomer, specialties: e.target.value };
                       setGroomers(updated);
                     }}
-                    className="flex-1 bg-transparent border-none p-2 font-medium text-paw-brown placeholder:text-paw-brown/30 focus:outline-none min-w-0"
+                    className="flex-1 bg-transparent border-none p-2 font-medium text-ink placeholder:text-muted focus:outline-none min-w-0"
                   />
                   <button
                     type="button"
                     onClick={() => setGroomers(groomers.filter((_, j) => j !== i))}
-                    className="p-2 text-paw-brown/30 hover:text-paw-orange transition-colors shrink-0"
+                    className="p-2 text-muted hover:text-accent transition-colors shrink-0"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -1539,7 +1527,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => setGroomers([...groomers, { name: "", specialties: "" }])}
-                className="flex items-center gap-2 text-sm font-bold text-paw-orange hover:text-paw-brown transition-colors px-2"
+                className="flex items-center gap-2 text-sm font-bold text-accent hover:text-ink transition-colors px-2"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <line x1="12" y1="5" x2="12" y2="19" />
@@ -1566,16 +1554,16 @@ export default function OnboardingPage() {
             <OnboardingLabel info="Connect the calendar or booking tool you already use. Call Slot reads your live availability before offering any time slot and writes confirmed bookings directly — no double-booking, no manual entry.">
               Connect Your Booking System
             </OnboardingLabel>
-            <p className="text-sm text-paw-brown/50 -mt-2">
+            <p className="text-sm text-muted -mt-2">
               Pick whichever tool you already use. Call Slot reads availability and writes bookings directly.
             </p>
             <div className="space-y-3">
               {/* Google Calendar */}
               <button
                 onClick={() => connectProvider("google")}
-                className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group"
+                className="w-full flex items-center gap-4 p-5 bg-white rounded-sm border-2 border-line hover:border-accent/30 transition-all text-left group"
               >
-                <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 bg-red-50 rounded-sm flex items-center justify-center shrink-0">
                   <svg
                     width="24"
                     height="24"
@@ -1593,10 +1581,10 @@ export default function OnboardingPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold text-paw-brown">
+                  <div className="font-bold text-ink">
                     Google Calendar
                   </div>
-                  <div className="text-sm text-paw-brown/50">
+                  <div className="text-sm text-muted">
                     Read availability &amp; write bookings
                   </div>
                 </div>
@@ -1621,7 +1609,7 @@ export default function OnboardingPage() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                    className="text-muted group-hover:text-accent transition-colors"
                   >
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
@@ -1632,19 +1620,19 @@ export default function OnboardingPage() {
               {/* Square Appointments */}
               <button
                 onClick={() => connectProvider("square")}
-                className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group"
+                className="w-full flex items-center gap-4 p-5 bg-white rounded-sm border-2 border-line hover:border-accent/30 transition-all text-left group"
               >
-                <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 bg-gray-900 rounded-sm flex items-center justify-center shrink-0">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                     <rect x="2" y="2" width="20" height="20" rx="4" />
                     <path d="M7 10h4v4H7zM13 10h4v4h-4z" fill="#1a1a1a" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold text-paw-brown">
+                  <div className="font-bold text-ink">
                     Square Appointments
                   </div>
-                  <div className="text-sm text-paw-brown/50">
+                  <div className="text-sm text-muted">
                     Sync bookings &amp; POS payments
                   </div>
                 </div>
@@ -1669,7 +1657,7 @@ export default function OnboardingPage() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                    className="text-muted group-hover:text-accent transition-colors"
                   >
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
@@ -1680,9 +1668,9 @@ export default function OnboardingPage() {
               {/* Acuity Scheduling */}
               <button
                 onClick={() => connectProvider("acuity")}
-                className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl border-2 border-paw-brown/5 hover:border-paw-orange/30 transition-all text-left group"
+                className="w-full flex items-center gap-4 p-5 bg-white rounded-sm border-2 border-line hover:border-accent/30 transition-all text-left group"
               >
-                <div className="w-12 h-12 bg-[#316FA8] rounded-2xl flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 bg-[#316FA8] rounded-sm flex items-center justify-center shrink-0">
                   <svg
                     width="24"
                     height="24"
@@ -1701,10 +1689,10 @@ export default function OnboardingPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold text-paw-brown">
+                  <div className="font-bold text-ink">
                     Acuity Scheduling
                   </div>
-                  <div className="text-sm text-paw-brown/50">
+                  <div className="text-sm text-muted">
                     Read availability &amp; write bookings
                   </div>
                 </div>
@@ -1729,7 +1717,7 @@ export default function OnboardingPage() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="text-paw-brown/30 group-hover:text-paw-orange transition-colors"
+                    className="text-muted group-hover:text-accent transition-colors"
                   >
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
@@ -1740,7 +1728,7 @@ export default function OnboardingPage() {
           </div>
 
           {!calendarConnected && (
-            <p className="text-xs text-paw-brown/45 text-center mt-1">
+            <p className="text-xs text-muted text-center mt-1">
               No calendar yet? That&apos;s okay — you can connect it later from Settings. Call Slot will still take calls; it just won&apos;t write bookings automatically until you do.
             </p>
           )}
@@ -1755,9 +1743,9 @@ export default function OnboardingPage() {
       {/* Step 5: Get Number + Test Call (merged) */}
       {step === 5 && (
         <div className="space-y-5">
-          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 p-5 space-y-4">
-            <p className="text-sm font-bold text-paw-brown">Simulate a caller (no phone needed)</p>
-            <p className="text-sm text-paw-brown/60">
+          <div className="bg-white rounded-sm border-2 border-line p-5 space-y-4">
+            <p className="text-sm font-bold text-ink">Simulate a caller (no phone needed)</p>
+            <p className="text-sm text-muted">
               Walk the keypad tree: press 1 to book, 9 for callback. This is the same flow forwarded callers hear.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -1765,7 +1753,7 @@ export default function OnboardingPage() {
                 type="button"
                 onClick={() => void runBookableSimulate()}
                 disabled={simulateLoading}
-                className="px-4 py-2 rounded-full bg-paw-brown text-paw-cream text-sm font-bold disabled:opacity-50"
+                className="px-4 py-2 rounded-full bg-ink text-surface text-sm font-bold disabled:opacity-50"
               >
                 {simulateSessionId ? "Replay menu" : "Start simulate"}
               </button>
@@ -1775,16 +1763,16 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={() => void runBookableSimulate(digit)}
                   disabled={simulateLoading || !simulateSessionId}
-                  className="px-4 py-2 rounded-full border border-paw-brown/15 text-sm font-bold disabled:opacity-40"
+                  className="px-4 py-2 rounded-sm border border-line text-sm font-bold disabled:opacity-40"
                 >
                   Press {digit}
                 </button>
               ))}
             </div>
             {simulateLog.length > 0 && (
-              <div className="bg-paw-sky/40 rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto">
+              <div className="bg-paper/40 rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto">
                 {simulateLog.map((line, index) => (
-                  <p key={`${index}-${line.slice(0, 12)}`} className="text-xs text-paw-brown/80 font-medium">
+                  <p key={`${index}-${line.slice(0, 12)}`} className="text-xs text-ink/80 font-medium">
                     {line}
                   </p>
                 ))}
@@ -1800,21 +1788,21 @@ export default function OnboardingPage() {
 
           {!provisionedNumber ? (
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-paw-amber/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-paw-brown">
+              <div className="w-16 h-16 bg-line rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ink">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-paw-brown mb-2">
+              <h3 className="text-lg font-bold text-ink mb-2">
                 Let&apos;s set up your test number
               </h3>
-              <p className="text-paw-brown/50 font-medium mb-6 max-w-sm mx-auto text-sm">
+              <p className="text-muted font-medium mb-6 max-w-sm mx-auto text-sm">
                 We&apos;ll give you a test line so you can walk the keypad tree. Your dedicated number is assigned when you go live.
               </p>
               <button
                 onClick={provisionNumber}
                 disabled={loading}
-                className="px-8 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft disabled:opacity-50"
+                className="px-8 py-3 bg-ink text-surface rounded-sm font-medium hover:bg-opacity-90 transition-all  disabled:opacity-50"
               >
                 {loading ? "Setting up..." : "Get My Test Number"}
               </button>
@@ -1826,8 +1814,8 @@ export default function OnboardingPage() {
                 <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-5">
                   {callPhase === "waiting" && (
                     <>
-                      <div className="absolute inset-0 rounded-full bg-paw-orange/20 animate-ping" style={{ animationDuration: "1.8s" }} />
-                      <div className="absolute inset-3 rounded-full bg-paw-orange/15 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
+                      <div className="absolute inset-0 rounded-full bg-accent/10 animate-ping" style={{ animationDuration: "1.8s" }} />
+                      <div className="absolute inset-3 rounded-full bg-accent/10 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
                     </>
                   )}
                   {callPhase === "in_progress" && (
@@ -1839,7 +1827,7 @@ export default function OnboardingPage() {
                   {callPhase === "completed" && (
                     <div className="absolute inset-0 rounded-full bg-green-400/20" />
                   )}
-                  <div className={`relative w-20 h-20 rounded-full flex items-center justify-center shadow-soft transition-colors duration-500 ${callPhase === "completed" ? "bg-green-500" : callPhase === "in_progress" ? "bg-amber-500" : "bg-paw-brown"}`}>
+                  <div className={`relative w-20 h-20 rounded-full flex items-center justify-center  transition-colors duration-500 ${callPhase === "completed" ? "bg-green-500" : callPhase === "in_progress" ? "bg-amber-500" : "bg-ink"}`}>
                     {callPhase === "completed" ? (
                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
@@ -1854,37 +1842,37 @@ export default function OnboardingPage() {
 
                 {callPhase === "waiting" && (
                   <>
-                    <p className="text-xs font-bold text-paw-brown/40 uppercase tracking-widest mb-2">Call this number now</p>
+                    <p className="text-xs font-bold text-muted uppercase tracking-widest mb-2">Call this number now</p>
                     <a
                       href={`tel:${provisionedNumber}`}
-                      className="block text-4xl font-extrabold text-paw-brown tracking-wide hover:text-paw-orange transition-colors"
+                      className="block text-4xl font-extrabold text-ink tracking-wide hover:text-accent transition-colors"
                     >
                       {formattedProvisionedNumber}
                     </a>
-                    <p className="text-xs text-paw-brown/40 mt-1">Tap to dial · or enter manually</p>
+                    <p className="text-xs text-muted mt-1">Tap to dial · or enter manually</p>
                   </>
                 )}
 
                 {callPhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
                     <p className="text-sm font-bold text-amber-600 mb-1">Call Slot is on the line</p>
-                    <p className="text-xs text-paw-brown/40">Stay on the line — we&apos;ll detect when it&apos;s done.</p>
+                    <p className="text-xs text-muted">Stay on the line — we&apos;ll detect when it&apos;s done.</p>
                   </div>
                 )}
 
                 {callPhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-extrabold text-green-700 mb-1">🎉 Call Slot booked it!</p>
-                    <p className="text-sm text-paw-brown/50">Ready to take real calls 24/7.</p>
+                    <p className="text-xl font-extrabold text-green-700 mb-1">Call Slot booked it.</p>
+                    <p className="text-sm text-muted">Ready to take real calls 24/7.</p>
                   </div>
                 )}
               </div>
 
               {/* Sample script — only while waiting */}
               {callPhase === "waiting" && (
-                <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8">
-                  <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try this →</p>
-                  <p className="text-sm text-paw-brown/80 italic leading-relaxed">
+                <div className="bg-paper/70 rounded-sm p-4 border border-line">
+                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">Try this →</p>
+                  <p className="text-sm text-ink/80 italic leading-relaxed">
                     &ldquo;Press 1 to book, then pick a service and a time from the keypad.&rdquo;
                   </p>
                 </div>
@@ -1892,7 +1880,7 @@ export default function OnboardingPage() {
 
               {/* In-progress banner */}
               {callPhase === "in_progress" && (
-                <div className="animate-in fade-in duration-300 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center">
+                <div className="animate-in fade-in duration-300 bg-amber-50 border-2 border-amber-200 rounded-sm p-4 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                     <span className="text-sm font-bold text-amber-700">Listening to your call live</span>
@@ -1904,26 +1892,26 @@ export default function OnboardingPage() {
 
               {/* AI call summary — after completion */}
               {callPhase === "completed" && detectedCallSummary && (
-                <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
+                <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-green-50 border-2 border-green-200 rounded-sm p-4">
                   <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Call summary</p>
-                  <p className="text-sm text-paw-brown/80 leading-relaxed">{detectedCallSummary}</p>
+                  <p className="text-sm text-ink/80 leading-relaxed">{detectedCallSummary}</p>
                 </div>
               )}
 
               {/* Waiting indicator / manual fallback */}
               {callPhase === "waiting" && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-center gap-3 py-1 text-paw-brown/40 text-xs font-bold">
+                  <div className="flex items-center justify-center gap-3 py-1 text-muted text-xs font-bold">
                     <span className="flex gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "120ms" }} />
-                      <span className="w-1.5 h-1.5 rounded-full bg-paw-brown/30 animate-bounce" style={{ animationDelay: "240ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "120ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "240ms" }} />
                     </span>
                     Waiting for your call
                   </div>
                   <button
                     onClick={() => setCallPhase("completed")}
-                    className="w-full py-3 rounded-full border-2 border-paw-brown/10 text-paw-brown/50 text-sm font-bold hover:border-paw-brown/25 hover:text-paw-brown/70 transition-all"
+                    className="w-full py-3 rounded-full border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
                   >
                     I&apos;ve already called ✓
                   </button>
@@ -1933,7 +1921,7 @@ export default function OnboardingPage() {
           )}
 
           {provisionError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {provisionError}
             </div>
           ) : null}
@@ -1951,28 +1939,28 @@ export default function OnboardingPage() {
       {step === 8 && (
         <div className="space-y-5">
           {provisionedNumber && (
-            <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-4 flex items-center justify-between">
+            <div className="bg-line border-2 border-line rounded-sm p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">Your Call Slot number</p>
-                <p className="text-xl font-extrabold text-paw-brown">{formattedProvisionedNumber}</p>
+                <p className="text-xs font-bold text-muted uppercase tracking-wider">Your Call Slot number</p>
+                <p className="text-xl font-extrabold text-ink">{formattedProvisionedNumber}</p>
               </div>
               <button
                 onClick={() => { void navigator.clipboard.writeText(formattedProvisionedNumber); }}
-                className="text-xs font-bold text-paw-brown/60 hover:text-paw-brown px-3 py-1.5 rounded-lg bg-white border border-paw-brown/10 transition-colors"
+                className="text-xs font-bold text-muted hover:text-ink px-3 py-1.5 rounded-lg bg-white border border-line transition-colors"
               >
                 Copy
               </button>
             </div>
           )}
 
-          <p className="text-sm text-paw-brown/60 font-medium">
-            Set up <strong className="text-paw-brown">conditional call forwarding</strong> on your business phone so unanswered, busy, and after-hours calls route to Call Slot. Your shop number stays the same.
+          <p className="text-sm text-muted font-medium">
+            Set up <strong className="text-ink">conditional call forwarding</strong> on your business phone so unanswered, busy, and after-hours calls route to Call Slot. Your shop number stays the same.
           </p>
 
           {/* iPhone instructions */}
-          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 overflow-hidden">
-            <div className="px-4 py-3 bg-paw-cream/50 border-b border-paw-brown/5">
-              <p className="text-xs font-bold text-paw-brown/60 uppercase tracking-wider">iPhone</p>
+          <div className="bg-white rounded-sm border-2 border-line overflow-hidden">
+            <div className="px-4 py-3 bg-surface border-b border-line">
+              <p className="text-xs font-bold text-muted uppercase tracking-wider">iPhone</p>
             </div>
             <div className="p-4 space-y-3">
               {[
@@ -1981,47 +1969,47 @@ export default function OnboardingPage() {
                 { n: 3, text: <><strong>Forward To:</strong> enter <strong>{formattedProvisionedNumber || "your Call Slot number"}</strong></> },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-paw-brown text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{n}</div>
-                  <span className="text-sm text-paw-brown/80 font-medium">{text}</span>
+                  <div className="w-6 h-6 bg-ink text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{n}</div>
+                  <span className="text-sm text-ink/80 font-medium">{text}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Android / carrier code */}
-          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 overflow-hidden">
-            <div className="px-4 py-3 bg-paw-cream/50 border-b border-paw-brown/5">
-              <p className="text-xs font-bold text-paw-brown/60 uppercase tracking-wider">Android or any carrier — dial code (works on all phones)</p>
+          <div className="bg-white rounded-sm border-2 border-line overflow-hidden">
+            <div className="px-4 py-3 bg-surface border-b border-line">
+              <p className="text-xs font-bold text-muted uppercase tracking-wider">Android or any carrier — dial code (works on all phones)</p>
             </div>
             <div className="p-4 space-y-3">
-              <p className="text-sm text-paw-brown/70 font-medium">
+              <p className="text-sm text-muted font-medium">
                 Open your phone dialer and call this code. It activates forwarding for calls you don&apos;t answer (no-answer forwarding).
               </p>
-              <div className="flex items-center gap-3 bg-paw-cream rounded-xl p-3">
-                <code className="font-bold text-paw-brown text-base tracking-wider flex-1">
+              <div className="flex items-center gap-3 bg-surface rounded-xl p-3">
+                <code className="font-bold text-ink text-base tracking-wider flex-1">
                   *61*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "XXXXXXXXXX"}#
                 </code>
                 <button
                   onClick={() => { void navigator.clipboard.writeText(`*61*${provisionedNumber.replace(/\D/g, "")}#`); }}
-                  className="text-xs font-bold text-paw-brown/60 hover:text-paw-brown px-3 py-1.5 rounded-lg bg-white border border-paw-brown/10 transition-colors shrink-0"
+                  className="text-xs font-bold text-muted hover:text-ink px-3 py-1.5 rounded-lg bg-white border border-line transition-colors shrink-0"
                 >
                   Copy
                 </button>
               </div>
-              <p className="text-xs text-paw-brown/40 font-medium">
-                For busy-line forwarding use <code className="bg-paw-cream px-1 rounded">*67*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "NUMBER"}#</code>, or forward all calls with <code className="bg-paw-cream px-1 rounded">*21*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "NUMBER"}#</code>.
+              <p className="text-xs text-muted font-medium">
+                For busy-line forwarding use <code className="bg-surface px-1 rounded">*67*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "NUMBER"}#</code>, or forward all calls with <code className="bg-surface px-1 rounded">*21*{provisionedNumber ? provisionedNumber.replace(/\D/g, "") : "NUMBER"}#</code>.
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border-2 border-paw-brown/5 overflow-hidden">
-            <div className="px-4 py-3 bg-paw-cream/50 border-b border-paw-brown/5">
-              <p className="text-xs font-bold text-paw-brown/60 uppercase tracking-wider">Common US carriers</p>
+          <div className="bg-white rounded-sm border-2 border-line overflow-hidden">
+            <div className="px-4 py-3 bg-surface border-b border-line">
+              <p className="text-xs font-bold text-muted uppercase tracking-wider">Common US carriers</p>
             </div>
-            <div className="p-4 space-y-3 text-sm text-paw-brown/75 font-medium">
+            <div className="p-4 space-y-3 text-sm text-muted font-medium">
               <p><strong>Verizon / AT&amp;T / T-Mobile:</strong> dial the codes above from your shop handset, or use Settings → Phone → Call Forwarding on iPhone.</p>
-              <p><strong>No-answer:</strong> <code className="bg-paw-cream px-1 rounded">*61*NUMBER#</code> · <strong>Busy:</strong> <code className="bg-paw-cream px-1 rounded">*67*NUMBER#</code> · <strong>All calls:</strong> <code className="bg-paw-cream px-1 rounded">*21*NUMBER#</code></p>
-              <p className="text-xs text-paw-brown/45">Replace NUMBER with your Call Slot line digits only (no +1). To turn off: <code className="bg-paw-cream px-1 rounded">##61#</code> no-answer, <code className="bg-paw-cream px-1 rounded">##67#</code> busy, <code className="bg-paw-cream px-1 rounded">##21#</code> all.</p>
+              <p><strong>No-answer:</strong> <code className="bg-surface px-1 rounded">*61*NUMBER#</code> · <strong>Busy:</strong> <code className="bg-surface px-1 rounded">*67*NUMBER#</code> · <strong>All calls:</strong> <code className="bg-surface px-1 rounded">*21*NUMBER#</code></p>
+              <p className="text-xs text-muted">Replace NUMBER with your Call Slot line digits only (no +1). To turn off: <code className="bg-surface px-1 rounded">##61#</code> no-answer, <code className="bg-surface px-1 rounded">##67#</code> busy, <code className="bg-surface px-1 rounded">##21#</code> all.</p>
             </div>
           </div>
 
@@ -2037,7 +2025,7 @@ export default function OnboardingPage() {
       {/* Step 7: Go Live (step 6 skipped — no billing) */}
       {step === 7 && (
         <div className="space-y-8">
-          <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
+          <div className="bg-green-50 border-2 border-green-200 rounded-sm p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 width="32"
@@ -2092,7 +2080,7 @@ export default function OnboardingPage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-paw-brown/5"
+                className="flex items-center gap-4 p-4 bg-white rounded-sm border-2 border-line"
               >
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                   <svg
@@ -2107,17 +2095,17 @@ export default function OnboardingPage() {
                   </svg>
                 </div>
                 <div>
-                  <div className="font-bold text-paw-brown text-sm">
+                  <div className="font-bold text-ink text-sm">
                     {item.label}
                   </div>
-                  <div className="text-xs text-paw-brown/50">{item.desc}</div>
+                  <div className="text-xs text-muted">{item.desc}</div>
                 </div>
               </div>
             ))}
           </div>
 
           {awaitingApproval && (
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-3xl p-8 text-center">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-sm p-8 text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
@@ -2134,7 +2122,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => router.push("/dashboard")}
-                className="mt-6 px-8 py-3 bg-paw-brown text-paw-cream rounded-full font-bold hover:bg-opacity-90 transition-all shadow-soft"
+                className="mt-6 px-8 py-3 bg-ink text-surface rounded-sm font-medium hover:bg-opacity-90 transition-all "
               >
                 Go to Dashboard
               </button>
@@ -2142,11 +2130,11 @@ export default function OnboardingPage() {
           )}
 
           {!awaitingApproval && (
-            <div className="pt-6 border-t border-paw-brown/5 flex items-center justify-between">
+            <div className="pt-6 border-t border-line flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => navigate(5)}
-                className="text-paw-brown/60 font-bold hover:text-paw-brown transition-colors"
+                className="text-muted font-bold hover:text-ink transition-colors"
               >
                 Back
               </button>
@@ -2154,7 +2142,7 @@ export default function OnboardingPage() {
                 type="button"
                 onClick={goLive}
                 disabled={loading}
-                className="px-10 py-4 bg-green-600 text-white rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-soft flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-10 py-4 bg-green-600 text-white rounded-sm font-medium text-lg hover:bg-green-700 transition-all  flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Setting up..." : "Go Live!"}
               <svg

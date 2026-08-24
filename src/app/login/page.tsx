@@ -11,8 +11,8 @@ export default function AuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-paw-sky">
-          <div className="animate-pulse text-paw-brown/60">Loading...</div>
+        <div className="min-h-screen flex items-center justify-center bg-paper">
+          <div className="animate-pulse text-muted">Loading...</div>
         </div>
       }
     >
@@ -58,49 +58,29 @@ function AuthPageContent() {
 
   if (status === "loading" || !!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paw-sky">
-        <div className="animate-pulse text-paw-brown/60">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-paper">
+        <div className="animate-pulse text-muted">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-paw-sky px-4 py-6 text-paw-brown">
-      <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <BrandLogo priority mobileWidth={156} desktopWidth={236} className="min-w-0 max-w-[156px] sm:max-w-[236px]" />
-        <Link href="/" className="text-sm font-semibold text-paw-brown/70 hover:text-paw-brown">
-          Back to home
+    <div className="min-h-screen bg-paper px-5 py-8 text-ink sm:px-8">
+      <div className="mx-auto flex max-w-5xl items-center justify-between">
+        <BrandLogo priority />
+        <Link href="/" className="text-[13px] text-muted hover:text-ink">
+          Back
         </Link>
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div className="space-y-6">
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-paw-surface px-4 py-2 text-sm font-semibold">
-            <span className="h-2 w-2 rounded-full bg-paw-orange animate-pulse" />
-            Live in 5 minutes
-          </p>
-          <h1 className="text-4xl font-extrabold leading-tight sm:text-6xl">
+      <div className="mx-auto mt-16 grid max-w-5xl gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <div>
+          <h1 className="font-display text-4xl leading-[1.1] tracking-tight sm:text-5xl">
             Stop losing bookings to missed calls.
           </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-paw-brown/75">
-            Call Slot picks up missed calls for your shop — callers book a real calendar opening on the keypad, and you get a text confirmation.
+          <p className="mt-5 max-w-md text-[16px] leading-relaxed text-muted">
+            Call Slot picks up missed calls for your shop. Callers book a real calendar opening on the keypad, and you get a text confirmation.
           </p>
-          <ul className="space-y-3">
-            {[
-              "Picks up forwarded calls in seconds, 24/7",
-              "Books appointments and texts confirmations automatically",
-              "Setup takes 5 minutes, no tech skills needed",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-3 text-paw-brown/80">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-paw-orange/15 text-paw-orange">
-                  <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                    <path d="M1 4.5L4 7.5L10 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className="text-base font-medium">{item}</span>
-              </li>
-            ))}
-          </ul>
         </div>
 
         <AuthPanel initialMode={initialMode} />

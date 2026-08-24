@@ -65,17 +65,20 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
     }
   };
 
+  const fieldClass =
+    "w-full border border-line bg-paper px-3 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted/70 focus:border-ink";
+
   return (
-    <div className="max-w-md rounded-[2rem] border border-white/60 bg-white/70 p-5 shadow-soft backdrop-blur-md">
-      <div className="mb-4 flex rounded-full bg-paw-cream p-1 text-sm font-semibold">
+    <div className="w-full max-w-md border border-line bg-surface p-6">
+      <div className="mb-5 flex border-b border-line text-[13px]">
         <button
           type="button"
           onClick={() => {
             setAuthMode("signup");
             setAuthError("");
           }}
-          className={`flex-1 rounded-full px-4 py-2 transition-colors ${
-            authMode === "signup" ? "bg-paw-brown text-paw-cream" : "text-paw-brown/70"
+          className={`-mb-px border-b px-1 pb-2.5 pr-5 transition-colors ${
+            authMode === "signup" ? "border-accent text-ink" : "border-transparent text-muted"
           }`}
         >
           Sign up
@@ -86,8 +89,8 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             setAuthMode("signin");
             setAuthError("");
           }}
-          className={`flex-1 rounded-full px-4 py-2 transition-colors ${
-            authMode === "signin" ? "bg-paw-brown text-paw-cream" : "text-paw-brown/70"
+          className={`-mb-px border-b px-1 pb-2.5 pr-5 transition-colors ${
+            authMode === "signin" ? "border-accent text-ink" : "border-transparent text-muted"
           }`}
         >
           Log in
@@ -100,7 +103,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Full name"
-            className="w-full rounded-2xl border border-paw-brown/10 bg-white px-4 py-3 text-base outline-none transition focus:border-paw-orange"
+            className={fieldClass}
           />
         ) : null}
         <input
@@ -109,7 +112,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email address"
-          className="w-full rounded-2xl border border-paw-brown/10 bg-white px-4 py-3 text-base outline-none transition focus:border-paw-orange"
+          className={fieldClass}
           required
         />
         <input
@@ -118,7 +121,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          className="w-full rounded-2xl border border-paw-brown/10 bg-white px-4 py-3 text-base outline-none transition focus:border-paw-orange"
+          className={fieldClass}
           minLength={8}
           required
         />
@@ -126,7 +129,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-2xl bg-paw-brown px-5 py-3 font-bold text-paw-cream transition hover:bg-opacity-90 disabled:opacity-50"
+          className="w-full bg-accent px-4 py-2.5 text-[13px] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
         >
           {isSubmitting
             ? "Please wait..."
@@ -136,22 +139,22 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
         </button>
       </form>
 
-      <div className="my-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-paw-brown/40">
-        <div className="h-px flex-1 bg-paw-brown/10" />
+      <div className="my-4 flex items-center gap-3 text-[11px] uppercase tracking-[0.16em] text-muted">
+        <div className="h-px flex-1 bg-line" />
         <span>or</span>
-        <div className="h-px flex-1 bg-paw-brown/10" />
+        <div className="h-px flex-1 bg-line" />
       </div>
 
       <button
         type="button"
         onClick={handleGoogleAuth}
         disabled={isSubmitting}
-        className="w-full rounded-2xl border border-paw-brown/10 bg-white px-5 py-3 font-semibold text-paw-brown transition hover:bg-paw-cream disabled:opacity-50"
+        className="w-full border border-ink px-4 py-2.5 text-[13px] text-ink hover:bg-paper disabled:opacity-50"
       >
         Continue with Google
       </button>
 
-      {authError ? <p className="mt-3 text-sm text-red-600">{authError}</p> : null}
+      {authError ? <p className="mt-3 text-sm text-accent">{authError}</p> : null}
     </div>
   );
 }

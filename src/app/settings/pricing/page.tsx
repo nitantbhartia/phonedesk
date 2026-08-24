@@ -204,7 +204,7 @@ export default function PricingPage() {
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-white/50 rounded-3xl animate-pulse" />
+          <div key={i} className="h-20 bg-white/50 rounded-sm animate-pulse" />
         ))}
       </div>
     );
@@ -221,7 +221,7 @@ export default function PricingPage() {
   return (
     <div className="space-y-8">
       {pageError && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-3xl border border-red-200 bg-red-50 px-5 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-sm border border-red-200 bg-red-50 px-5 py-4">
           <p className="flex-1 text-sm font-medium text-red-700">{pageError}</p>
           <button
             onClick={() => void fetchData()}
@@ -234,8 +234,8 @@ export default function PricingPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-paw-brown">Services &amp; Pricing</h1>
-          <p className="text-paw-brown/60 font-medium mt-1">
+          <h1 className="font-display text-4xl tracking-tight text-ink">Services &amp; Pricing</h1>
+          <p className="text-muted font-medium mt-1">
             Manage the services you offer and any breed- or size-specific pricing overrides. These are what callers can book by phone.
           </p>
         </div>
@@ -245,7 +245,7 @@ export default function PricingPage() {
             setShowForm(true);
           }}
           disabled={savedServices.length === 0}
-          className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft flex items-center gap-2 hover:bg-opacity-90 transition-colors disabled:opacity-50"
+          className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm  flex items-center gap-2 hover:bg-opacity-90 transition-colors disabled:opacity-50"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -256,18 +256,18 @@ export default function PricingPage() {
       </div>
 
       {/* Services — editable list */}
-      <div className="bg-white rounded-3xl shadow-card border border-white p-6">
+      <div className="bg-white rounded-sm  border border-white p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div>
-            <h2 className="font-bold text-paw-brown">Your Services</h2>
-            <p className="text-xs text-paw-brown/60 mt-1">
+            <h2 className="font-bold text-ink">Your Services</h2>
+            <p className="text-xs text-muted mt-1">
               Base prices quoted to callers. Toggle &ldquo;Add-on&rdquo; if this service can be booked after a primary booking.
             </p>
           </div>
           <button
             onClick={saveServices}
             disabled={savingServices}
-            className="px-4 py-2 bg-paw-brown text-white rounded-full font-bold text-xs shadow-soft hover:bg-opacity-90 transition-colors disabled:opacity-50 shrink-0"
+            className="px-4 py-2 bg-ink text-white rounded-sm font-medium text-xs  hover:bg-opacity-90 transition-colors disabled:opacity-50 shrink-0"
           >
             {savingServices ? "Saving..." : "Save Services"}
           </button>
@@ -277,7 +277,7 @@ export default function PricingPage() {
           {services.map((service, i) => (
             <div key={i} className="flex flex-col sm:flex-row sm:items-end gap-3">
               <div className="flex-1 space-y-1">
-                <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide">
+                <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-muted uppercase tracking-wide">
                   Service
                   <InfoIcon text="The service name spoken to callers (e.g. 'Full Groom', 'Bath & Brush', 'Nail Trim'). Keep names short and recognizable — callers will hear exactly what you type here." />
                 </label>
@@ -289,12 +289,12 @@ export default function PricingPage() {
                     updated[i] = { ...service, name: e.target.value };
                     setServices(updated);
                   }}
-                  className="w-full px-4 py-2.5 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                  className="w-full px-4 py-2.5 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                 />
               </div>
               <div className="flex items-end gap-3">
                 <div className="flex-1 sm:w-24 sm:flex-none space-y-1">
-                  <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide">
+                  <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-muted uppercase tracking-wide">
                     Price ($)
                     <InfoIcon text="Base price quoted to callers for this service. Use the breed/size overrides below if you need more specific pricing." />
                   </label>
@@ -306,11 +306,11 @@ export default function PricingPage() {
                       updated[i] = { ...service, price: e.target.value };
                       setServices(updated);
                     }}
-                    className="w-full px-4 py-2.5 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                    className="w-full px-4 py-2.5 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                   />
                 </div>
                 <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
-                  <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide">
+                  <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-muted uppercase tracking-wide">
                     Duration (min)
                     <InfoIcon text="How long this service takes in minutes. Call Slot uses this to block the right amount of time on your calendar." />
                   </label>
@@ -322,11 +322,11 @@ export default function PricingPage() {
                       updated[i] = { ...service, duration: e.target.value };
                       setServices(updated);
                     }}
-                    className="w-full px-4 py-2.5 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                    className="w-full px-4 py-2.5 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                   />
                 </div>
                 <div className="flex flex-col items-center gap-1 shrink-0">
-                  <label className="text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide whitespace-nowrap">
+                  <label className="text-[10px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">
                     Add-on
                   </label>
                   <label className="relative inline-flex items-center cursor-pointer h-10">
@@ -340,13 +340,13 @@ export default function PricingPage() {
                       }}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-paw-brown/20 rounded-full peer peer-checked:bg-paw-amber transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:after:translate-x-5" />
+                    <div className="w-10 h-5 bg-ink/20 rounded-full peer peer-checked:bg-line transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:after:translate-x-5" />
                   </label>
                 </div>
                 <button
                   onClick={() => setServices(services.filter((_, j) => j !== i))}
                   disabled={services.length <= 1}
-                  className="h-10 w-10 shrink-0 rounded-xl text-paw-brown/50 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-paw-brown/50 flex items-center justify-center"
+                  className="h-10 w-10 shrink-0 rounded-xl text-muted hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted flex items-center justify-center"
                   aria-label="Remove service"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -364,7 +364,7 @@ export default function PricingPage() {
                 { name: "", price: "", duration: "60", isAddon: false },
               ])
             }
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-paw-brown/10 bg-paw-cream/50 text-paw-brown font-bold text-xs hover:bg-paw-cream transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-sm border border-line bg-surface text-ink font-bold text-xs hover:bg-surface transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -375,15 +375,15 @@ export default function PricingPage() {
         </div>
 
         {savedServices.length > 0 && (
-          <div className="mt-6 pt-5 border-t border-paw-brown/5">
-            <p className="text-[10px] font-semibold text-paw-brown/50 uppercase tracking-wide mb-2">
+          <div className="mt-6 pt-5 border-t border-line">
+            <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-2">
               Currently quoting
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {savedServices.map((service) => (
-                <div key={service.id} className="bg-paw-cream/40 rounded-xl px-3 py-2">
-                  <p className="font-semibold text-paw-brown text-xs truncate">{service.name}</p>
-                  <p className="text-sm font-extrabold text-paw-brown">
+                <div key={service.id} className="bg-surface/40 rounded-xl px-3 py-2">
+                  <p className="font-semibold text-ink text-xs truncate">{service.name}</p>
+                  <p className="text-sm font-extrabold text-ink">
                     {formatCurrency(service.price)}
                   </p>
                 </div>
@@ -395,25 +395,25 @@ export default function PricingPage() {
 
       {/* Breed/Size overrides */}
       {Object.keys(rulesByService).length === 0 ? (
-        <div className="bg-white rounded-4xl shadow-soft p-16 text-center">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-paw-brown/30">
+        <div className="bg-white rounded-sm  p-16 text-center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-muted">
             <line x1="12" y1="1" x2="12" y2="23" />
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
-          <p className="font-bold text-paw-brown/50">No breed-specific pricing rules yet</p>
-          <p className="text-sm text-paw-brown/40 mt-1">
+          <p className="font-bold text-muted">No breed-specific pricing rules yet</p>
+          <p className="text-sm text-muted mt-1">
             Add rules so quotes stay accurate for specific cases, like a longer service at a higher price.
           </p>
         </div>
       ) : (
         Object.entries(rulesByService).map(([serviceName, serviceRules]) => (
-          <div key={serviceName} className="bg-white rounded-3xl shadow-card border border-white overflow-x-auto">
-            <div className="px-6 py-4 bg-paw-cream/50 border-b border-paw-brown/5">
-              <h3 className="font-bold text-paw-brown">{serviceName}</h3>
+          <div key={serviceName} className="bg-white rounded-sm  border border-white overflow-x-auto">
+            <div className="px-6 py-4 bg-surface border-b border-line">
+              <h3 className="font-bold text-ink">{serviceName}</h3>
             </div>
             <table className="w-full text-left">
               <thead>
-                <tr className="text-xs font-bold text-paw-brown/40 uppercase tracking-wider">
+                <tr className="text-xs font-bold text-muted uppercase tracking-wider">
                   <th className="px-3 sm:px-6 py-3">Breed</th>
                   <th className="px-3 sm:px-6 py-3">Size</th>
                   <th className="px-3 sm:px-6 py-3">Price</th>
@@ -421,19 +421,19 @@ export default function PricingPage() {
                   <th className="px-3 sm:px-6 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-paw-brown/5">
+              <tbody className="divide-y divide-line">
                 {serviceRules.map((rule) => (
-                  <tr key={rule.id} className="hover:bg-paw-cream/30 transition-colors">
-                    <td className="px-3 sm:px-6 py-3 text-sm font-medium text-paw-brown">
+                  <tr key={rule.id} className="hover:bg-surface transition-colors">
+                    <td className="px-3 sm:px-6 py-3 text-sm font-medium text-ink">
                       {rule.breed || "Any breed"}
                     </td>
-                    <td className="px-3 sm:px-6 py-3 text-sm text-paw-brown/70">
+                    <td className="px-3 sm:px-6 py-3 text-sm text-muted">
                       {rule.size || "Any size"}
                     </td>
-                    <td className="px-3 sm:px-6 py-3 text-sm font-bold text-paw-brown">
+                    <td className="px-3 sm:px-6 py-3 text-sm font-bold text-ink">
                       {formatCurrency(rule.price)}
                     </td>
-                    <td className="px-3 sm:px-6 py-3 text-sm text-paw-brown/50 hidden sm:table-cell">
+                    <td className="px-3 sm:px-6 py-3 text-sm text-muted hidden sm:table-cell">
                       {rule.notes || "—"}
                     </td>
                     <td className="px-3 sm:px-6 py-3 text-right">
@@ -456,11 +456,11 @@ export default function PricingPage() {
       {/* Add pricing rule form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-soft">
-            <h2 className="text-xl font-bold text-paw-brown mb-4">Add Pricing Rule</h2>
+          <div className="bg-white rounded-sm p-6 sm:p-8 max-w-md w-full mx-4 ">
+            <h2 className="text-xl font-bold text-ink mb-4">Add Pricing Rule</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                <label className="block text-xs font-bold text-muted uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Service *
                     <InfoIcon text="Choose which service this pricing rule overrides. The rule will only activate when a caller books this specific service — it won't affect other services." />
@@ -469,7 +469,7 @@ export default function PricingPage() {
                 <select
                   value={form.serviceId}
                   onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
-                  className="w-full px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                 >
                   <option value="">Select service...</option>
                   {savedServices.map((s) => (
@@ -481,7 +481,7 @@ export default function PricingPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                  <label className="block text-xs font-bold text-muted uppercase mb-1">
                     <span className="inline-flex items-center gap-1">
                       Breed
                       <InfoIcon text="Optional. Enter a breed name to apply this price only to that breed (e.g. 'Standard Poodle', 'Goldendoodle'). Leave blank to match all breeds." />
@@ -492,11 +492,11 @@ export default function PricingPage() {
                     value={form.breed}
                     onChange={(e) => setForm({ ...form, breed: e.target.value })}
                     placeholder="e.g. Standard Poodle"
-                    className="w-full px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                    className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                  <label className="block text-xs font-bold text-muted uppercase mb-1">
                     <span className="inline-flex items-center gap-1">
                       Size
                       <InfoIcon text="Optional. Restrict this rule to a specific dog size. When both Breed and Size are set, the rule only applies when both match." />
@@ -505,7 +505,7 @@ export default function PricingPage() {
                   <select
                     value={form.size}
                     onChange={(e) => setForm({ ...form, size: e.target.value })}
-                    className="w-full px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                    className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                   >
                     <option value="">Any size</option>
                     <option value="SMALL">Small</option>
@@ -516,7 +516,7 @@ export default function PricingPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                <label className="block text-xs font-bold text-muted uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Price *
                     <InfoIcon text="The price Call Slot uses when this rule matches. This overrides the base service price for the specified breed and/or size." />
@@ -527,11 +527,11 @@ export default function PricingPage() {
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   placeholder="85"
-                  className="w-full px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
+                <label className="block text-xs font-bold text-muted uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Notes
                     <InfoIcon text="Internal note only — not shared with callers. Use it to remind yourself why this rule exists (e.g. '+$20 for dematting', 'large dog surcharge')." />
@@ -542,11 +542,11 @@ export default function PricingPage() {
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   placeholder="e.g. +$30 if matted"
-                  className="w-full px-4 py-3 bg-paw-cream rounded-xl border border-paw-brown/10 focus:outline-none focus:border-paw-amber text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
                 />
               </div>
               {formError && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                   {formError}
                 </div>
               )}
@@ -556,14 +556,14 @@ export default function PricingPage() {
                     setShowForm(false);
                     setFormError("");
                   }}
-                  className="px-5 py-2.5 bg-white rounded-full font-bold text-sm border border-paw-brown/10 hover:bg-paw-cream transition-colors"
+                  className="px-5 py-2.5 bg-white rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={addRule}
                   disabled={!form.serviceId || !form.price || saving}
-                  className="px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft hover:bg-opacity-90 transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm  hover:bg-opacity-90 transition-colors disabled:opacity-50"
                 >
                   {saving ? "Adding..." : "Add Rule"}
                 </button>
