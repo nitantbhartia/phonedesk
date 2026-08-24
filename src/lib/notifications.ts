@@ -2,9 +2,9 @@ import { prisma } from "./prisma";
 import { sendSms } from "./sms";
 import { formatDateTime } from "./utils";
 import { normalizePhoneNumber } from "./phone";
-import type { Appointment, Business, PhoneNumber } from "@prisma/client";
+import type { Appointment, Business } from "@prisma/client";
 
-type BusinessWithPhone = Business & { phoneNumber: PhoneNumber | null };
+type BusinessWithPhone = Business & { phoneNumber: { number: string } | null };
 
 export type SmsSendStatus = "sent" | "skipped" | "failed";
 

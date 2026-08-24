@@ -219,6 +219,16 @@ describe("POST /api/retell/book-appointment", () => {
   });
 
   it("auto-corrects hallucinated past years before checking availability", async () => {
+    const timezone = "America/Los_Angeles";
+    const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(
+      new Date()
+    );
+    const [currentYear] = todayStr.split("-");
+    let expectedDate = `${currentYear}-05-21`;
+    if (expectedDate < todayStr) {
+      expectedDate = `${Number(currentYear) + 1}-05-21`;
+    }
+
     const response = await POST(
       makeRequest({
         args: {
@@ -232,8 +242,8 @@ describe("POST /api/retell/book-appointment", () => {
     const payload = await response.json();
 
     expect(parseLocalDatetime).toHaveBeenCalledWith(
-      "2026-05-21T09:00:00",
-      "America/Los_Angeles"
+      `${expectedDate}T09:00:00`,
+      timezone
     );
     expect(payload.booked).toBe(true);
   });
