@@ -72,7 +72,7 @@ export async function GET() {
   const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [callsThisWeek, callsLastWeek, callsThisMonth, bookingsConfirmed, bookingsMissed, avgDuration, totalDuration, nextAppointment] =
+  const [callsThisWeek, callsLastWeek, callsThisMonth, bookingsConfirmed, bookingsMissed, avgDuration, totalDuration, nextAppointment, bookingAttempts, callbacks] =
     await Promise.all([
       prisma.call.count({
         where: { businessId: business.id, isTestCall: false, createdAt: { gte: weekAgo } },
@@ -115,6 +115,20 @@ export async function GET() {
         orderBy: { startTime: "asc" },
         select: { petName: true, serviceName: true, startTime: true, customerName: true },
       }),
+      prisma.bookableSession.count({
+        where: {
+          businessId: business.id,
+          createdAt: { gte: monthAgo },
+          OR: [{ status: { not: "IN_PROGRESS" } }, { state: { not: "menu" } }],
+        },
+      }),
+      prisma.bookableSession.count({
+        where: {
+          businessId: business.id,
+          createdAt: { gte: monthAgo },
+          status: { in: ["CALLBACK", "NO_SLOTS"] },
+        },
+      }),
     ]);
 
   // Estimate revenue protected
@@ -132,6 +146,8 @@ export async function GET() {
     callsThisMonth,
     bookingsConfirmed,
     bookingsMissed,
+    bookingAttempts,
+    callbacks,
     revenueProtected: Math.round(bookingsConfirmed * avgServicePrice),
     avgCallDuration: Math.round(avgDuration._avg.duration || 0),
     totalCallMinutes,
@@ -174,6 +190,7 @@ export async function POST(req: NextRequest) {
     timezone,
     businessHours,
     bookingMode,
+    inboundPath,
     vaccinePolicy,
     services,
     // Agent config fields (optional — sent from agent settings page)
@@ -202,6 +219,9 @@ export async function POST(req: NextRequest) {
         ...(timezone !== undefined ? { timezone } : {}),
         ...(businessHours !== undefined ? { businessHours } : {}),
         ...(bookingMode !== undefined ? { bookingMode } : {}),
+        ...(inboundPath === "BOOKABLE_VOICEMAIL" || inboundPath === "RETELL_AGENT"
+          ? { inboundPath }
+          : {}),
         ...(vaccinePolicy !== undefined && ["OFF", "FLAG_ONLY", "REQUIRE"].includes(vaccinePolicy) ? { vaccinePolicy } : {}),
         onboardingStep: 3,
       },
@@ -374,7 +394,7 @@ export async function PATCH(req: NextRequest) {
 
   // Only allow safe fields to be updated
   const allowedFields = ["name", "ownerName", "city", "state", "phone", "address",
-    "timezone", "businessHours", "bookingMode", "vaccinePolicy", "isActive", "onboardingComplete",
+    "timezone", "businessHours", "bookingMode", "inboundPath", "vaccinePolicy", "isActive", "onboardingComplete",
     "onboardingStep", "googleReviewUrl", "plan"];
   const safeData: Record<string, unknown> = {};
   for (const key of allowedFields) {

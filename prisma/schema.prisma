@@ -71,6 +71,7 @@ model Business {
   timezone        String   @default("America/Los_Angeles")
   businessHours   Json?    // { mon: { open: "09:00", close: "17:00" }, ... }
   bookingMode     BookingMode @default(SOFT)
+  inboundPath     InboundPath @default(BOOKABLE_VOICEMAIL)
   vaccinePolicy   VaccinePolicy @default(OFF)
   isActive        Boolean  @default(false)
   onboardingStep  Int      @default(1)
@@ -91,6 +92,7 @@ model Business {
   reviewRequests  ReviewRequest[]
   breedRecommendations BreedRecommendation[]
   groomers        Groomer[]
+  bookableSessions BookableSession[]
   googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
   stripeCustomerId String? @unique
@@ -114,6 +116,11 @@ enum Plan {
 enum BookingMode {
   HARD
   SOFT
+}
+
+enum InboundPath {
+  BOOKABLE_VOICEMAIL
+  RETELL_AGENT
 }
 
 enum VaccinePolicy {
@@ -265,6 +272,7 @@ model Call {
   recordingUrl    String?
   isTestCall      Boolean     @default(false) // true if made before onboarding complete; excluded from usage counts
   isOutbound      Boolean     @default(false) // true for AI-initiated outbound rebooking calls
+  bookableSession BookableSession?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -275,6 +283,47 @@ enum CallStatus {
   MISSED
   FAILED
   NO_BOOKING
+  CALLBACK
+}
+
+model BookableSession {
+  id                String                @id @default(cuid())
+  businessId        String
+  business          Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  callId            String?               @unique
+  call              Call?                 @relation(fields: [callId], references: [id], onDelete: SetNull)
+  callSid           String                @unique
+  callerPhone       String?
+  calledNumber      String?
+  state             String                @default("menu")
+  serviceId         String?
+  slotOffset        Int                   @default(0)
+  slotsHeard        Int                   @default(0)
+  slotsOffered      Json?
+  prefetchedSlots   Json?
+  status            BookableSessionStatus @default(IN_PROGRESS)
+  appointmentId     String?
+  calendarEventId   String?
+  smsCustomerStatus String?
+  smsOwnerStatus    String?
+  recordingUrl      String?
+  knownCaller       Boolean               @default(false)
+  bookingKind       String?
+  lastDigit         String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([businessId, createdAt])
+  @@index([callerPhone])
+}
+
+enum BookableSessionStatus {
+  IN_PROGRESS
+  BOOKED
+  REQUESTED
+  CALLBACK
+  NO_SLOTS
+  FAILED
 }
 
 model Appointment {

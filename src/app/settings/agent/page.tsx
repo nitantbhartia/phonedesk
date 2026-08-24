@@ -34,6 +34,7 @@ interface BusinessData {
   name: string;
   ownerName: string;
   bookingMode: string;
+  inboundPath: string;
   vaccinePolicy: string;
   isActive: boolean;
   retellConfig: {
@@ -54,6 +55,7 @@ export default function AgentSettingsPage() {
   // Form state
   const [greeting, setGreeting] = useState("");
   const [bookingMode, setBookingMode] = useState("SOFT");
+  const [inboundPath, setInboundPath] = useState("BOOKABLE_VOICEMAIL");
   const [vaccinePolicy, setVaccinePolicy] = useState("OFF");
   const [isActive, setIsActive] = useState(true);
 
@@ -74,6 +76,7 @@ export default function AgentSettingsPage() {
           setBusiness(data.business);
           setGreeting(data.business.retellConfig?.greeting || "");
           setBookingMode(data.business.bookingMode);
+          setInboundPath(data.business.inboundPath || "BOOKABLE_VOICEMAIL");
           setVaccinePolicy(data.business.vaccinePolicy || "OFF");
           setIsActive(data.business.isActive);
         }
@@ -95,6 +98,7 @@ export default function AgentSettingsPage() {
           name: business?.name,
           ownerName: business?.ownerName,
           bookingMode,
+          inboundPath,
           vaccinePolicy,
           agentActive: isActive,
           greeting,
@@ -127,9 +131,9 @@ export default function AgentSettingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">AI Agent Settings</h1>
+          <h1 className="text-2xl font-bold">Call answering</h1>
           <p className="text-muted-foreground">
-            Manage your AI receptionist&apos;s greeting, booking mode, and vaccine policy. Manage services and pricing from the <a href="/settings/pricing" className="underline underline-offset-2 font-medium">Services &amp; Pricing</a> page.
+            Bookable answers forwarded calls with keypad booking. Manage services from the <a href="/settings/pricing" className="underline underline-offset-2 font-medium">Services &amp; Pricing</a> page.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -145,6 +149,35 @@ export default function AgentSettingsPage() {
         </div>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Inbound path</CardTitle>
+          <CardDescription>
+            Bookable voicemail is the default. The older conversational path stays available but is not used for new shops.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select value={inboundPath} onValueChange={setInboundPath}>
+            <SelectTrigger className="w-80">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="BOOKABLE_VOICEMAIL">
+                Bookable voicemail (keypad)
+              </SelectItem>
+              <SelectItem value="RETELL_AGENT">
+                Legacy conversational line
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground mt-2">
+            {inboundPath === "BOOKABLE_VOICEMAIL"
+              ? "Callers hear your shop name, then press 1 to book or 9 to leave a message."
+              : "Keeps the previous conversational line. Do not use this for the Bookable pilot."}
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Agent Status */}
       <Card>
         <CardHeader>
@@ -152,10 +185,10 @@ export default function AgentSettingsPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="w-5 h-5" />
-                Agent Status
+                Line status
               </CardTitle>
               <CardDescription>
-                Control whether your AI agent is actively taking calls.
+                Pause Bookable if you need forwarded calls to stop being answered.
               </CardDescription>
             </div>
             <div className="flex items-center gap-3">

@@ -1,4 +1,3 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseOwnerCommand, executeCommand } from "@/lib/sms-commands";
@@ -6,13 +5,11 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { rateLimit } from "@/lib/rate-limit";
 import { isRetellAuthorized } from "@/lib/retell-auth";
 import { isSmsEnabled } from "@/lib/sms";
+import { twiml, verifyTwilioSignature } from "@/lib/twilio";
 
 /** Return an empty TwiML response (Twilio requires text/xml Content-Type) */
 function twimlOk() {
-  return new Response(
-    '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
-    { status: 200, headers: { "Content-Type": "text/xml" } }
-  );
+  return twiml("");
 }
 
 type InboundSource = "retell" | "twilio";
@@ -24,43 +21,6 @@ type InboundPayload = {
   messageBody: string;
   twilioFormData?: FormData;
 };
-
-function getPublicRequestUrl(req: NextRequest) {
-  const url = new URL(req.url);
-  const proto =
-    req.headers.get("x-forwarded-proto") || url.protocol.replace(":", "");
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  return `${proto}://${host || url.host}${url.pathname}${url.search}`;
-}
-
-function verifyTwilioSignature(req: NextRequest, formData: FormData) {
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  if (!authToken) {
-    return true;
-  }
-
-  const signature = req.headers.get("x-twilio-signature");
-  if (!signature) {
-    return false;
-  }
-
-  const params = Array.from(formData.entries())
-    .map(([key, value]) => [key, String(value)] as const)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-
-  const data =
-    getPublicRequestUrl(req) +
-    params.map(([key, value]) => `${key}${value}`).join("");
-  const expected = createHmac("sha1", authToken).update(data).digest("base64");
-
-  const sigBuf = Buffer.from(signature, "utf8");
-  const expBuf = Buffer.from(expected, "utf8");
-  if (sigBuf.length !== expBuf.length) {
-    return false;
-  }
-
-  return timingSafeEqual(sigBuf, expBuf);
-}
 
 async function parseInboundPayload(req: NextRequest): Promise<InboundPayload> {
   const contentType = req.headers.get("content-type") || "";
@@ -179,6 +139,57 @@ export async function POST(req: NextRequest) {
     normalizedBusinessPhone &&
     normalizedFrom === normalizedBusinessPhone
   ) {
+    const ownerReply = messageBody.trim().toUpperCase();
+    if (ownerReply === "Y" || ownerReply === "N") {
+      const request = await prisma.appointment.findFirst({
+        where: {
+          businessId: business.id,
+          status: "PENDING",
+          notes: { contains: "Request via Bookable" },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (!request) {
+        await sendSmsReply(
+          from,
+          "No pending booking request to update.",
+          to
+        );
+        return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
+      }
+
+      if (ownerReply === "Y") {
+        await prisma.appointment.update({
+          where: { id: request.id },
+          data: { status: "CONFIRMED", confirmedAt: new Date() },
+        });
+        if (request.customerPhone) {
+          await sendSmsReply(
+            request.customerPhone,
+            `${business.name}: ${request.serviceName || "appointment"}, confirmed. Reply C to cancel.`,
+            to
+          );
+        }
+        await sendSmsReply(from, `Confirmed ${request.customerPhone || "caller"}.`, to);
+      } else {
+        await prisma.appointment.update({
+          where: { id: request.id },
+          data: { status: "CANCELLED" },
+        });
+        if (request.customerPhone) {
+          await sendSmsReply(
+            request.customerPhone,
+            `${business.name}: that time is not available. Call us to pick another.`,
+            to
+          );
+        }
+        await sendSmsReply(from, `Declined ${request.customerPhone || "caller"}.`, to);
+      }
+
+      return source === "twilio" ? twimlOk() : NextResponse.json({ ok: true });
+    }
+
     try {
       const command = await parseOwnerCommand(messageBody);
       await prisma.smsLog.updateMany({
@@ -202,7 +213,7 @@ export async function POST(req: NextRequest) {
   } else {
     const upperBody = messageBody.trim().toUpperCase();
 
-    if (upperBody === "CANCEL") {
+    if (upperBody === "CANCEL" || upperBody === "C") {
       const appointment = await prisma.appointment.findFirst({
         where: {
           businessId: business.id,

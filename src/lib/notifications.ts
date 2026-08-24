@@ -6,6 +6,133 @@ import type { Appointment, Business, PhoneNumber } from "@prisma/client";
 
 type BusinessWithPhone = Business & { phoneNumber: PhoneNumber | null };
 
+export type SmsSendStatus = "sent" | "skipped" | "failed";
+
+function smsFromNumber(business: BusinessWithPhone) {
+  return process.env.TWILIO_PHONE_NUMBER || business.phoneNumber?.number;
+}
+
+function confirmTime(appointment: Appointment, timezone?: string) {
+  return formatDateTime(appointment.startTime, timezone);
+}
+
+export function buildBookableCustomerSms(
+  shopName: string,
+  serviceName: string,
+  time: string,
+  kind: "AUTO" | "REQUEST"
+) {
+  if (kind === "REQUEST") {
+    return `${shopName}: request for ${serviceName}, ${time}. We'll confirm shortly.`;
+  }
+  return `${shopName}: ${serviceName}, ${time}. Reply C to cancel.`;
+}
+
+export function buildBookableCallbackSms(
+  callerPhone: string | null | undefined,
+  calledAt: Date,
+  timezone?: string,
+  recordingUrl?: string
+) {
+  const when = formatDateTime(calledAt, timezone);
+  const line = `Callback: ${callerPhone || "unknown"}, called ${when}`;
+  return recordingUrl ? `${line}\n${recordingUrl}` : line;
+}
+
+export async function sendBookableConfirmationToCustomer(
+  business: BusinessWithPhone,
+  appointment: Appointment,
+  kind: "AUTO" | "REQUEST"
+): Promise<SmsSendStatus> {
+  const customerPhone = normalizePhoneNumber(appointment.customerPhone);
+  const fromNumber = smsFromNumber(business);
+  if (!customerPhone || !fromNumber) return "skipped";
+
+  const time = confirmTime(appointment, business.timezone);
+  const body = buildBookableCustomerSms(
+    business.name,
+    appointment.serviceName || "appointment",
+    time,
+    kind
+  );
+  if (/https?:\/\//i.test(body)) {
+    console.error("[SMS] Refusing to send Bookable confirmation that contains a URL");
+    return "failed";
+  }
+
+  try {
+    await sendSms(customerPhone, body, fromNumber);
+    return "sent";
+  } catch (error) {
+    console.error("[SMS] Bookable customer confirmation failed:", error);
+    return "failed";
+  }
+}
+
+export async function sendBookableOwnerBookingNotice(
+  business: BusinessWithPhone,
+  appointment: Appointment
+): Promise<SmsSendStatus> {
+  const ownerPhone = normalizePhoneNumber(business.phone);
+  const fromNumber = smsFromNumber(business);
+  if (!ownerPhone || !fromNumber) return "skipped";
+
+  const time = confirmTime(appointment, business.timezone);
+  const body = `Booked: ${appointment.customerPhone || "unknown"}, ${appointment.serviceName || "appointment"}, ${time}.`;
+
+  try {
+    await sendSms(ownerPhone, body, fromNumber);
+    return "sent";
+  } catch (error) {
+    console.error("[SMS] Bookable owner notice failed:", error);
+    return "failed";
+  }
+}
+
+export async function sendBookableRequestToOwner(
+  business: BusinessWithPhone,
+  appointment: Appointment
+): Promise<SmsSendStatus> {
+  const ownerPhone = normalizePhoneNumber(business.phone);
+  const fromNumber = smsFromNumber(business);
+  if (!ownerPhone || !fromNumber) return "skipped";
+
+  const time = confirmTime(appointment, business.timezone);
+  const body = `Request: ${appointment.customerPhone || "unknown"} wants ${appointment.serviceName || "an appointment"}, ${time}. Reply Y to confirm, N to decline.`;
+
+  try {
+    await sendSms(ownerPhone, body, fromNumber);
+    return "sent";
+  } catch (error) {
+    console.error("[SMS] Bookable request notice failed:", error);
+    return "failed";
+  }
+}
+
+export async function sendBookableCallbackToOwner(
+  business: BusinessWithPhone,
+  details: { callerPhone?: string | null; recordingUrl?: string }
+): Promise<SmsSendStatus> {
+  const ownerPhone = normalizePhoneNumber(business.phone);
+  const fromNumber = smsFromNumber(business);
+  if (!ownerPhone || !fromNumber) return "skipped";
+
+  const body = buildBookableCallbackSms(
+    details.callerPhone,
+    new Date(),
+    business.timezone,
+    details.recordingUrl
+  );
+
+  try {
+    await sendSms(ownerPhone, body, fromNumber);
+    return "sent";
+  } catch (error) {
+    console.error("[SMS] Bookable callback notice failed:", error);
+    return "failed";
+  }
+}
+
 export async function sendBookingNotificationToOwner(
   business: BusinessWithPhone,
   appointment: Appointment

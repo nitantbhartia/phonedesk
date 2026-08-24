@@ -12,6 +12,8 @@ interface DashboardStats {
   callsThisMonth: number;
   bookingsConfirmed: number;
   bookingsMissed: number;
+  bookingAttempts: number;
+  callbacks: number;
   revenueProtected: number;
   avgCallDuration: number;
   nextAppointment: {
@@ -128,6 +130,8 @@ export default function DashboardPage() {
     callsThisMonth: 0,
     bookingsConfirmed: 0,
     bookingsMissed: 0,
+    bookingAttempts: 0,
+    callbacks: 0,
     revenueProtected: 0,
     avgCallDuration: 0,
     nextAppointment: null,
@@ -266,55 +270,17 @@ export default function DashboardPage() {
             Welcome back, {firstName} 👋
           </h1>
           <p className="text-paw-brown/60 font-medium">
-            Here&apos;s what RingPaw handled for you this week.{" "}
-            <button
-              onClick={() => setTourOpen(true)}
-              className="text-paw-orange underline underline-offset-2 hover:text-paw-orange/80 text-sm font-semibold transition-colors"
-            >
-              Take a tour →
-            </button>
+            Missed calls that booked or left a callback.
           </p>
         </div>
 
         <div className="flex items-center gap-6">
-          {/* Agent Status Toggle */}
           <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-sm border border-paw-brown/5">
             <span className="text-sm font-bold text-paw-brown/70">
-              Agent Status
+              Bookable
             </span>
-            <label className={`flex items-center ${subscriptionActive ? "cursor-pointer" : "cursor-not-allowed"}`}>
-              <div className="relative" onClick={!subscriptionActive ? () => setSubscribePromptOpen(true) : undefined}>
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={subscriptionActive && agentLive}
-                  disabled={agentToggling || !subscriptionActive}
-                  onChange={(e) => {
-                    if (!subscriptionActive) return;
-                    if (!e.target.checked) {
-                      setConfirmOff(true);
-                    } else {
-                      void toggleAgent(true);
-                    }
-                  }}
-                />
-                <div
-                  className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
-                    subscriptionActive && agentLive ? "bg-paw-orange" : "bg-gray-200"
-                  }`}
-                />
-                <div
-                  className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${
-                    subscriptionActive && agentLive ? "translate-x-6" : ""
-                  }`}
-                />
-              </div>
-              <div className="ml-3 text-paw-brown font-bold text-sm">
-                {subscriptionActive && agentLive ? "Live" : "Off"}
-              </div>
-            </label>
+            <div className="text-paw-brown font-bold text-sm">On</div>
           </div>
-
         </div>
       </header>
 
@@ -328,7 +294,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1">
             <p className="font-bold text-green-800 text-sm">You&apos;re live! 🎉</p>
-            <p className="text-green-700/70 text-sm">Your AI receptionist is now active and ready to answer calls.</p>
+            <p className="text-green-700/70 text-sm">Forward unanswered calls to your Bookable number and it will pick up.</p>
           </div>
           <button onClick={() => setJustSubscribed(false)} className="text-green-600 hover:text-green-800 text-lg font-bold">×</button>
         </div>
@@ -386,8 +352,8 @@ export default function DashboardPage() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="font-bold text-red-700 text-sm">Your AI receptionist is off</p>
-            <p className="text-red-600/70 text-sm">Calls are going to voicemail. Toggle the agent back on to resume.</p>
+            <p className="font-bold text-red-700 text-sm">Bookable is paused</p>
+            <p className="text-red-600/70 text-sm">Forwarded calls will not be answered until you turn it back on.</p>
           </div>
           <button
             onClick={() => void toggleAgent(true)}
@@ -441,7 +407,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-xl font-bold text-paw-brown mb-2">Subscription required</h3>
             <p className="text-paw-brown/60 text-sm mb-6">
-              Your AI receptionist is ready to go — you just need an active plan to turn it on and start taking calls.
+              You need an active plan to keep Bookable answering forwarded calls.
             </p>
             <div className="flex flex-col gap-3">
               <Link
@@ -510,8 +476,8 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {/* Calls Handled */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        {/* Calls */}
         <div data-tour="tour-calls" className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
           <div className="w-8 h-8 bg-paw-sky rounded-xl flex items-center justify-center text-paw-brown mb-3">
             <svg
@@ -526,7 +492,7 @@ export default function DashboardPage() {
             </svg>
           </div>
           <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
-            Calls Handled
+            Calls
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-paw-brown">
@@ -545,7 +511,24 @@ export default function DashboardPage() {
           <p className="text-xs text-paw-brown/40 mt-0.5">Past 7 days{stats.callsLastWeek > 0 ? ` · ${stats.callsLastWeek} last week` : ""}</p>
         </div>
 
-        {/* Bookings */}
+        <div className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
+          <div className="w-8 h-8 bg-paw-sky rounded-xl flex items-center justify-center text-paw-brown mb-3">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
+          <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
+            Booking attempts
+          </p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-paw-brown">
+              {stats.bookingAttempts}
+            </span>
+          </div>
+          <p className="text-xs text-paw-brown/40 mt-0.5">Past 30 days</p>
+        </div>
+
         <div className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
           <div className="w-8 h-8 bg-paw-amber/20 rounded-xl flex items-center justify-center text-paw-brown mb-3">
             <svg
@@ -560,33 +543,17 @@ export default function DashboardPage() {
             </svg>
           </div>
           <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
-            Bookings
+            Booked
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-paw-brown">
               {stats.bookingsConfirmed}
             </span>
-            {stats.bookingsConfirmed + stats.bookingsMissed > 0 && (
-              <span className="text-xs font-bold text-paw-orange">
-                {Math.round((stats.bookingsConfirmed / (stats.bookingsConfirmed + stats.bookingsMissed)) * 100)}% rate
-              </span>
-            )}
           </div>
-          <p className="text-xs text-paw-brown/40 mt-0.5">Past 30 days · {stats.bookingsMissed} missed</p>
-          <div className="w-full bg-gray-100 h-1 rounded-full mt-2 flex overflow-hidden">
-            <div
-              className="bg-paw-orange h-full"
-              style={{
-                width:
-                  stats.bookingsConfirmed + stats.bookingsMissed > 0
-                    ? `${(stats.bookingsConfirmed / (stats.bookingsConfirmed + stats.bookingsMissed)) * 100}%`
-                    : "0%",
-              }}
-            />
-          </div>
+          <p className="text-xs text-paw-brown/40 mt-0.5">Past 30 days · includes requests</p>
         </div>
 
-        {/* Revenue Protected */}
+        {/* Revenue */}
         <div data-tour="tour-revenue" className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
           <div className="w-8 h-8 bg-paw-orange/10 rounded-xl flex items-center justify-center text-paw-orange mb-3">
             <svg
@@ -602,7 +569,7 @@ export default function DashboardPage() {
             </svg>
           </div>
           <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
-            Est. Revenue Protected
+            Est. revenue
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-paw-brown">
@@ -614,8 +581,25 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        <div className="bg-white p-4 rounded-2xl shadow-card border border-white/50">
+          <div className="w-8 h-8 bg-paw-brown/10 rounded-xl flex items-center justify-center text-paw-brown mb-3">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+          </div>
+          <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">
+            Callbacks
+          </p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-paw-brown">
+              {stats.callbacks}
+            </span>
+          </div>
+          <p className="text-xs text-paw-brown/40 mt-0.5">Messages for you to return</p>
+        </div>
+
         {/* Next Appointment */}
-        <div className="bg-paw-brown p-4 rounded-2xl shadow-soft relative overflow-hidden group">
+        <div className="bg-paw-brown p-4 rounded-2xl shadow-soft relative overflow-hidden group md:col-span-2">
           <svg
             className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 opacity-10"
             fill="currentColor"
@@ -733,7 +717,7 @@ export default function DashboardPage() {
       {/* Recent Call Log */}
       <div data-tour="tour-calllog" className="bg-white rounded-[2.5rem] shadow-card border border-white/50 overflow-hidden">
         <div className="px-8 py-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-xl font-bold text-paw-brown">Recent Call Log</h2>
+          <h2 className="text-xl font-bold text-paw-brown">Recent activity</h2>
           <div className="flex gap-2">
             <button
               onClick={async () => {
@@ -797,7 +781,7 @@ export default function DashboardPage() {
               </svg>
               <p className="font-bold text-paw-brown">No calls yet</p>
               <p className="text-sm mt-1 mb-4">
-                Make a test call to your RingPaw number to see it in action.
+                Forward a missed call to your Bookable number, or walk the keypad tree at /api/voice/simulate.
               </p>
               <Link
                 href="/settings/agent"
