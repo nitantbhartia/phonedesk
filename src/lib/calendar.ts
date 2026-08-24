@@ -742,6 +742,52 @@ export async function getAvailableSlots(
   return slots;
 }
 
+function addDaysYmd(ymdDate: string, deltaDays: number) {
+  const base = new Date(`${ymdDate}T12:00:00Z`);
+  base.setUTCDate(base.getUTCDate() + deltaDays);
+  return base.toISOString().slice(0, 10);
+}
+
+/**
+ * Next open slots across the coming days, using shop hours, busy calendars,
+ * and the same lead-time / interval rules as getAvailableSlots.
+ */
+export async function getNextOpenSlots(
+  businessId: string,
+  durationMinutes: number = 60,
+  options: {
+    days?: number;
+    limit?: number;
+    offset?: number;
+    now?: Date;
+  } = {}
+): Promise<TimeSlot[]> {
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+  });
+  if (!business) throw new Error("Business not found");
+
+  const timezone = getBusinessTimezone(business.timezone);
+  const days = options.days ?? 7;
+  const limit = options.limit ?? 2;
+  const offset = options.offset ?? 0;
+  const now = options.now ?? new Date();
+  const todayYmd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+  }).format(now);
+
+  const collected: TimeSlot[] = [];
+  const needed = offset + limit;
+
+  for (let i = 0; i < days && collected.length < needed; i++) {
+    const date = addDaysYmd(todayYmd, i);
+    const daySlots = await getAvailableSlots(businessId, date, durationMinutes);
+    collected.push(...daySlots);
+  }
+
+  return collected.slice(offset, offset + limit);
+}
+
 export async function bookAppointment(
   businessId: string,
   details: {
@@ -757,6 +803,7 @@ export async function bookAppointment(
     notes?: string;
     groomerId?: string;
     isTestBooking?: boolean;
+    bookingModeOverride?: BookingMode;
   }
 ) {
   if (
@@ -804,10 +851,13 @@ export async function bookAppointment(
     throw new Error("Requested slot is no longer available");
   }
 
-  // Demo/test bookings always use HARD mode (auto-confirm) since all slots are open
-  const bookingMode: BookingMode = details.isTestBooking
-    ? "HARD"
-    : matchedService?.bookingMode || business.bookingMode;
+  // Demo/test bookings always use HARD mode (auto-confirm) since all slots are open.
+  // Bookable voicemail can force REQUEST (SOFT/PENDING) or AUTO (HARD) per caller.
+  const bookingMode: BookingMode = details.bookingModeOverride
+    ? details.bookingModeOverride
+    : details.isTestBooking
+      ? "HARD"
+      : matchedService?.bookingMode || business.bookingMode;
 
   const appointment = await prisma.$transaction(async (tx) => {
     const conflictingAppointment = await tx.appointment.findFirst({

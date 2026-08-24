@@ -63,6 +63,7 @@ import {
   getAcuityAppointments,
   describeAvailableSlots,
   getAvailableSlots,
+  getNextOpenSlots,
   getConflicts,
   getGoogleCalendarEvents,
   getSquareBookings,
@@ -387,6 +388,28 @@ describe("calendar helpers", () => {
     vi.useRealTimers();
   });
 
+  it("picks the next two open slots across the coming week", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-12T15:30:00.000Z"));
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+      timezone: "America/Los_Angeles",
+      businessHours: {
+        thu: { open: "8:00 AM", close: "12:00 PM" },
+        fri: { open: "9:00 AM", close: "11:00 AM" },
+      },
+    } as never);
+    vi.mocked(prisma.calendarConnection.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([]);
+
+    const slots = await getNextOpenSlots("biz_1", 60, { days: 7, limit: 2 });
+
+    expect(slots).toHaveLength(2);
+    expect(slots[0].start.toISOString()).toBe("2026-03-12T16:30:00.000Z");
+    expect(slots[1].start.getTime()).toBeGreaterThan(slots[0].start.getTime());
+    vi.useRealTimers();
+  });
+
   it("checks slot availability against overlapping appointments", async () => {
     vi.mocked(prisma.calendarConnection.findMany).mockResolvedValue([]);
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([
@@ -629,6 +652,53 @@ describe("calendar helpers", () => {
     expect(prisma.appointment.update).toHaveBeenCalledWith({
       where: { id: "appt_1" },
       data: { calendarEventId: "88" },
+    });
+  });
+
+  it("honors bookingModeOverride for Bookable request holds", async () => {
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+      bookingMode: "HARD",
+    } as never);
+    vi.mocked(prisma.calendarConnection.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue({
+      name: "Bath",
+      price: 45,
+      bookingMode: "HARD",
+    } as never);
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.calendarConnection.findMany).mockResolvedValue([]);
+    const createMock = vi.fn().mockResolvedValue({
+      id: "appt_req",
+      status: "PENDING",
+    });
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => {
+      return callback({
+        appointment: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: createMock,
+          update: vi.fn().mockResolvedValue({
+            id: "appt_req",
+            status: "PENDING",
+            confirmLink: "https://confirm.test/appt_req",
+          }),
+        },
+      });
+    });
+
+    await bookAppointment("biz_1", {
+      customerName: "Caller",
+      serviceName: "Bath",
+      startTime: new Date("2026-03-12T20:00:00.000Z"),
+      endTime: new Date("2026-03-12T21:00:00.000Z"),
+      bookingModeOverride: "SOFT",
+    });
+
+    expect(createMock).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        status: "PENDING",
+        bookingMode: "SOFT",
+      }),
     });
   });
 

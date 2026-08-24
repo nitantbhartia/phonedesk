@@ -40,6 +40,9 @@ vi.mock("@/lib/prisma", () => ({
       count: vi.fn(),
       findFirst: vi.fn(),
     },
+    bookableSession: {
+      count: vi.fn(),
+    },
   },
 }));
 
@@ -73,6 +76,8 @@ describe("business/profile", () => {
     vi.mocked(prisma.call.aggregate).mockReset();
     vi.mocked(prisma.appointment.count).mockReset();
     vi.mocked(prisma.appointment.findFirst).mockReset();
+    vi.mocked(prisma.bookableSession.count).mockReset();
+    vi.mocked(prisma.bookableSession.count).mockResolvedValue(0);
     vi.mocked(syncRetellAgent).mockReset();
     vi.mocked(seedBreedRecommendations).mockReset();
   });
@@ -126,6 +131,8 @@ describe("business/profile", () => {
       callsThisMonth: 12,
       bookingsConfirmed: 4,
       bookingsMissed: 2,
+      bookingAttempts: 0,
+      callbacks: 0,
       revenueProtected: 200,
       avgCallDuration: 83,
       totalCallMinutes: 10,

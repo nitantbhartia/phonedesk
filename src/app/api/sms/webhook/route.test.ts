@@ -179,6 +179,55 @@ describe("POST /api/sms/webhook", () => {
     await expect(response.json()).resolves.toEqual({ ok: true });
   });
 
+  it("treats a lone C the same as CANCEL", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_1",
+      customerName: "Jamie",
+      serviceName: "Full Groom",
+    } as never);
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550100",
+        to_number: "+16195559999",
+        message: "C",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(prisma.appointment.update).toHaveBeenCalledWith({
+      where: { id: "appt_1" },
+      data: { status: "CANCELLED" },
+    });
+  });
+
+  it("lets the owner confirm a Bookable request with Y", async () => {
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: "appt_req",
+      customerPhone: "+16195550100",
+      serviceName: "Bath",
+    } as never);
+
+    const response = await POST(
+      makeJsonRequest({
+        from_number: "+16195550000",
+        to_number: "+16195559999",
+        message: "Y",
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(prisma.appointment.update).toHaveBeenCalledWith({
+      where: { id: "appt_req" },
+      data: { status: "CONFIRMED", confirmedAt: expect.any(Date) },
+    });
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "Paw House: Bath, confirmed. Reply C to cancel.",
+      "+16195559999"
+    );
+  });
+
   it("cancels the next upcoming appointment and notifies both customer and owner", async () => {
     vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
       id: "appt_1",

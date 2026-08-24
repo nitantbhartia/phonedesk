@@ -30,6 +30,9 @@ import {
   sendRescheduleConfirmationToCustomer,
   sendRescheduleNotificationToOwner,
   sendWaitlistOpeningNotification,
+  buildBookableCustomerSms,
+  buildBookableCallbackSms,
+  sendBookableConfirmationToCustomer,
 } from "./notifications";
 
 const business = {
@@ -229,6 +232,43 @@ describe("notifications", () => {
     const smsBody = vi.mocked(sendSms).mock.calls[0][1];
     expect(smsBody).not.toMatch(/https?:\/\//);
     expect(smsBody).toContain("Reply CONFIRM to lock in the new time");
+  });
+
+  it("builds Bookable confirmation SMS without a URL", () => {
+    const body = buildBookableCustomerSms(
+      "Spawkles",
+      "Full Groom",
+      "Tue 2:00 PM",
+      "AUTO"
+    );
+    expect(body).toBe("Spawkles: Full Groom, Tue 2:00 PM. Reply C to cancel.");
+    expect(body).not.toMatch(/https?:\/\//);
+    expect(body.toLowerCase()).not.toMatch(/\bai\b|virtual receptionist|\bassistant\b/);
+  });
+
+  it("sends Bookable confirmation only after a booking exists", async () => {
+    await sendBookableConfirmationToCustomer(
+      business as never,
+      appointment as never,
+      "AUTO"
+    );
+
+    expect(sendSms).toHaveBeenCalledWith(
+      "+16195550100",
+      "Paw House: Full Groom, Thu, May 21, 9:00 AM. Reply C to cancel.",
+      "+16195559999"
+    );
+  });
+
+  it("formats owner callback SMS with caller id and optional recording", () => {
+    const body = buildBookableCallbackSms(
+      "+16195550100",
+      new Date("2026-05-21T16:00:00.000Z"),
+      "America/Los_Angeles",
+      "https://api.twilio.com/recordings/RE123"
+    );
+    expect(body).toContain("Callback: +16195550100, called");
+    expect(body).toContain("https://api.twilio.com/recordings/RE123");
   });
 
   it("includes waitlist details in cancellation notices when available", async () => {
