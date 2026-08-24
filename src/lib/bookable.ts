@@ -333,16 +333,20 @@ async function fallToCallback(
   });
 
   if (updated.callId) {
-    await prisma.call.update({
-      where: { id: updated.callId },
-      data: {
-        status: "CALLBACK",
-        summary:
-          reason === "no_slots"
-            ? "No openings — caller offered callback"
-            : "Caller asked for a callback",
-      },
-    }).catch(() => undefined);
+    try {
+      await prisma.call.update({
+        where: { id: updated.callId },
+        data: {
+          status: "CALLBACK",
+          summary:
+            reason === "no_slots"
+              ? "No openings — caller offered callback"
+              : "Caller asked for a callback",
+        },
+      });
+    } catch {
+      // Call row update is non-blocking.
+    }
   }
 
   return {
@@ -476,10 +480,14 @@ async function bookOfferedSlot(
   });
   const requiresWrite = primary?.provider === "GOOGLE" || primary?.provider === "SQUARE" || primary?.provider === "ACUITY";
   if (requiresWrite && !appointment.calendarEventId) {
-    await prisma.appointment.update({
-      where: { id: appointment.id },
-      data: { status: "CANCELLED", notes: "Calendar write failed — released" },
-    }).catch(() => undefined);
+    try {
+      await prisma.appointment.update({
+        where: { id: appointment.id },
+        data: { status: "CANCELLED", notes: "Calendar write failed — released" },
+      });
+    } catch {
+      // Hold release is best-effort; caller still goes to callback.
+    }
     return fallToCallback(session, shop, "calendar_failed");
   }
 
@@ -504,18 +512,22 @@ async function bookOfferedSlot(
   });
 
   if (updated.callId) {
-    await prisma.call.update({
-      where: { id: updated.callId },
-      data: {
-        status: "COMPLETED",
-        appointmentId: appointment.id,
-        callerName: appointment.customerName,
-        summary:
-          bookingKind === "AUTO"
-            ? `Booked ${service.name} ${selected.spoken}`
-            : `Requested ${service.name} ${selected.spoken}`,
-      },
-    }).catch(() => undefined);
+    try {
+      await prisma.call.update({
+        where: { id: updated.callId },
+        data: {
+          status: "COMPLETED",
+          appointmentId: appointment.id,
+          callerName: appointment.customerName,
+          summary:
+            bookingKind === "AUTO"
+              ? `Booked ${service.name} ${selected.spoken}`
+              : `Requested ${service.name} ${selected.spoken}`,
+        },
+      });
+    } catch {
+      // Call row update is non-blocking.
+    }
   }
 
   return {
@@ -677,10 +689,14 @@ export async function attachBookableRecording(sessionId: string, recordingUrl: s
     });
   }
   if (session.callId) {
-    await prisma.call.update({
-      where: { id: session.callId },
-      data: { recordingUrl, status: "CALLBACK" },
-    }).catch(() => undefined);
+    try {
+      await prisma.call.update({
+        where: { id: session.callId },
+        data: { recordingUrl, status: "CALLBACK" },
+      });
+    } catch {
+      // Call row update is non-blocking.
+    }
   }
   return session;
 }
