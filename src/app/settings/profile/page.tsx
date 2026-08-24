@@ -287,15 +287,15 @@ export default function BusinessProfilePage() {
   return (
     <div className="space-y-6">
       {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
+        <div className="flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
+          <p className="flex-1 text-sm text-accent font-medium">{fetchError}</p>
           <button
             onClick={() => void fetchBusiness()}
-            className="text-red-700 hover:text-red-900 text-xs font-bold"
+            className="text-accent hover:text-red-900 text-xs font-bold"
           >
             Retry
           </button>
-          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+          <button onClick={() => setFetchError("")} className="text-muted hover:text-accent text-xs font-bold">Dismiss</button>
         </div>
       )}
 
@@ -315,8 +315,8 @@ export default function BusinessProfilePage() {
       {saveStatus && (
         <div className={`p-3 rounded-lg text-sm ${
           saveStatus.ok
-            ? "bg-green-50 text-green-800 border border-green-200"
-            : "bg-red-50 text-red-800 border border-red-200"
+          ? "bg-paper text-ink border border-line"
+          : "bg-paper text-ink border border-line"
         }`}>
           {saveStatus.message}
         </div>

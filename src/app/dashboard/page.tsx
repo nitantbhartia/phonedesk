@@ -59,20 +59,20 @@ function formatDuration(seconds: number): string {
 function getStatusBadge(call: RecentCall) {
   if (call.appointment) {
     return (
-      <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+      <span className="px-3 py-1 bg-paper text-ink text-xs font-bold rounded-sm">
         Completed
       </span>
     );
   }
   if (call.status === "COMPLETED") {
     return (
-      <span className="px-3 py-1 bg-accent/10 text-accent text-xs font-bold rounded-full">
+      <span className="px-3 py-1 bg-accent/10 text-accent text-xs font-bold rounded-sm">
         Follow-up Needed
       </span>
     );
   }
   return (
-    <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+    <span className="px-3 py-1 bg-paper text-accent text-xs font-bold rounded-sm">
       {call.status === "MISSED" ? "Missed" : call.status}
     </span>
   );
@@ -243,12 +243,12 @@ export default function DashboardPage() {
   if (status === "loading" || loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-64 bg-white/50 rounded-sm animate-pulse" />
+        <div className="h-8 w-64 bg-surface rounded-sm animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-40 bg-white/50 rounded-sm animate-pulse"
+              className="h-40 bg-surface rounded-sm animate-pulse"
             />
           ))}
         </div>
@@ -268,9 +268,9 @@ export default function DashboardPage() {
 
       {/* Error banner */}
       {fetchError && (
-        <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
-          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 transition-colors text-xs font-bold">Dismiss</button>
+        <div className="mb-6 flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
+          <p className="flex-1 text-sm text-accent font-medium">{fetchError}</p>
+          <button onClick={() => setFetchError("")} className="text-muted hover:text-accent transition-colors text-xs font-bold">Dismiss</button>
         </div>
       )}
 
@@ -286,7 +286,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-full  border border-line">
+          <div className="flex items-center gap-3 bg-surface px-5 py-3 rounded-sm border border-line">
             <span className="text-sm font-bold text-muted">
               Call Slot
             </span>
@@ -297,33 +297,33 @@ export default function DashboardPage() {
 
       {/* Just subscribed — welcome banner */}
       {justSubscribed && subscriptionActive && (
-        <div className="mb-6 flex items-center gap-4 bg-green-50 border border-green-200 rounded-sm px-5 py-4">
-          <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
+        <div className="mb-6 flex items-center gap-4 bg-paper border border-line rounded-sm px-5 py-4">
+          <div className="w-9 h-9 rounded-sm bg-paper flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-ink" strokeWidth="2.5">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </div>
           <div className="flex-1">
-            <p className="font-bold text-green-800 text-sm">You&apos;re live.</p>
-            <p className="text-green-700/70 text-sm">Forward unanswered calls to your Call Slot number and it will pick up.</p>
+            <p className="font-bold text-ink text-sm">You&apos;re live.</p>
+            <p className="text-muted text-sm">Forward unanswered calls to your Call Slot number and it will pick up.</p>
           </div>
-          <button onClick={() => setJustSubscribed(false)} className="text-green-600 hover:text-green-800 text-lg font-bold">×</button>
+          <button onClick={() => setJustSubscribed(false)} className="text-ink hover:text-ink text-lg font-bold">×</button>
         </div>
       )}
 
       {/* Agent-off banner — preview mode (still in onboarding) */}
       {!subscriptionActive && !onboardingComplete && (
-        <div className="mb-6 flex items-center gap-4 bg-blue-50 border border-blue-200 rounded-sm px-5 py-4">
-          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5">
+        <div className="mb-6 flex items-center gap-4 bg-paper border border-line rounded-sm px-5 py-4">
+          <div className="w-9 h-9 rounded-sm bg-paper flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-ink" strokeWidth="2.5">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
           </div>
           <div className="flex-1">
-            <p className="font-bold text-blue-800 text-sm">You&apos;re previewing your dashboard</p>
-            <p className="text-blue-700/70 text-sm">This is what your calls and bookings will look like. Finish setup to go live.</p>
+            <p className="font-bold text-ink text-sm">You&apos;re previewing your dashboard</p>
+            <p className="text-muted text-sm">This is what your calls and bookings will look like. Finish setup to go live.</p>
           </div>
-          <Link href="/onboarding" className="shrink-0 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors">
+          <Link href="/onboarding" className="shrink-0 px-4 py-2 bg-accent text-white rounded-sm font-bold text-sm hover:bg-accent-hover transition-colors">
             Finish Setup
           </Link>
         </div>
@@ -331,7 +331,7 @@ export default function DashboardPage() {
       {/* SMS commands discovery banner — shown once until dismissed */}
       {false && !smsHintDismissed && (
         <div className="mb-6 flex items-start gap-4 bg-paper border border-line rounded-sm px-5 py-4">
-          <div className="w-9 h-9 rounded-full bg-ink/5 flex items-center justify-center shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-sm bg-ink/5 flex items-center justify-center shrink-0 mt-0.5">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
@@ -355,20 +355,20 @@ export default function DashboardPage() {
       )}
 
       {subscriptionActive && !agentLive && (
-        <div className="mb-6 flex items-center gap-4 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
-          <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5">
+        <div className="mb-6 flex items-center gap-4 bg-paper border border-line rounded-sm px-5 py-4">
+          <div className="w-9 h-9 rounded-sm bg-paper flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="2.5">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
           <div className="flex-1">
-            <p className="font-bold text-red-700 text-sm">Call Slot is paused</p>
-            <p className="text-red-600/70 text-sm">Forwarded calls will not be answered until you turn it back on.</p>
+            <p className="font-bold text-accent text-sm">Call Slot is paused</p>
+            <p className="text-muted text-sm">Forwarded calls will not be answered until you turn it back on.</p>
           </div>
           <button
             onClick={() => void toggleAgent(true)}
-            className="shrink-0 px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors"
+            className="shrink-0 px-4 py-2 bg-accent text-white rounded-sm font-bold text-sm hover:bg-accent-hover transition-colors"
           >
             Turn back on
           </button>
@@ -378,9 +378,9 @@ export default function DashboardPage() {
       {/* Confirmation dialog — turning agent off */}
       {confirmOff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-sm p-8 max-w-sm w-full  text-center">
-            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5">
+          <div className="bg-surface rounded-sm p-8 max-w-sm w-full text-center">
+            <div className="w-14 h-14 bg-paper rounded-sm flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="2.5">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
             </div>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => { setConfirmOff(false); void toggleAgent(false); }}
-                className="flex-1 py-3 rounded-sm bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
+                className="flex-1 py-3 rounded-sm bg-accent text-white font-bold hover:bg-accent-hover transition-colors"
               >
                 Turn off
               </button>
@@ -409,9 +409,9 @@ export default function DashboardPage() {
       {/* Subscribe prompt modal — shown when unsubscribed user tries to enable agent */}
       {subscribePromptOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setSubscribePromptOpen(false)}>
-          <div className="bg-white rounded-sm p-8 max-w-sm w-full  text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="w-14 h-14 bg-line rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="bg-surface rounded-sm p-8 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-line rounded-sm flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-ink" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
@@ -430,7 +430,7 @@ export default function DashboardPage() {
               </Link>
               <button
                 onClick={() => setSubscribePromptOpen(false)}
-                className="w-full py-3 rounded-full border-2 border-line font-bold text-ink hover:bg-paper transition-colors"
+                className="w-full py-3 rounded-sm border-2 border-line font-bold text-ink hover:bg-paper transition-colors"
               >
                 Not now
               </button>
@@ -442,7 +442,7 @@ export default function DashboardPage() {
       {/* Transcript modal */}
       {transcriptCall && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setTranscriptCall(null)}>
-          <div className="bg-white rounded-sm p-8 max-w-lg w-full  max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-surface rounded-sm p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-xl font-bold text-ink">{transcriptCall.callerName || "Unknown Caller"}</h3>
@@ -455,10 +455,10 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {getStatusBadge(transcriptCall)}
               {transcriptCall.appointment && (
-                <div className="bg-green-50 rounded-sm p-4 border border-green-100">
-                  <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">Booking Confirmed</p>
-                  <p className="font-bold text-green-900">{transcriptCall.appointment.petName} — {transcriptCall.appointment.serviceName}</p>
-                  <p className="text-sm text-green-700">
+                <div className="bg-paper rounded-sm p-4 border border-line">
+                  <p className="text-xs font-bold text-ink uppercase tracking-wider mb-1">Booking Confirmed</p>
+                  <p className="font-bold text-ink">{transcriptCall.appointment.petName} — {transcriptCall.appointment.serviceName}</p>
+                  <p className="text-sm text-ink">
                     {new Date(transcriptCall.appointment.startTime).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   </p>
                 </div>
@@ -473,7 +473,7 @@ export default function DashboardPage() {
                     <svg className="w-3 h-3 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path d="m9 18 6-6-6-6" /></svg>
                     Full Transcript
                   </summary>
-                  <div className="mt-2 bg-white rounded-sm border border-line p-4 max-h-60 overflow-y-auto">
+                  <div className="mt-2 bg-surface rounded-sm border border-line p-4 max-h-60 overflow-y-auto">
                     <p className="text-sm text-muted leading-relaxed whitespace-pre-wrap">{transcriptCall.transcript}</p>
                   </div>
                 </details>
@@ -488,13 +488,13 @@ export default function DashboardPage() {
 
       {/* Calendar health + funnel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white rounded-sm  border border-white/50 p-5">
+        <div className="bg-surface rounded-sm border border-line p-5">
           <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">
             Calendar health
           </p>
           {calendarHealth ? (
             <>
-              <p className={`text-sm font-bold ${calendarHealth.canWriteEvents ? "text-green-700" : "text-amber-700"}`}>
+              <p className={`text-sm font-bold ${calendarHealth.canWriteEvents ? "text-ink" : "text-ink"}`}>
                 {calendarHealth.canWriteEvents ? "Read + write OK" : calendarHealth.connected ? "Request mode" : "Not connected"}
               </p>
               <p className="text-sm text-muted mt-1">{calendarHealth.message}</p>
@@ -506,7 +506,7 @@ export default function DashboardPage() {
             Manage calendar →
           </Link>
         </div>
-        <div className="bg-white rounded-sm  border border-white/50 p-5">
+        <div className="bg-surface rounded-sm border border-line p-5">
           <p className="text-xs font-bold text-muted uppercase tracking-wider mb-3">
             Booking funnel (30 days)
           </p>
@@ -520,7 +520,7 @@ export default function DashboardPage() {
                   <span className="font-bold text-ink">
                     {row.count}
                     {row.dropoffPct > 0 ? (
-                      <span className="text-red-400 text-xs ml-2">−{row.dropoffPct}%</span>
+                      <span className="text-muted text-xs ml-2">−{row.dropoffPct}%</span>
                     ) : null}
                   </span>
                 </div>
@@ -533,8 +533,8 @@ export default function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {/* Calls */}
-        <div data-tour="tour-calls" className="bg-white p-4 rounded-sm  border border-white/50">
-          <div className="w-8 h-8 bg-paper rounded-xl flex items-center justify-center text-ink mb-3">
+        <div data-tour="tour-calls" className="bg-surface p-4 rounded-sm border border-line">
+          <div className="w-8 h-8 bg-paper rounded-sm flex items-center justify-center text-ink mb-3">
             <svg
               width="16"
               height="16"
@@ -550,14 +550,14 @@ export default function DashboardPage() {
             Calls
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-ink">
+            <span className="text-2xl font-medium text-ink">
               {stats.callsThisWeek}
             </span>
             {stats.callsLastWeek > 0 && (() => {
               const pctChange = Math.round(((stats.callsThisWeek - stats.callsLastWeek) / stats.callsLastWeek) * 100);
               if (pctChange === 0) return null;
               return (
-                <span className={`text-xs font-bold ${pctChange > 0 ? "text-green-500" : "text-red-400"}`}>
+                <span className={`text-xs font-bold ${pctChange > 0 ? "text-ink" : "text-muted"}`}>
                   {pctChange > 0 ? "+" : ""}{pctChange}%
                 </span>
               );
@@ -566,8 +566,8 @@ export default function DashboardPage() {
           <p className="text-xs text-muted mt-0.5">Past 7 days{stats.callsLastWeek > 0 ? ` · ${stats.callsLastWeek} last week` : ""}</p>
         </div>
 
-        <div className="bg-white p-4 rounded-sm  border border-white/50">
-          <div className="w-8 h-8 bg-paper rounded-xl flex items-center justify-center text-ink mb-3">
+        <div className="bg-surface p-4 rounded-sm border border-line">
+          <div className="w-8 h-8 bg-paper rounded-sm flex items-center justify-center text-ink mb-3">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" />
@@ -577,15 +577,15 @@ export default function DashboardPage() {
             Booking attempts
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-ink">
+            <span className="text-2xl font-medium text-ink">
               {stats.bookingAttempts}
             </span>
           </div>
           <p className="text-xs text-muted mt-0.5">Past 30 days</p>
         </div>
 
-        <div className="bg-white p-4 rounded-sm  border border-white/50">
-          <div className="w-8 h-8 bg-line rounded-xl flex items-center justify-center text-ink mb-3">
+        <div className="bg-surface p-4 rounded-sm border border-line">
+          <div className="w-8 h-8 bg-line rounded-sm flex items-center justify-center text-ink mb-3">
             <svg
               width="16"
               height="16"
@@ -601,7 +601,7 @@ export default function DashboardPage() {
             Booked
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-ink">
+            <span className="text-2xl font-medium text-ink">
               {stats.bookingsConfirmed}
             </span>
           </div>
@@ -609,8 +609,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Revenue */}
-        <div data-tour="tour-revenue" className="bg-white p-4 rounded-sm  border border-white/50">
-          <div className="w-8 h-8 bg-accent/10 rounded-xl flex items-center justify-center text-accent mb-3">
+        <div data-tour="tour-revenue" className="bg-surface p-4 rounded-sm border border-line">
+          <div className="w-8 h-8 bg-accent/10 rounded-sm flex items-center justify-center text-accent mb-3">
             <svg
               width="16"
               height="16"
@@ -627,7 +627,7 @@ export default function DashboardPage() {
             Est. revenue
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-ink">
+            <span className="text-2xl font-medium text-ink">
               ${stats.revenueProtected.toLocaleString()}
             </span>
           </div>
@@ -636,8 +636,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-sm  border border-white/50">
-          <div className="w-8 h-8 bg-ink/5 rounded-xl flex items-center justify-center text-ink mb-3">
+        <div className="bg-surface p-4 rounded-sm border border-line">
+          <div className="w-8 h-8 bg-ink/5 rounded-sm flex items-center justify-center text-ink mb-3">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
@@ -646,7 +646,7 @@ export default function DashboardPage() {
             Callbacks
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-ink">
+            <span className="text-2xl font-medium text-ink">
               {stats.callbacks}
             </span>
           </div>
@@ -682,7 +682,7 @@ export default function DashboardPage() {
           )}
           <Link
             href="/today"
-            className="mt-3 inline-block px-3 py-1.5 bg-white/10 hover:bg-white/20 transition-all rounded-xl text-xs font-bold text-white uppercase tracking-widest"
+            className="mt-3 inline-block px-3 py-1.5 bg-white/10 hover:bg-white/20 transition-all rounded-sm text-xs font-bold text-white uppercase tracking-widest"
           >
             View Schedule
           </Link>
@@ -695,34 +695,34 @@ export default function DashboardPage() {
         const remaining = Math.max(0, usageMinutesLimit - usageMinutesUsed);
         const isNear = pct >= 80;
         return (
-          <div className="bg-white rounded-sm  border border-white/50 p-4 sm:p-5 mb-6">
+          <div className="bg-surface rounded-sm border border-line p-4 sm:p-5 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-xs font-bold text-muted uppercase tracking-wider mb-1">
                   {usagePlanName} Plan — Monthly Minutes
                 </p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-extrabold text-ink">{usageMinutesUsed}</span>
+                  <span className="text-2xl font-medium text-ink">{usageMinutesUsed}</span>
                   <span className="text-muted font-medium">/ {usageMinutesLimit} min used</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-sm font-bold ${isNear ? "text-amber-600" : "text-muted"}`}>
+                <span className={`text-sm font-bold ${isNear ? "text-ink" : "text-muted"}`}>
                   {remaining} min remaining
                 </span>
                 {isNear && (
                   <Link
                     href="/settings/billing"
-                    className="px-4 py-2 bg-line text-ink text-sm font-bold rounded-full hover:bg-ink hover:text-white transition-colors"
+                    className="px-4 py-2 bg-line text-ink text-sm font-bold rounded-sm hover:bg-ink hover:text-white transition-colors"
                   >
                     Upgrade
                   </Link>
                 )}
               </div>
             </div>
-            <div className="mt-3 w-full h-1.5 rounded-full bg-ink/5 overflow-hidden">
+            <div className="mt-3 w-full h-1.5 rounded-sm bg-ink/5 overflow-hidden">
               <div
-                className={`h-full transition-all rounded-full ${isNear ? "bg-amber-400" : "bg-line"}`}
+                className={`h-full transition-all rounded-sm ${isNear ? "bg-ink" : "bg-line"}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -732,7 +732,7 @@ export default function DashboardPage() {
 
       {/* SMS Quick Commands card — hidden for Call Slot MVP */}
       {false && (
-      <div className="bg-white rounded-sm  border border-white/50 px-5 py-4 mb-6">
+      <div className="bg-surface rounded-sm border border-line px-5 py-4 mb-6">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted">
@@ -761,8 +761,8 @@ export default function DashboardPage() {
       )}
 
       {/* Recent Call Log */}
-      <div data-tour="tour-calllog" className="bg-white rounded-sm  border border-white/50 overflow-hidden">
-        <div className="px-8 py-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div data-tour="tour-calllog" className="bg-surface rounded-sm border border-line overflow-hidden">
+        <div className="px-8 py-6 border-b border-line flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-bold text-ink">Recent activity</h2>
           <div className="flex gap-2">
             <button
@@ -786,7 +786,7 @@ export default function DashboardPage() {
                 }
               }}
               disabled={sendingDigest}
-              className="px-4 py-2 rounded-sm border border-gray-100 text-sm font-bold hover:bg-paper transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 rounded-sm border border-line text-sm font-bold hover:bg-paper transition-colors disabled:opacity-50 flex items-center gap-2"
               title="Email yourself a weekly summary"
             >
               {digestSent ? (
@@ -799,7 +799,7 @@ export default function DashboardPage() {
             </button>
             <Link
               href="/calls"
-              className="px-4 py-2 rounded-sm border border-gray-100 text-sm font-bold hover:bg-paper transition-colors"
+              className="px-4 py-2 rounded-sm border border-line text-sm font-bold hover:bg-paper transition-colors"
             >
               View All & Filter
             </Link>
@@ -807,7 +807,7 @@ export default function DashboardPage() {
         </div>
         {digestError && (
           <div className="px-8 pb-4">
-            <p className="text-sm font-medium text-red-600">{digestError}</p>
+            <p className="text-sm font-medium text-accent">{digestError}</p>
           </div>
         )}
 
@@ -819,7 +819,7 @@ export default function DashboardPage() {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-xs font-bold text-muted uppercase tracking-widest border-b border-gray-50 bg-surface">
+                <tr className="text-xs font-bold text-muted uppercase tracking-widest border-b border-line bg-surface">
                   <th className="px-4 sm:px-8 py-4">Caller</th>
                   <th className="px-4 sm:px-8 py-4 hidden sm:table-cell">Status</th>
                   <th className="px-4 sm:px-8 py-4 hidden md:table-cell">Outcome</th>
@@ -827,7 +827,7 @@ export default function DashboardPage() {
                   <th className="px-4 sm:px-8 py-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-line">
                 {recentCalls.map((call) => {
                   const displayName =
                     call.callerName || call.callerPhone || "Unknown";
@@ -853,7 +853,7 @@ export default function DashboardPage() {
                       <td className="px-4 sm:px-8 py-4 sm:py-5">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center font-bold text-ink shrink-0`}
+                            className={`w-10 h-10 rounded-sm ${bgColor} flex items-center justify-center font-bold text-ink shrink-0`}
                           >
                             {initials}
                           </div>
@@ -894,7 +894,7 @@ export default function DashboardPage() {
             </table>
           )}
         </div>
-
+                              
         {recentCalls.length > 0 && (
           <div className="px-8 py-6 bg-surface text-center">
             <Link

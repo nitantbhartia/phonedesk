@@ -47,12 +47,12 @@ export function Toaster() {
       {items.map((t) => (
         <div
           key={t.id}
-          className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold min-w-[220px] max-w-sm ${
+          className={`flex items-center gap-3 border border-line px-5 py-3 rounded-sm text-sm font-medium min-w-[220px] max-w-sm ${
             t.kind === "success"
-              ? "bg-green-700 text-white"
+              ? "bg-ink text-paper"
               : t.kind === "error"
-              ? "bg-red-600 text-white"
-              : "bg-slate-800 text-white"
+              ? "bg-accent text-accent-foreground"
+              : "bg-surface text-ink"
           }`}
         >
           {t.kind === "success" ? (

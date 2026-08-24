@@ -241,10 +241,10 @@ export function DashboardTour({ open, onClose }: Props) {
           pointerEvents: "auto",
           maxHeight: typeof window !== "undefined" ? window.innerHeight - 32 : "90vh",
         }}
-        className="bg-white rounded-sm  overflow-y-auto"
+        className="bg-surface rounded-sm overflow-y-auto"
       >
         {/* Progress bar */}
-        <div className="h-1 bg-gray-100">
+        <div className="h-1 bg-paper">
           <div
             className="h-full bg-accent transition-all duration-300"
             style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
@@ -269,7 +269,7 @@ export function DashboardTour({ open, onClose }: Props) {
 
           {/* Hint */}
           {currentStep.hint && (
-            <div className="bg-surface rounded-xl px-3 py-2 mb-3">
+            <div className="bg-surface rounded-sm px-3 py-2 mb-3">
               <p className="text-xs text-muted">{currentStep.hint}</p>
             </div>
           )}
@@ -282,8 +282,8 @@ export function DashboardTour({ open, onClose }: Props) {
                 onClick={() => setStep(i)}
                 className={`rounded-full transition-all ${
                   i === step
-                    ? "w-4 h-2 bg-accent"
-                    : "w-2 h-2 bg-ink/15 hover:bg-ink/30"
+                  ? "w-4 h-2 bg-accent"
+                  : "w-2 h-2 bg-ink/15 hover:bg-ink/30"
                 }`}
               />
             ))}
@@ -294,7 +294,7 @@ export function DashboardTour({ open, onClose }: Props) {
             {step > 0 && (
               <button
                 onClick={goPrev}
-                className="px-3 py-2 rounded-xl border border-line text-muted text-xs font-bold hover:bg-surface transition-colors"
+                className="px-3 py-2 rounded-sm border border-line text-muted text-xs font-bold hover:bg-surface transition-colors"
               >
                 ← Back
               </button>
@@ -302,7 +302,7 @@ export function DashboardTour({ open, onClose }: Props) {
             {!isLast && (
               <button
                 onClick={handleClose}
-                className="px-3 py-2 rounded-xl text-muted text-xs font-semibold hover:bg-surface transition-colors"
+                className="px-3 py-2 rounded-sm text-muted text-xs font-semibold hover:bg-surface transition-colors"
               >
                 Skip
               </button>

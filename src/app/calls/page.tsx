@@ -44,13 +44,13 @@ function ScoreBadge({ call }: { call: CallRecord }) {
   const { total, max, label } = computeCallScorecard(call);
   const colorClass =
     total >= 6
-      ? "bg-emerald-100 text-emerald-700"
+      ? "bg-paper text-ink"
       : total >= 4
-      ? "bg-amber-100 text-amber-700"
-      : "bg-red-100 text-red-600";
+      ? "bg-paper text-ink"
+      : "bg-paper text-accent";
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${colorClass}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-bold tabular-nums ${colorClass}`}
       title={`Call quality: ${label}`}
     >
       {total}/{max}
@@ -150,7 +150,7 @@ export default function CallLogPage() {
           <button
             onClick={exportCSV}
             disabled={calls.length === 0}
-            className="px-5 py-2.5 bg-white rounded-sm font-medium text-sm  border border-line flex items-center gap-2 hover:bg-surface transition-colors disabled:opacity-40"
+            className="px-5 py-2.5 bg-surface rounded-sm font-medium text-sm border border-line flex items-center gap-2 hover:bg-surface transition-colors disabled:opacity-40"
           >
             <svg
               width="18"
@@ -170,9 +170,9 @@ export default function CallLogPage() {
       </div>
 
       {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
-          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+        <div className="flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
+          <p className="flex-1 text-sm text-accent font-medium">{fetchError}</p>
+          <button onClick={() => setFetchError("")} className="text-muted hover:text-accent text-xs font-bold">Dismiss</button>
         </div>
       )}
 
@@ -216,7 +216,7 @@ export default function CallLogPage() {
           <button
             type="button"
             onClick={() => { setSearch(""); setSearchInput(""); setPage(0); }}
-            className="px-4 py-2.5 bg-white rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors text-muted"
+            className="px-4 py-2.5 bg-surface rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors text-muted"
           >
             Clear
           </button>
@@ -234,8 +234,8 @@ export default function CallLogPage() {
             }}
             className={`px-5 py-2 rounded-sm text-sm font-medium transition-all ${
               filter === f.value
-                ? "bg-ink text-white "
-                : "bg-white text-muted hover:bg-surface border border-line"
+              ? "bg-ink text-white "
+              : "bg-surface text-muted hover:bg-surface border border-line"
             }`}
           >
             {f.label}
@@ -244,7 +244,7 @@ export default function CallLogPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-sm  overflow-hidden border border-white">
+      <div className="bg-surface rounded-sm overflow-hidden border border-line">
         {loading ? (
           <div className="p-8 space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -301,18 +301,18 @@ export default function CallLogPage() {
                   "bg-paper",
                   "bg-accent/10",
                   "bg-line",
-                  "bg-gray-100",
+                  "bg-paper",
                 ];
                 const bgColor =
                   call.callerName
                     ? bgColors[
                         displayName.charCodeAt(0) % bgColors.length
                       ]
-                    : "bg-gray-100";
+                    : "bg-paper";
                 const textColor =
                   call.callerName
                     ? "text-ink"
-                    : "text-gray-400";
+                    : "text-muted";
 
                 return (
                   <tr
@@ -322,7 +322,7 @@ export default function CallLogPage() {
                     <td className="px-4 sm:px-8 py-4 sm:py-6">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center font-bold ${textColor} shrink-0`}
+                          className={`w-10 h-10 rounded-sm ${bgColor} flex items-center justify-center font-bold ${textColor} shrink-0`}
                         >
                           {initials}
                         </div>
@@ -342,7 +342,7 @@ export default function CallLogPage() {
                     </td>
                     <td className="px-4 sm:px-6 py-4 sm:py-6 hidden sm:table-cell">
                       {call.appointment?.serviceName ? (
-                        <span className="px-3 py-1 bg-line text-ink text-xs font-bold rounded-full">
+                        <span className="px-3 py-1 bg-line text-ink text-xs font-bold rounded-sm">
                           {call.appointment.serviceName}
                         </span>
                       ) : (
@@ -353,7 +353,7 @@ export default function CallLogPage() {
                     </td>
                     <td className="px-4 sm:px-6 py-4 sm:py-6 hidden sm:table-cell">
                       {call.appointment ? (
-                        <div className="flex items-center gap-2 text-emerald-600">
+                        <div className="flex items-center gap-2 text-ink">
                           <svg
                             width="16"
                             height="16"
@@ -447,7 +447,7 @@ export default function CallLogPage() {
               <button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 0}
-                className="p-2 rounded-lg border border-line hover:bg-white transition-colors disabled:opacity-30"
+                className="p-2 rounded-lg border border-line hover:bg-surface transition-colors disabled:opacity-30"
               >
                 <svg
                   width="16"
@@ -463,7 +463,7 @@ export default function CallLogPage() {
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={page >= totalPages - 1}
-                className="p-2 rounded-lg border border-line hover:bg-white transition-colors disabled:opacity-30"
+                className="p-2 rounded-lg border border-line hover:bg-surface transition-colors disabled:opacity-30"
               >
                 <svg
                   width="16"
@@ -506,12 +506,12 @@ export default function CallLogPage() {
                   const { total, max, criteria, label } = computeCallScorecard(selectedCall);
                   const badgeColor =
                     total >= 6
-                      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                      ? "bg-paper text-ink border-line"
                       : total >= 4
-                      ? "bg-amber-100 text-amber-700 border-amber-200"
-                      : "bg-red-100 text-red-600 border-red-200";
+                      ? "bg-paper text-ink border-line"
+                      : "bg-paper text-accent border-line";
                   return (
-                    <div className="border rounded-sm p-4 bg-white">
+                    <div className="border rounded-sm p-4 bg-surface">
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <span className="text-sm font-bold text-ink">Call quality</span>
@@ -524,7 +524,7 @@ export default function CallLogPage() {
                       <div className="space-y-1.5">
                         {criteria.map((c) => (
                           <div key={c.key} className="flex items-start gap-2 text-sm">
-                            <span className={`mt-0.5 ${c.passed ? "text-emerald-500" : "text-red-400"}`}>
+                            <span className={`mt-0.5 ${c.passed ? "text-ink" : "text-muted"}`}>
                               {c.passed ? "✓" : "✗"}
                             </span>
                             <div className="min-w-0">
@@ -565,7 +565,7 @@ export default function CallLogPage() {
                       Status
                     </div>
                     {selectedCall.appointment ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                      <span className="inline-flex items-center gap-1 text-ink font-bold">
                         <svg
                           width="14"
                           height="14"
@@ -616,15 +616,15 @@ export default function CallLogPage() {
                     <div className="text-sm font-bold text-ink mb-2">
                       Appointment
                     </div>
-                    <div className="bg-green-50 border border-green-200 rounded-sm p-4 text-sm">
+                    <div className="bg-paper border border-line rounded-sm p-4 text-sm">
                       <div className="font-bold text-ink">
                         {selectedCall.appointment.petName} –{" "}
                         {selectedCall.appointment.serviceName}
                       </div>
-                      <div className="text-green-700 mt-1">
+                      <div className="text-ink mt-1">
                         {formatDateTime(selectedCall.appointment.startTime)}
                       </div>
-                      <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                      <span className="inline-block mt-2 px-3 py-1 bg-paper text-ink text-xs font-bold rounded-sm">
                         {selectedCall.appointment.status}
                       </span>
                     </div>

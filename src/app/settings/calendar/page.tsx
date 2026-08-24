@@ -309,8 +309,8 @@ function CalendarSettingsPageContent() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-64 bg-white/50 rounded-sm animate-pulse" />
-        <div className="h-64 bg-white/50 rounded-sm animate-pulse" />
+        <div className="h-8 w-64 bg-surface rounded-sm animate-pulse" />
+        <div className="h-64 bg-surface rounded-sm animate-pulse" />
       </div>
     );
   }
@@ -321,18 +321,18 @@ function CalendarSettingsPageContent() {
   return (
     <div className="space-y-8">
       {pageError && (
-        <div className="rounded-sm border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+        <div className="rounded-sm border border-line bg-paper px-5 py-4 text-sm font-medium text-accent">
           {pageError}
         </div>
       )}
       {pageNotice && (
-        <div className="rounded-sm border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-700">
+        <div className="rounded-sm border border-line bg-paper px-5 py-4 text-sm font-medium text-ink">
           {pageNotice}
         </div>
       )}
 
       {/* Calendar Integration Section */}
-      <section className="bg-white rounded-sm p-6 sm:p-10  border border-white">
+      <section className="bg-surface rounded-sm p-6 sm:p-10 border border-line">
         <div className="mb-8">
           <h1 className="font-display text-3xl tracking-tight text-ink">
             Bookings
@@ -348,17 +348,17 @@ function CalendarSettingsPageContent() {
           <div
             className={`p-6 bg-surface rounded-sm border-2 flex flex-col items-center text-center relative overflow-hidden ${
               isConnected("GOOGLE")
-                ? "border-line"
-                : "border-transparent hover:border-line"
-            } transition-all`}
+              ? "border-line"
+              : "border-transparent hover:border-line"
+              } transition-all`}
           >
             {isConnected("GOOGLE") && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-paper text-ink rounded-sm text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
                 CONNECTED
               </div>
             )}
-            <div className="w-14 h-14 bg-white rounded-sm flex items-center justify-center  mb-4">
+            <div className="w-14 h-14 bg-surface rounded-sm flex items-center justify-center mb-4">
               <svg width="32" height="32" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -388,35 +388,35 @@ function CalendarSettingsPageContent() {
               <button
                 onClick={() => disconnectCalendar("GOOGLE")}
                 disabled={disconnecting === "GOOGLE"}
-                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                className="text-xs font-bold text-accent hover:text-accent transition-colors disabled:opacity-50"
               >
                 {disconnecting === "GOOGLE" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
                 onClick={() => connectCalendar("google")}
-                className="w-full py-2 px-4 bg-ink text-surface rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+                className="w-full py-2 px-4 bg-ink text-surface rounded-sm text-xs font-bold hover:bg-opacity-90 transition-all"
               >
                 Connect Account
               </button>
             )}
           </div>
-
+              
           {/* Square Appointments */}
           <div
             className={`p-6 bg-surface rounded-sm border-2 flex flex-col items-center text-center relative overflow-hidden ${
               isConnected("SQUARE")
-                ? "border-line"
-                : "border-transparent hover:border-line"
-            } transition-all`}
+              ? "border-line"
+              : "border-transparent hover:border-line"
+              } transition-all`}
           >
             {isConnected("SQUARE") && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-paper text-ink rounded-sm text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
                 CONNECTED
               </div>
             )}
-            <div className="w-14 h-14 bg-black rounded-sm flex items-center justify-center  mb-4">
+            <div className="w-14 h-14 bg-black rounded-sm flex items-center justify-center mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
                 <rect x="2" y="2" width="20" height="20" rx="4" />
                 <path d="M7 10h4v4H7zM13 10h4v4h-4z" fill="black" />
@@ -430,35 +430,35 @@ function CalendarSettingsPageContent() {
               <button
                 onClick={() => disconnectCalendar("SQUARE")}
                 disabled={disconnecting === "SQUARE"}
-                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                className="text-xs font-bold text-accent hover:text-accent transition-colors disabled:opacity-50"
               >
                 {disconnecting === "SQUARE" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
                 onClick={() => connectCalendar("square")}
-                className="w-full py-2 px-4 bg-ink text-surface rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+                className="w-full py-2 px-4 bg-ink text-surface rounded-sm text-xs font-bold hover:bg-opacity-90 transition-all"
               >
                 Connect Account
               </button>
             )}
           </div>
-
+              
           {/* Acuity Scheduling */}
           <div
             className={`p-6 bg-surface rounded-sm border-2 flex flex-col items-center text-center relative overflow-hidden ${
               isConnected("ACUITY")
-                ? "border-line"
-                : "border-transparent hover:border-line"
-            } transition-all`}
+              ? "border-line"
+              : "border-transparent hover:border-line"
+              } transition-all`}
           >
             {isConnected("ACUITY") && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-paper text-ink rounded-sm text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
                 CONNECTED
               </div>
             )}
-            <div className="w-14 h-14 bg-[#316FA8] rounded-sm flex items-center justify-center  mb-4">
+            <div className="w-14 h-14 bg-[#316FA8] rounded-sm flex items-center justify-center mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
                 <line x1="16" x2="16" y1="2" y2="6" />
@@ -475,21 +475,21 @@ function CalendarSettingsPageContent() {
               <button
                 onClick={() => disconnectCalendar("ACUITY")}
                 disabled={disconnecting === "ACUITY"}
-                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                className="text-xs font-bold text-accent hover:text-accent transition-colors disabled:opacity-50"
               >
                 {disconnecting === "ACUITY" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
                 onClick={() => connectCalendar("acuity")}
-                className="w-full py-2 px-4 bg-ink text-surface rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+                className="w-full py-2 px-4 bg-ink text-surface rounded-sm text-xs font-bold hover:bg-opacity-90 transition-all"
               >
                 Connect Account
               </button>
             )}
           </div>
         </div>
-
+              
         <div className="mt-6 p-4 bg-line rounded-sm border border-line flex gap-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-accent shrink-0">Note</span>
           <p className="text-sm text-ink/80 font-medium">
@@ -501,9 +501,9 @@ function CalendarSettingsPageContent() {
           </p>
         </div>
       </section>
-
+              
       {/* Business Hours Section */}
-      <section className="bg-white rounded-sm p-6 sm:p-10  border border-white">
+      <section className="bg-surface rounded-sm p-6 sm:p-10 border border-line">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-ink">
             <span className="inline-flex items-center gap-2">
@@ -515,7 +515,7 @@ function CalendarSettingsPageContent() {
             Set the hours Call Slot can offer appointment slots.
           </p>
         </div>
-
+              
         <div className="bg-surface rounded-sm p-6 border-2 border-line space-y-4">
           {Object.entries(hours).map(([day, h]) => (
             <div
@@ -542,7 +542,7 @@ function CalendarSettingsPageContent() {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
+                  <div className="w-11 h-6 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-line after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
                 </label>
               </div>
               {h.enabled ? (
@@ -555,7 +555,7 @@ function CalendarSettingsPageContent() {
                         [day]: { ...h, open: e.target.value },
                       })
                     }
-                    className="appearance-none bg-white border-2 border-line rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-ink transition-all"
+                    className="appearance-none bg-surface border-2 border-line rounded-sm px-3 py-2 text-sm font-bold focus:outline-none focus:border-ink transition-all"
                   >
                     {TIME_OPTIONS.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -570,7 +570,7 @@ function CalendarSettingsPageContent() {
                         [day]: { ...h, close: e.target.value },
                       })
                     }
-                    className="appearance-none bg-white border-2 border-line rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-ink transition-all"
+                    className="appearance-none bg-surface border-2 border-line rounded-sm px-3 py-2 text-sm font-bold focus:outline-none focus:border-ink transition-all"
                   >
                     {TIME_OPTIONS.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -594,7 +594,7 @@ function CalendarSettingsPageContent() {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
+                <div className="w-11 h-6 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-line after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
               </label>
             </div>
           ))}
@@ -609,7 +609,7 @@ function CalendarSettingsPageContent() {
           {hoursDirty && (
             <button
               onClick={fetchData}
-              className="px-6 py-3 bg-white text-ink font-bold rounded-full border border-line hover:bg-surface transition-all text-sm"
+              className="px-6 py-3 bg-surface text-ink font-bold rounded-sm border border-line hover:bg-surface transition-all text-sm"
             >
               Discard
             </button>
@@ -617,7 +617,7 @@ function CalendarSettingsPageContent() {
           <button
             onClick={saveHours}
             disabled={saving || !hoursDirty}
-            className="px-8 py-3 bg-ink text-surface font-bold rounded-full  hover: hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:"
+            className="px-8 py-3 bg-ink text-surface font-bold rounded-sm hover: transition-all text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:"
           >
             {saving ? "Saving\u2026" : "Save Hours"}
           </button>
@@ -627,7 +627,7 @@ function CalendarSettingsPageContent() {
       {/* Booking Logic + Conflict Checker */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Booking Logic */}
-        <section className="bg-white rounded-sm p-6 sm:p-10  border border-white h-full">
+        <section className="bg-surface rounded-sm p-6 sm:p-10 border border-line h-full">
           <h3 className="text-xl font-bold text-ink mb-6">
             Booking Logic
           </h3>
@@ -713,12 +713,12 @@ function CalendarSettingsPageContent() {
 
           <div className="mt-6 flex items-center justify-end gap-3">
             {bookingLogicSaved && (
-              <span className="text-xs text-green-600 font-medium">Saved</span>
+              <span className="text-xs text-ink font-medium">Saved</span>
             )}
             <button
               onClick={() => void saveBookingLogic()}
               disabled={bookingLogicSaving || !primaryConnectionId}
-              className="px-8 py-3 bg-ink text-surface font-bold rounded-full  hover: hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50"
+              className="px-8 py-3 bg-ink text-surface font-bold rounded-sm hover: transition-all text-sm disabled:opacity-50"
             >
               {bookingLogicSaving ? "Saving…" : "Save Primary Destination"}
             </button>
@@ -726,14 +726,13 @@ function CalendarSettingsPageContent() {
         </section>
 
         {/* Conflict Checker */}
-        <section className="bg-ink text-surface rounded-sm p-6 sm:p-10  relative overflow-hidden h-full">
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-line rounded-full blur-3xl" />
+        <section className="bg-ink text-surface rounded-sm p-6 sm:p-10 relative overflow-hidden h-full">
 
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-accent">
               Conflict Checker
             </h3>
-            <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold tracking-widest text-accent">
+            <span className="px-3 py-1 bg-white/10 rounded-sm text-[10px] font-bold tracking-widest text-accent">
               LIVE
             </span>
           </div>
@@ -746,7 +745,7 @@ function CalendarSettingsPageContent() {
                 ))}
               </div>
             ) : conflicts.length === 0 ? (
-              <div className="bg-white/10  rounded-sm p-6 border border-white/10 text-center">
+              <div className="bg-white/10 rounded-sm p-6 border border-white/10 text-center">
                 <p className="text-sm font-bold text-green-400 mb-1">All clear</p>
                 <p className="text-xs text-white/50">
                   {connections.length === 0
@@ -777,7 +776,7 @@ function CalendarSettingsPageContent() {
                 return (
                   <div
                     key={i}
-                    className="bg-white/10  rounded-sm p-4 flex gap-4 border border-white/10"
+                    className="bg-white/10 rounded-sm p-4 flex gap-4 border border-white/10"
                   >
                     <div className="w-12 text-center shrink-0">
                       <p className="text-[10px] font-bold text-white/40">{dayAbbr}</p>

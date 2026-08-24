@@ -146,9 +146,6 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
             aria-label={isPlaying ? "Pause" : isFinished ? "Replay" : "Play"}
           >
             {/* Pulse ring while playing */}
-            {isPlaying && (
-              <span className="absolute inset-0 rounded-full border-2 border-accent/40 animate-ping" />
-            )}
             {isFinished ? (
               /* Replay icon */
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -181,10 +178,10 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
                   key={i}
                   className={`flex-1 rounded-full transition-colors duration-100 ${
                     hot
-                      ? "bg-accent"
-                      : played
-                        ? "bg-ink"
-                        : "bg-ink/15 group-hover:bg-ink/22"
+                    ? "bg-accent"
+                    : played
+                    ? "bg-ink"
+                    : "bg-ink/15 group-hover:bg-ink/22"
                   }`}
                   style={{
                     height: `${height * 100}%`,
@@ -209,7 +206,7 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
 
         {/* Live transcript */}
         <div className="px-5 pb-5">
-          <div className="bg-surface rounded-xl p-4 min-h-[86px] flex flex-col justify-center">
+          <div className="bg-surface rounded-sm p-4 min-h-[86px] flex flex-col justify-center">
             {elapsed === 0 && !isPlaying ? (
               <div className="text-center">
                 <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-1">Live Transcript</p>
@@ -219,10 +216,10 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm ${
                       currentLine.speaker === "ai"
-                        ? "bg-accent/10 text-accent"
-                        : "bg-ink/5 text-muted"
+                      ? "bg-accent/10 text-accent"
+                      : "bg-ink/5 text-muted"
                     }`}
                   >
                     {currentLine.speaker === "ai" ? "Call Slot" : "Caller"}
@@ -237,14 +234,9 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
           </div>
 
           {isFinished && (
-            <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2.5">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              <div>
-                <p className="text-[12px] font-bold text-green-800">Appointment booked successfully</p>
-                <p className="text-[11px] text-green-700">Luna &middot; Full Groom &middot; Monday 3:00 PM &middot; Confirmation text sent</p>
-              </div>
+            <div className="mt-3 border border-line bg-paper p-3">
+              <p className="text-[12px] font-medium text-ink">Appointment booked</p>
+              <p className="text-[11px] text-muted">Luna · Full Groom · Monday 3:00 PM · Confirmation text sent</p>
             </div>
           )}
         </div>

@@ -182,7 +182,7 @@ export default function IntakeFormPage() {
   if (error && !businessName) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface px-4">
-        <div className="rounded-sm bg-white p-8  text-center">
+        <div className="rounded-sm bg-surface p-8 text-center">
           <p className="text-ink text-lg">{error}</p>
         </div>
       </div>
@@ -192,7 +192,7 @@ export default function IntakeFormPage() {
   if (submitted) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface px-4">
-        <div className="rounded-sm bg-white p-8  text-center max-w-md w-full">
+        <div className="rounded-sm bg-surface p-8 text-center max-w-md w-full">
           <h1 className="font-display text-2xl tracking-tight text-ink mb-2">
             Thank you
           </h1>
@@ -212,7 +212,7 @@ export default function IntakeFormPage() {
   return (
     <div className="min-h-screen bg-surface py-8 px-4">
       <div className="mx-auto max-w-lg">
-        <div className="rounded-sm bg-white p-6 sm:p-8 ">
+        <div className="rounded-sm bg-surface p-6 sm:p-8 ">
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="font-display text-2xl tracking-tight text-ink">
@@ -227,7 +227,7 @@ export default function IntakeFormPage() {
           </div>
 
           {error && (
-            <div className="rounded-sm bg-red-50 border border-red-200 p-3 mb-4 text-red-700 text-sm text-center">
+            <div className="rounded-sm bg-paper border border-line p-3 mb-4 text-accent text-sm text-center">
               {error}
             </div>
           )}
@@ -469,7 +469,7 @@ export default function IntakeFormPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-sm bg-ink py-4 text-white font-bold text-lg  hover:bg-ink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-sm bg-ink py-4 text-white font-bold text-lg hover:bg-ink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "Submitting..." : "Submit Intake Form"}
             </button>

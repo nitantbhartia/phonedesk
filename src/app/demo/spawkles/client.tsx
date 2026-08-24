@@ -105,7 +105,7 @@ function TranscriptViewer({ turns }: { turns: TranscriptTurn[] }) {
               className="flex items-center justify-center gap-2 py-1 animate-in fade-in duration-300"
               style={{ animationDelay: `${i * 40}ms` }}
             >
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-paper border border-line text-ink text-xs font-semibold">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                 </svg>
@@ -126,21 +126,21 @@ function TranscriptViewer({ turns }: { turns: TranscriptTurn[] }) {
             style={{ animationDelay: `${i * 40}ms` }}
           >
             {!isAgent && (
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-paper border-2 border-line flex items-center justify-center mt-0.5">
+              <div className="flex-shrink-0 w-6 h-6 rounded-sm bg-paper border-2 border-line flex items-center justify-center mt-0.5">
                 <span className="font-mono text-[10px] text-muted">You</span>
               </div>
             )}
             <div
               className={`max-w-[78%] px-3 py-2 rounded-sm text-sm leading-relaxed ${
                 isAgent
-                  ? "bg-ink text-surface rounded-br-sm"
-                  : "bg-white border-2 border-line text-ink rounded-bl-sm"
+                ? "bg-ink text-surface rounded-br-sm"
+                : "bg-surface border-2 border-line text-ink rounded-bl-sm"
               }`}
             >
               {content}
             </div>
             {isAgent && (
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-ink flex items-center justify-center mt-0.5">
+              <div className="flex-shrink-0 w-6 h-6 rounded-sm bg-ink flex items-center justify-center mt-0.5">
                 <span className="font-mono text-[10px] text-surface">CS</span>
               </div>
             )}
@@ -366,7 +366,7 @@ export function SpawklesDemoClient() {
         {/* Intro heading — only when not in active call */}
         {livePhase === "loading" && (
           <div className="text-center mb-2">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-ink leading-tight mb-2">
+            <h1 className="text-3xl sm:text-4xl font-medium text-ink leading-tight mb-2">
               Hi Shirine!
             </h1>
             <p className="text-muted font-medium text-base max-w-md mx-auto leading-relaxed">
@@ -379,7 +379,7 @@ export function SpawklesDemoClient() {
           {/* Loading */}
           {livePhase === "loading" && (
             <div className="text-center animate-in fade-in duration-300 py-8">
-              <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6 ">
+              <div className="w-20 h-20 bg-surface rounded-sm flex items-center justify-center mx-auto mb-6 ">
                 <svg className="animate-spin w-8 h-8 text-muted" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -405,12 +405,12 @@ export function SpawklesDemoClient() {
 
           {/* Active demo — waiting / in_progress / completed */}
           {(livePhase === "waiting" || livePhase === "in_progress" || livePhase === "completed") && (
-            <div className="bg-surface rounded-sm border-4 border-white  p-5 sm:p-8 animate-in fade-in duration-300">
+            <div className="bg-surface rounded-sm border border-line p-5 sm:p-8 animate-in fade-in duration-300">
               <div className="text-center mb-6">
                 {/* Hero heading for waiting state */}
                 {livePhase === "waiting" && (
                   <div className="mb-6">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold text-ink leading-tight mb-2">
+                    <h1 className="text-3xl sm:text-4xl font-medium text-ink leading-tight mb-2">
                       Hi Shirine!
                     </h1>
                     <p className="text-muted font-medium text-base max-w-sm mx-auto">
@@ -419,24 +419,8 @@ export function SpawklesDemoClient() {
                   </div>
                 )}
 
-                {/* Phone icon with animated rings */}
-                <div className="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-4">
-                  {livePhase === "waiting" && (
-                    <>
-                      <div className="absolute inset-0 rounded-full bg-accent/10 animate-ping" style={{ animationDuration: "1.8s" }} />
-                      <div className="absolute inset-3 rounded-full bg-accent/10 animate-ping" style={{ animationDuration: "1.8s", animationDelay: "0.4s" }} />
-                    </>
-                  )}
-                  {livePhase === "in_progress" && (
-                    <>
-                      <div className="absolute inset-0 rounded-full bg-amber-400/30 animate-ping" style={{ animationDuration: "1.2s" }} />
-                      <div className="absolute inset-3 rounded-full bg-amber-400/20 animate-ping" style={{ animationDuration: "1.2s", animationDelay: "0.3s" }} />
-                    </>
-                  )}
-                  {livePhase === "completed" && <div className="absolute inset-0 rounded-full bg-green-400/20" />}
-                  <div className={`relative w-20 h-20 rounded-full flex items-center justify-center  transition-colors duration-500 ${
-                    livePhase === "completed" ? "bg-green-500" : livePhase === "in_progress" ? "bg-amber-500" : "bg-ink"
-                  }`}>
+                <div className="relative inline-flex items-center justify-center w-20 h-20 mx-auto mb-4">
+                  <div className="relative w-20 h-20 rounded-sm flex items-center justify-center bg-ink">
                     {livePhase === "completed" ? (
                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                     ) : (
@@ -453,7 +437,7 @@ export function SpawklesDemoClient() {
                     <p className="text-xs font-bold text-muted uppercase tracking-widest mb-2">Call this number now</p>
                     <a
                       href={`tel:${number}`}
-                      className="block text-4xl sm:text-6xl font-extrabold text-ink tracking-wide hover:text-accent transition-colors"
+                      className="block text-4xl sm:text-6xl font-medium text-ink tracking-wide hover:text-accent transition-colors"
                     >
                       {formattedNumber}
                     </a>
@@ -462,8 +446,8 @@ export function SpawklesDemoClient() {
                 )}
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-lg font-bold text-amber-600 mb-1">Call Slot is on the call!</p>
-                    <p className="text-3xl font-extrabold text-amber-600 tabular-nums tracking-wide">
+                    <p className="text-lg font-bold text-ink mb-1">Call Slot is on the call!</p>
+                    <p className="text-3xl font-medium text-ink tabular-nums tracking-wide">
                       {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                     </p>
                     <p className="text-xs text-muted mt-1">remaining in demo</p>
@@ -471,7 +455,7 @@ export function SpawklesDemoClient() {
                 )}
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-extrabold text-green-700 mb-1">That was Call Slot!</p>
+                    <p className="text-xl font-medium text-ink mb-1">That was Call Slot!</p>
                     <p className="text-sm text-muted">Natural, friendly, and ready to answer 24/7.</p>
                   </div>
                 )}
@@ -488,8 +472,8 @@ export function SpawklesDemoClient() {
                         onClick={() => setSelectedScenario(s.id)}
                         className={`flex flex-col items-center gap-1 px-2 py-3 rounded-sm border-2 text-center transition-all ${
                           selectedScenario === s.id
-                            ? "border-ink bg-ink/5 "
-                            : "border-line bg-white hover:border-ink/25"
+                          ? "border-ink bg-ink/5 "
+                          : "border-line bg-surface hover:border-ink/25"
                         }`}
                       >
                         <span className={`text-xs font-bold leading-tight ${selectedScenario === s.id ? "text-ink" : "text-muted"}`}>
@@ -513,13 +497,13 @@ export function SpawklesDemoClient() {
 
               {/* In progress indicator */}
               {livePhase === "in_progress" && (
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-sm p-4 text-center mb-4 animate-in fade-in duration-300">
+                <div className="bg-paper border-2 border-line rounded-sm p-4 text-center mb-4 animate-in fade-in duration-300">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-sm font-bold text-amber-700">Listening live</span>
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-ink animate-pulse" />
+                    <span className="text-sm font-bold text-ink">Listening live</span>
+                    <span className="w-2 h-2 rounded-full bg-ink animate-pulse" />
                   </div>
-                  <p className="text-xs text-amber-600/70 mt-1">Full transcript appears when the call ends.</p>
+                  <p className="text-xs text-ink/70 mt-1">Full transcript appears when the call ends.</p>
                 </div>
               )}
 
@@ -530,25 +514,25 @@ export function SpawklesDemoClient() {
                   <div className="flex gap-1 bg-paper rounded-sm p-1 mb-3">
                     <button
                       onClick={() => setCompletedTab("summary")}
-                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                      className={`flex-1 py-2 rounded-sm text-xs font-bold transition-all ${
                         completedTab === "summary"
-                          ? "bg-white  text-ink"
-                          : "text-muted hover:text-ink/80"
+                        ? "bg-surface text-ink"
+                        : "text-muted hover:text-ink/80"
                       }`}
                     >
                       Summary
                     </button>
                     <button
                       onClick={() => setCompletedTab("transcript")}
-                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                      className={`flex-1 py-2 rounded-sm text-xs font-bold transition-all ${
                         completedTab === "transcript"
-                          ? "bg-white  text-ink"
-                          : "text-muted hover:text-ink/80"
+                        ? "bg-surface text-ink"
+                        : "text-muted hover:text-ink/80"
                       }`}
                     >
                       Full Transcript
                       {transcriptObject && transcriptObject.length > 0 && (
-                        <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-accent/10 text-accent text-[10px]">
+                        <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-sm bg-accent/10 text-accent text-[10px]">
                           ✓
                         </span>
                       )}
@@ -557,8 +541,8 @@ export function SpawklesDemoClient() {
 
                   {/* Summary tab */}
                   {completedTab === "summary" && (
-                    <div className="bg-green-50 border-2 border-green-200 rounded-sm p-4">
-                      <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Call Summary</p>
+                    <div className="bg-paper border-2 border-line rounded-sm p-4">
+                      <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Call Summary</p>
                       {summary ? (
                         <p className="text-sm text-ink/80 leading-relaxed">{summary}</p>
                       ) : (
@@ -571,7 +555,7 @@ export function SpawklesDemoClient() {
 
                   {/* Transcript tab */}
                   {completedTab === "transcript" && (
-                    <div className="bg-white border-2 border-line rounded-sm p-4">
+                    <div className="bg-surface border-2 border-line rounded-sm p-4">
                       <p className="text-xs font-bold text-muted uppercase tracking-wider mb-3">
                         Conversation · actions highlighted
                       </p>
@@ -623,7 +607,7 @@ export function SpawklesDemoClient() {
                           .catch(() => { /* stay on waiting */ });
                       }
                     }}
-                    className="w-full py-3 rounded-full border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
+                    className="w-full py-3 rounded-sm border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
                   >
                     I&apos;ve already called — check status
                   </button>
@@ -635,7 +619,7 @@ export function SpawklesDemoClient() {
                 <div className="mt-2 space-y-3 animate-in fade-in duration-400">
                   <button
                     onClick={resetDemo}
-                    className="w-full py-3 rounded-full border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-ink transition-all"
+                    className="w-full py-3 rounded-sm border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-ink transition-all"
                   >
                     Try another call
                   </button>

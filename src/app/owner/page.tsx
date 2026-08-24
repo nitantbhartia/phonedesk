@@ -127,7 +127,7 @@ export default async function OwnerDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Owner Dashboard</h1>
+        <h1 className="font-display text-3xl tracking-tight text-ink">Owner</h1>
         <p className="text-muted-foreground">
           Cross-account analytics across all shops using Call Slot.
         </p>

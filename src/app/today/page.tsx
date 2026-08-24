@@ -20,10 +20,10 @@ interface TodayAppointment {
 }
 
 const GROOMING_STATUSES = [
-  { value: "CHECKED_IN", label: "Checked In", color: "bg-blue-100 text-blue-700" },
-  { value: "IN_PROGRESS", label: "In Progress", color: "bg-amber-100 text-amber-700" },
-  { value: "READY_FOR_PICKUP", label: "Ready for Pickup", color: "bg-emerald-100 text-emerald-700" },
-  { value: "PICKED_UP", label: "Picked Up", color: "bg-gray-100 text-gray-500" },
+  { value: "CHECKED_IN", label: "Checked In", color: "bg-paper text-ink" },
+  { value: "IN_PROGRESS", label: "In Progress", color: "bg-paper text-ink" },
+  { value: "READY_FOR_PICKUP", label: "Ready for Pickup", color: "bg-paper text-ink" },
+  { value: "PICKED_UP", label: "Picked Up", color: "bg-paper text-muted" },
 ];
 
 export default function TodayPage() {
@@ -129,7 +129,7 @@ export default function TodayPage() {
     const found = GROOMING_STATUSES.find((s) => s.value === status);
     if (!found) return null;
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-bold ${found.color}`}>
+      <span className={`px-3 py-1 rounded-sm text-xs font-bold ${found.color}`}>
         {found.label}
       </span>
     );
@@ -154,7 +154,7 @@ export default function TodayPage() {
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 bg-white/50 rounded-sm animate-pulse" />
+          <div key={i} className="h-24 bg-surface rounded-sm animate-pulse" />
         ))}
       </div>
     );
@@ -170,16 +170,16 @@ export default function TodayPage() {
       </div>
 
       {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
-          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+        <div className="flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
+          <p className="flex-1 text-sm text-accent font-medium">{fetchError}</p>
+          <button onClick={() => setFetchError("")} className="text-muted hover:text-accent text-xs font-bold">Dismiss</button>
         </div>
       )}
 
       {statusError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{statusError}</p>
-          <button onClick={() => setStatusError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+        <div className="flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
+          <p className="flex-1 text-sm text-accent font-medium">{statusError}</p>
+          <button onClick={() => setStatusError("")} className="text-muted hover:text-accent text-xs font-bold">Dismiss</button>
         </div>
       )}
 
@@ -196,7 +196,7 @@ export default function TodayPage() {
             return (
               <div
                 key={appt.id}
-                className={`bg-white rounded-sm  border border-white p-6 transition-all ${
+                className={`bg-surface rounded-sm border border-line p-6 transition-all ${
                   appt.groomingStatus === "PICKED_UP" ? "opacity-60" : ""
                 }`}
               >
@@ -216,7 +216,7 @@ export default function TodayPage() {
                       </p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
                         {appt.serviceName && (
-                          <span className="px-2.5 py-0.5 bg-line text-ink text-xs font-bold rounded-full">
+                          <span className="px-2.5 py-0.5 bg-line text-ink text-xs font-bold rounded-sm">
                             {appt.serviceName}
                           </span>
                         )}
@@ -234,7 +234,7 @@ export default function TodayPage() {
                       <button
                         onClick={() => updateStatus(appt.id, nextStatus)}
                         disabled={isUpdating}
-                        className="px-4 sm:px-5 py-2 sm:py-2.5 bg-ink text-white rounded-sm font-medium text-xs sm:text-sm  hover:bg-opacity-90 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        className="px-4 sm:px-5 py-2 sm:py-2.5 bg-ink text-white rounded-sm font-medium text-xs sm:text-sm hover:bg-opacity-90 transition-colors disabled:opacity-50 whitespace-nowrap"
                       >
                         {isUpdating ? "..." : getNextStatusLabel(appt.groomingStatus)}
                       </button>
@@ -242,7 +242,7 @@ export default function TodayPage() {
 
                     <button
                       onClick={() => openNoteModal(appt.id, appt.petName || "Pet")}
-                      className="p-2 sm:p-2.5 bg-surface rounded-xl hover:bg-line transition-colors shrink-0"
+                      className="p-2 sm:p-2.5 bg-surface rounded-sm hover:bg-line transition-colors shrink-0"
                       title="Add behavior note"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted">
@@ -261,7 +261,7 @@ export default function TodayPage() {
       {/* Behavior Note Modal */}
       {noteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setNoteModal(null)}>
-          <div className="bg-white rounded-sm p-8 max-w-sm w-full " onClick={(e) => e.stopPropagation()}>
+          <div className="bg-surface rounded-sm p-8 max-w-sm w-full " onClick={(e) => e.stopPropagation()}>
             <h3 className="text-xl font-bold text-ink mb-1">Behavior Note</h3>
             <p className="text-sm text-muted mb-5">For {noteModal.petName}</p>
             <textarea
@@ -273,7 +273,7 @@ export default function TodayPage() {
               className="w-full rounded-sm border-2 border-line p-4 text-sm font-medium resize-none focus:outline-none focus:border-ink transition-all"
             />
             {noteError && (
-              <p className="text-red-600 text-xs mt-2">{noteError}</p>
+              <p className="text-accent text-xs mt-2">{noteError}</p>
             )}
             <div className="flex gap-3 mt-5">
               <button

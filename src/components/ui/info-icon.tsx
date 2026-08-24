@@ -64,7 +64,7 @@ export function InfoIcon({
     mounted && open
       ? createPortal(
           <span
-            className="pointer-events-none fixed z-[9999] w-64 -translate-x-1/2 -translate-y-full rounded-sm bg-ink px-4 py-3 text-xs font-medium text-surface  leading-relaxed"
+            className="pointer-events-none fixed z-[9999] w-64 -translate-x-1/2 -translate-y-full rounded-sm bg-ink px-4 py-3 text-xs font-medium text-surface leading-relaxed"
             style={{ top: pos.top - 10, left: pos.left }}
           >
             {text}
@@ -78,7 +78,7 @@ export function InfoIcon({
     <>
       <span
         ref={ref}
-        className={`relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:text-muted cursor-pointer ${className}`}
+        className={`relative inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted transition-colors hover:text-muted cursor-pointer ${className}`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

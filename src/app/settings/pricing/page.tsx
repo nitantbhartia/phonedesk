@@ -204,7 +204,7 @@ export default function PricingPage() {
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-white/50 rounded-sm animate-pulse" />
+          <div key={i} className="h-20 bg-surface rounded-sm animate-pulse" />
         ))}
       </div>
     );
@@ -221,11 +221,11 @@ export default function PricingPage() {
   return (
     <div className="space-y-8">
       {pageError && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-sm border border-red-200 bg-red-50 px-5 py-4">
-          <p className="flex-1 text-sm font-medium text-red-700">{pageError}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-sm border border-line bg-paper px-5 py-4">
+          <p className="flex-1 text-sm font-medium text-accent">{pageError}</p>
           <button
             onClick={() => void fetchData()}
-            className="rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
+            className="rounded-sm border border-line bg-surface px-4 py-2 text-xs font-bold text-accent hover:bg-paper"
           >
             Retry
           </button>
@@ -245,7 +245,7 @@ export default function PricingPage() {
             setShowForm(true);
           }}
           disabled={savedServices.length === 0}
-          className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm  flex items-center gap-2 hover:bg-opacity-90 transition-colors disabled:opacity-50"
+          className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm flex items-center gap-2 hover:bg-opacity-90 transition-colors disabled:opacity-50"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -256,7 +256,7 @@ export default function PricingPage() {
       </div>
 
       {/* Services — editable list */}
-      <div className="bg-white rounded-sm  border border-white p-6">
+      <div className="bg-surface rounded-sm border border-line p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div>
             <h2 className="font-bold text-ink">Your Services</h2>
@@ -267,7 +267,7 @@ export default function PricingPage() {
           <button
             onClick={saveServices}
             disabled={savingServices}
-            className="px-4 py-2 bg-ink text-white rounded-sm font-medium text-xs  hover:bg-opacity-90 transition-colors disabled:opacity-50 shrink-0"
+            className="px-4 py-2 bg-ink text-white rounded-sm font-medium text-xs hover:bg-opacity-90 transition-colors disabled:opacity-50 shrink-0"
           >
             {savingServices ? "Saving..." : "Save Services"}
           </button>
@@ -289,7 +289,7 @@ export default function PricingPage() {
                     updated[i] = { ...service, name: e.target.value };
                     setServices(updated);
                   }}
-                  className="w-full px-4 py-2.5 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-2.5 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                 />
               </div>
               <div className="flex items-end gap-3">
@@ -306,7 +306,7 @@ export default function PricingPage() {
                       updated[i] = { ...service, price: e.target.value };
                       setServices(updated);
                     }}
-                    className="w-full px-4 py-2.5 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                    className="w-full px-4 py-2.5 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   />
                 </div>
                 <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
@@ -322,7 +322,7 @@ export default function PricingPage() {
                       updated[i] = { ...service, duration: e.target.value };
                       setServices(updated);
                     }}
-                    className="w-full px-4 py-2.5 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                    className="w-full px-4 py-2.5 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   />
                 </div>
                 <div className="flex flex-col items-center gap-1 shrink-0">
@@ -346,7 +346,7 @@ export default function PricingPage() {
                 <button
                   onClick={() => setServices(services.filter((_, j) => j !== i))}
                   disabled={services.length <= 1}
-                  className="h-10 w-10 shrink-0 rounded-xl text-muted hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted flex items-center justify-center"
+                  className="h-10 w-10 shrink-0 rounded-sm text-muted hover:text-accent hover:bg-paper transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted flex items-center justify-center"
                   aria-label="Remove service"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -381,9 +381,9 @@ export default function PricingPage() {
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {savedServices.map((service) => (
-                <div key={service.id} className="bg-surface/40 rounded-xl px-3 py-2">
+                <div key={service.id} className="bg-surface/40 rounded-sm px-3 py-2">
                   <p className="font-semibold text-ink text-xs truncate">{service.name}</p>
-                  <p className="text-sm font-extrabold text-ink">
+                  <p className="text-sm font-medium text-ink">
                     {formatCurrency(service.price)}
                   </p>
                 </div>
@@ -395,7 +395,7 @@ export default function PricingPage() {
 
       {/* Breed/Size overrides */}
       {Object.keys(rulesByService).length === 0 ? (
-        <div className="bg-white rounded-sm  p-16 text-center">
+        <div className="bg-surface rounded-sm p-16 text-center">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-muted">
             <line x1="12" y1="1" x2="12" y2="23" />
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -407,7 +407,7 @@ export default function PricingPage() {
         </div>
       ) : (
         Object.entries(rulesByService).map(([serviceName, serviceRules]) => (
-          <div key={serviceName} className="bg-white rounded-sm  border border-white overflow-x-auto">
+          <div key={serviceName} className="bg-surface rounded-sm border border-line overflow-x-auto">
             <div className="px-6 py-4 bg-surface border-b border-line">
               <h3 className="font-bold text-ink">{serviceName}</h3>
             </div>
@@ -440,7 +440,7 @@ export default function PricingPage() {
                       <button
                         onClick={() => deleteRule(rule.id)}
                         disabled={deleting === rule.id}
-                        className="text-red-500 font-bold text-xs hover:underline disabled:opacity-50"
+                        className="text-accent font-bold text-xs hover:underline disabled:opacity-50"
                       >
                         {deleting === rule.id ? "Removing..." : "Remove"}
                       </button>
@@ -456,7 +456,7 @@ export default function PricingPage() {
       {/* Add pricing rule form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-sm p-6 sm:p-8 max-w-md w-full mx-4 ">
+          <div className="bg-surface rounded-sm p-6 sm:p-8 max-w-md w-full mx-4 ">
             <h2 className="text-xl font-bold text-ink mb-4">Add Pricing Rule</h2>
             <div className="space-y-4">
               <div>
@@ -469,7 +469,7 @@ export default function PricingPage() {
                 <select
                   value={form.serviceId}
                   onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                 >
                   <option value="">Select service...</option>
                   {savedServices.map((s) => (
@@ -492,7 +492,7 @@ export default function PricingPage() {
                     value={form.breed}
                     onChange={(e) => setForm({ ...form, breed: e.target.value })}
                     placeholder="e.g. Standard Poodle"
-                    className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                    className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   />
                 </div>
                 <div>
@@ -505,7 +505,7 @@ export default function PricingPage() {
                   <select
                     value={form.size}
                     onChange={(e) => setForm({ ...form, size: e.target.value })}
-                    className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                    className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   >
                     <option value="">Any size</option>
                     <option value="SMALL">Small</option>
@@ -527,7 +527,7 @@ export default function PricingPage() {
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   placeholder="85"
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                 />
               </div>
               <div>
@@ -542,11 +542,11 @@ export default function PricingPage() {
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   placeholder="e.g. +$30 if matted"
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                 />
               </div>
               {formError && (
-                <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                <div className="rounded-sm border border-line bg-paper px-4 py-3 text-sm font-medium text-accent">
                   {formError}
                 </div>
               )}
@@ -556,14 +556,14 @@ export default function PricingPage() {
                     setShowForm(false);
                     setFormError("");
                   }}
-                  className="px-5 py-2.5 bg-white rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors"
+                  className="px-5 py-2.5 bg-surface rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={addRule}
                   disabled={!form.serviceId || !form.price || saving}
-                  className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm  hover:bg-opacity-90 transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm hover:bg-opacity-90 transition-colors disabled:opacity-50"
                 >
                   {saving ? "Adding..." : "Add Rule"}
                 </button>

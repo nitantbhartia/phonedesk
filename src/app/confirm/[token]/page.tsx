@@ -99,7 +99,7 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
         </div>
 
         {/* Appointment details card */}
-        <div className="rounded-sm bg-white p-6  space-y-5">
+        <div className="rounded-sm bg-surface p-6 space-y-5">
 
           {/* Pet + Service */}
           <div className="flex items-center justify-between gap-4">
@@ -107,7 +107,7 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
               <p className="text-xs font-bold uppercase tracking-widest text-muted mb-0.5">
                 Pet
               </p>
-              <p className="text-2xl font-extrabold text-ink">
+              <p className="text-2xl font-medium text-ink">
                 {appointment.petName ?? "Your Pet"}
               </p>
             </div>
@@ -196,7 +196,7 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
         </a>
 
         {/* Grooming prep tips */}
-        <div className="rounded-sm bg-white p-6 ">
+        <div className="rounded-sm bg-surface p-6 ">
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted mb-4">
             Grooming Prep Tips
           </h2>

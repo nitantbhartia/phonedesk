@@ -246,7 +246,7 @@ export default function NoShowProtectionPage() {
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 bg-white/50 rounded-sm animate-pulse" />
+          <div key={i} className="h-32 bg-surface rounded-sm animate-pulse" />
         ))}
       </div>
     );
@@ -257,7 +257,7 @@ export default function NoShowProtectionPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-ink">
+          <h1 className="text-4xl font-medium text-ink">
             No-Show Protection
           </h1>
           <p className="text-muted font-medium mt-1">
@@ -267,7 +267,7 @@ export default function NoShowProtectionPage() {
         <div className="flex gap-3">
           <button
             onClick={() => setShowAddWaitlist(true)}
-            className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm  flex items-center gap-2 hover:bg-opacity-90 transition-colors"
+            className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm flex items-center gap-2 hover:bg-opacity-90 transition-colors"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -279,17 +279,17 @@ export default function NoShowProtectionPage() {
       </div>
 
       {actionError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-sm px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{actionError}</p>
-          <button onClick={() => setActionError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+        <div className="flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
+          <p className="flex-1 text-sm text-accent font-medium">{actionError}</p>
+          <button onClick={() => setActionError("")} className="text-muted hover:text-accent text-xs font-bold">Dismiss</button>
         </div>
       )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-sm p-6  border border-white">
+        <div className="bg-surface rounded-sm p-6 border border-line">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-sm bg-paper flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
@@ -297,28 +297,28 @@ export default function NoShowProtectionPage() {
             </div>
             <span className="text-xs font-bold text-muted uppercase">No-Shows</span>
           </div>
-          <p className="text-3xl font-extrabold text-ink">{stats?.noShowCount || 0}</p>
+          <p className="text-3xl font-medium text-ink">{stats?.noShowCount || 0}</p>
           <p className="text-xs text-muted mt-1">
             {stats?.noShowRate || 0}% rate (30 days)
           </p>
         </div>
 
-        <div className="bg-white rounded-sm p-6  border border-white">
+        <div className="bg-surface rounded-sm p-6 border border-line">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-sm bg-paper flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
             <span className="text-xs font-bold text-muted uppercase">Confirmed</span>
           </div>
-          <p className="text-3xl font-extrabold text-ink">{stats?.confirmedCount || 0}</p>
+          <p className="text-3xl font-medium text-ink">{stats?.confirmedCount || 0}</p>
           <p className="text-xs text-muted mt-1">Via SMS reply (30 days)</p>
         </div>
 
-        <div className="bg-white rounded-sm p-6  border border-white">
+        <div className="bg-surface rounded-sm p-6 border border-line">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-sm bg-paper flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="8" x2="12" y2="12" />
@@ -327,14 +327,14 @@ export default function NoShowProtectionPage() {
             </div>
             <span className="text-xs font-bold text-muted uppercase">Unconfirmed</span>
           </div>
-          <p className="text-3xl font-extrabold text-ink">{stats?.upcomingUnconfirmed || 0}</p>
+          <p className="text-3xl font-medium text-ink">{stats?.upcomingUnconfirmed || 0}</p>
           <p className="text-xs text-muted mt-1">Upcoming, no reply yet</p>
         </div>
 
-        <div className="bg-ink rounded-sm p-6  text-surface relative overflow-hidden">
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-line rounded-full blur-xl" />
+        <div className="bg-ink rounded-sm p-6 text-surface relative overflow-hidden">
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-line rounded-sm blur-xl" />
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FDD783" strokeWidth="2.5">
                 <line x1="12" y1="1" x2="12" y2="23" />
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -342,16 +342,16 @@ export default function NoShowProtectionPage() {
             </div>
             <span className="text-xs font-bold text-accent uppercase">Revenue Saved</span>
           </div>
-          <p className="text-3xl font-extrabold">{formatCurrency(stats?.estimatedSaved || 0)}</p>
+          <p className="text-3xl font-medium">{formatCurrency(stats?.estimatedSaved || 0)}</p>
           <p className="text-xs text-white/50 mt-1">Est. from confirmations</p>
         </div>
       </div>
 
       {/* Repeat Offenders */}
       {offenders.length > 0 && (
-        <div className="bg-red-50 rounded-sm p-8 border border-red-100">
+        <div className="bg-paper rounded-sm p-8 border border-red-100">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-sm bg-red-100 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-sm bg-paper flex items-center justify-center">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
@@ -360,7 +360,7 @@ export default function NoShowProtectionPage() {
             </div>
             <div>
               <h3 className="font-bold text-red-900">Repeat No-Show Offenders</h3>
-              <p className="text-xs text-red-600/60">
+              <p className="text-xs text-accent/60">
                 Customers with 2 or more no-shows — consider requiring deposits or calling to confirm
               </p>
             </div>
@@ -369,10 +369,10 @@ export default function NoShowProtectionPage() {
             {offenders.map((offender, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between bg-white rounded-sm px-5 py-3 border border-red-100"
+                className="flex items-center justify-between bg-surface rounded-sm px-5 py-3 border border-red-100"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-sm">
+                  <div className="w-9 h-9 rounded-sm bg-paper flex items-center justify-center text-accent font-bold text-sm">
                     {offender.noShowCount}x
                   </div>
                   <div>
@@ -386,7 +386,7 @@ export default function NoShowProtectionPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-red-600 font-bold">
+                  <p className="text-xs text-accent font-bold">
                     {offender.noShowCount} no-shows
                   </p>
                   {offender.lastNoShow && (
@@ -415,17 +415,17 @@ export default function NoShowProtectionPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-5 py-2 rounded-sm text-sm font-medium transition-all flex items-center gap-2 ${
                 activeTab === tab.key
-                  ? "bg-ink text-white "
-                  : "bg-white text-muted hover:bg-surface border border-line"
+                ? "bg-ink text-white "
+                : "bg-surface text-muted hover:bg-surface border border-line"
               }`}
             >
               {tab.label}
               {tab.count > 0 && (
                 <span
-                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold ${
                     activeTab === tab.key
-                      ? "bg-white/20 text-white"
-                      : "bg-ink/5 text-muted"
+                    ? "bg-white/20 text-white"
+                    : "bg-ink/5 text-muted"
                   }`}
                 >
                   {tab.count}
@@ -435,7 +435,7 @@ export default function NoShowProtectionPage() {
           ))}
         </div>
 
-        <div className="bg-white rounded-sm  overflow-x-auto border border-white">
+        <div className="bg-surface rounded-sm overflow-x-auto border border-line">
           {/* Awaiting Confirmation Tab */}
           {activeTab === "pending" && (
             <>
@@ -463,7 +463,7 @@ export default function NoShowProtectionPage() {
                       <tr key={appt.id} className="hover:bg-surface transition-colors">
                         <td className="px-4 sm:px-8 py-4 sm:py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center font-bold text-ink text-sm shrink-0">
+                            <div className="w-9 h-9 rounded-sm bg-paper flex items-center justify-center font-bold text-ink text-sm shrink-0">
                               {appt.customerName
                                 .split(" ")
                                 .map((w) => w[0])
@@ -478,7 +478,7 @@ export default function NoShowProtectionPage() {
                         </td>
                         <td className="px-4 sm:px-6 py-4 sm:py-5 hidden sm:table-cell">
                           {appt.serviceName ? (
-                            <span className="px-3 py-1 bg-line text-ink text-xs font-bold rounded-full">
+                            <span className="px-3 py-1 bg-line text-ink text-xs font-bold rounded-sm">
                               {appt.serviceName}
                             </span>
                           ) : (
@@ -491,11 +491,11 @@ export default function NoShowProtectionPage() {
                         <td className="px-4 sm:px-6 py-4 sm:py-5 hidden md:table-cell">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1.5">
-                              <span className={`w-1.5 h-1.5 rounded-full ${appt.reminder48hSent ? "bg-emerald-500" : "bg-gray-300"}`} />
+                              <span className={`w-1.5 h-1.5 rounded-full ${appt.reminder48hSent ? "bg-ink" : "bg-line"}`} />
                               <span className="text-[10px] font-bold text-muted">48h SMS</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <span className={`w-1.5 h-1.5 rounded-full ${appt.reminderSent ? "bg-emerald-500" : "bg-gray-300"}`} />
+                              <span className={`w-1.5 h-1.5 rounded-full ${appt.reminderSent ? "bg-ink" : "bg-line"}`} />
                               <span className="text-[10px] font-bold text-muted">24h SMS</span>
                             </div>
                           </div>
@@ -503,7 +503,7 @@ export default function NoShowProtectionPage() {
                         <td className="px-4 sm:px-8 py-4 sm:py-5 text-right">
                           <button
                             onClick={() => markNoShow(appt.id)}
-                            className="text-red-500 font-bold text-xs hover:underline"
+                            className="text-accent font-bold text-xs hover:underline"
                           >
                             Mark No-Show
                           </button>
@@ -543,7 +543,7 @@ export default function NoShowProtectionPage() {
                       <tr key={ns.id} className="hover:bg-surface transition-colors">
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center font-bold text-red-500 text-sm">
+                            <div className="w-9 h-9 rounded-sm bg-paper flex items-center justify-center font-bold text-accent text-sm">
                               {ns.customerName
                                 .split(" ")
                                 .map((w) => w[0])
@@ -604,7 +604,7 @@ export default function NoShowProtectionPage() {
                       <tr key={entry.id} className="hover:bg-surface transition-colors">
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-paper flex items-center justify-center font-bold text-ink text-sm">
+                            <div className="w-9 h-9 rounded-sm bg-paper flex items-center justify-center font-bold text-ink text-sm">
                               {entry.customerName
                                 .split(" ")
                                 .map((w) => w[0])
@@ -621,7 +621,7 @@ export default function NoShowProtectionPage() {
                         </td>
                         <td className="px-6 py-5">
                           {entry.serviceName ? (
-                            <span className="px-3 py-1 bg-paper text-ink text-xs font-bold rounded-full">
+                            <span className="px-3 py-1 bg-paper text-ink text-xs font-bold rounded-sm">
                               {entry.serviceName}
                             </span>
                           ) : (
@@ -638,7 +638,7 @@ export default function NoShowProtectionPage() {
                         <td className="px-8 py-5 text-right">
                           <button
                             onClick={() => removeFromWaitlist(entry.id)}
-                            className="text-red-500 font-bold text-xs hover:underline"
+                            className="text-accent font-bold text-xs hover:underline"
                           >
                             Remove
                           </button>
@@ -670,12 +670,12 @@ export default function NoShowProtectionPage() {
                     </p>
                     <div className="flex items-center gap-3">
                       {blastResult && (
-                        <span className="text-xs font-bold text-emerald-600">{blastResult}</span>
+                        <span className="text-xs font-bold text-ink">{blastResult}</span>
                       )}
                       <button
                         onClick={blastLapsingClients}
                         disabled={blasting}
-                        className="px-5 py-2 bg-ink text-white rounded-sm font-medium text-sm  hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        className="px-5 py-2 bg-ink text-white rounded-sm font-medium text-sm hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <line x1="22" y1="2" x2="11" y2="13" />
@@ -702,7 +702,7 @@ export default function NoShowProtectionPage() {
                         <tr key={i} className="hover:bg-surface transition-colors">
                           <td className="px-8 py-5">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-line flex items-center justify-center font-bold text-ink text-sm">
+                              <div className="w-9 h-9 rounded-sm bg-line flex items-center justify-center font-bold text-ink text-sm">
                                 {client.customerName.split(" ").map((w) => w[0]).join("").slice(0, 2)}
                               </div>
                               <div>
@@ -715,10 +715,10 @@ export default function NoShowProtectionPage() {
                             {formatDateTime(client.lastVisitDate)}
                           </td>
                           <td className="px-6 py-5">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            <span className={`px-3 py-1 rounded-sm text-xs font-bold ${
                               client.daysSinceVisit > 90
-                                ? "bg-red-100 text-red-700"
-                                : "bg-amber-100 text-amber-700"
+                              ? "bg-paper text-accent"
+                              : "bg-paper text-ink"
                             }`}>
                               {client.daysSinceVisit}d ago
                             </span>
@@ -727,18 +727,18 @@ export default function NoShowProtectionPage() {
                             <div className="flex items-center justify-end gap-3">
                               <span className="text-xs text-muted hidden sm:inline">{formatPhoneNumber(client.customerPhone)}</span>
                               {callResult === "success" ? (
-                                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-ink">
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                   Calling…
                                 </span>
                               ) : callResult === "error" ? (
-                                <span className="text-xs font-bold text-red-500">Failed</span>
+                                <span className="text-xs font-bold text-accent">Failed</span>
                               ) : (
                                 <button
                                   onClick={() => callToRebook(client.customerPhone)}
                                   disabled={isCalling || !!callingPhone}
                                   title="Call this customer to rebook"
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-line hover:bg-line text-ink rounded-full text-xs font-bold transition-colors disabled:opacity-40"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-line hover:bg-line text-ink rounded-sm text-xs font-bold transition-colors disabled:opacity-40"
                                 >
                                   {isCalling ? (
                                     <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -764,7 +764,6 @@ export default function NoShowProtectionPage() {
 
       {/* How It Works Section */}
       <div className="bg-ink rounded-sm p-10 text-surface relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-line rounded-full blur-3xl" />
         <h3 className="text-xl font-bold text-accent mb-6">How No-Show Protection Works</h3>
         <div className="grid md:grid-cols-4 gap-6">
           <div className="space-y-2">
@@ -811,7 +810,7 @@ export default function NoShowProtectionPage() {
                   onChange={(e) =>
                     setWaitlistForm({ ...waitlistForm, customerName: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   placeholder="Jane Smith"
                 />
               </div>
@@ -825,7 +824,7 @@ export default function NoShowProtectionPage() {
                   onChange={(e) =>
                     setWaitlistForm({ ...waitlistForm, customerPhone: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   placeholder="(555) 123-4567"
                 />
               </div>
@@ -841,7 +840,7 @@ export default function NoShowProtectionPage() {
                   onChange={(e) =>
                     setWaitlistForm({ ...waitlistForm, petName: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   placeholder="Buddy"
                 />
               </div>
@@ -855,7 +854,7 @@ export default function NoShowProtectionPage() {
                   onChange={(e) =>
                     setWaitlistForm({ ...waitlistForm, serviceName: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   placeholder="Full Grooming"
                 />
               </div>
@@ -871,7 +870,7 @@ export default function NoShowProtectionPage() {
                   onChange={(e) =>
                     setWaitlistForm({ ...waitlistForm, preferredDate: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                 />
               </div>
               <div>
@@ -884,7 +883,7 @@ export default function NoShowProtectionPage() {
                   onChange={(e) =>
                     setWaitlistForm({ ...waitlistForm, preferredTime: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-line focus:outline-none focus:border-ink text-sm"
+                  className="w-full px-4 py-3 bg-surface rounded-sm border border-line focus:outline-none focus:border-ink text-sm"
                   placeholder="Morning, Afternoon, 10:00 AM"
                 />
               </div>
@@ -892,14 +891,14 @@ export default function NoShowProtectionPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowAddWaitlist(false)}
-                className="px-5 py-2.5 bg-white rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors"
+                className="px-5 py-2.5 bg-surface rounded-sm font-medium text-sm border border-line hover:bg-surface transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={addToWaitlist}
                 disabled={!waitlistForm.customerName || !waitlistForm.customerPhone || !waitlistForm.preferredDate}
-                className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm  hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add to Waitlist
               </button>
