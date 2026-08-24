@@ -145,7 +145,10 @@ export async function POST(req: NextRequest) {
         where: {
           businessId: business.id,
           status: "PENDING",
-          notes: { contains: "Request via Bookable" },
+          OR: [
+            { notes: { contains: "Request via Call Slot" } },
+            { notes: { contains: "Request via Bookable" } },
+          ],
         },
         orderBy: { createdAt: "desc" },
       });
@@ -206,7 +209,7 @@ export async function POST(req: NextRequest) {
       console.error("[SMS Webhook] Error processing owner command:", error);
       await sendSmsReply(
         from,
-        "[RingPaw] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
+        "[Call Slot] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
         to
       );
     }
@@ -239,7 +242,7 @@ export async function POST(req: NextRequest) {
         if (normalizedBusinessPhone) {
           await sendSmsReply(
             normalizedBusinessPhone,
-            `[RingPaw] ${appointment.customerName} cancelled their ${
+            `[Call Slot] ${appointment.customerName} cancelled their ${
               appointment.serviceName || "grooming"
             } appointment.`,
             to
@@ -282,7 +285,7 @@ export async function POST(req: NextRequest) {
           const { formatDateTime } = await import("@/lib/utils");
           await sendSmsReply(
             normalizedBusinessPhone,
-            `[RingPaw] ${appointment.customerName} confirmed their ${
+            `[Call Slot] ${appointment.customerName} confirmed their ${
               appointment.serviceName || "grooming"
             } appointment (${formatDateTime(appointment.startTime)}).`,
             to
@@ -357,7 +360,7 @@ export async function POST(req: NextRequest) {
           if (normalizedBusinessPhone) {
             await sendSmsReply(
               normalizedBusinessPhone,
-              `[RingPaw] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${
+              `[Call Slot] Waitlist fill! ${waitlistEntry.customerName} booked the opening for ${
                 waitlistEntry.petName || "their pet"
               }.`,
               to

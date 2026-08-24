@@ -14,24 +14,24 @@ const outfit = Outfit({
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com";
 
 export const metadata: Metadata = {
-  title: "RingPaw - Phone Receptionist for Pet Groomers",
+  title: "Call Slot — Your voicemail can book.",
   description:
-    "Never miss a booking. Pip answers your calls, books appointments, and texts you summaries — 24/7.",
+    "Forward missed calls to Call Slot. Callers pick a time on the keypad, and the booking writes to your calendar.",
   metadataBase: new URL(APP_URL),
   openGraph: {
-    title: "RingPaw - Phone Receptionist for Pet Groomers",
+    title: "Call Slot — Your voicemail can book.",
     description:
-      "Never miss a booking. Pip answers your calls, books appointments, and texts confirmations — 24/7.",
+      "Forward missed calls to Call Slot. Callers pick a time on the keypad, and the booking writes to your calendar.",
     url: APP_URL,
-    siteName: "RingPaw",
+    siteName: "Call Slot",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "RingPaw - Phone Receptionist for Pet Groomers",
+    title: "Call Slot — Your voicemail can book.",
     description:
-      "Never miss a booking. Pip answers your calls, books appointments, and texts confirmations — 24/7.",
+      "Forward missed calls to Call Slot. Callers pick a time on the keypad, and the booking writes to your calendar.",
   },
 };
 

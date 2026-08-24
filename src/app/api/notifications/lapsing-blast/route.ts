@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     try {
       const message = [
         `Hi! It's been a while since ${business.name} last saw your pup.`,
-        `Ready to book your next grooming appointment? Just reply BOOK and our AI will get you scheduled right away.`,
+        `Ready to book your next appointment? Just reply BOOK and we'll get you scheduled right away.`,
         `Or call us anytime — we'd love to see you soon! 🐾`,
       ].join(" ");
 

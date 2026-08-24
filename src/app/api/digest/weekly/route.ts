@@ -132,17 +132,17 @@ export async function POST(req: NextRequest) {
   // Opportunity insight
   let insight = "";
   if (lapsingCount > 5) {
-    insight = `${lapsingCount} clients haven't been in for 6+ weeks. Try the AI Call feature on the No-Shows page to win them back.`;
+    insight = `${lapsingCount} clients haven't been in for 6+ weeks. Try the No-Shows page to win them back.`;
   } else if (missedCalls > 3) {
     insight = `${missedCalls} calls were missed this week. Consider expanding your business hours to capture more bookings.`;
   } else if (bookingRate < 40 && totalCalls > 3) {
-    insight = `Your booking conversion rate is ${bookingRate}%. Review recent call transcripts — callers may be asking questions your AI isn't answering yet.`;
+    insight = `Your booking conversion rate is ${bookingRate}%. Review recent calls — callers may be dropping off before they pick a time.`;
   } else if (totalCalls === 0) {
-    insight = `No calls this week. Make sure your AI agent is active and your phone number is forwarding correctly.`;
+    insight = `No calls this week. Make sure Call Slot is active and your shop number is forwarding correctly.`;
   } else if (topService) {
     insight = `${topService} was your top requested service this week. Highlight it in your greeting or promos to convert similar callers faster.`;
   } else {
-    insight = `Great week! Your AI handled ${totalCalls} call${totalCalls !== 1 ? "s" : ""} and booked ${bookedCalls} appointment${bookedCalls !== 1 ? "s" : ""}. Keep it up.`;
+    insight = `Great week! Call Slot handled ${totalCalls} call${totalCalls !== 1 ? "s" : ""} and booked ${bookedCalls} appointment${bookedCalls !== 1 ? "s" : ""}. Keep it up.`;
   }
 
   const html = buildDigestHtml({
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
 
   await sendEmail({
     to: toEmail,
-    subject: `📊 Your RingPaw weekly recap — ${business.name}`,
+    subject: `📊 Your Call Slot weekly recap — ${business.name}`,
     html,
     text,
   });
@@ -217,7 +217,7 @@ function buildDigestHtml(d: DigestData): string {
     <!-- Header -->
     <div style="text-align:center;margin-bottom:32px;">
       <span style="font-size:36px;">🐾</span>
-      <h1 style="color:#3d2b1a;font-size:24px;font-weight:800;margin:12px 0 4px;">Weekly AI Recap</h1>
+      <h1 style="color:#3d2b1a;font-size:24px;font-weight:800;margin:12px 0 4px;">Weekly recap</h1>
       <p style="color:#7a5c42;font-size:14px;margin:0;">Hi ${d.ownerName} — here's how ${d.businessName} did this week</p>
       ${d.weekOf ? `<p style="color:#a08060;font-size:12px;margin:4px 0 0;">${d.weekOf}</p>` : ""}
     </div>
@@ -248,7 +248,7 @@ function buildDigestHtml(d: DigestData): string {
     <div style="background:#fff8e6;border:1.5px solid #d4a85340;border-radius:24px;padding:24px 28px;margin-bottom:16px;">
       <h2 style="color:#3d2b1a;font-size:14px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;">⚠️ Win-Back Opportunity</h2>
       <p style="color:#5c4020;font-size:15px;margin:0;"><strong>${d.lapsingCount} client${d.lapsingCount !== 1 ? "s" : ""}</strong> haven't been in for 6+ weeks.</p>
-      <p style="color:#7a5c42;font-size:13px;margin:6px 0 0;">Open the No-Shows page in RingPaw to send an AI call or text blast.</p>
+      <p style="color:#7a5c42;font-size:13px;margin:6px 0 0;">Open the No-Shows page in Call Slot to send a call or text blast.</p>
     </div>` : ""}
 
     <!-- Insight -->
@@ -267,7 +267,7 @@ function buildDigestHtml(d: DigestData): string {
 
     <!-- Footer -->
     <p style="color:#a08060;font-size:12px;text-align:center;margin:0;">
-      RingPaw AI Receptionist · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.ringpaw.com"}/settings/agent" style="color:#a08060;">Manage agent settings</a>
+      Call Slot · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com"}/settings/agent" style="color:#a08060;">Manage call answering</a>
     </p>
 
   </div>
@@ -277,7 +277,7 @@ function buildDigestHtml(d: DigestData): string {
 
 function buildDigestText(d: DigestData): string {
   return [
-    `Weekly AI Recap — ${d.businessName}`,
+    `Weekly recap — ${d.businessName}`,
     `Hi ${d.ownerName}!`,
     "",
     "THIS WEEK'S NUMBERS",

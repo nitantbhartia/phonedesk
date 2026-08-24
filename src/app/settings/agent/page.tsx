@@ -108,7 +108,7 @@ export default function AgentSettingsPage() {
       if (!res.ok) {
         toast.error(data.error || "Failed to save settings");
       } else {
-        toast.success(data.synced ? "Saved and synced to voice agent" : "Settings saved");
+        toast.success(data.synced ? "Saved and synced" : "Settings saved");
         setLastSaved(new Date());
       }
     } catch {
@@ -133,7 +133,7 @@ export default function AgentSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold">Call answering</h1>
           <p className="text-muted-foreground">
-            Bookable answers forwarded calls with keypad booking. Manage services from the <a href="/settings/pricing" className="underline underline-offset-2 font-medium">Services &amp; Pricing</a> page.
+            Call Slot answers forwarded calls with keypad booking. Manage services from the <a href="/settings/pricing" className="underline underline-offset-2 font-medium">Services &amp; Pricing</a> page.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -173,7 +173,7 @@ export default function AgentSettingsPage() {
           <p className="text-sm text-muted-foreground mt-2">
             {inboundPath === "BOOKABLE_VOICEMAIL"
               ? "Callers hear your shop name, then press 1 to book or 9 to leave a message."
-              : "Keeps the previous conversational line. Do not use this for the Bookable pilot."}
+              : "Keeps the previous conversational line. Do not use this for the Call Slot pilot."}
           </p>
         </CardContent>
       </Card>
@@ -188,7 +188,7 @@ export default function AgentSettingsPage() {
                 Line status
               </CardTitle>
               <CardDescription>
-                Pause Bookable if you need forwarded calls to stop being answered.
+                Pause Call Slot if you need forwarded calls to stop being answered.
               </CardDescription>
             </div>
             <div className="flex items-center gap-3">
@@ -209,7 +209,7 @@ export default function AgentSettingsPage() {
             Opening Greeting
           </CardTitle>
           <CardDescription>
-            The first thing callers hear when the AI picks up.
+            The first thing callers hear when Call Slot picks up.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -236,7 +236,7 @@ export default function AgentSettingsPage() {
         <CardHeader>
           <CardTitle>Booking Mode</CardTitle>
           <CardDescription>
-            Choose how the AI handles appointment bookings.
+            Choose how Call Slot writes appointments.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -269,7 +269,7 @@ export default function AgentSettingsPage() {
             Vaccine Policy
           </CardTitle>
           <CardDescription>
-            Control whether Pip asks about rabies and Bordetella vaccination status during booking calls.
+            Control whether callers are asked about rabies and Bordetella vaccination status during booking calls.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -291,10 +291,10 @@ export default function AgentSettingsPage() {
           </Select>
           <p className="text-sm text-muted-foreground mt-2">
             {vaccinePolicy === "OFF"
-              ? "Pip won't ask about vaccines during calls. Vaccination is still collected on the intake form."
+              ? "Callers won't be asked about vaccines during the keypad flow. Vaccination is still collected on the intake form."
               : vaccinePolicy === "FLAG_ONLY"
-                ? "Pip asks about rabies and Bordetella before booking. If the owner says no or is unsure, Pip books anyway and notes the status for your review."
-                : "Pip asks about rabies and Bordetella before booking. If the owner says their dog isn't vaccinated, Pip will not book and will ask them to call back after getting updated."}
+                ? "Ask about rabies and Bordetella before booking. If they say no or are unsure, still book and note the status for your review."
+                : "Ask about rabies and Bordetella before booking. If they say they aren't vaccinated, don't book and ask them to call back after getting updated."}
           </p>
         </CardContent>
       </Card>
@@ -307,8 +307,8 @@ export default function AgentSettingsPage() {
             SMS Command Reference
           </CardTitle>
           <CardDescription>
-            You can manage your AI agent via text message. Send these commands to
-            your RingPaw number.
+            You can manage your shop by text. Send these commands to
+            your Call Slot number.
           </CardDescription>
         </CardHeader>
         <CardContent>

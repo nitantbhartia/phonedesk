@@ -255,7 +255,7 @@ export default function BusinessProfilePage() {
       } else if (!groomersRes.ok) {
         setSaveStatus({ ok: false, message: groomersData.error || "Profile saved but groomers failed" });
       } else {
-        setSaveStatus({ ok: true, message: "Business profile saved" + (profileData.synced ? " and synced to voice agent" : "") });
+        setSaveStatus({ ok: true, message: "Business profile saved" + (profileData.synced ? " and synced" : "") });
         // Refresh groomers to get server-assigned IDs
         if (groomersData.groomers) {
           setGroomers(
@@ -303,7 +303,7 @@ export default function BusinessProfilePage() {
         <div>
           <h1 className="text-2xl font-bold">Business Profile</h1>
           <p className="text-muted-foreground">
-            Update your business details. Changes sync to your AI receptionist automatically.
+            Update your business details. Changes apply to Call Slot immediately.
           </p>
         </div>
         <Button onClick={saveProfile} disabled={saving} className="w-full sm:w-auto">
@@ -330,14 +330,14 @@ export default function BusinessProfilePage() {
             Business Information
           </CardTitle>
           <CardDescription>
-            Core details about your business. The AI uses these to answer caller questions.
+            Core details about your shop. Call Slot uses these on forwarded calls.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Business Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Paws & Claws Grooming" />
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your shop name" />
             </div>
             <div className="space-y-2">
               <Label>Owner Name</Label>
@@ -390,7 +390,7 @@ export default function BusinessProfilePage() {
             Business Hours
           </CardTitle>
           <CardDescription>
-            Set your operating hours. The AI tells callers these when asked.
+            Set your operating hours. Call Slot only offers times inside these hours.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -453,16 +453,16 @@ export default function BusinessProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Groomers
+            Team
           </CardTitle>
           <CardDescription>
-            Add your groomers so callers can request a specific person. The AI will offer them as options.
+            Add team members if more than one person takes appointments.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {groomers.length === 0 && (
             <p className="text-sm text-muted-foreground py-2">
-              No groomers added yet. Add your team members below.
+              No team members added yet. Add people below.
             </p>
           )}
           {groomers.map((groomer, i) => (
@@ -505,7 +505,7 @@ export default function BusinessProfilePage() {
             variant="outline"
             onClick={() => setGroomers([...groomers, { name: "", specialties: "" }])}
           >
-            <Plus className="w-4 h-4 mr-2" /> Add Groomer
+            <Plus className="w-4 h-4 mr-2" /> Add team member
           </Button>
         </CardContent>
       </Card>

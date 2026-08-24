@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
   if (!agentId) {
     return NextResponse.json(
-      { error: "Could not create AI agent. Please complete your business profile first." },
+      { error: "Could not start the demo. Please complete your business profile first." },
       { status: 500 }
     );
   }

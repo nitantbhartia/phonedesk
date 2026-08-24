@@ -109,7 +109,7 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
   },
   {
     href: "/settings/agent",
-    label: "AI Settings",
+    label: "Call answering",
     tourId: "tour-nav-ai",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -233,7 +233,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-paw-brown">
-                {session?.user?.name || "Bookable account"}
+                {session?.user?.name || "Call Slot account"}
               </p>
               <p className="truncate text-xs text-paw-brown/60">
                 {session?.user?.email || "Signed in"}
@@ -297,7 +297,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex-1">
               <p className="font-bold text-amber-800 text-sm">No active subscription</p>
-              <p className="text-amber-700/70 text-sm">Your AI receptionist is paused. Subscribe to start taking calls.</p>
+              <p className="text-amber-700/70 text-sm">Call Slot is paused. Subscribe to start taking forwarded calls.</p>
             </div>
             <Link href="/settings/billing" className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">
               Subscribe

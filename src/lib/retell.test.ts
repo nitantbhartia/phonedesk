@@ -229,7 +229,7 @@ describe("simple prompt helpers", () => {
   it("builds the default greeting", () => {
     expect(
       generateGreeting({ name: "Paw House" } as never)
-    ).toBe("Hi, you've reached Paw House! This is Pip — how can I help you today?");
+    ).toBe("Hi, you've reached Paw House.");
   });
 });
 
@@ -432,7 +432,7 @@ describe("Retell API helpers", () => {
     const result = await provisionRetellPhoneNumber({
       agentId: "agent_1",
       areaCode: 999,
-      nickname: "RingPaw Line",
+      nickname: "Call Slot Line",
       smsWebhookUrl: "https://app.example.com/api/sms/webhook",
     });
 

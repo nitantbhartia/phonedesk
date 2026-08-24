@@ -392,7 +392,7 @@ describe("business/profile", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(502);
-    expect(payload.error).toContain("failed to sync to voice agent");
+    expect(payload.error).toContain("failed to sync");
   });
 
   it("patches retell config and safe business fields", async () => {

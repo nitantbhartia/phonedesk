@@ -153,7 +153,7 @@ describe("POST /api/provision-number", () => {
     expect(provisionRetellPhoneNumber).toHaveBeenCalledWith({
       agentId: "agent_1",
       areaCode: 619,
-      nickname: "Paw House - RingPaw",
+      nickname: "Paw House - Call Slot",
       smsWebhookUrl: "https://app.example.com/api/sms/webhook",
     });
     await expect(response.json()).resolves.toEqual({
@@ -199,7 +199,7 @@ describe("POST /api/provision-number", () => {
     expect(provisionRetellPhoneNumber).toHaveBeenCalledWith({
       agentId: "agent_1",
       areaCode: 619,
-      nickname: "Paw House - RingPaw",
+      nickname: "Paw House - Call Slot",
       smsWebhookUrl: undefined,
     });
   });

@@ -1,5 +1,5 @@
 /**
- * Creates a custom RingPaw demo for Spawkles Mobile Dog Grooming (San Diego).
+ * Creates a custom Call Slot demo for Spawkles Mobile Dog Grooming (San Diego).
  *
  * Run once in production after setting DATABASE_URL and RETELL_API_KEY:
  *
@@ -354,7 +354,7 @@ async function main() {
   if (existingPhone?.retellPhoneNumber) {
     await updateRetellPhoneNumber(existingPhone.retellPhoneNumber, {
       inboundAgentId: retellConfig.agentId,
-      nickname: "Spawkles Demo — RingPaw",
+      nickname: "Spawkles Demo — Call Slot",
     });
     console.log(`✔ Reused existing phone number: ${formatPhone(existingPhone.retellPhoneNumber)}`);
   } else {
@@ -366,7 +366,7 @@ async function main() {
         phoneResult = await provisionRetellPhoneNumber({
           agentId: retellConfig.agentId,
           areaCode,
-          nickname: "Spawkles Demo — RingPaw",
+          nickname: "Spawkles Demo — Call Slot",
         });
         break;
       } catch (err) {
@@ -383,7 +383,7 @@ async function main() {
       console.log("  ⚠ No San Diego area codes available, using fallback...");
       phoneResult = await provisionRetellPhoneNumber({
         agentId: retellConfig.agentId,
-        nickname: "Spawkles Demo — RingPaw",
+        nickname: "Spawkles Demo — Call Slot",
       });
     }
 
@@ -429,7 +429,7 @@ async function main() {
 
     await updateRetellPhoneNumber(legacyNumber, {
       inboundAgentId: null,
-      nickname: "Spawkles Demo — RingPaw (Detached)",
+      nickname: "Spawkles Demo — Call Slot (Detached)",
     });
     console.log(`✔ Detached legacy Spawkles number: ${formatPhone(legacyNumber)}`);
   }

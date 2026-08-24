@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
           if (smsFrom && business.phone) {
             sendSms(
               business.phone,
-              `Looks like Pip didn't get a chance to shine this month — no charge, no hard feelings. Sign back in any time to give it another go.`,
+              `Looks like Call Slot didn't book this month — no charge, no hard feelings. Sign back in any time to give it another go.`,
               smsFrom
             ).catch((e) => console.error("[stripe.webhook] Trial cancel SMS failed:", e));
           }

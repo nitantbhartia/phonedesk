@@ -133,7 +133,7 @@ export async function POST(req: Request) {
     const result = await provisionRetellPhoneNumber({
       agentId,
       areaCode,
-      nickname: `${business.name} - RingPaw`,
+      nickname: `${business.name} - Call Slot`,
       smsWebhookUrl: shouldAttachRetellSmsWebhook()
         ? buildRetellWebhookUrl(appUrl, "/api/sms/webhook")
         : undefined,

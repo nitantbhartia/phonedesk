@@ -181,7 +181,7 @@ function LandingPageContent() {
             </h1>
 
             <p className="animate-fade-in-up-delay-2 text-xl text-paw-brown/80 leading-relaxed max-w-lg">
-              Bookable picks up forwarded calls with your shop name, offers real calendar openings by keypad, and texts confirmations — no app for callers.
+              Call Slot picks up forwarded calls with your shop name, offers real calendar openings by keypad, and texts confirmations — no app for callers.
             </p>
 
             <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
@@ -323,7 +323,7 @@ function LandingPageContent() {
                   {missedPerDay} calls/day × ${groomPrice} × 5 days × 4 weeks
                 </p>
                 <div className="mt-4 pt-4 border-t border-white/10 text-sm font-semibold text-white/70">
-                  RingPaw starts at <span className="text-paw-amber font-bold">$99/mo</span> — it pays for itself the first call it answers.
+                  Call Slot is <span className="text-paw-amber font-bold">$79/mo</span> — it pays for itself the first call it books.
                 </div>
               </div>
 
@@ -382,8 +382,8 @@ function LandingPageContent() {
               </div>
               <div className="px-6 pb-8">
                 <div className="w-8 h-8 rounded-full bg-paw-orange text-white flex items-center justify-center font-bold mb-4">2</div>
-                <h4 className="text-xl font-bold mb-2">Pip Answers Instantly</h4>
-                <p className="text-paw-brown/70 leading-relaxed">RingPaw answers in seconds. Warm, natural conversation. Asks for their dog&apos;s name, breed, and what service they need.</p>
+                <h4 className="text-xl font-bold mb-2">Call Slot picks up</h4>
+                <p className="text-paw-brown/70 leading-relaxed">Forwarded calls hear your shop name, then a short keypad menu: press 1 to book, or 9 to leave a message.</p>
               </div>
             </div>
 
@@ -428,7 +428,7 @@ function LandingPageContent() {
                   </svg>
                 </div>
                 <h3 className="text-2xl font-bold">Breed-Smart Booking</h3>
-                <p className="text-paw-brown/70">Caller mentions their bernedoodle? RingPaw auto-sets the right appointment length, flags matting concerns, and asks the right questions &mdash; without you lifting a finger.</p>
+                <p className="text-paw-brown/70">Caller mentions their bernedoodle? Call Slot offers real openings for that service length from your live calendar &mdash; no double-booking, no typing on the caller&apos;s end.</p>
               </div>
               <div className="w-full md:w-48 h-48 bg-white rounded-3xl shadow-inner-light p-4 rotate-3 group-hover:rotate-0 transition-transform duration-300">
                 <div className="w-full h-full border border-gray-100 rounded-2xl p-3 flex flex-col gap-2">
@@ -460,7 +460,7 @@ function LandingPageContent() {
                   </svg>
                 </div>
                 <h3 className="text-2xl font-bold">Text to Control Everything</h3>
-                <p className="text-white/70">Block a day, pause bookings, add a service, check tomorrow&apos;s schedule &mdash; just text RingPaw like you&apos;d text an employee. &quot;Block tomorrow&quot; &rarr; Done.</p>
+                <p className="text-white/70">Block a day, pause bookings, add a service, check tomorrow&apos;s schedule &mdash; just text Call Slot like you&apos;d text the shop line. &quot;Block tomorrow&quot; &rarr; Done.</p>
               </div>
               <div className="w-full md:w-48 h-48 bg-paw-surface/10 rounded-3xl shadow-inner-light p-4 -rotate-3 group-hover:rotate-0 transition-transform duration-300 backdrop-blur-sm border border-white/10">
                 <div className="space-y-2.5 pt-3">
@@ -509,7 +509,7 @@ function LandingPageContent() {
                   </svg>
                 ),
                 title: "Automatic Review Requests",
-                desc: "2 hours after pickup, RingPaw texts the owner a warm review request with your Google link. Watch your review count climb weekly.",
+                desc: "2 hours after pickup, Call Slot texts the customer a warm review request with your Google link. Watch your review count climb weekly.",
               },
               {
                 icon: (
@@ -518,7 +518,7 @@ function LandingPageContent() {
                   </svg>
                 ),
                 title: "No-Show Protection",
-                desc: "48hr and 24hr reminders sent automatically. If someone cancels, RingPaw texts your waitlist and fills the slot before you notice.",
+                desc: "48hr and 24hr reminders sent automatically. If someone cancels, Call Slot texts your waitlist and fills the slot before you notice.",
               },
             ].map((feature) => (
               <div key={feature.title} className="bg-paw-cream/50 rounded-2xl p-5 hover:bg-paw-cream transition-colors duration-200">
@@ -549,7 +549,7 @@ function LandingPageContent() {
           </div>
           <div className="max-w-md mx-auto">
             <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative card-glow">
-              <h3 className="text-xl font-bold text-paw-amber mb-1">Bookable</h3>
+              <h3 className="text-xl font-bold text-paw-amber mb-1">Call Slot</h3>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-5xl font-extrabold text-white">$79</span>
                 <span className="text-white/50">/mo</span>
@@ -599,7 +599,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">RingPaw uses a warm, conversational voice built for phone calls. It speaks naturally, asks the right follow-up questions, and handles the flow of a real booking conversation &mdash; not a scripted menu. You can hear it for yourself using the demo player above.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Callers hear your shop name, then a short keypad menu. Press 1 to book, pick a service, then choose a real opening from your calendar. You can walk through the same tree in the demo.</p>
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -608,7 +608,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; and it checks live availability before offering any slot. If you&apos;re already booked at 2&nbsp;PM, RingPaw won&apos;t offer 2&nbsp;PM. The moment a caller confirms, the appointment writes directly to Google Calendar, Square, or Acuity. You&apos;ll see it on your calendar within seconds, no copy-pasting required.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; and it checks live availability before offering any slot. If you&apos;re already booked at 2&nbsp;PM, Call Slot won&apos;t offer 2&nbsp;PM. The moment a caller confirms, the appointment writes directly to Google Calendar, Square, or Acuity. You&apos;ll see it on your calendar within seconds, no copy-pasting required.</p>
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -617,16 +617,16 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">RingPaw handles the vast majority of calls on its own &mdash; but when something&apos;s genuinely outside its knowledge, it doesn&apos;t guess or go silent. It tells the caller, &ldquo;Let me have [your name] give you a quick call back,&rdquo; takes their number, and texts you a summary of what they needed. You call back already knowing the context. Nothing falls through the cracks.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">If a caller needs something the keypad can&apos;t book, they press 9 and leave a short message. You get a callback text with their number and the recording. Nothing falls through the cracks.</p>
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
-              What happens if Pip can&apos;t answer something?
+              What if they don&apos;t want any of the times?
               <span className="group-open:rotate-180 transition-transform">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Pip knows its limits. If a caller asks something unusual or wants to reschedule a complex appointment, Pip takes a message and texts you immediately. You stay in control &mdash; Pip never guesses on your behalf. And because every call is logged with a full transcript, you can review exactly what was said and adjust Pip&apos;s behavior from your dashboard.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">They can press 3 for more times (up to six openings per call) or press 9 to leave a message. You get a callback text and can book them yourself. Call Slot never improvises a time that isn&apos;t on your calendar.</p>
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -644,7 +644,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; update your hours any time from the Settings page. Toggle any day on or off, adjust open and close times, and RingPaw picks up the change immediately. Need to block a holiday or take a personal day? Mark it as busy in your connected calendar and RingPaw will treat that time as unavailable, no extra steps needed.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Yes &mdash; update your hours any time from the Settings page. Toggle any day on or off, adjust open and close times, and Call Slot picks up the change immediately. Need to block a holiday or take a personal day? Mark it as busy in your connected calendar and Call Slot will treat that time as unavailable, no extra steps needed.</p>
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -653,7 +653,7 @@ function LandingPageContent() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
-            <p className="mt-4 text-paw-brown/70 leading-relaxed">Genuinely about 5 minutes. Sign up, enter your business name and services, connect your calendar, and set up conditional call forwarding &mdash; we give you the exact code to dial on your phone. That&apos;s it. RingPaw is live and answering calls. No developer needed, no complicated config, no ongoing maintenance.</p>
+            <p className="mt-4 text-paw-brown/70 leading-relaxed">Genuinely about 5 minutes. Sign up, enter your shop name and services, connect your calendar, and set up conditional call forwarding &mdash; we give you the exact code to dial on your phone. That&apos;s it. Call Slot is live on missed calls. No developer needed, no complicated config, no ongoing maintenance.</p>
           </details>
           <details className="glass-card rounded-3xl p-6 shadow-sm group cursor-pointer hover:shadow-md transition-shadow duration-200">
             <summary className="list-none flex justify-between items-center font-bold text-lg text-paw-brown">
@@ -693,7 +693,7 @@ function LandingPageContent() {
             <a href="#" className="hover:text-white transition-colors">Support</a>
           </div>
           <div className="text-sm text-paw-cream/40">
-            &copy; {new Date().getFullYear()} Bookable. All rights reserved.
+            &copy; {new Date().getFullYear()} Call Slot. All rights reserved.
           </div>
         </div>
       </footer>

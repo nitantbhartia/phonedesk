@@ -193,7 +193,7 @@ export default function TodayPage() {
           </svg>
           <p className="font-bold text-paw-brown/50">No appointments scheduled today</p>
           <p className="text-sm text-paw-brown/40 mt-1">
-            Appointments booked by your AI receptionist will appear here automatically.
+            Appointments booked by Call Slot will appear here automatically.
           </p>
           <a
             href="/dashboard"

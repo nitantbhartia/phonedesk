@@ -8,7 +8,7 @@ import { CheckCircle, CreditCard, Zap } from "lucide-react";
 const PLANS = [
   {
     id: "PRO",
-    name: "Bookable",
+    name: "Call Slot",
     price: 79,
     minutes: 300,
     popular: true,

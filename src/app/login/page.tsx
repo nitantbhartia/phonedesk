@@ -83,11 +83,11 @@ function AuthPageContent() {
             Stop losing bookings to missed calls.
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-paw-brown/75">
-            RingPaw answers every call for your grooming business — booking appointments, collecting details, and texting confirmations while you focus on the dogs.
+            Call Slot picks up missed calls for your shop — callers book a real calendar opening on the keypad, and you get a text confirmation.
           </p>
           <ul className="space-y-3">
             {[
-              "Pip picks up in seconds, 24/7",
+              "Picks up forwarded calls in seconds, 24/7",
               "Books appointments and texts confirmations automatically",
               "Setup takes 5 minutes, no tech skills needed",
             ].map((item) => (
