@@ -278,8 +278,8 @@ export default function BusinessProfilePage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
-        <div className="h-64 bg-slate-200 rounded-lg animate-pulse" />
+        <div className="h-8 w-48 bg-line/60" />
+        <div className="h-64 bg-line/40" />
       </div>
     );
   }
@@ -287,23 +287,23 @@ export default function BusinessProfilePage() {
   return (
     <div className="space-y-6">
       {fetchError && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
-          <p className="flex-1 text-sm text-red-700 font-medium">{fetchError}</p>
+        <div className="flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
+          <p className="flex-1 text-sm text-accent font-medium">{fetchError}</p>
           <button
             onClick={() => void fetchBusiness()}
-            className="text-red-700 hover:text-red-900 text-xs font-bold"
+            className="text-accent hover:text-red-900 text-xs font-bold"
           >
             Retry
           </button>
-          <button onClick={() => setFetchError("")} className="text-red-400 hover:text-red-600 text-xs font-bold">Dismiss</button>
+          <button onClick={() => setFetchError("")} className="text-muted hover:text-accent text-xs font-bold">Dismiss</button>
         </div>
       )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Business Profile</h1>
-          <p className="text-muted-foreground">
-            Update your business details. Changes apply to Call Slot immediately.
+          <h1 className="font-display text-[2.15rem] tracking-tight text-ink">Business</h1>
+          <p className="mt-1 text-[14px] text-muted">
+            Shop details used on forwarded calls.
           </p>
         </div>
         <Button onClick={saveProfile} disabled={saving} className="w-full sm:w-auto">
@@ -315,8 +315,8 @@ export default function BusinessProfilePage() {
       {saveStatus && (
         <div className={`p-3 rounded-lg text-sm ${
           saveStatus.ok
-            ? "bg-green-50 text-green-800 border border-green-200"
-            : "bg-red-50 text-red-800 border border-red-200"
+          ? "bg-paper text-ink border border-line"
+          : "bg-paper text-ink border border-line"
         }`}>
           {saveStatus.message}
         </div>

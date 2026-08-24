@@ -241,36 +241,36 @@ export function DashboardTour({ open, onClose }: Props) {
           pointerEvents: "auto",
           maxHeight: typeof window !== "undefined" ? window.innerHeight - 32 : "90vh",
         }}
-        className="bg-white rounded-3xl shadow-2xl overflow-y-auto"
+        className="bg-surface rounded-sm overflow-y-auto"
       >
         {/* Progress bar */}
-        <div className="h-1 bg-gray-100">
+        <div className="h-1 bg-paper">
           <div
-            className="h-full bg-paw-orange transition-all duration-300"
+            className="h-full bg-accent transition-all duration-300"
             style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
           />
         </div>
 
         <div className="p-6">
           {/* Step counter */}
-          <p className="text-[10px] font-bold uppercase tracking-widest text-paw-brown/40 mb-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1">
             {step + 1} of {STEPS.length}
           </p>
 
           {/* Title */}
-          <h2 className="text-lg font-extrabold text-paw-brown mb-2 leading-snug">
+          <h2 className="font-display text-lg tracking-tight text-ink mb-2 leading-snug">
             {currentStep.title}
           </h2>
 
           {/* Body */}
-          <p className="text-sm text-paw-brown/70 leading-relaxed mb-3">
+          <p className="text-sm text-muted leading-relaxed mb-3">
             {currentStep.body}
           </p>
 
           {/* Hint */}
           {currentStep.hint && (
-            <div className="bg-paw-cream rounded-xl px-3 py-2 mb-3">
-              <p className="text-xs text-paw-brown/60">{currentStep.hint}</p>
+            <div className="bg-surface rounded-sm px-3 py-2 mb-3">
+              <p className="text-xs text-muted">{currentStep.hint}</p>
             </div>
           )}
 
@@ -282,8 +282,8 @@ export function DashboardTour({ open, onClose }: Props) {
                 onClick={() => setStep(i)}
                 className={`rounded-full transition-all ${
                   i === step
-                    ? "w-4 h-2 bg-paw-orange"
-                    : "w-2 h-2 bg-paw-brown/15 hover:bg-paw-brown/30"
+                  ? "w-4 h-2 bg-accent"
+                  : "w-2 h-2 bg-ink/15 hover:bg-ink/30"
                 }`}
               />
             ))}
@@ -294,7 +294,7 @@ export function DashboardTour({ open, onClose }: Props) {
             {step > 0 && (
               <button
                 onClick={goPrev}
-                className="px-3 py-2 rounded-xl border border-paw-brown/15 text-paw-brown/60 text-xs font-bold hover:bg-paw-cream transition-colors"
+                className="px-3 py-2 rounded-sm border border-line text-muted text-xs font-bold hover:bg-surface transition-colors"
               >
                 ← Back
               </button>
@@ -302,14 +302,14 @@ export function DashboardTour({ open, onClose }: Props) {
             {!isLast && (
               <button
                 onClick={handleClose}
-                className="px-3 py-2 rounded-xl text-paw-brown/40 text-xs font-semibold hover:bg-paw-cream transition-colors"
+                className="px-3 py-2 rounded-sm text-muted text-xs font-semibold hover:bg-surface transition-colors"
               >
                 Skip
               </button>
             )}
             <button
               onClick={goNext}
-              className="flex-1 px-4 py-2 rounded-xl bg-paw-orange text-white text-sm font-bold hover:bg-paw-orange/90 transition-colors"
+              className="flex-1 bg-accent px-4 py-2 text-[13px] text-accent-foreground hover:bg-accent-hover"
             >
               {isLast ? "Let's go!" : "Next →"}
             </button>

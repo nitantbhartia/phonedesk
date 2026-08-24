@@ -65,17 +65,20 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
     }
   };
 
+  const fieldClass =
+    "mt-1.5 w-full border border-line bg-paper px-3 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-ink";
+
   return (
-    <div className="max-w-md rounded-[2rem] border border-white/60 bg-white/70 p-5 shadow-soft backdrop-blur-md">
-      <div className="mb-4 flex rounded-full bg-paw-cream p-1 text-sm font-semibold">
+    <div className="w-full border border-line bg-surface px-6 py-7 sm:px-8 sm:py-8">
+      <div className="mb-7 flex gap-6 border-b border-line text-[12px] tracking-[0.04em]">
         <button
           type="button"
           onClick={() => {
             setAuthMode("signup");
             setAuthError("");
           }}
-          className={`flex-1 rounded-full px-4 py-2 transition-colors ${
-            authMode === "signup" ? "bg-paw-brown text-paw-cream" : "text-paw-brown/70"
+          className={`-mb-px border-b pb-2.5 ${
+            authMode === "signup" ? "border-ink text-ink" : "border-transparent text-muted"
           }`}
         >
           Sign up
@@ -86,72 +89,75 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             setAuthMode("signin");
             setAuthError("");
           }}
-          className={`flex-1 rounded-full px-4 py-2 transition-colors ${
-            authMode === "signin" ? "bg-paw-brown text-paw-cream" : "text-paw-brown/70"
+          className={`-mb-px border-b pb-2.5 ${
+            authMode === "signin" ? "border-ink text-ink" : "border-transparent text-muted"
           }`}
         >
           Log in
         </button>
       </div>
 
-      <form onSubmit={handleCredentialsAuth} className="space-y-3">
+      <form onSubmit={handleCredentialsAuth} className="space-y-4">
         {authMode === "signup" ? (
-          <input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full name"
-            className="w-full rounded-2xl border border-paw-brown/10 bg-white px-4 py-3 text-base outline-none transition focus:border-paw-orange"
-          />
+          <label className="block">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Name</span>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className={fieldClass}
+              autoComplete="name"
+            />
+          </label>
         ) : null}
-        <input
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email address"
-          className="w-full rounded-2xl border border-paw-brown/10 bg-white px-4 py-3 text-base outline-none transition focus:border-paw-orange"
-          required
-        />
-        <input
-          type="password"
-          autoComplete={authMode === "signup" ? "new-password" : "current-password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="w-full rounded-2xl border border-paw-brown/10 bg-white px-4 py-3 text-base outline-none transition focus:border-paw-orange"
-          minLength={8}
-          required
-        />
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Email</span>
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={fieldClass}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Password</span>
+          <input
+            type="password"
+            autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={fieldClass}
+            minLength={8}
+            required
+          />
+        </label>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-2xl bg-paw-brown px-5 py-3 font-bold text-paw-cream transition hover:bg-opacity-90 disabled:opacity-50"
+          className="mt-2 w-full bg-accent px-4 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
         >
-          {isSubmitting
-            ? "Please wait..."
-            : authMode === "signup"
-              ? "Create account"
-              : "Log in"}
+          {isSubmitting ? "Please wait…" : authMode === "signup" ? "Create account" : "Log in"}
         </button>
       </form>
 
-      <div className="my-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-paw-brown/40">
-        <div className="h-px flex-1 bg-paw-brown/10" />
+      <div className="my-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+        <div className="h-px flex-1 bg-line" />
         <span>or</span>
-        <div className="h-px flex-1 bg-paw-brown/10" />
+        <div className="h-px flex-1 bg-line" />
       </div>
 
       <button
         type="button"
         onClick={handleGoogleAuth}
         disabled={isSubmitting}
-        className="w-full rounded-2xl border border-paw-brown/10 bg-white px-5 py-3 font-semibold text-paw-brown transition hover:bg-paw-cream disabled:opacity-50"
+        className="w-full border border-ink px-4 py-2.5 text-[12px] tracking-[0.04em] text-ink hover:bg-paper disabled:opacity-50"
       >
         Continue with Google
       </button>
 
-      {authError ? <p className="mt-3 text-sm text-red-600">{authError}</p> : null}
+      {authError ? <p className="mt-4 text-[13px] text-accent">{authError}</p> : null}
     </div>
   );
 }

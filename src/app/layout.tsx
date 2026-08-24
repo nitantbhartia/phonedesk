@@ -1,14 +1,29 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { Providers } from "@/components/providers";
 
-const outfit = Outfit({
+const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600"],
   display: "swap",
+  variable: "--font-sans",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-display",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
+  variable: "--font-mono",
 });
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com";
@@ -44,7 +59,9 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${outfit.className} font-sans antialiased`}>
+      <body
+        className={`${plexSans.variable} ${instrumentSerif.variable} ${plexMono.variable} font-sans bg-paper text-ink antialiased`}
+      >
         {googleAnalyticsId ? (
           <Suspense fallback={null}>
             <GoogleAnalytics measurementId={googleAnalyticsId} />

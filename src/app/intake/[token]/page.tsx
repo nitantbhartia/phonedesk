@@ -171,8 +171,8 @@ export default function IntakeFormPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paw-cream">
-        <div className="animate-pulse text-paw-brown text-lg font-bold">
+      <div className="flex min-h-screen items-center justify-center bg-surface">
+        <div className="animate-pulse text-ink text-lg font-bold">
           Loading...
         </div>
       </div>
@@ -181,9 +181,9 @@ export default function IntakeFormPage() {
 
   if (error && !businessName) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paw-cream px-4">
-        <div className="rounded-2xl bg-white p-8 shadow-soft text-center">
-          <p className="text-paw-brown text-lg">{error}</p>
+      <div className="flex min-h-screen items-center justify-center bg-surface px-4">
+        <div className="rounded-sm bg-surface p-8 text-center">
+          <p className="text-ink text-lg">{error}</p>
         </div>
       </div>
     );
@@ -191,13 +191,12 @@ export default function IntakeFormPage() {
 
   if (submitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paw-cream px-4">
-        <div className="rounded-3xl bg-white p-8 shadow-soft text-center max-w-md w-full">
-          <div className="text-5xl mb-4">🐾</div>
-          <h1 className="text-2xl font-bold text-paw-brown mb-2">
-            Thank You!
+      <div className="flex min-h-screen items-center justify-center bg-surface px-4">
+        <div className="rounded-sm bg-surface p-8 text-center max-w-md w-full">
+          <h1 className="font-display text-2xl tracking-tight text-ink mb-2">
+            Thank you
           </h1>
-          <p className="text-paw-brown/70">
+          <p className="text-muted">
             Your intake form for <span className="font-bold">{businessName}</span> has been submitted.
             We look forward to seeing you and your pet!
           </p>
@@ -207,37 +206,36 @@ export default function IntakeFormPage() {
   }
 
   const inputClass =
-    "w-full rounded-2xl border border-paw-brown/10 bg-paw-cream/50 px-4 py-3 text-paw-brown placeholder:text-paw-brown/40 focus:outline-none focus:ring-2 focus:ring-paw-amber/50 focus:border-paw-amber transition-colors";
-  const labelClass = "block text-sm font-bold text-paw-brown mb-1";
+    "w-full rounded-sm border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ink/20 focus:border-ink transition-colors";
+  const labelClass = "block text-sm font-bold text-ink mb-1";
 
   return (
-    <div className="min-h-screen bg-paw-cream py-8 px-4">
+    <div className="min-h-screen bg-surface py-8 px-4">
       <div className="mx-auto max-w-lg">
-        <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-soft">
+        <div className="rounded-sm bg-surface p-6 sm:p-8 ">
           {/* Header */}
           <div className="text-center mb-6">
-            <div className="text-4xl mb-2">🐾</div>
-            <h1 className="text-2xl font-bold text-paw-brown">
-              New Client Intake
+            <h1 className="font-display text-2xl tracking-tight text-ink">
+              New client intake
             </h1>
-            <p className="text-paw-brown/60 mt-1">
-              Welcome to <span className="font-bold text-paw-brown">{businessName}</span>
+            <p className="text-muted mt-1">
+              Welcome to <span className="font-bold text-ink">{businessName}</span>
             </p>
-            <p className="text-paw-brown/50 text-sm mt-1">
+            <p className="text-muted text-sm mt-1">
               Hi {customerName}, please fill out this form before your visit.
             </p>
           </div>
 
           {error && (
-            <div className="rounded-2xl bg-red-50 border border-red-200 p-3 mb-4 text-red-700 text-sm text-center">
+            <div className="rounded-sm bg-paper border border-line p-3 mb-4 text-accent text-sm text-center">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Pet Information */}
-            <div className="rounded-2xl bg-paw-sky/30 p-4 space-y-3">
-              <h2 className="font-bold text-paw-brown text-lg">
+            <div className="rounded-sm bg-paper p-4 space-y-3">
+              <h2 className="font-bold text-ink text-lg">
                 Pet Information
               </h2>
 
@@ -322,8 +320,8 @@ export default function IntakeFormPage() {
             </div>
 
             {/* Behavior */}
-            <div className="rounded-2xl bg-paw-amber/10 p-4 space-y-3">
-              <h2 className="font-bold text-paw-brown text-lg">Behavior</h2>
+            <div className="rounded-sm bg-line p-4 space-y-3">
+              <h2 className="font-bold text-ink text-lg">Behavior</h2>
 
               <div>
                 <FieldLabel htmlFor="temperament" className={labelClass} info="Helps groomers approach your pet in the safest, calmest way.">
@@ -378,8 +376,8 @@ export default function IntakeFormPage() {
             </div>
 
             {/* Vet Information */}
-            <div className="rounded-2xl bg-paw-sky/30 p-4 space-y-3">
-              <h2 className="font-bold text-paw-brown text-lg">
+            <div className="rounded-sm bg-paper p-4 space-y-3">
+              <h2 className="font-bold text-ink text-lg">
                 Veterinarian
               </h2>
 
@@ -415,8 +413,8 @@ export default function IntakeFormPage() {
             </div>
 
             {/* Emergency Contact */}
-            <div className="rounded-2xl bg-paw-orange/10 p-4 space-y-3">
-              <h2 className="font-bold text-paw-brown text-lg">
+            <div className="rounded-sm bg-accent/10 p-4 space-y-3">
+              <h2 className="font-bold text-ink text-lg">
                 Emergency Contact
               </h2>
 
@@ -471,14 +469,14 @@ export default function IntakeFormPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-3xl bg-paw-brown py-4 text-white font-bold text-lg shadow-soft hover:bg-paw-brown/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-sm bg-ink py-4 text-white font-bold text-lg hover:bg-ink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "Submitting..." : "Submit Intake Form"}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-paw-brown/40 text-xs mt-4">
+        <p className="text-center text-muted text-xs mt-4">
           Powered by Call Slot
         </p>
       </div>

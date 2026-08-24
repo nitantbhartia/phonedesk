@@ -11,8 +11,8 @@ export default function AuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-paw-sky">
-          <div className="animate-pulse text-paw-brown/60">Loading...</div>
+        <div className="flex min-h-screen items-center justify-center bg-paper text-[13px] text-muted">
+          Loading
         </div>
       }
     >
@@ -58,52 +58,37 @@ function AuthPageContent() {
 
   if (status === "loading" || !!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paw-sky">
-        <div className="animate-pulse text-paw-brown/60">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-paper text-[13px] text-muted">
+        Loading
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-paw-sky px-4 py-6 text-paw-brown">
-      <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <BrandLogo priority mobileWidth={156} desktopWidth={236} className="min-w-0 max-w-[156px] sm:max-w-[236px]" />
-        <Link href="/" className="text-sm font-semibold text-paw-brown/70 hover:text-paw-brown">
-          Back to home
-        </Link>
-      </div>
-
-      <div className="mx-auto mt-10 grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div className="space-y-6">
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-paw-surface px-4 py-2 text-sm font-semibold">
-            <span className="h-2 w-2 rounded-full bg-paw-orange animate-pulse" />
-            Live in 5 minutes
-          </p>
-          <h1 className="text-4xl font-extrabold leading-tight sm:text-6xl">
-            Stop losing bookings to missed calls.
-          </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-paw-brown/75">
-            Call Slot picks up missed calls for your shop — callers book a real calendar opening on the keypad, and you get a text confirmation.
-          </p>
-          <ul className="space-y-3">
-            {[
-              "Picks up forwarded calls in seconds, 24/7",
-              "Books appointments and texts confirmations automatically",
-              "Setup takes 5 minutes, no tech skills needed",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-3 text-paw-brown/80">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-paw-orange/15 text-paw-orange">
-                  <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                    <path d="M1 4.5L4 7.5L10 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className="text-base font-medium">{item}</span>
-              </li>
-            ))}
-          </ul>
+    <div className="min-h-screen bg-paper text-ink">
+      <header className="border-b border-line">
+        <div className="mx-auto flex h-[4.25rem] max-w-5xl items-center justify-between px-6 sm:px-8">
+          <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
+          <Link href="/" className="text-[12px] tracking-[0.04em] text-muted hover:text-ink">
+            Back
+          </Link>
         </div>
+      </header>
 
-        <AuthPanel initialMode={initialMode} />
+      <div className="mx-auto grid max-w-5xl gap-16 px-6 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-6">
+          <h1 className="font-display text-[2.75rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
+            Your voicemail
+            <br />
+            can book.
+          </h1>
+          <p className="mt-7 max-w-[24rem] text-[16px] leading-[1.55] text-muted">
+            Call Slot picks up missed calls for your shop. Callers book a real calendar opening on the keypad.
+          </p>
+        </div>
+        <div className="lg:col-span-6 lg:pt-1">
+          <AuthPanel initialMode={initialMode} />
+        </div>
       </div>
     </div>
   );

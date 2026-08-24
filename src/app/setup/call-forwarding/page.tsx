@@ -45,8 +45,8 @@ export default function CallForwardingSetupPage() {
   }, [status, router]);
 
   return (
-    <div className="min-h-screen bg-paw-sky flex items-center justify-center">
-      <div className="animate-pulse text-paw-brown/50 font-medium">
+    <div className="min-h-screen bg-paper flex items-center justify-center">
+      <div className="animate-pulse text-muted font-medium">
         Loading...
       </div>
     </div>

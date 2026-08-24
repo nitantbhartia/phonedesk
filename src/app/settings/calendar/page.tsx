@@ -108,8 +108,8 @@ export default function CalendarSettingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-paw-cream">
-          <div className="animate-pulse text-paw-brown/60">Loading...</div>
+        <div className="flex min-h-screen items-center justify-center bg-surface">
+          <div className="animate-pulse text-muted">Loading...</div>
         </div>
       }
     >
@@ -309,8 +309,8 @@ function CalendarSettingsPageContent() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-64 bg-white/50 rounded-2xl animate-pulse" />
-        <div className="h-64 bg-white/50 rounded-4xl animate-pulse" />
+        <div className="h-8 w-64 bg-surface rounded-sm animate-pulse" />
+        <div className="h-64 bg-surface rounded-sm animate-pulse" />
       </div>
     );
   }
@@ -321,23 +321,23 @@ function CalendarSettingsPageContent() {
   return (
     <div className="space-y-8">
       {pageError && (
-        <div className="rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+        <div className="rounded-sm border border-line bg-paper px-5 py-4 text-sm font-medium text-accent">
           {pageError}
         </div>
       )}
       {pageNotice && (
-        <div className="rounded-3xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-700">
+        <div className="rounded-sm border border-line bg-paper px-5 py-4 text-sm font-medium text-ink">
           {pageNotice}
         </div>
       )}
 
       {/* Calendar Integration Section */}
-      <section className="bg-white rounded-4xl p-6 sm:p-10 shadow-soft border border-white">
+      <section className="bg-surface rounded-sm p-6 sm:p-10 border border-line">
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-paw-brown">
-            Calendar Integration
+          <h1 className="font-display text-3xl tracking-tight text-ink">
+            Bookings
           </h1>
-          <p className="text-paw-brown/60 mt-2 font-medium">
+          <p className="text-muted mt-2 font-medium">
             Connect your booking tools so Call Slot can manage your availability
             in real-time.
           </p>
@@ -346,19 +346,19 @@ function CalendarSettingsPageContent() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Google Calendar */}
           <div
-            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
+            className={`p-6 bg-surface rounded-sm border-2 flex flex-col items-center text-center relative overflow-hidden ${
               isConnected("GOOGLE")
-                ? "border-paw-amber"
-                : "border-transparent hover:border-paw-brown/10"
-            } transition-all`}
+              ? "border-line"
+              : "border-transparent hover:border-line"
+              } transition-all`}
           >
             {isConnected("GOOGLE") && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-paper text-ink rounded-sm text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
                 CONNECTED
               </div>
             )}
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
+            <div className="w-14 h-14 bg-surface rounded-sm flex items-center justify-center mb-4">
               <svg width="32" height="32" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -379,7 +379,7 @@ function CalendarSettingsPageContent() {
               </svg>
             </div>
             <h3 className="font-bold text-lg mb-1">Google Calendar</h3>
-            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
+            <p className="text-xs text-muted mb-4 font-medium">
               {isConnected("GOOGLE")
                 ? googleConn?.calendarId || userEmail
                 : "Not connected"}
@@ -388,77 +388,77 @@ function CalendarSettingsPageContent() {
               <button
                 onClick={() => disconnectCalendar("GOOGLE")}
                 disabled={disconnecting === "GOOGLE"}
-                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                className="text-xs font-bold text-accent hover:text-accent transition-colors disabled:opacity-50"
               >
                 {disconnecting === "GOOGLE" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
                 onClick={() => connectCalendar("google")}
-                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+                className="w-full py-2 px-4 bg-ink text-surface rounded-sm text-xs font-bold hover:bg-opacity-90 transition-all"
               >
                 Connect Account
               </button>
             )}
           </div>
-
+              
           {/* Square Appointments */}
           <div
-            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
+            className={`p-6 bg-surface rounded-sm border-2 flex flex-col items-center text-center relative overflow-hidden ${
               isConnected("SQUARE")
-                ? "border-paw-amber"
-                : "border-transparent hover:border-paw-brown/10"
-            } transition-all`}
+              ? "border-line"
+              : "border-transparent hover:border-line"
+              } transition-all`}
           >
             {isConnected("SQUARE") && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-paper text-ink rounded-sm text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
                 CONNECTED
               </div>
             )}
-            <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center shadow-sm mb-4">
+            <div className="w-14 h-14 bg-black rounded-sm flex items-center justify-center mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
                 <rect x="2" y="2" width="20" height="20" rx="4" />
                 <path d="M7 10h4v4H7zM13 10h4v4h-4z" fill="black" />
               </svg>
             </div>
             <h3 className="font-bold text-lg mb-1">Square Appointments</h3>
-            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
+            <p className="text-xs text-muted mb-4 font-medium">
               {isConnected("SQUARE") ? "Connected" : "Not connected"}
             </p>
             {isConnected("SQUARE") ? (
               <button
                 onClick={() => disconnectCalendar("SQUARE")}
                 disabled={disconnecting === "SQUARE"}
-                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                className="text-xs font-bold text-accent hover:text-accent transition-colors disabled:opacity-50"
               >
                 {disconnecting === "SQUARE" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
                 onClick={() => connectCalendar("square")}
-                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+                className="w-full py-2 px-4 bg-ink text-surface rounded-sm text-xs font-bold hover:bg-opacity-90 transition-all"
               >
                 Connect Account
               </button>
             )}
           </div>
-
+              
           {/* Acuity Scheduling */}
           <div
-            className={`p-6 bg-paw-cream rounded-3xl border-2 flex flex-col items-center text-center relative overflow-hidden ${
+            className={`p-6 bg-surface rounded-sm border-2 flex flex-col items-center text-center relative overflow-hidden ${
               isConnected("ACUITY")
-                ? "border-paw-amber"
-                : "border-transparent hover:border-paw-brown/10"
-            } transition-all`}
+              ? "border-line"
+              : "border-transparent hover:border-line"
+              } transition-all`}
           >
             {isConnected("ACUITY") && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-paper text-ink rounded-sm text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
                 CONNECTED
               </div>
             )}
-            <div className="w-14 h-14 bg-[#316FA8] rounded-2xl flex items-center justify-center shadow-sm mb-4">
+            <div className="w-14 h-14 bg-[#316FA8] rounded-sm flex items-center justify-center mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
                 <line x1="16" x2="16" y1="2" y2="6" />
@@ -468,31 +468,31 @@ function CalendarSettingsPageContent() {
               </svg>
             </div>
             <h3 className="font-bold text-lg mb-1">Acuity Scheduling</h3>
-            <p className="text-xs text-paw-brown/50 mb-4 font-medium">
+            <p className="text-xs text-muted mb-4 font-medium">
               {isConnected("ACUITY") ? "Connected" : "Not connected"}
             </p>
             {isConnected("ACUITY") ? (
               <button
                 onClick={() => disconnectCalendar("ACUITY")}
                 disabled={disconnecting === "ACUITY"}
-                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                className="text-xs font-bold text-accent hover:text-accent transition-colors disabled:opacity-50"
               >
                 {disconnecting === "ACUITY" ? "Disconnecting\u2026" : "Disconnect"}
               </button>
             ) : (
               <button
                 onClick={() => connectCalendar("acuity")}
-                className="w-full py-2 px-4 bg-paw-brown text-paw-cream rounded-full text-xs font-bold hover:bg-opacity-90 transition-all"
+                className="w-full py-2 px-4 bg-ink text-surface rounded-sm text-xs font-bold hover:bg-opacity-90 transition-all"
               >
                 Connect Account
               </button>
             )}
           </div>
         </div>
-
-        <div className="mt-6 p-4 bg-paw-amber/10 rounded-2xl border border-paw-amber/20 flex gap-3">
-          <span className="text-lg shrink-0">💡</span>
-          <p className="text-sm text-paw-brown/80 font-medium">
+              
+        <div className="mt-6 p-4 bg-line rounded-sm border border-line flex gap-3">
+          <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-accent shrink-0">Note</span>
+          <p className="text-sm text-ink/80 font-medium">
             <strong>Using Gingr, MoeGo, or other grooming software?</strong>{" "}
             Connect the same Google Calendar that your booking software syncs
             with. When Call Slot books an appointment, it&apos;ll show as busy in
@@ -501,22 +501,22 @@ function CalendarSettingsPageContent() {
           </p>
         </div>
       </section>
-
+              
       {/* Business Hours Section */}
-      <section className="bg-white rounded-4xl p-6 sm:p-10 shadow-soft border border-white">
+      <section className="bg-surface rounded-sm p-6 sm:p-10 border border-line">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-paw-brown">
+          <h2 className="text-xl font-bold text-ink">
             <span className="inline-flex items-center gap-2">
               Business Hours
               <InfoIcon text="Call Slot will only offer appointment slots that fall within these hours. Callers asking for times outside your hours will be told you're closed." />
             </span>
           </h2>
-          <p className="text-paw-brown/60 mt-1 text-sm font-medium">
+          <p className="text-muted mt-1 text-sm font-medium">
             Set the hours Call Slot can offer appointment slots.
           </p>
         </div>
-
-        <div className="bg-paw-cream rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
+              
+        <div className="bg-surface rounded-sm p-6 border-2 border-line space-y-4">
           {Object.entries(hours).map(([day, h]) => (
             <div
               key={day}
@@ -525,7 +525,7 @@ function CalendarSettingsPageContent() {
               <div className="flex items-center justify-between sm:justify-start">
                 <span
                   className={`font-bold w-24 ${
-                    h.enabled ? "text-paw-brown" : "text-paw-brown/40"
+                    h.enabled ? "text-ink" : "text-muted"
                   }`}
                 >
                   {day}
@@ -542,7 +542,7 @@ function CalendarSettingsPageContent() {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+                  <div className="w-11 h-6 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-line after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
                 </label>
               </div>
               {h.enabled ? (
@@ -555,13 +555,13 @@ function CalendarSettingsPageContent() {
                         [day]: { ...h, open: e.target.value },
                       })
                     }
-                    className="appearance-none bg-white border-2 border-paw-brown/5 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-paw-amber transition-all"
+                    className="appearance-none bg-surface border-2 border-line rounded-sm px-3 py-2 text-sm font-bold focus:outline-none focus:border-ink transition-all"
                   >
                     {TIME_OPTIONS.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
-                  <span className="text-paw-brown/30 font-bold">to</span>
+                  <span className="text-muted font-bold">to</span>
                   <select
                     value={h.close}
                     onChange={(e) =>
@@ -570,7 +570,7 @@ function CalendarSettingsPageContent() {
                         [day]: { ...h, close: e.target.value },
                       })
                     }
-                    className="appearance-none bg-white border-2 border-paw-brown/5 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-paw-amber transition-all"
+                    className="appearance-none bg-surface border-2 border-line rounded-sm px-3 py-2 text-sm font-bold focus:outline-none focus:border-ink transition-all"
                   >
                     {TIME_OPTIONS.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -578,7 +578,7 @@ function CalendarSettingsPageContent() {
                   </select>
                 </div>
               ) : (
-                <span className="text-sm font-bold text-paw-brown/40">
+                <span className="text-sm font-bold text-muted">
                   Closed
                 </span>
               )}
@@ -594,7 +594,7 @@ function CalendarSettingsPageContent() {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-paw-orange" />
+                <div className="w-11 h-6 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-line after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
               </label>
             </div>
           ))}
@@ -602,14 +602,14 @@ function CalendarSettingsPageContent() {
 
         <div className="mt-6 flex items-center justify-end gap-3">
           {lastSaved && !hoursDirty && (
-            <span className="text-xs text-paw-brown/40 font-medium">
+            <span className="text-xs text-muted font-medium">
               Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
           {hoursDirty && (
             <button
               onClick={fetchData}
-              className="px-6 py-3 bg-white text-paw-brown font-bold rounded-full border border-paw-brown/10 hover:bg-paw-cream transition-all text-sm"
+              className="px-6 py-3 bg-surface text-ink font-bold rounded-sm border border-line hover:bg-surface transition-all text-sm"
             >
               Discard
             </button>
@@ -617,7 +617,7 @@ function CalendarSettingsPageContent() {
           <button
             onClick={saveHours}
             disabled={saving || !hoursDirty}
-            className="px-8 py-3 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-soft"
+            className="px-8 py-3 bg-ink text-surface font-bold rounded-sm hover: transition-all text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:"
           >
             {saving ? "Saving\u2026" : "Save Hours"}
           </button>
@@ -627,14 +627,14 @@ function CalendarSettingsPageContent() {
       {/* Booking Logic + Conflict Checker */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Booking Logic */}
-        <section className="bg-white rounded-4xl p-6 sm:p-10 shadow-soft border border-white h-full">
-          <h3 className="text-xl font-bold text-paw-brown mb-6">
+        <section className="bg-surface rounded-sm p-6 sm:p-10 border border-line h-full">
+          <h3 className="text-xl font-bold text-ink mb-6">
             Booking Logic
           </h3>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
+              <label className="block text-sm font-bold text-muted uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Primary Destination
                   <InfoIcon text="The calendar where Call Slot writes new bookings. If you have multiple connected calendars, pick the one you use for appointments." />
@@ -642,14 +642,14 @@ function CalendarSettingsPageContent() {
               </label>
               <div className="relative">
                 {connections.filter((c) => c.isActive).length === 0 ? (
-                  <div className="w-full bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 text-paw-brown/40 font-bold text-sm">
+                  <div className="w-full bg-surface border-2 border-line rounded-sm px-5 py-4 text-muted font-bold text-sm">
                     No calendars connected — connect one above
                   </div>
                 ) : (
                   <select
                     value={primaryConnectionId}
                     onChange={(e) => setPrimaryConnectionId(e.target.value)}
-                    className="w-full appearance-none bg-paw-cream border-2 border-paw-brown/5 rounded-2xl px-5 py-4 font-bold focus:outline-none focus:border-paw-amber transition-all"
+                    className="w-full appearance-none bg-surface border-2 border-line rounded-sm px-5 py-4 font-bold focus:outline-none focus:border-ink transition-all"
                   >
                     {connections.filter((c) => c.isActive).map((c) => (
                       <option key={c.id} value={c.id}>
@@ -675,36 +675,36 @@ function CalendarSettingsPageContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
+              <label className="block text-sm font-bold text-muted uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Conflict Checking
                   <InfoIcon text="Advanced conflict controls are not editable yet. Call Slot already respects conflicts from your connected calendar data." />
                 </span>
               </label>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl border border-transparent opacity-60">
+                <label className="flex items-center gap-3 p-4 bg-surface rounded-sm border border-transparent opacity-60">
                   <input
                     type="checkbox"
                     checked={respectBusy}
                     disabled
-                    className="w-5 h-5 rounded-md accent-paw-orange"
+                    className="w-5 h-5 rounded-md accent-accent"
                   />
-                  <span className="font-bold text-paw-brown/80">
+                  <span className="font-bold text-ink/80">
                     Respect &quot;Busy&quot; events on personal calendar
                   </span>
                 </label>
-                <label className="flex items-center gap-3 p-4 bg-paw-cream/50 rounded-2xl border border-transparent opacity-60">
+                <label className="flex items-center gap-3 p-4 bg-surface rounded-sm border border-transparent opacity-60">
                   <input
                     type="checkbox"
                     checked={bufferTime}
                     disabled
-                    className="w-5 h-5 rounded-md accent-paw-orange"
+                    className="w-5 h-5 rounded-md accent-accent"
                   />
-                  <span className="font-bold text-paw-brown/80">
+                  <span className="font-bold text-ink/80">
                     Block 15m buffer before &amp; after each dog
                   </span>
                 </label>
-                <p className="text-xs font-medium text-paw-brown/55">
+                <p className="text-xs font-medium text-muted">
                   These advanced controls are coming soon. Right now you can save the primary booking destination above.
                 </p>
               </div>
@@ -713,12 +713,12 @@ function CalendarSettingsPageContent() {
 
           <div className="mt-6 flex items-center justify-end gap-3">
             {bookingLogicSaved && (
-              <span className="text-xs text-green-600 font-medium">Saved</span>
+              <span className="text-xs text-ink font-medium">Saved</span>
             )}
             <button
               onClick={() => void saveBookingLogic()}
               disabled={bookingLogicSaving || !primaryConnectionId}
-              className="px-8 py-3 bg-paw-brown text-paw-cream font-bold rounded-full shadow-soft hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50"
+              className="px-8 py-3 bg-ink text-surface font-bold rounded-sm hover: transition-all text-sm disabled:opacity-50"
             >
               {bookingLogicSaving ? "Saving…" : "Save Primary Destination"}
             </button>
@@ -726,14 +726,13 @@ function CalendarSettingsPageContent() {
         </section>
 
         {/* Conflict Checker */}
-        <section className="bg-paw-brown text-paw-cream rounded-4xl p-6 sm:p-10 shadow-soft relative overflow-hidden h-full">
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-paw-amber/10 rounded-full blur-3xl" />
+        <section className="bg-ink text-surface rounded-sm p-6 sm:p-10 relative overflow-hidden h-full">
 
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-paw-amber">
+            <h3 className="text-xl font-bold text-accent">
               Conflict Checker
             </h3>
-            <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold tracking-widest text-paw-amber">
+            <span className="px-3 py-1 bg-white/10 rounded-sm text-[10px] font-bold tracking-widest text-accent">
               LIVE
             </span>
           </div>
@@ -742,11 +741,11 @@ function CalendarSettingsPageContent() {
             {conflictsLoading && conflicts.length === 0 ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white/10 rounded-2xl p-4 h-20 animate-pulse" />
+                  <div key={i} className="bg-white/10 rounded-sm p-4 h-20 animate-pulse" />
                 ))}
               </div>
             ) : conflicts.length === 0 ? (
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-center">
+              <div className="bg-white/10 rounded-sm p-6 border border-white/10 text-center">
                 <p className="text-sm font-bold text-green-400 mb-1">All clear</p>
                 <p className="text-xs text-white/50">
                   {connections.length === 0
@@ -777,7 +776,7 @@ function CalendarSettingsPageContent() {
                 return (
                   <div
                     key={i}
-                    className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex gap-4 border border-white/10"
+                    className="bg-white/10 rounded-sm p-4 flex gap-4 border border-white/10"
                   >
                     <div className="w-12 text-center shrink-0">
                       <p className="text-[10px] font-bold text-white/40">{dayAbbr}</p>
@@ -788,7 +787,7 @@ function CalendarSettingsPageContent() {
                         <span className="text-xs font-bold truncate">
                           {startTime} — {endTime}
                         </span>
-                        <span className="px-2 py-0.5 bg-paw-orange/20 text-paw-orange rounded text-[9px] font-bold shrink-0">
+                        <span className="px-2 py-0.5 bg-accent/10 text-accent rounded text-[9px] font-bold shrink-0">
                           BLOCKED
                         </span>
                       </div>
@@ -806,7 +805,7 @@ function CalendarSettingsPageContent() {
             <button
               onClick={fetchConflicts}
               disabled={conflictsLoading}
-              className="text-xs font-bold text-paw-amber border-b border-paw-amber/30 hover:border-paw-amber transition-all pb-1 disabled:opacity-50"
+              className="text-xs font-bold text-accent border-b border-line hover:border-ink transition-all pb-1 disabled:opacity-50"
             >
               {conflictsLoading ? "Refreshing\u2026" : "Refresh conflicts (Auto-syncs every 2m)"}
             </button>

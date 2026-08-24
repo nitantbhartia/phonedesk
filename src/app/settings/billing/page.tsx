@@ -146,9 +146,9 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-10 w-64 bg-white/50 rounded-2xl animate-pulse" />
-        <div className="h-56 bg-white/50 rounded-4xl animate-pulse" />
-        <div className="h-72 bg-white/50 rounded-4xl animate-pulse" />
+        <div className="h-10 w-64 bg-surface rounded-sm animate-pulse" />
+        <div className="h-56 bg-surface rounded-sm animate-pulse" />
+        <div className="h-72 bg-surface rounded-sm animate-pulse" />
       </div>
     );
   }
@@ -156,63 +156,63 @@ export default function BillingPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-extrabold text-paw-brown">Billing & Plan</h1>
-        <p className="text-paw-brown/60 font-medium mt-1">View your plan and monthly usage.</p>
+        <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Billing</h1>
+        <p className="text-muted font-medium mt-1">View your plan and monthly usage.</p>
       </div>
 
       {/* Current Plan Usage */}
-      <section className="bg-white rounded-3xl shadow-card border border-white p-6 sm:p-8">
+      <section className="bg-surface rounded-sm border border-line p-6 sm:p-8">
         {subscriptionActive && activePlan ? (
           <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-paw-brown">
+                <h2 className="text-2xl font-bold text-ink">
                   Current Plan: {activePlan.name}
                   {usage?.subscriptionStatus === "trialing" && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">Trial</span>
+                    <span className="ml-2 inline-flex items-center rounded-sm bg-paper px-2.5 py-1 text-xs font-bold text-ink">Trial</span>
                   )}
                 </h2>
-                <p className="text-paw-brown/60 font-medium mt-1">${activePlan.price}/month</p>
+                <p className="text-muted font-medium mt-1">${activePlan.price}/month</p>
               </div>
               <span
-                className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold ${
+                className={`inline-flex w-fit items-center rounded-sm px-3 py-1 text-xs font-bold ${
                   isAtLimit
-                    ? "bg-red-100 text-red-700"
-                    : isNearLimit
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-green-100 text-green-700"
+                  ? "bg-paper text-accent"
+                  : isNearLimit
+                  ? "bg-paper text-ink"
+                  : "bg-paper text-ink"
                 }`}
               >
                 {minutesUsed} / {minutesLimit} min
               </span>
             </div>
             <div className="mt-6 space-y-2">
-              <div className="flex justify-between text-sm font-medium text-paw-brown/70">
+              <div className="flex justify-between text-sm font-medium text-muted">
                 <span>Monthly minutes used</span>
                 <span>{Math.min(percentUsed, 100)}%</span>
               </div>
-              <div className="w-full h-2 rounded-full bg-paw-brown/10 overflow-hidden">
+              <div className="w-full h-2 rounded-sm bg-ink/5 overflow-hidden">
                 <div
                   className={`h-full transition-all ${
-                    isAtLimit ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-paw-amber"
+                    isAtLimit ? "bg-ink" : isNearLimit ? "bg-ink" : "bg-line"
                   }`}
                   style={{ width: `${Math.min(percentUsed, 100)}%` }}
                 />
               </div>
               {isAtLimit && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mt-3">
-                  <p className="text-sm font-medium text-red-800">
+                <div className="bg-paper border border-line rounded-sm p-4 mt-3">
+                  <p className="text-sm font-medium text-ink">
                     You&apos;ve used all your minutes for this month.
                   </p>
                   {nextPlan && (
-                    <p className="text-sm text-red-700 mt-1">
+                    <p className="text-sm text-accent mt-1">
                       Upgrade to <strong>{nextPlan.name}</strong> for {nextPlan.minutes} min/month.
                     </p>
                   )}
                 </div>
               )}
               {isNearLimit && nextPlan && (
-                <p className="text-sm text-amber-700 mt-2">
+                <p className="text-sm text-ink mt-2">
                   Running low on minutes. Upgrade to {nextPlan.name} for {nextPlan.minutes} min/month.
                 </p>
               )}
@@ -220,15 +220,15 @@ export default function BillingPage() {
           </>
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5">
+            <div className="w-10 h-10 rounded-sm bg-paper flex items-center justify-center shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-ink" strokeWidth="2.5">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-paw-brown">No active plan</h2>
-              <p className="text-paw-brown/60 font-medium mt-1">$79/mo — one location, one line. Set STRIPE_PRO_PRICE_ID in env for live checkout.</p>
+              <h2 className="text-2xl font-bold text-ink">No active plan</h2>
+              <p className="text-muted font-medium mt-1">$79/mo — one location, one line. Set STRIPE_PRO_PRICE_ID in env for live checkout.</p>
             </div>
           </div>
         )}
@@ -244,61 +244,61 @@ export default function BillingPage() {
           return (
             <article
               key={plan.id}
-              className={`rounded-3xl border p-6 sm:p-7 shadow-card ${
+              className={`rounded-sm border p-6 sm:p-7 ${
                 isCurrent
-                  ? "bg-white border-paw-amber ring-2 ring-paw-amber/40"
-                  : plan.popular
-                    ? "bg-paw-brown text-paw-cream border-paw-brown"
-                    : "bg-white border-white"
+                ? "bg-surface border-line ring-2 ring-accent/40"
+                : plan.popular
+                ? "bg-ink text-surface border-ink"
+                : "bg-surface border-line"
               }`}
             >
               <div className="flex items-center justify-between mb-3">
-                <h3 className={`text-xl font-bold ${plan.popular && !isCurrent ? "text-paw-amber" : "text-paw-brown"}`}>
+                <h3 className={`text-xl font-bold ${plan.popular && !isCurrent ? "text-accent" : "text-ink"}`}>
                   {plan.name}
                 </h3>
                 {isCurrent ? (
-                  <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700">
+                  <span className="inline-flex items-center rounded-sm bg-paper px-2.5 py-1 text-[11px] font-bold text-ink">
                     Current
                   </span>
                 ) : null}
                 {plan.popular && !isCurrent ? (
-                  <span className="inline-flex items-center rounded-full bg-paw-amber px-2.5 py-1 text-[11px] font-bold text-paw-brown">
+                  <span className="inline-flex items-center rounded-sm bg-line px-2.5 py-1 text-[11px] font-bold text-ink">
                     Recommended
                   </span>
                 ) : null}
               </div>
               <div className="mb-6">
-                <span className={`text-4xl font-extrabold ${plan.popular && !isCurrent ? "text-white" : "text-paw-brown"}`}>
+                <span className={`text-4xl font-medium ${plan.popular && !isCurrent ? "text-white" : "text-ink"}`}>
                   ${plan.price}
                 </span>
-                <span className={`${plan.popular && !isCurrent ? "text-white/70" : "text-paw-brown/60"}`}>/mo</span>
+                <span className={`${plan.popular && !isCurrent ? "text-white/70" : "text-muted"}`}>/mo</span>
               </div>
               <ul className="space-y-2 mb-6">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
                     className={`flex items-start gap-2 text-sm ${
-                      plan.popular && !isCurrent ? "text-white/85" : "text-paw-brown/80"
+                      plan.popular && !isCurrent ? "text-white/85" : "text-ink/80"
                     }`}
                   >
-                    <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular && !isCurrent ? "text-paw-amber" : "text-green-500"}`} />
+                    <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular && !isCurrent ? "text-accent" : "text-ink"}`} />
                     {feature}
                   </li>
                 ))}
               </ul>
               {isCurrent ? (
                 <button
-                  className="w-full py-3 rounded-full border-2 border-paw-brown/20 text-paw-brown font-bold text-sm opacity-70 cursor-not-allowed"
+                  className="w-full py-3 rounded-sm border-2 border-line text-ink font-bold text-sm opacity-70 cursor-not-allowed"
                   disabled
                 >
                   Current Plan
                 </button>
               ) : (
                 <button
-                  className={`w-full py-3 rounded-full font-bold text-sm transition-colors disabled:opacity-60 ${
+                  className={`w-full py-3 rounded-sm font-medium text-sm transition-colors disabled:opacity-60 ${
                     plan.popular
-                      ? "bg-paw-amber text-paw-brown hover:bg-white"
-                      : "border-2 border-paw-brown text-paw-brown hover:bg-paw-brown hover:text-white"
+                    ? "bg-line text-ink hover:bg-surface"
+                    : "border-2 border-ink text-ink hover:bg-ink hover:text-white"
                   }`}
                   onClick={() => {
                     if (subscriptionActive && stripeSubscriptionId) {
@@ -326,26 +326,26 @@ export default function BillingPage() {
       </section>
 
       {billingError ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-medium">
+        <div className="rounded-sm border border-line bg-paper px-4 py-3 text-sm text-accent font-medium">
           {billingError}
         </div>
       ) : null}
 
       {/* Billing Info — only shown when Stripe customer exists */}
       {hasStripeCustomer && (
-        <section className="bg-white rounded-3xl shadow-card border border-white p-6 sm:p-8">
+        <section className="bg-surface rounded-sm border border-line p-6 sm:p-8">
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="w-5 h-5 text-paw-brown" />
-            <h2 className="text-xl font-bold text-paw-brown">Payment Method</h2>
+            <CreditCard className="w-5 h-5 text-ink" />
+            <h2 className="text-xl font-bold text-ink">Payment Method</h2>
           </div>
-          <div className="text-center py-8 text-paw-brown/70">
+          <div className="text-center py-8 text-muted">
             <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium text-paw-brown">Manage your payment details</p>
+            <p className="font-medium text-ink">Manage your payment details</p>
             <p className="text-sm mt-1">
               Open Stripe customer portal to update payment method, invoices, and subscription.
             </p>
             <button
-              className="mt-4 inline-flex items-center px-5 py-2.5 bg-paw-brown text-white rounded-full font-bold text-sm shadow-soft hover:bg-opacity-90 transition-colors"
+              className="mt-4 inline-flex items-center px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm hover:bg-opacity-90 transition-colors"
               onClick={() => void openBillingPortal()}
             >
               <Zap className="w-4 h-4 mr-2" /> Open Billing Portal

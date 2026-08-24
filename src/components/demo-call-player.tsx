@@ -126,40 +126,15 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
     <div className="relative w-full">
       {audioSrc && <audio ref={audioRef} src={audioSrc} preload="metadata" />}
 
-      {/* Outer glow when playing */}
-      <div
-        className={`absolute inset-0 rounded-[2rem] bg-paw-amber/25 blur-2xl transition-opacity duration-700 pointer-events-none -z-10 ${
-          isPlaying ? "opacity-100" : "opacity-0"
-        }`}
-      />
-
-      <div className="bg-white rounded-[2rem] shadow-soft border border-white/80 overflow-hidden">
-        {/* Header */}
-        <div className="bg-paw-brown px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-paw-amber/20 rounded-full flex items-center justify-center shrink-0">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F5C163" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm leading-tight">Real Call Recording</p>
-              <p className="text-white/50 text-[11px]">Happy Paws Grooming &middot; Inbound call</p>
-            </div>
+      <div className="overflow-hidden border border-line bg-surface">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">Recording</p>
+            <p className="mt-1 text-[13px] text-ink">Happy Paws · inbound</p>
           </div>
-          <div className="flex items-center gap-2.5">
-            <span
-              className={`flex items-center gap-1.5 text-red-400 text-[11px] font-bold transition-opacity duration-300 ${
-                isPlaying ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-              REC
-            </span>
-            <span className="text-white/50 text-[11px] font-mono tabular-nums">
-              {formatTime(elapsed)} / {formatTime(TOTAL_CALL_DURATION)}
-            </span>
-          </div>
+          <span className="font-mono text-[11px] tabular-nums text-muted">
+            {formatTime(elapsed)} / {formatTime(TOTAL_CALL_DURATION)}
+          </span>
         </div>
 
         {/* Waveform + play button */}
@@ -167,13 +142,10 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
           {/* Play / Pause / Replay */}
           <button
             onClick={handlePlayPause}
-            className="relative w-12 h-12 rounded-full bg-paw-brown text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shrink-0"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center bg-accent text-accent-foreground hover:bg-accent-hover"
             aria-label={isPlaying ? "Pause" : isFinished ? "Replay" : "Play"}
           >
             {/* Pulse ring while playing */}
-            {isPlaying && (
-              <span className="absolute inset-0 rounded-full border-2 border-paw-orange/40 animate-ping" />
-            )}
             {isFinished ? (
               /* Replay icon */
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -206,10 +178,10 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
                   key={i}
                   className={`flex-1 rounded-full transition-colors duration-100 ${
                     hot
-                      ? "bg-paw-orange"
-                      : played
-                        ? "bg-paw-brown"
-                        : "bg-paw-brown/15 group-hover:bg-paw-brown/22"
+                    ? "bg-accent"
+                    : played
+                    ? "bg-ink"
+                    : "bg-ink/15 group-hover:bg-ink/22"
                   }`}
                   style={{
                     height: `${height * 100}%`,
@@ -224,7 +196,7 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
         </div>
 
         {/* Status line */}
-        <div className="px-5 pb-3 text-[13px] text-paw-brown/50 font-medium leading-none">
+        <div className="px-5 pb-3 text-[13px] text-muted font-medium leading-none">
           {elapsed === 0 && !isPlaying
             ? "Press play to hear a real booking call"
             : isFinished
@@ -234,27 +206,27 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
 
         {/* Live transcript */}
         <div className="px-5 pb-5">
-          <div className="bg-paw-cream/60 rounded-xl p-4 min-h-[86px] flex flex-col justify-center">
+          <div className="bg-surface rounded-sm p-4 min-h-[86px] flex flex-col justify-center">
             {elapsed === 0 && !isPlaying ? (
               <div className="text-center">
-                <p className="text-[11px] font-bold text-paw-brown/35 uppercase tracking-wider mb-1">Live Transcript</p>
-                <p className="text-[13px] text-paw-brown/45">Captions appear as the call plays</p>
+                <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-1">Live Transcript</p>
+                <p className="text-[13px] text-muted">Captions appear as the call plays</p>
               </div>
             ) : currentLine ? (
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm ${
                       currentLine.speaker === "ai"
-                        ? "bg-paw-orange/15 text-paw-orange"
-                        : "bg-paw-brown/10 text-paw-brown/60"
+                      ? "bg-accent/10 text-accent"
+                      : "bg-ink/5 text-muted"
                     }`}
                   >
                     {currentLine.speaker === "ai" ? "Call Slot" : "Caller"}
                   </span>
-                  <span className="text-[10px] text-paw-brown/30 font-mono">{formatTime(currentLine.time)}</span>
+                  <span className="text-[10px] text-muted font-mono">{formatTime(currentLine.time)}</span>
                 </div>
-                <p className="text-paw-brown text-[13.5px] leading-relaxed font-medium">
+                <p className="text-ink text-[13.5px] leading-relaxed font-medium">
                   &ldquo;{currentLine.text}&rdquo;
                 </p>
               </div>
@@ -262,14 +234,9 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
           </div>
 
           {isFinished && (
-            <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2.5">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              <div>
-                <p className="text-[12px] font-bold text-green-800">Appointment booked successfully</p>
-                <p className="text-[11px] text-green-700">Luna &middot; Full Groom &middot; Monday 3:00 PM &middot; Confirmation text sent</p>
-              </div>
+            <div className="mt-3 border border-line bg-paper p-3">
+              <p className="text-[12px] font-medium text-ink">Appointment booked</p>
+              <p className="text-[11px] text-muted">Luna · Full Groom · Monday 3:00 PM · Confirmation text sent</p>
             </div>
           )}
         </div>
