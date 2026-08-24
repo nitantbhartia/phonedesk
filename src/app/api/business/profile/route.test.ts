@@ -43,6 +43,12 @@ vi.mock("@/lib/prisma", () => ({
     bookableSession: {
       count: vi.fn(),
     },
+    bookableFunnelEvent: {
+      groupBy: vi.fn(async () => []),
+    },
+    calendarConnection: {
+      findFirst: vi.fn(async () => null),
+    },
   },
 }));
 

@@ -37,7 +37,7 @@ export function BrandLogo({
         />
         <Image
           src="/ringpaw-logo.png"
-          alt="RingPaw AI"
+          alt="Bookable"
           width={desktopWidth}
           height={Math.round((desktopWidth * 527) / 2303)}
           priority={priority}
@@ -49,7 +49,7 @@ export function BrandLogo({
   );
 
   return href ? (
-    <Link href={href} aria-label="RingPaw AI home" className="inline-flex max-w-full">
+    <Link href={href} aria-label="Bookable home" className="inline-flex max-w-full">
       {logo}
     </Link>
   ) : (

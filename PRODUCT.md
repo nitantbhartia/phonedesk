@@ -75,7 +75,57 @@ No booking link. `C` cancels the caller’s next appointment.
 
 ## Dashboard
 
-Home shows: calls, booking attempts, booked, estimated revenue, callbacks, and recent activity. No receptionist pitch.
+Home shows: calls, booking attempts, booked, estimated revenue, callbacks, recent activity, **calendar health** (read busy + write events), and **booking funnel drop-off** (30-day). No receptionist pitch.
+
+---
+
+## Onboarding (6 steps, ~5 minutes)
+
+1. Shop name (+ account)
+2. Connect Google Calendar
+3. Hours
+4. Up to 3 phone-bookable services (name, duration, optional starting price)
+5. Carrier forwarding (no-answer / busy / after-hours codes + iPhone path)
+6. `/api/voice/simulate` test + success moment in UI
+
+---
+
+## Voice menu (PRD copy)
+
+- Shop name first. During hours: “We’re helping another customer right now.” After hours: “We’re currently closed.”
+- Press **1** book (known callers: usual `{pet}` `{service}` shortcut, or service menu)
+- Press **2** hours + starting prices (one line), then booking path
+- Press **3** more slot times (in slots state) or another service (known callers at menu)
+- Press **0** repeat current menu
+- Press **9** callback + optional 30s recording
+- Invalid digit: repeat once, then callback
+- Prefetch availability when the call starts
+
+---
+
+## Funnel analytics (persisted)
+
+Events: `call_forwarded`, `menu_started`, `menu_digit_pressed`, `booking_selected`, `service_selected`, `pricing_heard`, `slots_requested`, `slots_presented`, `slot_selected`, `booking_started`, `booking_succeeded`, `booking_failed`, `sms_sent`, `callback_selected`, `voicemail_recorded`, `call_abandoned` — each with elapsed ms when available.
+
+---
+
+## Pricing
+
+**$79/mo** — one location, one line. Single live plan (no tiers). Set `STRIPE_PRO_PRICE_ID` in env for Stripe checkout.
+
+---
+
+## Audit fields (`BookableSession`)
+
+`call_id`, `shop_id`, `caller_phone`, `service_id`, `slots_offered`, `slot_selected`, `booking_status`, `calendar_event_id`, `sms_customer_status`, `sms_owner_status`.
+
+---
+
+## Brand
+
+Customer-facing copy: **Bookable** / “Busy grooming? Your voicemail can book.” Never AI, virtual receptionist, assistant, or voice agent in landing, dashboard, settings, SMS, or voice prompts. RingPaw may remain in code comments only.
+
+Retell conversational agent stays behind `inboundPath = RETELL_AGENT` (not default owner UX).
 
 ---
 

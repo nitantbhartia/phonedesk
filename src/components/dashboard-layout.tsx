@@ -120,6 +120,10 @@ const navItems: Array<{ href: string; label: string; tourId?: string; icon: Reac
   },
 ];
 
+const bookableNavItems = navItems.filter(
+  (item) => !["/no-shows", "/settings/reviews", "/settings/agent"].includes(item.href)
+);
+
 const ownerNavItem: { href: string; label: string; tourId?: string; icon: React.ReactNode } = {
   href: "/owner",
   label: "Owner",
@@ -151,7 +155,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const showOwnerNav = isOwnerDashboardEmailClient(session?.user?.email || null);
-  const finalNavItems = showOwnerNav ? [...navItems, ownerNavItem] : navItems;
+  const finalNavItems = showOwnerNav
+    ? [...bookableNavItems, ownerNavItem]
+    : bookableNavItems;
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [showSubBanner, setShowSubBanner] = useState(false);
   useEffect(() => {
@@ -227,7 +233,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-paw-brown">
-                {session?.user?.name || "RingPaw account"}
+                {session?.user?.name || "Bookable account"}
               </p>
               <p className="truncate text-xs text-paw-brown/60">
                 {session?.user?.email || "Signed in"}

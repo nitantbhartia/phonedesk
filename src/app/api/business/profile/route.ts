@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { syncRetellAgent } from "@/lib/retell";
 import { seedBreedRecommendations } from "@/lib/breed-recommendations";
+import { getBookableFunnelSummary } from "@/lib/bookable-analytics";
+import { getCalendarHealth } from "@/lib/calendar-health";
 
 const stripeBypass = process.env.STRIPE_BYPASS === "true";
 
@@ -169,7 +171,18 @@ export async function GET() {
       ? demoSession.demoNumber.number
       : null;
 
-  return NextResponse.json({ business, stats, demoPhoneNumber });
+  const [funnel, calendarHealth] = await Promise.all([
+    getBookableFunnelSummary(business.id, monthAgo),
+    getCalendarHealth(business.id),
+  ]);
+
+  return NextResponse.json({
+    business,
+    stats,
+    demoPhoneNumber,
+    funnel,
+    calendarHealth,
+  });
 }
 
 export async function POST(req: NextRequest) {

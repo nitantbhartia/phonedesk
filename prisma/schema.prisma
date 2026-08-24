@@ -93,6 +93,7 @@ model Business {
   breedRecommendations BreedRecommendation[]
   groomers        Groomer[]
   bookableSessions BookableSession[]
+  bookableFunnelEvents BookableFunnelEvent[]
   googleReviewUrl String?        // direct Google review link
   plan            Plan     @default(STARTER)
   stripeCustomerId String? @unique
@@ -300,6 +301,7 @@ model BookableSession {
   slotOffset        Int                   @default(0)
   slotsHeard        Int                   @default(0)
   slotsOffered      Json?
+  slotSelected      Json?
   prefetchedSlots   Json?
   status            BookableSessionStatus @default(IN_PROGRESS)
   appointmentId     String?
@@ -308,13 +310,33 @@ model BookableSession {
   smsOwnerStatus    String?
   recordingUrl      String?
   knownCaller       Boolean               @default(false)
+  usualServiceId    String?
+  usualPetName      String?
   bookingKind       String?
   lastDigit         String?
+  invalidAttempts   Int                   @default(0)
+  callStartedAt     DateTime?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
 
   @@index([businessId, createdAt])
   @@index([callerPhone])
+}
+
+model BookableFunnelEvent {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sessionId  String?
+  callId     String?
+  event      String
+  digit      String?
+  elapsedMs  Int?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, event, createdAt])
+  @@index([sessionId])
 }
 
 enum BookableSessionStatus {

@@ -154,6 +154,15 @@ export default function DashboardPage() {
   const [digestError, setDigestError] = useState("");
   const [usagePlanName, setUsagePlanName] = useState("");
   const [tourOpen, setTourOpen] = useState(false);
+  const [funnelDropoff, setFunnelDropoff] = useState<
+    Array<{ event: string; count: number; dropoffPct: number }>
+  >([]);
+  const [calendarHealth, setCalendarHealth] = useState<{
+    connected: boolean;
+    canReadBusy: boolean;
+    canWriteEvents: boolean;
+    message: string;
+  } | null>(null);
   const [smsHintDismissed, setSmsHintDismissed] = useState(true); // default true to avoid flash
 
   useEffect(() => {
@@ -189,6 +198,8 @@ export default function DashboardPage() {
         const subStatus = data.business?.stripeSubscriptionStatus;
         setSubscriptionActive(["active", "trialing"].includes(subStatus ?? ""));
         setOnboardingComplete(data.business?.onboardingComplete ?? true);
+        if (data.funnel?.dropoff) setFunnelDropoff(data.funnel.dropoff);
+        if (data.calendarHealth) setCalendarHealth(data.calendarHealth);
       }
 
       if (callsRes.ok) {
@@ -318,7 +329,7 @@ export default function DashboardPage() {
         </div>
       )}
       {/* SMS commands discovery banner — shown once until dismissed */}
-      {!smsHintDismissed && (
+      {false && !smsHintDismissed && (
         <div className="mb-6 flex items-start gap-4 bg-paw-sky/60 border border-paw-brown/10 rounded-2xl px-5 py-4">
           <div className="w-9 h-9 rounded-full bg-paw-brown/10 flex items-center justify-center shrink-0 mt-0.5">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-paw-brown">
@@ -474,6 +485,50 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Calendar health + funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-2xl shadow-card border border-white/50 p-5">
+          <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">
+            Calendar health
+          </p>
+          {calendarHealth ? (
+            <>
+              <p className={`text-sm font-bold ${calendarHealth.canWriteEvents ? "text-green-700" : "text-amber-700"}`}>
+                {calendarHealth.canWriteEvents ? "Read + write OK" : calendarHealth.connected ? "Request mode" : "Not connected"}
+              </p>
+              <p className="text-sm text-paw-brown/60 mt-1">{calendarHealth.message}</p>
+            </>
+          ) : (
+            <p className="text-sm text-paw-brown/50">Loading…</p>
+          )}
+          <Link href="/settings/calendar" className="inline-block mt-3 text-xs font-bold text-paw-orange hover:underline">
+            Manage calendar →
+          </Link>
+        </div>
+        <div className="bg-white rounded-2xl shadow-card border border-white/50 p-5">
+          <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-3">
+            Booking funnel (30 days)
+          </p>
+          {funnelDropoff.length === 0 ? (
+            <p className="text-sm text-paw-brown/50">No forwarded calls yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {funnelDropoff.map((row) => (
+                <div key={row.event} className="flex items-center justify-between text-sm">
+                  <span className="text-paw-brown/70 font-medium">{row.event.replace(/_/g, " ")}</span>
+                  <span className="font-bold text-paw-brown">
+                    {row.count}
+                    {row.dropoffPct > 0 ? (
+                      <span className="text-red-400 text-xs ml-2">−{row.dropoffPct}%</span>
+                    ) : null}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
@@ -686,7 +741,8 @@ export default function DashboardPage() {
         );
       })()}
 
-      {/* SMS Quick Commands card */}
+      {/* SMS Quick Commands card — hidden for Bookable MVP */}
+      {false && (
       <div className="bg-white rounded-2xl shadow-card border border-white/50 px-5 py-4 mb-6">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -713,6 +769,7 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Recent Call Log */}
       <div data-tour="tour-calllog" className="bg-white rounded-[2.5rem] shadow-card border border-white/50 overflow-hidden">

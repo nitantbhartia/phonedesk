@@ -171,18 +171,17 @@ function LandingPageContent() {
             </div>
 
             <h1 className="animate-fade-in-up-delay-1 text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
-              Busy Grooming{" "}
+              Busy grooming?{" "}
               <span className="text-paw-orange relative inline-block">
-                Dogs?
+                Your voicemail can book.
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-paw-amber/50" viewBox="0 0 100 10" preserveAspectRatio="none">
                   <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                 </svg>
-              </span>{" "}
-              We Answer the Phone.
+              </span>
             </h1>
 
             <p className="animate-fade-in-up-delay-2 text-xl text-paw-brown/80 leading-relaxed max-w-lg">
-              When you can&apos;t answer the phone, RingPaw does. It talks to customers, books appointments, and texts confirmations automatically.
+              Bookable picks up forwarded calls with your shop name, offers real calendar openings by keypad, and texts confirmations — no app for callers.
             </p>
 
             <div className="animate-fade-in-up-delay-3 flex flex-col sm:flex-row gap-4">
@@ -546,17 +545,16 @@ function LandingPageContent() {
               <svg className="w-6 h-6 text-paw-amber" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
               <span className="text-lg font-extrabold text-paw-brown">30-Day Outcome Guarantee</span>
             </div>
-            <p className="text-sm text-paw-brown/70">No credit card needed. You are only charged when Pip books your first appointment. If it does not work in 30 days, you owe nothing.</p>
+            <p className="text-sm text-paw-brown/70">No credit card needed to set up. Live billing is $79/mo for one location and one forwarded line.</p>
           </div>
           <div className="max-w-md mx-auto">
-            {/* Studio */}
             <div className="bg-paw-brown text-paw-cream p-8 sm:p-10 rounded-[2.5rem] shadow-xl relative card-glow">
-              <h3 className="text-xl font-bold text-paw-amber mb-1">Studio</h3>
+              <h3 className="text-xl font-bold text-paw-amber mb-1">Bookable</h3>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-extrabold text-white">$199</span>
+                <span className="text-5xl font-extrabold text-white">$79</span>
                 <span className="text-white/50">/mo</span>
               </div>
-              <p className="text-sm text-white/70 mb-6 leading-snug">For full-time groomers who want Pip handling every missed call.</p>
+              <p className="text-sm text-white/70 mb-6 leading-snug">One location, one line. Voicemail that books with your real calendar.</p>
               <Link
                 href="/onboarding"
                 className="block w-full py-4 text-center bg-paw-amber text-paw-brown rounded-full font-bold hover:bg-white transition-colors shadow-lg"
@@ -566,28 +564,26 @@ function LandingPageContent() {
               <ul className="mt-8 space-y-4 text-sm font-medium text-paw-cream">
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  300 Minutes / Month (~150 calls)
+                  Keypad booking on forwarded calls
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Everything Included
+                  Google Calendar read + write
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  Square + Google Calendar
+                  Owner + caller SMS (no links)
                 </li>
                 <li className="flex gap-3">
                   <svg className="w-5 h-5 text-paw-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                  SMS Confirmations & Reminders
+                  Booking funnel on your dashboard
                 </li>
               </ul>
-              <a href="#features" className="mt-6 text-xs font-semibold text-paw-amber hover:underline block text-center">See all features →</a>
             </div>
           </div>
 
-          {/* Guarantee line */}
           <p className="text-center text-base text-paw-brown/70 mt-10 font-semibold">
-            All plans include a 30-day outcome guarantee. If RingPaw doesn&apos;t book a single appointment, you pay nothing.
+            Set STRIPE_PRO_PRICE_ID in your environment for live Stripe checkout.
           </p>
         </div>
       </section>
@@ -697,7 +693,7 @@ function LandingPageContent() {
             <a href="#" className="hover:text-white transition-colors">Support</a>
           </div>
           <div className="text-sm text-paw-cream/40">
-            &copy; {new Date().getFullYear()} RingPaw. All rights reserved.
+            &copy; {new Date().getFullYear()} Bookable. All rights reserved.
           </div>
         </div>
       </footer>
