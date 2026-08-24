@@ -194,11 +194,12 @@ export function matchActiveService<T extends { isActive: boolean; name: string }
   );
 }
 
-export function resolveActiveService<T extends { id: string; isActive: boolean; name: string }>(
+export function resolveActiveService<T extends { id: string; isActive: boolean; name: string; crmCatalogId?: string | null }>(
   services: T[],
   input: {
     serviceId?: string | null;
     serviceName?: string | null;
+    crmCatalogId?: string | null;
   }
 ): T | null {
   const activeServices = services.filter((service) => service.isActive);
@@ -208,6 +209,14 @@ export function resolveActiveService<T extends { id: string; isActive: boolean; 
       activeServices.find((service) => service.id === input.serviceId) || null;
     if (exactIdMatch) {
       return exactIdMatch;
+    }
+  }
+
+  if (input.crmCatalogId) {
+    const crmMatch =
+      activeServices.find((service) => service.crmCatalogId === input.crmCatalogId) || null;
+    if (crmMatch) {
+      return crmMatch;
     }
   }
 

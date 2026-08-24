@@ -1,6 +1,9 @@
 import twilio from "twilio";
+import { prisma } from "./prisma";
 
 let _client: ReturnType<typeof twilio> | null = null;
+
+const OPT_OUT_FOOTER = "\nReply STOP to opt out.";
 
 export type SmsProvider = "disabled" | "twilio";
 
@@ -74,4 +77,39 @@ export async function sendSms(
   }
 
   throw lastError ?? new Error("Failed to send SMS");
+}
+
+export function appendOptOutFooter(body: string): string {
+  if (body.includes("STOP")) return body;
+  return body + OPT_OUT_FOOTER;
+}
+
+export async function isCustomerOptedOut(
+  businessId: string,
+  phone: string
+): Promise<boolean> {
+  const customer = await prisma.customer.findUnique({
+    where: { businessId_phone: { businessId, phone } },
+    select: { smsOptOut: true },
+  });
+  return customer?.smsOptOut === true;
+}
+
+export async function sendCustomerSms(
+  to: string,
+  body: string,
+  from?: string,
+  options?: { businessId?: string; retries?: number }
+): Promise<void> {
+  if (options?.businessId) {
+    const optedOut = await isCustomerOptedOut(options.businessId, to);
+    if (optedOut) {
+      console.log("[SMS] Customer opted out, skipping send to:", to);
+      return;
+    }
+  }
+
+  await sendSms(to, appendOptOutFooter(body), from, {
+    retries: options?.retries ?? 2,
+  });
 }

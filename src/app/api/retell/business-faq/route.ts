@@ -81,6 +81,27 @@ export async function POST(req: NextRequest) {
   }
 
   if (/(cancel|cancellation|resched|reschedule|late|refund|deposit|policy|fee)/.test(lower)) {
+    const policies = (business.policies as Record<string, unknown>) || {};
+    const parts: string[] = [];
+
+    if (policies.cancellationFee) {
+      parts.push(`Our cancellation fee is ${policies.cancellationFee}.`);
+    }
+    if (policies.depositRequired && policies.depositAmount) {
+      parts.push(`We require a ${policies.depositAmount} deposit to hold your appointment.`);
+    }
+    if (policies.latePolicyMinutes) {
+      parts.push(`If you're more than ${policies.latePolicyMinutes} minutes late, we may need to reschedule.`);
+    }
+
+    if (parts.length > 0) {
+      return NextResponse.json({
+        topic: "policy",
+        answerable: true,
+        result: parts.join(" "),
+      });
+    }
+
     return NextResponse.json({
       topic: "policy",
       answerable: false,
