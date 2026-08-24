@@ -209,7 +209,7 @@ export async function executeCommand(
           duration: 60, // default 1 hour
         },
       });
-      responseMessage = `Added "${name}" at $${price} to your services. Your AI agent will now offer this to callers.`;
+      responseMessage = `Added "${name}" at $${price} to your services. Callers can book this on the keypad.`;
       break;
     }
 
@@ -280,7 +280,7 @@ export async function executeCommand(
         data: { businessHours: updatedHours },
       });
 
-      responseMessage = `Business hours updated to ${openStr}-${closeStr} for ${targetDays.join(", ")}. Your AI agent will use these new hours.`;
+      responseMessage = `Business hours updated to ${openStr}-${closeStr} for ${targetDays.join(", ")}. Call Slot will use these new hours.`;
       break;
     }
 
@@ -290,7 +290,7 @@ export async function executeCommand(
         data: { isActive: false },
       });
       responseMessage =
-        "Bookings paused. Your AI agent will now take messages only. Text 'Resume bookings' to restart.";
+        "Bookings paused. Forwarded calls will take a message only. Text 'Resume bookings' to restart.";
       break;
     }
 
@@ -300,7 +300,7 @@ export async function executeCommand(
         data: { isActive: true },
       });
       responseMessage =
-        "Bookings resumed! Your AI agent is back to full booking mode.";
+        "Bookings resumed! Call Slot is back to offering times on forwarded calls.";
       break;
     }
 
@@ -615,7 +615,7 @@ export async function executeCommand(
   }
 
   // Send response back to owner
-  await sendOutboundSms(replyTo, `[RingPaw] ${responseMessage}`, fromNumber);
+  await sendOutboundSms(replyTo, `[Call Slot] ${responseMessage}`, fromNumber);
 
   return responseMessage;
 }

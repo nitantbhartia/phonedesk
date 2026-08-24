@@ -151,7 +151,7 @@ export async function sendBookingNotificationToOwner(
   const time = formatDateTime(appointment.startTime, business.timezone);
 
   const message = [
-    `[RingPaw] New booking!`,
+    `[Call Slot] New booking!`,
     `${appointment.petName || "Pet"} (${appointment.petBreed || "Unknown breed"}, ${appointment.petSize || "?"})`,
     `${appointment.serviceName || "Grooming"} - ${time}`,
     `Customer: ${appointment.customerName} (${appointment.customerPhone || "no phone"})`,
@@ -189,7 +189,7 @@ export async function sendBookingConfirmationToCustomer(
   const message = [
     isSoftPending
       ? `Hi ${appointment.customerName}, thanks for calling ${business.name}! We've got your request for ${appointment.petName || "your pet"}'s ${appointment.serviceName || "grooming"} appointment on ${time}.`
-      : `Hi ${appointment.customerName}, this is RingPaw confirming your grooming appointment for ${appointment.petName || "your pet"} on ${time}.`,
+      : `Hi ${appointment.customerName}, this is Call Slot confirming your appointment on ${time}.`,
     "",
     ...(isSoftPending
       ? []
@@ -224,7 +224,7 @@ export async function sendMissedCallNotification(
   // Notify owner
   if (ownerPhone) {
     const ownerMessage = [
-      `[RingPaw] Missed call - no booking made.`,
+      `[Call Slot] Missed call - no booking made.`,
       `Caller: ${callerName || "Unknown"} (${callerPhone})`,
       `They may call back or you can reach out.`,
     ].join("\n");
@@ -382,11 +382,11 @@ export async function sendCancellationWithWaitlistNotification(
 
   const message = waitlistCustomerName
     ? [
-        `[RingPaw] ${cancelledAppt.customerName} cancelled their ${time} slot.`,
+        `[Call Slot] ${cancelledAppt.customerName} cancelled their ${time} slot.`,
         `Waitlist auto-fill: contacting ${waitlistCustomerName} to fill the opening.`,
       ].join("\n")
     : [
-        `[RingPaw] ${cancelledAppt.customerName} cancelled their ${time} slot.`,
+        `[Call Slot] ${cancelledAppt.customerName} cancelled their ${time} slot.`,
         `No one on the waitlist for this time.`,
       ].join("\n");
 
@@ -407,7 +407,7 @@ export async function sendRescheduleNotificationToOwner(
   const newTime = formatDateTime(newAppt.startTime, business.timezone);
 
   const message = [
-    `[RingPaw] ${originalAppt.customerName} rescheduled their appointment.`,
+    `[Call Slot] ${originalAppt.customerName} rescheduled their appointment.`,
     `${originalAppt.petName || "Pet"}: ${oldTime} -> ${newTime}`,
     waitlistCustomerName
       ? `Waitlist auto-fill: contacting ${waitlistCustomerName} for the old opening.`

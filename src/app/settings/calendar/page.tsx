@@ -259,7 +259,7 @@ function CalendarSettingsPageContent() {
       }
       setSavedHoursJson(JSON.stringify(businessHours));
       setLastSaved(new Date());
-      toast.success("Hours saved & synced to voice agent");
+      toast.success("Hours saved");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save hours");
     } finally {
@@ -338,7 +338,7 @@ function CalendarSettingsPageContent() {
             Calendar Integration
           </h1>
           <p className="text-paw-brown/60 mt-2 font-medium">
-            Connect your booking tools so RingPaw can manage your availability
+            Connect your booking tools so Call Slot can manage your availability
             in real-time.
           </p>
         </div>
@@ -495,7 +495,7 @@ function CalendarSettingsPageContent() {
           <p className="text-sm text-paw-brown/80 font-medium">
             <strong>Using Gingr, MoeGo, or other grooming software?</strong>{" "}
             Connect the same Google Calendar that your booking software syncs
-            with. When RingPaw books an appointment, it&apos;ll show as busy in
+            with. When Call Slot books an appointment, it&apos;ll show as busy in
             your grooming software too — preventing double-bookings
             automatically.
           </p>
@@ -508,11 +508,11 @@ function CalendarSettingsPageContent() {
           <h2 className="text-xl font-bold text-paw-brown">
             <span className="inline-flex items-center gap-2">
               Business Hours
-              <InfoIcon text="The AI will only offer appointment slots that fall within these hours. Callers asking for times outside your hours will be told you're closed and asked to pick another time." />
+              <InfoIcon text="Call Slot will only offer appointment slots that fall within these hours. Callers asking for times outside your hours will be told you're closed." />
             </span>
           </h2>
           <p className="text-paw-brown/60 mt-1 text-sm font-medium">
-            Set the hours your AI agent can book appointments.
+            Set the hours Call Slot can offer appointment slots.
           </p>
         </div>
 
@@ -637,7 +637,7 @@ function CalendarSettingsPageContent() {
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Primary Destination
-                  <InfoIcon text="The calendar where RingPaw writes new bookings. If you have multiple connected calendars, pick the one you use for grooming appointments." />
+                  <InfoIcon text="The calendar where Call Slot writes new bookings. If you have multiple connected calendars, pick the one you use for appointments." />
                 </span>
               </label>
               <div className="relative">
@@ -678,7 +678,7 @@ function CalendarSettingsPageContent() {
               <label className="block text-sm font-bold text-paw-brown/60 uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Conflict Checking
-                  <InfoIcon text="Advanced conflict controls are not editable yet. RingPaw already respects conflicts from your connected calendar data." />
+                  <InfoIcon text="Advanced conflict controls are not editable yet. Call Slot already respects conflicts from your connected calendar data." />
                 </span>
               </label>
               <div className="space-y-3">

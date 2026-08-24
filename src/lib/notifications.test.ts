@@ -69,7 +69,7 @@ describe("notifications", () => {
 
     expect(sendSms).toHaveBeenCalledWith(
       "+16195550000",
-      expect.stringContaining("[RingPaw] New booking!"),
+      expect.stringContaining("[Call Slot] New booking!"),
       "+16195559999"
     );
   });

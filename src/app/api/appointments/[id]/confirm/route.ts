@@ -93,7 +93,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
       await sendSms(
         appointment.business.phone,
-        `[RingPaw] ${appointment.customerName} confirmed their ${
+        `[Call Slot] ${appointment.customerName} confirmed their ${
           appointment.serviceName ?? "grooming"
         } appointment (${formatDateTime(appointment.startTime)}).`,
         fromNumber

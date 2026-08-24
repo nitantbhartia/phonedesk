@@ -186,7 +186,7 @@ export async function createSquareBooking(
               service_variation_id: "any", // Let Square pick default service
             },
           ],
-          customer_note: `${details.customerName}${details.serviceName ? ` - ${details.serviceName}` : ""} (Booked via RingPaw)`,
+          customer_note: `${details.customerName}${details.serviceName ? ` - ${details.serviceName}` : ""} (Booked via Call Slot)`,
         },
       }),
     }
@@ -295,7 +295,7 @@ export async function createAcuityAppointment(
         lastName,
         email: details.customerEmail || "",
         phone: details.customerPhone || "",
-        notes: "Booked via RingPaw",
+        notes: "Booked via Call Slot",
       }),
     }
   );
@@ -566,7 +566,7 @@ export interface ConflictEntry {
   start: Date;
   end: Date;
   summary: string;
-  source: string; // "Google Calendar", "Square", "Acuity", "RingPaw"
+  source: string; // "Google Calendar", "Square", "Acuity", "Call Slot"
 }
 
 export async function getConflicts(
@@ -593,7 +593,7 @@ export async function getConflicts(
     start: a.startTime,
     end: a.endTime,
     summary: [a.customerName, a.serviceName].filter(Boolean).join(" — ") || "Appointment",
-    source: "RingPaw",
+    source: "Call Slot",
   }));
 
   for (const conn of connections) {
@@ -915,7 +915,7 @@ export async function bookAppointment(
       details.petSize ? `Size: ${details.petSize}` : "",
       details.notes ? `Notes: ${details.notes}` : "",
       "",
-      "Booked via RingPaw",
+      "Booked via Call Slot",
     ]
       .filter(Boolean)
       .join("\n");

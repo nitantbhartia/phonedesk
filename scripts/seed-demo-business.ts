@@ -23,7 +23,7 @@ async function main() {
   // 1. Demo user (internal account, no password needed)
   const user = await prisma.user.upsert({
     where: { email: DEMO_EMAIL },
-    create: { email: DEMO_EMAIL, name: "RingPaw Demo" },
+    create: { email: DEMO_EMAIL, name: "Call Slot Demo" },
     update: {},
   });
   console.log(`✔ User:     ${user.email} (${user.id})`);

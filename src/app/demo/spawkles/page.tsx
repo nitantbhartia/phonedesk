@@ -4,8 +4,8 @@ import { SpawklesDemoClient } from "./client";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Spawkles Mobile Dog Grooming — RingPaw Demo",
-  description: "Try Pip, your phone receptionist for Spawkles Mobile Dog Grooming.",
+  title: "Spawkles Mobile Dog Grooming — Call Slot Demo",
+  description: "Hear Call Slot pick up for Spawkles Mobile Dog Grooming.",
   robots: "noindex, nofollow",
 };
 

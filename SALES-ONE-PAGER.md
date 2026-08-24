@@ -1,4 +1,4 @@
-# RingPaw — Sales One-Pager
+# Call Slot — Sales One-Pager
 
 **"Busy grooming dogs? We answer the phone."**
 
@@ -6,17 +6,15 @@
 
 ## 60-SECOND PITCH
 
-> "When you're mid-groom and the phone rings, you can't answer — and most customers don't leave a voicemail, they call the next groomer on Google. RingPaw fixes that. It's an AI receptionist that answers every call, has a real conversation, checks your live calendar, books the appointment, and texts a confirmation — all automatically. You don't touch anything. 5-minute setup, connects to Google Calendar, Square, or Acuity, starts at $99/mo. 30-day guarantee — if it doesn't book a single appointment, you pay nothing."
+> "When you're mid-groom and the phone rings, you can't answer — and most customers don't leave a voicemail, they call the next groomer on Google. Call Slot fixes that. Forward missed calls, callers press 1 to book a real calendar opening, and you get a text confirmation. 5-minute setup, connects to Google Calendar, Square, or Acuity, $79/mo. 30-day guarantee — if it doesn't book a single appointment, you pay nothing."
 
 ---
 
 ## PRICING
 
-| Plan | Price | Minutes | Best For |
-|------|-------|---------|----------|
-| **Solo** | $99/mo | 120 min | Solo groomer, moderate volume |
-| **Studio** | $199/mo | 300 min | Full-time groomer, higher volume |
-| **Salon** | $349/mo | 500 min | Multi-groomer shops |
+| Plan | Price | Best For |
+|------|-------|----------|
+| **Call Slot** | $79/mo | One location, one forwarded line |
 
 - Overage: $0.40/min | No contracts, no setup fees, cancel anytime
 - **30-day outcome guarantee** — zero bookings = zero charge
@@ -26,17 +24,14 @@
 
 ## FULL FEATURE LIST
 
-### Voice AI Receptionist (core)
-- Answers every call 24/7 in a natural, customizable voice
-- Collects customer name, phone, pet name, breed, size, service, preferred time
-- Checks real-time calendar availability during the call
-- Quotes pricing instantly using dynamic breed x size x service matrix
-- Books the appointment directly into the calendar
-- Reads back confirmation and sends SMS automatically
-- Recognizes returning customers by phone — "Hi Sarah, booking Max again?"
-- Configurable personality: warm / professional / playful
-- Multi-language: English, Spanish, French, and more
-- Custom greeting and fallback messages
+### Bookable voicemail (core)
+- Picks up forwarded missed, busy, and after-hours calls 24/7
+- Shop name first, then keypad: press 1 to book, press 9 to leave a message
+- Offers real calendar openings for up to three phone-bookable services
+- Writes the booking to Google Calendar (Square/Acuity if already connected)
+- Sends SMS confirmations to caller and owner — no booking links
+- Known callers can auto-book; new callers hold a request until the shop confirms
+- Custom shop greeting; after hours uses the same tree with next openings
 
 ### Smart Booking Engine
 - **Hard mode:** Instant confirmed booking + calendar event + SMS confirmation
@@ -95,25 +90,25 @@
 - Turns every missed opportunity into a second chance
 
 ### Customer Memory
-- AI remembers: name, pet, breed, preferred service, visit count, VIP status
+- Remembers: name, pet, breed, preferred service, visit count, VIP status
 - Behavioral notes (anxious, muzzle required, special handling)
-- No-show history surfaced to AI during calls
+- No-show history available on the dashboard
 
 ### Dynamic Pricing Matrix
 - Set base prices per service
 - Override by breed + size + service (e.g., Golden Retriever Large Full Groom = $95)
-- AI quotes the correct price live on every call
+- Quotes the correct price when a matching rule exists
 
 ### Dashboard & Analytics
 - Calls this week/month, confirmed bookings, missed calls
 - Average call duration, revenue protected
 - Today's view with live grooming status per appointment
-- Full call log with transcript search, AI summaries, and recording playback
+- Full call log with recordings and outcomes
 
 ### Behavioral Risk Logging
 - Severity levels: Note / Caution / High Risk
 - Tags: muzzle_required, anxious, biting, reactive, special_handling
-- AI reads behavior brief before each call
+- Notes available on the dashboard before the visit
 
 ### Agent Personality Settings
 - Voice selection, greeting, fallback message
@@ -126,9 +121,9 @@
 
 | They say | You say |
 |----------|---------|
-| **"My customers won't want to talk to AI."** | Most common concern — and the #1 reaction after hearing it is "that's AI?" It sounds natural, books faster than a human, and customers just want their dog scheduled. *Have them call the demo number right now.* |
-| **"I already have voicemail."** | Most callers don't leave voicemails — they hang up and call the next groomer. Voicemail is a holding pen. RingPaw is a booking machine. |
-| **"It's too expensive."** | At $99/mo, one extra booking covers it. If you're missing 2-4 calls/day at $85/groom, that's $170-$340 in lost revenue *daily*. And if it books zero in 30 days, you pay nothing. |
+| **"My customers won't want a keypad."** | Callers already know how to press 1. They hear your shop name, pick a real opening, and get a text. *Have them call the demo number right now.* |
+| **"I already have voicemail."** | Most callers don't leave voicemails — they hang up and call the next groomer. Voicemail is a holding pen. Call Slot is a booking machine. |
+| **"It's too expensive."** | At $79/mo, one extra booking covers it. If you're missing 2-4 calls/day at $85/groom, that's $170-$340 in lost revenue *daily*. And if it books zero in 30 days, you pay nothing. |
 | **"I'm too busy to set this up."** | 5 minutes. Business name, services, link calendar. Call forwarding is a single code you dial — 30 seconds. You're live by tonight. |
 | **"What if it gets something wrong?"** | It only books open slots — can't double-book. If unsure, it asks the customer to clarify. You get a daily report of every call. Text it commands to block days or adjust anytime. |
 | **"I need to think about it."** | Totally fair — but with the 30-day guarantee there's zero risk. Worst case, cancel before day 30, pay nothing. Get it live today and see it work with real calls this week. |
@@ -146,4 +141,4 @@
 
 ---
 
-*RingPaw — Never miss another booking.*
+*Call Slot — Your voicemail can book.*

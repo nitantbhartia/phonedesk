@@ -151,26 +151,26 @@ function formatPhoneNumber(value: string) {
 const STEP_CONFIG = [
   {
     title: "What's your shop called?",
-    subtitle: "Bookable answers your forwarded calls with your shop name first — like voicemail that books.",
+    subtitle: "Call Slot answers your forwarded calls with your shop name first — like voicemail that books.",
     proTip: "Use the name customers already know from your sign and Google listing.",
   },
   {
     title: "Connect Google Calendar",
-    subtitle: "Bookable reads your real openings and writes confirmed bookings. Google Calendar is required for v1.",
+    subtitle: "Call Slot reads your real openings and writes confirmed bookings. Google Calendar is required for v1.",
     proTip: "If you use Square or Acuity too, you can add them later in Settings.",
   },
   {
     title: "When are you open?",
-    subtitle: "Bookable only offers slots during these hours. After hours, callers still hear your shop name and can book the next openings.",
+    subtitle: "Call Slot only offers slots during these hours. After hours, callers still hear your shop name and can book the next openings.",
     proTip: "Match the hours on your door — callers hear these times when they press 2 for pricing.",
   },
   {
     title: "What can callers book by phone?",
-    subtitle: "Add up to three services with duration and optional starting price. Bookable keeps the menu short.",
-    proTip: "Bath, full groom, and nail trim cover most shops. You can edit these anytime.",
+    subtitle: "Add up to three services with duration and optional starting price. Call Slot keeps the menu short.",
+    proTip: "Keep it to the 2–3 services callers actually book by phone. You can edit these anytime.",
   },
   {
-    title: "Forward missed calls to Bookable",
+    title: "Forward missed calls to Call Slot",
     subtitle: "Set up no-answer, busy, and after-hours forwarding on your existing shop line.",
     proTip: "Conditional forwarding only kicks in when you don't answer — customers still call your usual number.",
   },
@@ -223,9 +223,9 @@ export default function OnboardingPage() {
 
   // Step 2: Services
   const [services, setServices] = useState<ServiceEntry[]>([
-    { name: "Full Groom", price: "75", duration: "90" },
-    { name: "Bath & Brush", price: "45", duration: "60" },
-    { name: "Nail Trim", price: "20", duration: "15" },
+    { name: "Standard appointment", price: "75", duration: "60" },
+    { name: "Express visit", price: "45", duration: "30" },
+    { name: "Follow-up", price: "20", duration: "15" },
   ]);
   const [bookingMode, setBookingMode] = useState<"SOFT" | "HARD">("SOFT");
   const [groomers, setGroomers] = useState<Array<{ name: string; specialties: string }>>([]);
@@ -824,7 +824,7 @@ export default function OnboardingPage() {
         setProvisionedNumber(provData.phoneNumber);
       } else if (!provData.alreadyProvisioned) {
         console.error("[goLive] Number provisioning failed:", provData.error);
-        throw new Error(provData.error || "Failed to provision your RingPaw number. Please try again.");
+        throw new Error(provData.error || "Failed to provision your Call Slot number. Please try again.");
       }
 
       // End the demo session now that we have a real number
@@ -896,7 +896,7 @@ export default function OnboardingPage() {
             Hey, {firstName}! 👋
           </h1>
           <p className="text-paw-brown/60 font-medium mb-8 leading-relaxed">
-            Busy grooming? Your voicemail can book. Set up Bookable in about five minutes — forward missed calls, callers press 1 to book, you get text confirmations.
+            Your voicemail can book. Set up Call Slot in about five minutes — forward missed calls, callers press 1 to book, you get text confirmations.
           </p>
 
           {/* What they'll set up */}
@@ -906,7 +906,7 @@ export default function OnboardingPage() {
               { icon: "📅", label: "Google Calendar", desc: "Real openings + writes" },
               { icon: "🕐", label: "Hours", desc: "When callers can book" },
               { icon: "✂️", label: "Up to 3 services", desc: "Short phone menu" },
-              { icon: "📞", label: "Call forwarding", desc: "No-answer → Bookable" },
+              { icon: "📞", label: "Call forwarding", desc: "No-answer → Call Slot" },
               { icon: "✅", label: "Test booking", desc: "Simulate press 1 → book" },
             ].map((item) => (
               <li key={item.label} className="flex items-center gap-3">
@@ -1110,7 +1110,7 @@ export default function OnboardingPage() {
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <OnboardingInput
                         id="websiteUrl"
-                        placeholder="https://yourgroomingsite.com"
+                        placeholder="https://yourshop.com"
                         value={websiteUrl}
                         onChange={(e) => setWebsiteUrl(e.target.value)}
                       />
@@ -1155,7 +1155,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="businessName"
-                info="The name spoken to callers when your AI answers (e.g. 'Happy Paws Grooming'). Use your full business name exactly as you'd say it on the phone."
+                info="The name spoken to callers when Call Slot picks up (e.g. 'River Street Studio'). Use your full shop name exactly as you'd say it on the phone."
               >
                 Business Name
               </OnboardingLabel>
@@ -1169,7 +1169,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="ownerName"
-                info="Your first name is used when the AI says 'Sarah is with a client right now, but I can help you.' Helps callers feel they're still reaching the right person."
+                info="Your first name is used when Call Slot says the shop is with a client right now. Helps callers feel they're still reaching the right person."
               >
                 Owner Name
               </OnboardingLabel>
@@ -1186,7 +1186,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="phone"
-                info="Your existing business phone number. We use the area code to assign you a local RingPaw number that matches your region, so callers see a familiar number."
+                info="Your existing business phone number. We use the area code to assign you a local Call Slot number that matches your region, so callers see a familiar number."
               >
                 Phone Number
               </OnboardingLabel>
@@ -1200,7 +1200,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="address"
-                info="Your full street address. The AI will share this when callers ask 'Where are you located?' or 'How do I get there?'"
+                info="Your full street address. Call Slot can share this when callers ask where you are."
               >
                 Address
               </OnboardingLabel>
@@ -1217,7 +1217,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="city"
-                info="Your city is included in the business profile so the AI can give accurate location context to callers asking about nearby drop-off or parking."
+                info="Your city is included in the business profile so callers get accurate location context."
               >
                 City
               </OnboardingLabel>
@@ -1261,7 +1261,7 @@ export default function OnboardingPage() {
 
           {/* Business Hours */}
           <div className="space-y-4">
-            <OnboardingLabel info="Set the days and times you accept appointments. The AI will only offer slots within these hours and tell callers you're closed outside of them. Toggle a day off to mark it closed.">
+            <OnboardingLabel info="Set the days and times you accept appointments. Call Slot will only offer slots within these hours. Toggle a day off to mark it closed.">
               Business Hours
             </OnboardingLabel>
             <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5 space-y-4">
@@ -1369,7 +1369,7 @@ export default function OnboardingPage() {
       {step === 2 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel info="List every service you offer with its price and how long it takes. The AI will quote these prices to callers, use the duration to find available slots, and avoid double-booking.">
+            <OnboardingLabel info="List the services callers can book by phone, with price and duration. Call Slot uses duration to find available slots and avoid double-booking.">
               Services &amp; Pricing
             </OnboardingLabel>
             <div className="space-y-3">
@@ -1462,7 +1462,7 @@ export default function OnboardingPage() {
               Optional settings
             </summary>
             <div className="mt-4 space-y-4">
-              <OnboardingLabel info="Soft booking holds the slot for 2 hours and sends the customer a confirmation link — you stay in control. Hard booking confirms immediately on your calendar. Most groomers start with Soft Book.">
+              <OnboardingLabel info="Soft booking holds the slot for 2 hours — you stay in control. Hard booking confirms immediately on your calendar. Most shops start with Soft Book.">
                 Default Booking Mode
               </OnboardingLabel>
               <div className="bg-white rounded-3xl p-6 border-2 border-paw-brown/5">
@@ -1494,8 +1494,8 @@ export default function OnboardingPage() {
 
           {/* Groomers (optional) */}
           <div className="space-y-4">
-            <OnboardingLabel info="If you have multiple groomers, add them here so callers can request someone by name. Include their specialties (e.g. doodles, cats, senior dogs) so the AI can match callers to the right groomer.">
-              Your Groomers (Optional)
+            <OnboardingLabel info="If you have more than one person taking appointments, add them here so you can keep names on file. Specialties are optional.">
+              Your team (optional)
             </OnboardingLabel>
             <div className="space-y-3">
               {groomers.map((groomer, i) => (
@@ -1505,7 +1505,7 @@ export default function OnboardingPage() {
                 >
                   <input
                     type="text"
-                    placeholder="Groomer name"
+                    placeholder="Name"
                     value={groomer.name}
                     onChange={(e) => {
                       const updated = [...groomers];
@@ -1516,7 +1516,7 @@ export default function OnboardingPage() {
                   />
                   <input
                     type="text"
-                    placeholder="Specialties (e.g. doodles, cats)"
+                    placeholder="Role or notes (optional)"
                     value={groomer.specialties}
                     onChange={(e) => {
                       const updated = [...groomers];
@@ -1545,7 +1545,7 @@ export default function OnboardingPage() {
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Add a groomer
+                Add a team member
               </button>
             </div>
           </div>
@@ -1563,11 +1563,11 @@ export default function OnboardingPage() {
       {step === 4 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel info="Connect the calendar or booking tool you already use. RingPaw reads your live availability before offering any time slot and writes confirmed bookings directly — no double-booking, no manual entry.">
+            <OnboardingLabel info="Connect the calendar or booking tool you already use. Call Slot reads your live availability before offering any time slot and writes confirmed bookings directly — no double-booking, no manual entry.">
               Connect Your Booking System
             </OnboardingLabel>
             <p className="text-sm text-paw-brown/50 -mt-2">
-              Pick whichever tool you already use. RingPaw reads availability and writes bookings directly.
+              Pick whichever tool you already use. Call Slot reads availability and writes bookings directly.
             </p>
             <div className="space-y-3">
               {/* Google Calendar */}
@@ -1741,7 +1741,7 @@ export default function OnboardingPage() {
 
           {!calendarConnected && (
             <p className="text-xs text-paw-brown/45 text-center mt-1">
-              No calendar yet? That&apos;s okay — you can connect it later from Settings. RingPaw will still take calls; it just won&apos;t write bookings automatically until you do.
+              No calendar yet? That&apos;s okay — you can connect it later from Settings. Call Slot will still take calls; it just won&apos;t write bookings automatically until you do.
             </p>
           )}
           <OnboardingFooter
@@ -1792,7 +1792,7 @@ export default function OnboardingPage() {
             )}
             {simulateLog.some((line) => line.includes("booked") || line.includes("requested") || line.includes("call you back")) && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                <p className="font-bold text-green-800">Success — Bookable is working!</p>
+                <p className="font-bold text-green-800">Success — Call Slot is working!</p>
                 <p className="text-sm text-green-700/80 mt-1">Forward a real missed call to hear it on a handset, or head to your dashboard.</p>
               </div>
             )}
@@ -1809,7 +1809,7 @@ export default function OnboardingPage() {
                 Let&apos;s set up your test number
               </h3>
               <p className="text-paw-brown/50 font-medium mb-6 max-w-sm mx-auto text-sm">
-                We&apos;ll give you a test line so you can hear your AI receptionist in action. Your dedicated number is assigned when you go live.
+                We&apos;ll give you a test line so you can walk the keypad tree. Your dedicated number is assigned when you go live.
               </p>
               <button
                 onClick={provisionNumber}
@@ -1867,14 +1867,14 @@ export default function OnboardingPage() {
 
                 {callPhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-sm font-bold text-amber-600 mb-1">Your AI is on the call right now</p>
+                    <p className="text-sm font-bold text-amber-600 mb-1">Call Slot is on the line</p>
                     <p className="text-xs text-paw-brown/40">Stay on the line — we&apos;ll detect when it&apos;s done.</p>
                   </div>
                 )}
 
                 {callPhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-extrabold text-green-700 mb-1">🎉 Your AI nailed it!</p>
+                    <p className="text-xl font-extrabold text-green-700 mb-1">🎉 Call Slot booked it!</p>
                     <p className="text-sm text-paw-brown/50">Ready to take real calls 24/7.</p>
                   </div>
                 )}
@@ -1883,9 +1883,9 @@ export default function OnboardingPage() {
               {/* Sample script — only while waiting */}
               {callPhase === "waiting" && (
                 <div className="bg-paw-sky/70 rounded-2xl p-4 border border-paw-brown/8">
-                  <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try saying this →</p>
+                  <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider mb-2">Try this →</p>
                   <p className="text-sm text-paw-brown/80 italic leading-relaxed">
-                    &ldquo;Hi, I&apos;m calling to book a grooming appointment for my golden retriever. He needs a full groom — do you have anything available next week?&rdquo;
+                    &ldquo;Press 1 to book, then pick a service and a time from the keypad.&rdquo;
                   </p>
                 </div>
               )}
@@ -1905,7 +1905,7 @@ export default function OnboardingPage() {
               {/* AI call summary — after completion */}
               {callPhase === "completed" && detectedCallSummary && (
                 <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
-                  <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">AI Call Summary</p>
+                  <p className="text-xs font-bold text-green-700 uppercase tracking-wider mb-2">Call summary</p>
                   <p className="text-sm text-paw-brown/80 leading-relaxed">{detectedCallSummary}</p>
                 </div>
               )}
@@ -1953,7 +1953,7 @@ export default function OnboardingPage() {
           {provisionedNumber && (
             <div className="bg-paw-amber/10 border-2 border-paw-amber/30 rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">Your Bookable number</p>
+                <p className="text-xs font-bold text-paw-brown/50 uppercase tracking-wider">Your Call Slot number</p>
                 <p className="text-xl font-extrabold text-paw-brown">{formattedProvisionedNumber}</p>
               </div>
               <button
@@ -1966,7 +1966,7 @@ export default function OnboardingPage() {
           )}
 
           <p className="text-sm text-paw-brown/60 font-medium">
-            Set up <strong className="text-paw-brown">conditional call forwarding</strong> on your business phone so unanswered, busy, and after-hours calls route to Bookable. Your shop number stays the same.
+            Set up <strong className="text-paw-brown">conditional call forwarding</strong> on your business phone so unanswered, busy, and after-hours calls route to Call Slot. Your shop number stays the same.
           </p>
 
           {/* iPhone instructions */}
@@ -1978,7 +1978,7 @@ export default function OnboardingPage() {
               {[
                 { n: 1, text: <>Open <strong>Settings</strong> → <strong>Phone</strong> → <strong>Call Forwarding</strong></> },
                 { n: 2, text: <>Toggle <strong>Call Forwarding</strong> on</> },
-                { n: 3, text: <><strong>Forward To:</strong> enter <strong>{formattedProvisionedNumber || "your RingPaw number"}</strong></> },
+                { n: 3, text: <><strong>Forward To:</strong> enter <strong>{formattedProvisionedNumber || "your Call Slot number"}</strong></> },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-paw-brown text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{n}</div>
@@ -2021,14 +2021,14 @@ export default function OnboardingPage() {
             <div className="p-4 space-y-3 text-sm text-paw-brown/75 font-medium">
               <p><strong>Verizon / AT&amp;T / T-Mobile:</strong> dial the codes above from your shop handset, or use Settings → Phone → Call Forwarding on iPhone.</p>
               <p><strong>No-answer:</strong> <code className="bg-paw-cream px-1 rounded">*61*NUMBER#</code> · <strong>Busy:</strong> <code className="bg-paw-cream px-1 rounded">*67*NUMBER#</code> · <strong>All calls:</strong> <code className="bg-paw-cream px-1 rounded">*21*NUMBER#</code></p>
-              <p className="text-xs text-paw-brown/45">Replace NUMBER with your Bookable line digits only (no +1). To turn off: <code className="bg-paw-cream px-1 rounded">##61#</code> no-answer, <code className="bg-paw-cream px-1 rounded">##67#</code> busy, <code className="bg-paw-cream px-1 rounded">##21#</code> all.</p>
+              <p className="text-xs text-paw-brown/45">Replace NUMBER with your Call Slot line digits only (no +1). To turn off: <code className="bg-paw-cream px-1 rounded">##61#</code> no-answer, <code className="bg-paw-cream px-1 rounded">##67#</code> busy, <code className="bg-paw-cream px-1 rounded">##21#</code> all.</p>
             </div>
           </div>
 
           <OnboardingFooter
             onBack={() => navigate(2)}
             onNext={() => navigate(5)}
-            nextLabel="Test Bookable"
+            nextLabel="Test Call Slot"
           />
         </div>
       )}
@@ -2059,13 +2059,13 @@ export default function OnboardingPage() {
               Ready to launch!
             </h3>
             <p className="text-green-700 font-medium">
-              Your AI receptionist will answer calls, book appointments, and
-              text you summaries.
+              Call Slot will pick up forwarded calls, offer real calendar openings by keypad, and
+              text you confirmations.
             </p>
           </div>
 
           <div className="space-y-3">
-            <OnboardingLabel info="A summary of everything you've configured. Once you click 'Go Live', your AI receptionist will start answering forwarded calls immediately. You can adjust any setting later from the dashboard.">
+            <OnboardingLabel info="A summary of everything you've configured. Once you click 'Go Live', Call Slot will start answering forwarded calls immediately. You can adjust any setting later from the dashboard.">
               Setup Summary
             </OnboardingLabel>
             {[
@@ -2087,7 +2087,7 @@ export default function OnboardingPage() {
               },
               {
                 label: formattedProvisionedNumber || "Phone number",
-                desc: "RingPaw number provisioned",
+                desc: "Call Slot number provisioned",
               },
             ].map((item) => (
               <div

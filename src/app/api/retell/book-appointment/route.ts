@@ -428,7 +428,7 @@ export async function POST(req: NextRequest) {
           if (smsFrom && updatedBiz.phone) {
             sendSms(
               updatedBiz.phone,
-              `Pip just booked your first appointment — your ${business.name} plan is now active! You're all set.`,
+              `Call Slot just booked your first appointment — your ${business.name} plan is now active! You're all set.`,
               smsFrom
             ).catch((e) => console.error("[book-appointment] Trial activation SMS failed:", e));
           }

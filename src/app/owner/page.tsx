@@ -129,7 +129,7 @@ export default async function OwnerDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold">Owner Dashboard</h1>
         <p className="text-muted-foreground">
-          Cross-account analytics across all groomers using RingPaw.
+          Cross-account analytics across all shops using Call Slot.
         </p>
       </div>
 

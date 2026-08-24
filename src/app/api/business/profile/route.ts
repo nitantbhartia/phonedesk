@@ -338,7 +338,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       console.error("[Retell Sync] Failed for business", business.id, error);
       return NextResponse.json(
-        { business, error: "Settings saved but failed to sync to voice agent: " + (error instanceof Error ? error.message : String(error)) },
+        { business, error: "Settings saved but failed to sync: " + (error instanceof Error ? error.message : String(error)) },
         { status: 502 }
       );
     }

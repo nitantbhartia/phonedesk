@@ -51,7 +51,7 @@ function ScoreBadge({ call }: { call: CallRecord }) {
   return (
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${colorClass}`}
-      title={`AI quality score: ${label}`}
+      title={`Call quality: ${label}`}
     >
       {total}/{max}
     </span>
@@ -143,7 +143,7 @@ export default function CallLogPage() {
         <div>
           <h1 className="text-4xl font-extrabold text-paw-brown">Call Log</h1>
           <p className="text-paw-brown/60 font-medium mt-1">
-            Every call your AI handled — tap any row to read the full transcript and see what was booked.
+            Every forwarded call Call Slot picked up — tap any row to see what was booked.
           </p>
         </div>
         <div className="flex gap-3">
@@ -271,7 +271,7 @@ export default function CallLogPage() {
             <p className="text-sm mt-1">
               {filter !== "all"
                 ? "Try a different filter."
-                : "Make a test call to your RingPaw number to see it in action."}
+                : "Make a test call to your Call Slot number to see it in action."}
             </p>
             {filter === "all" && (
               <a
@@ -303,7 +303,7 @@ export default function CallLogPage() {
                   Time
                 </th>
                 <th className="px-4 sm:px-6 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider hidden sm:table-cell">
-                  AI Score
+                  Quality
                 </th>
                 <th className="px-4 sm:px-8 py-5 text-xs font-bold text-paw-brown/40 uppercase tracking-wider text-right">
                   Action
@@ -535,7 +535,7 @@ export default function CallLogPage() {
                     <div className="border rounded-2xl p-4 bg-white">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <span className="text-sm font-bold text-paw-brown">AI Quality Scorecard</span>
+                          <span className="text-sm font-bold text-paw-brown">Call quality</span>
                           <p className="text-xs text-paw-brown/50 mt-0.5">{label}</p>
                         </div>
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border tabular-nums ${badgeColor}`}>

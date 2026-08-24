@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "RingPaw - Phone Receptionist for Pet Groomers";
+export const alt = "Call Slot — Your voicemail can book.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -20,33 +20,6 @@ export default function OgImage() {
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        {/* Decorative paw prints */}
-        <div
-          style={{
-            position: "absolute",
-            top: 40,
-            right: 80,
-            fontSize: 64,
-            opacity: 0.1,
-            display: "flex",
-          }}
-        >
-          🐾
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            bottom: 50,
-            left: 90,
-            fontSize: 48,
-            opacity: 0.1,
-            display: "flex",
-          }}
-        >
-          🐾
-        </div>
-
-        {/* Main content */}
         <div
           style={{
             display: "flex",
@@ -55,7 +28,6 @@ export default function OgImage() {
             gap: 16,
           }}
         >
-          {/* Logo mark */}
           <div
             style={{
               display: "flex",
@@ -68,10 +40,9 @@ export default function OgImage() {
               marginBottom: 8,
             }}
           >
-            <span style={{ fontSize: 44, display: "flex" }}>🐕</span>
+            <span style={{ fontSize: 36, color: "#FDD783", display: "flex" }}>☎</span>
           </div>
 
-          {/* Brand name */}
           <div
             style={{
               fontSize: 72,
@@ -81,10 +52,9 @@ export default function OgImage() {
               display: "flex",
             }}
           >
-            RingPaw
+            Call Slot
           </div>
 
-          {/* Tagline */}
           <div
             style={{
               fontSize: 32,
@@ -94,10 +64,9 @@ export default function OgImage() {
               marginTop: -4,
             }}
           >
-            Phone Receptionist for Pet Groomers
+            Your voicemail can book.
           </div>
 
-          {/* Description */}
           <div
             style={{
               fontSize: 22,
@@ -109,11 +78,10 @@ export default function OgImage() {
               maxWidth: 700,
             }}
           >
-            Answers calls. Books appointments. Sends confirmations. 24/7.
+            Missed calls pick a time on the keypad. Bookings write to your calendar.
           </div>
         </div>
 
-        {/* Bottom bar */}
         <div
           style={{
             position: "absolute",

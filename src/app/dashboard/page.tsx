@@ -288,7 +288,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-sm border border-paw-brown/5">
             <span className="text-sm font-bold text-paw-brown/70">
-              Bookable
+              Call Slot
             </span>
             <div className="text-paw-brown font-bold text-sm">On</div>
           </div>
@@ -305,7 +305,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1">
             <p className="font-bold text-green-800 text-sm">You&apos;re live! 🎉</p>
-            <p className="text-green-700/70 text-sm">Forward unanswered calls to your Bookable number and it will pick up.</p>
+            <p className="text-green-700/70 text-sm">Forward unanswered calls to your Call Slot number and it will pick up.</p>
           </div>
           <button onClick={() => setJustSubscribed(false)} className="text-green-600 hover:text-green-800 text-lg font-bold">×</button>
         </div>
@@ -337,9 +337,9 @@ export default function DashboardPage() {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-paw-brown text-sm">Manage RingPaw by text</p>
+            <p className="font-bold text-paw-brown text-sm">Manage Call Slot by text</p>
             <p className="text-paw-brown/60 text-sm mt-0.5">
-              Text your RingPaw number to block time, pause bookings, or update services — no app needed.
+              Text your Call Slot number to block time, pause bookings, or update services — no app needed.
               Try <code className="bg-white/60 px-1 py-0.5 rounded text-xs font-bold">&quot;Block tomorrow&quot;</code> or <code className="bg-white/60 px-1 py-0.5 rounded text-xs font-bold">&quot;Pause bookings&quot;</code>.{" "}
               <Link href="/settings/agent" className="underline underline-offset-2 hover:text-paw-brown transition-colors font-semibold">See all commands →</Link>
             </p>
@@ -363,7 +363,7 @@ export default function DashboardPage() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="font-bold text-red-700 text-sm">Bookable is paused</p>
+            <p className="font-bold text-red-700 text-sm">Call Slot is paused</p>
             <p className="text-red-600/70 text-sm">Forwarded calls will not be answered until you turn it back on.</p>
           </div>
           <button
@@ -384,7 +384,7 @@ export default function DashboardPage() {
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-paw-brown mb-2">Turn off RingPaw?</h3>
+            <h3 className="text-xl font-bold text-paw-brown mb-2">Turn off Call Slot?</h3>
             <p className="text-paw-brown/60 text-sm mb-6">
               Calls will go to voicemail until you turn it back on. You might miss bookings while it&apos;s off.
             </p>
@@ -418,7 +418,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-xl font-bold text-paw-brown mb-2">Subscription required</h3>
             <p className="text-paw-brown/60 text-sm mb-6">
-              You need an active plan to keep Bookable answering forwarded calls.
+              You need an active plan to keep Call Slot answering forwarded calls.
             </p>
             <div className="flex flex-col gap-3">
               <Link
@@ -741,7 +741,7 @@ export default function DashboardPage() {
         );
       })()}
 
-      {/* SMS Quick Commands card — hidden for Bookable MVP */}
+      {/* SMS Quick Commands card — hidden for Call Slot MVP */}
       {false && (
       <div className="bg-white rounded-2xl shadow-card border border-white/50 px-5 py-4 mb-6">
         <div className="flex items-center justify-between mb-3">
@@ -838,7 +838,7 @@ export default function DashboardPage() {
               </svg>
               <p className="font-bold text-paw-brown">No calls yet</p>
               <p className="text-sm mt-1 mb-4">
-                Forward a missed call to your Bookable number, or walk the keypad tree at /api/voice/simulate.
+                Forward a missed call to your Call Slot number, or walk the keypad tree at /api/voice/simulate.
               </p>
               <Link
                 href="/settings/agent"

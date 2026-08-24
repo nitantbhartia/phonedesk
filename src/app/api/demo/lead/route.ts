@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   // Notify owner dashboard emails
   const ownerEmails = getOwnerDashboardEmails();
   if (ownerEmails.length > 0) {
-    const subject = `New RingPaw Lead: ${businessName.trim()}`;
+    const subject = `New Call Slot Lead: ${businessName.trim()}`;
     const text = [
       `New lead from the demo page:`,
       ``,
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       `Phone: ${phone.trim()}`,
       `Business: ${businessName.trim()}`,
       ``,
-      `— RingPaw Lead Notification`,
+      `— Call Slot Lead Notification`,
     ].join("\n");
 
     const html = `

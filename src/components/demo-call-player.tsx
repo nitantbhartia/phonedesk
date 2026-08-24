@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 // Transcript lines with timestamps (seconds into the call).
 // Paste your Retell transcript here — set time: to the second each line starts.
 const CALL_TRANSCRIPT = [
-  { time: 0, speaker: "ai" as const, text: "Hi, you've reached Happy Paws! This is Pip — how can I help you today?" },
+  { time: 0, speaker: "ai" as const, text: "Hi, you've reached Happy Paws! How can I help you today?" },
   { time: 5, speaker: "caller" as const, text: "Hey. I'm calling to make an appointment for my dog." },
   { time: 10, speaker: "ai" as const, text: "Of course! What's your dog's name?" },
   { time: 14, speaker: "caller" as const, text: "Luna." },
@@ -250,7 +250,7 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
                         : "bg-paw-brown/10 text-paw-brown/60"
                     }`}
                   >
-                    {currentLine.speaker === "ai" ? "RingPaw AI" : "Caller"}
+                    {currentLine.speaker === "ai" ? "Call Slot" : "Caller"}
                   </span>
                   <span className="text-[10px] text-paw-brown/30 font-mono">{formatTime(currentLine.time)}</span>
                 </div>

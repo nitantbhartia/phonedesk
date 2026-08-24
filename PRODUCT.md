@@ -1,10 +1,10 @@
-# Bookable — voicemail that books
+# Call Slot — voicemail that books
 
-Working name: **Bookable**. Former product: RingPaw. Validation MVP (v0.1) for independent pet groomers.
+Display name: **Call Slot**. Short / product id: **callslot**. Former names: Bookable, RingPaw. Validation MVP (v0.1).
 
 Callers who hit a shop number (or a no-answer / busy / after-hours forward) hear a short shop-branded voicemail. They book with the keypad. This is not a conversational receptionist.
 
-Copy never says AI, virtual receptionist, or assistant. Shop name first. It should feel like voicemail.
+Copy never says AI, virtual receptionist, or assistant. Shop name first. It should feel like voicemail. In-app tagline: **Your voicemail can book.**
 
 ---
 
@@ -32,7 +32,7 @@ If Google can only show busy (no reliable event write), operate in request mode.
 
 Conversational agent, speech recognition, personality, bilingual small talk, SMS-first booking threads, booking links, chat widgets, waitlist / review / lapsing SMS factory, deposits, payments, multi-location, Spanish, breed quoting, a new CRM.
 
-The older Retell conversational agent remains in the repo behind `inboundPath = RETELL_AGENT`. It is not the default inbound path and is not on the Bookable critical path.
+The older Retell conversational agent remains in the repo behind `inboundPath = RETELL_AGENT`. It is not the default inbound path and is not on the Call Slot critical path.
 
 ---
 
@@ -123,7 +123,7 @@ Events: `call_forwarded`, `menu_started`, `menu_digit_pressed`, `booking_selecte
 
 ## Brand
 
-Customer-facing copy: **Bookable** / “Busy grooming? Your voicemail can book.” Never AI, virtual receptionist, assistant, or voice agent in landing, dashboard, settings, SMS, or voice prompts. RingPaw may remain in code comments only.
+Customer-facing copy: **Call Slot** / “Your voicemail can book.” Never AI, virtual receptionist, assistant, or voice agent in landing, dashboard, settings, SMS, or voice prompts. Internal identifiers (`BookableSession`, `BOOKABLE_VOICEMAIL`, `/api/voice/*`) stay as-is. Domain may remain ringpaw.com until callslot.ai is live.
 
 Retell conversational agent stays behind `inboundPath = RETELL_AGENT` (not default owner UX).
 

@@ -10,7 +10,7 @@ const STEPS = [
   { number: 3, label: "Hours" },
   { number: 4, label: "Services" },
   { number: 5, label: "Call forwarding" },
-  { number: 6, label: "Test Bookable" },
+  { number: 6, label: "Test Call Slot" },
 ];
 
 interface OnboardingLayoutProps {

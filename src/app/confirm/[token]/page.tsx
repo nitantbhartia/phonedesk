@@ -239,7 +239,7 @@ export default async function AppointmentConfirmPage({ params }: PageProps) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            RingPaw.com
+            Call Slot
           </a>
         </p>
       </div>

@@ -680,7 +680,7 @@ async function bookOfferedSlot(
       servicePrice: service.price,
       startTime: start,
       endTime: end,
-      notes: session.knownCaller ? "Booked via Bookable" : "Request via Bookable — awaiting shop confirm",
+      notes: session.knownCaller ? "Booked via Call Slot" : "Request via Call Slot — awaiting shop confirm",
       bookingModeOverride: bookingKind === "AUTO" ? "HARD" : "SOFT",
     });
   } catch (error) {

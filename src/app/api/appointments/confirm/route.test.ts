@@ -94,7 +94,7 @@ describe("appointments/confirm", () => {
     });
     expect(sendSms).toHaveBeenCalledWith(
       "+16195550000",
-      "[RingPaw] Jamie confirmed their Full Groom appointment (Thu, May 21, 9:00 AM).",
+      "[Call Slot] Jamie confirmed their Full Groom appointment (Thu, May 21, 9:00 AM).",
       "+16195559999"
     );
     expect(response.status).toBe(307);

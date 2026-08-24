@@ -20,42 +20,42 @@ interface Step {
 const STEPS: Step[] = [
   {
     title: "Welcome to your dashboard",
-    body: "Your AI receptionist is live. Let's take a 60-second tour so you know exactly where everything is.",
+    body: "Call Slot is live on forwarded calls. Let's take a 60-second tour so you know exactly where everything is.",
     hint: "Click Next to move through — or Skip if you'd rather explore on your own.",
   },
   {
     targetId: "tour-calls",
     title: "Calls Handled",
-    body: "Every call your AI answered this week. Each one was a call that would have gone to voicemail — handled instead.",
+    body: "Every forwarded call Call Slot picked up this week. Each one was a missed call that would have gone to voicemail.",
     side: "bottom",
   },
   {
     targetId: "tour-revenue",
     title: "Revenue Protected",
-    body: "Estimated revenue your AI saved this week — confirmed bookings multiplied by your average service price. Keep your services updated in AI Settings so this stays accurate.",
+    body: "Estimated revenue from confirmed bookings this week, multiplied by your average service price. Keep services updated in Settings so this stays accurate.",
     side: "bottom",
   },
   {
     targetId: "tour-calllog",
     title: "Recent Call Log",
-    body: "Every call your AI handled is logged here with caller name, outcome, and duration. Click any row to open the full transcript and see exactly what was said.",
+    body: "Every call is logged here with caller, outcome, and duration. Open a row to see what happened on that call.",
     side: "top",
   },
   {
     targetId: "tour-nav-today",
     title: "Today's Schedule",
-    body: "Your live appointment list for the day. Tap the status badge as pets check in, get groomed, and are picked up — customers get an automated SMS at each step.",
+    body: "Your live appointment list for the day. Tap the status badge as customers check in and wrap up.",
     side: "right",
   },
   {
     targetId: "tour-nav-ai",
-    title: "AI Settings",
-    body: "Customize your AI's voice, personality, services, and booking mode. Toggle any service as an \"Add-on\" to let the AI upsell it to returning customers. Changes sync instantly.",
+    title: "Call answering",
+    body: "Pause the line, switch inbound path, or manage how forwarded calls are handled. Changes apply immediately.",
     side: "right",
   },
   {
     title: "You're all set!",
-    body: "Make a test call to your RingPaw number to hear your AI in action. You can replay this tour anytime via the \"Take a tour\" link on your dashboard.",
+    body: "Make a test call to your Call Slot number to hear the keypad tree. You can replay this tour anytime via the \"Take a tour\" link on your dashboard.",
   },
 ];
 

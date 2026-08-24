@@ -128,7 +128,7 @@ export default function PricingPage() {
       if (!res.ok) {
         toast.error(data.error || "Failed to save services");
       } else {
-        toast.success(data.synced ? "Saved and synced to voice agent" : "Services saved");
+        toast.success(data.synced ? "Saved and synced" : "Services saved");
         await fetchData();
       }
     } catch {
@@ -236,7 +236,7 @@ export default function PricingPage() {
         <div>
           <h1 className="text-4xl font-extrabold text-paw-brown">Services &amp; Pricing</h1>
           <p className="text-paw-brown/60 font-medium mt-1">
-            Manage the services you offer and any breed- or size-specific pricing overrides. Your AI agent quotes these to callers.
+            Manage the services you offer and any breed- or size-specific pricing overrides. These are what callers can book by phone.
           </p>
         </div>
         <button
@@ -261,7 +261,7 @@ export default function PricingPage() {
           <div>
             <h2 className="font-bold text-paw-brown">Your Services</h2>
             <p className="text-xs text-paw-brown/60 mt-1">
-              Base prices quoted to callers. Toggle &ldquo;Add-on&rdquo; to let your AI upsell that service after a primary booking.
+              Base prices quoted to callers. Toggle &ldquo;Add-on&rdquo; if this service can be booked after a primary booking.
             </p>
           </div>
           <button
@@ -312,7 +312,7 @@ export default function PricingPage() {
                 <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
                   <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-paw-brown/60 uppercase tracking-wide">
                     Duration (min)
-                    <InfoIcon text="How long this service takes in minutes. The AI uses this to block the right amount of time on your calendar." />
+                    <InfoIcon text="How long this service takes in minutes. Call Slot uses this to block the right amount of time on your calendar." />
                   </label>
                   <input
                     type="number"
@@ -402,7 +402,7 @@ export default function PricingPage() {
           </svg>
           <p className="font-bold text-paw-brown/50">No breed-specific pricing rules yet</p>
           <p className="text-sm text-paw-brown/40 mt-1">
-            Add rules so your AI can give accurate quotes like &quot;A standard poodle full groom is $120&quot;
+            Add rules so quotes stay accurate for specific cases, like a longer service at a higher price.
           </p>
         </div>
       ) : (
@@ -519,7 +519,7 @@ export default function PricingPage() {
                 <label className="block text-xs font-bold text-paw-brown/60 uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Price *
-                    <InfoIcon text="The price the AI will quote when this rule matches. This overrides the base service price for the specified breed and/or size." />
+                    <InfoIcon text="The price Call Slot uses when this rule matches. This overrides the base service price for the specified breed and/or size." />
                   </span>
                 </label>
                 <input

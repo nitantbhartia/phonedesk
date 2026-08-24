@@ -11,9 +11,9 @@ const PLAN_MINUTES: Record<string, number> = {
 };
 
 const PLAN_NAMES: Record<string, string> = {
-  STARTER: "Solo",
-  PRO: "Studio",
-  BUSINESS: "Salon",
+  STARTER: "Starter",
+  PRO: "Call Slot",
+  BUSINESS: "Business",
 };
 
 export async function GET() {
@@ -61,7 +61,7 @@ export async function GET() {
     overageMinutes,
     percentUsed: Math.round(percentUsed),
     plan: business.plan,
-    planName: PLAN_NAMES[business.plan] ?? "Solo",
+    planName: PLAN_NAMES[business.plan] ?? "Call Slot",
     subscriptionStatus: business.stripeSubscriptionStatus,
     periodStart: periodStart.toISOString(),
   });

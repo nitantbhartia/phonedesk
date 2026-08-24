@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       const { formatDateTime } = await import("@/lib/utils");
       await sendSms(
         appointment.business.phone,
-        `[RingPaw] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
+        `[Call Slot] ${appointment.customerName} confirmed their ${appointment.serviceName || "grooming"} appointment (${formatDateTime(appointment.startTime)}).`,
         process.env.TWILIO_PHONE_NUMBER || appointment.business.phoneNumber.number
       );
     } catch (smsErr) {
