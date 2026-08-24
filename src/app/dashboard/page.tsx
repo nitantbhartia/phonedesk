@@ -412,7 +412,7 @@ export default function DashboardPage() {
           },
           { label: "Attempts", value: String(stats.bookingAttempts), note: "30 days" },
           { label: "Booked", value: String(stats.bookingsConfirmed), note: "30 days" },
-          { label: "Est. revenue", value: `$${stats.revenueProtected.toLocaleString()}`, note: `$${avgServicePrice} avg`, tour: "tour-revenue" },
+          { label: "Revenue", value: `$${stats.revenueProtected.toLocaleString()}`, note: `$${avgServicePrice} avg`, tour: "tour-revenue" },
           { label: "Callbacks", value: String(stats.callbacks), note: "To return" },
           { label: "Next", value: nextAppointmentLabel, note: stats.nextAppointment?.serviceName || "Schedule" },
         ].map((metric) => (
@@ -440,7 +440,7 @@ export default function DashboardPage() {
               <p className="mt-1 text-[13px] text-muted">{calendarHealth.message}</p>
             </>
           ) : (
-            <p className="mt-2 text-[13px] text-muted">Loading…</p>
+            <p className="mt-2 text-[13px] text-muted">Not connected</p>
           )}
           <Link href="/settings/calendar" className="mt-3 inline-block text-[12px] text-accent hover:text-accent-hover">
             Manage calendar

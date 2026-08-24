@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { InfoIcon } from "@/components/ui/info-icon";
 import { BrandLogo } from "@/components/brand-logo";
 
 const STEPS = [
@@ -99,11 +98,9 @@ export function OnboardingLabel({
     <label
       htmlFor={htmlFor}
       className={`block font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted ${className}`}
+      title={info}
     >
-      <span className="inline-flex items-center gap-1.5">
-        <span>{children}</span>
-        {info ? <InfoIcon text={info} /> : null}
-      </span>
+      {children}
     </label>
   );
 }
@@ -138,7 +135,7 @@ export function OnboardingSelect({
 export function OnboardingFooter({
   onBack,
   onNext,
-  nextLabel = "Continue Setup",
+  nextLabel = "Continue",
   backLabel = "Back",
   showBack = true,
   nextDisabled = false,

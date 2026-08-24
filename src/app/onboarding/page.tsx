@@ -945,7 +945,7 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={handleGoogleSignup}
-            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-sm border-2 border-line bg-surface font-semibold text-ink hover:bg-paper/40 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-sm border border-line bg-surface font-semibold text-ink hover:bg-paper/40 transition-all"
           >
             <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
               <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.2-2.7-.5-4z" fill="#FFC107"/>
@@ -1053,7 +1053,7 @@ export default function OnboardingPage() {
           }}
         >
           {websiteImportEnabled && (
-            <div className="rounded-sm border-2 border-line bg-surface px-5 py-5 ">
+            <div className="rounded-sm border border-line bg-surface px-5 py-5 ">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-wider text-muted">
@@ -1139,7 +1139,7 @@ export default function OnboardingPage() {
               </OnboardingLabel>
               <OnboardingInput
                 id="businessName"
-                placeholder="e.g. Happy Paws Grooming"
+                placeholder="Riverside Grooming"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
               />
@@ -1242,35 +1242,15 @@ export default function OnboardingPage() {
             <OnboardingLabel info="Set the days and times you accept appointments. Call Slot will only offer slots within these hours. Toggle a day off to mark it closed.">
               Business Hours
             </OnboardingLabel>
-            <div className="bg-surface rounded-sm p-6 border-2 border-line space-y-4">
+            <div className="divide-y divide-line border-y border-line">
               {Object.entries(hours).map(([day, h]) => (
                 <div
                   key={day}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 py-2 sm:py-1"
+                  className="flex flex-col gap-2 py-3.5 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex items-center justify-between sm:justify-start">
-                    <span
-                      className={`font-bold w-24 ${
-                        h.enabled ? "text-ink" : "text-muted"
-                      }`}
-                    >
-                      {day}
-                    </span>
-                    <label className="relative inline-flex items-center cursor-pointer sm:hidden">
-                      <input
-                        type="checkbox"
-                        checked={h.enabled}
-                        onChange={(e) =>
-                          setHours({
-                            ...hours,
-                            [day]: { ...h, enabled: e.target.checked },
-                          })
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-line after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
-                    </label>
-                  </div>
+                  <span className={`w-24 text-[14px] ${h.enabled ? "text-ink" : "text-muted"}`}>
+                    {day}
+                  </span>
                   {h.enabled ? (
                     <div className="flex items-center gap-3">
                       <OnboardingSelect
@@ -1288,7 +1268,7 @@ export default function OnboardingPage() {
                           </option>
                         ))}
                       </OnboardingSelect>
-                      <span className="text-muted font-bold">to</span>
+                      <span className="text-[13px] text-muted">to</span>
                       <OnboardingSelect
                         value={h.close}
                         onChange={(e) =>
@@ -1306,24 +1286,20 @@ export default function OnboardingPage() {
                       </OnboardingSelect>
                     </div>
                   ) : (
-                    <span className="text-sm font-bold text-muted">
-                      Closed
-                    </span>
+                    <span className="text-[13px] text-muted">Closed</span>
                   )}
-                  <label className="relative inline-flex items-center cursor-pointer hidden sm:inline-flex">
-                    <input
-                      type="checkbox"
-                      checked={h.enabled}
-                      onChange={(e) =>
-                        setHours({
-                          ...hours,
-                          [day]: { ...h, enabled: e.target.checked },
-                        })
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-line after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
-                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setHours({
+                        ...hours,
+                        [day]: { ...h, enabled: !h.enabled },
+                      })
+                    }
+                    className="self-start text-[12px] tracking-[0.04em] text-muted hover:text-ink sm:self-auto"
+                  >
+                    {h.enabled ? "Open" : "Closed"}
+                  </button>
                 </div>
               ))}
             </div>
@@ -1337,7 +1313,7 @@ export default function OnboardingPage() {
             backLabel="Cancel"
             onBack={() => router.push("/")}
             onNext={validateStep1AndContinue}
-            nextLabel="Save & Continue"
+            nextLabel="Continue"
             nextDisabled={!businessName || !ownerName}
           />
         </form>
@@ -1354,7 +1330,7 @@ export default function OnboardingPage() {
               {services.map((service, i) => (
                 <div
                   key={i}
-                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-surface p-3 rounded-sm border-2 border-line "
+                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-surface p-3 rounded-sm border border-line "
                 >
                   <input
                     type="text"
@@ -1443,7 +1419,7 @@ export default function OnboardingPage() {
               <OnboardingLabel info="Soft booking holds the slot for 2 hours — you stay in control. Hard booking confirms immediately on your calendar. Most shops start with Soft Book.">
                 Default Booking Mode
               </OnboardingLabel>
-              <div className="bg-surface rounded-sm p-6 border-2 border-line">
+              <div className="bg-surface rounded-sm p-6 border border-line">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-bold text-ink">
@@ -1479,7 +1455,7 @@ export default function OnboardingPage() {
               {groomers.map((groomer, i) => (
                 <div
                   key={i}
-                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-surface p-3 rounded-sm border-2 border-line "
+                  className="flex flex-col sm:flex-row gap-3 sm:items-center bg-surface p-3 rounded-sm border border-line "
                 >
                   <input
                     type="text"
@@ -1551,7 +1527,7 @@ export default function OnboardingPage() {
               {/* Google Calendar */}
               <button
                 onClick={() => connectProvider("google")}
-                className="w-full flex items-center gap-4 p-5 bg-surface rounded-sm border-2 border-line hover:border-accent/30 transition-all text-left group"
+                className="w-full flex items-center gap-4 p-5 bg-surface rounded-sm border border-line hover:border-accent/30 transition-all text-left group"
               >
                 <div className="w-12 h-12 bg-paper rounded-sm flex items-center justify-center shrink-0">
                   <svg
@@ -1610,7 +1586,7 @@ export default function OnboardingPage() {
               {/* Square Appointments */}
               <button
                 onClick={() => connectProvider("square")}
-                className="w-full flex items-center gap-4 p-5 bg-surface rounded-sm border-2 border-line hover:border-accent/30 transition-all text-left group"
+                className="w-full flex items-center gap-4 p-5 bg-surface rounded-sm border border-line hover:border-accent/30 transition-all text-left group"
               >
                 <div className="w-12 h-12 bg-gray-900 rounded-sm flex items-center justify-center shrink-0">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
@@ -1658,7 +1634,7 @@ export default function OnboardingPage() {
               {/* Acuity Scheduling */}
               <button
                 onClick={() => connectProvider("acuity")}
-                className="w-full flex items-center gap-4 p-5 bg-surface rounded-sm border-2 border-line hover:border-accent/30 transition-all text-left group"
+                className="w-full flex items-center gap-4 p-5 bg-surface rounded-sm border border-line hover:border-accent/30 transition-all text-left group"
               >
                 <div className="w-12 h-12 bg-[#316FA8] rounded-sm flex items-center justify-center shrink-0">
                   <svg
@@ -1725,7 +1701,7 @@ export default function OnboardingPage() {
           <OnboardingFooter
             onBack={() => navigate(1)}
             onNext={() => navigate(2)}
-            nextLabel={calendarConnected ? "Continue Setup" : "Skip for Now"}
+            nextLabel={calendarConnected ? "Continue" : "Skip for now"}
           />
         </div>
       )}
@@ -1733,7 +1709,7 @@ export default function OnboardingPage() {
       {/* Step 5: Get Number + Test Call (merged) */}
       {step === 5 && (
         <div className="space-y-5">
-          <div className="bg-surface rounded-sm border-2 border-line p-5 space-y-4">
+          <div className="bg-surface rounded-sm border border-line p-5 space-y-4">
             <p className="text-sm font-bold text-ink">Simulate a caller (no phone needed)</p>
             <p className="text-sm text-muted">
               Walk the keypad tree: press 1 to book, 9 for callback. This is the same flow forwarded callers hear.
@@ -1855,7 +1831,7 @@ export default function OnboardingPage() {
 
               {/* In-progress banner */}
               {callPhase === "in_progress" && (
-                <div className="animate-in fade-in duration-300 bg-paper border-2 border-line rounded-sm p-4 text-center">
+                <div className="animate-in fade-in duration-300 bg-paper border border-line rounded-sm p-4 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-ink animate-pulse" />
                     <span className="text-sm font-bold text-ink">Listening to your call live</span>
@@ -1867,7 +1843,7 @@ export default function OnboardingPage() {
 
               {/* AI call summary — after completion */}
               {callPhase === "completed" && detectedCallSummary && (
-                <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-paper border-2 border-line rounded-sm p-4">
+                <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-paper border border-line rounded-sm p-4">
                   <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Call summary</p>
                   <p className="text-sm text-ink/80 leading-relaxed">{detectedCallSummary}</p>
                 </div>
@@ -1886,7 +1862,7 @@ export default function OnboardingPage() {
                   </div>
                   <button
                     onClick={() => setCallPhase("completed")}
-                    className="w-full py-3 rounded-sm border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
+                    className="w-full py-3 rounded-sm border border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
                   >
                     I&apos;ve already called ✓
                   </button>
@@ -1904,7 +1880,7 @@ export default function OnboardingPage() {
           <OnboardingFooter
             onBack={() => navigate(4)}
             onNext={() => navigate(7)}
-            nextLabel={provisionedNumber ? "Continue" : "Continue Setup"}
+            nextLabel={provisionedNumber ? "Continue" : "Continue"}
             nextDisabled={!provisionedNumber || callPhase === "waiting"}
           />
         </div>
@@ -1914,7 +1890,7 @@ export default function OnboardingPage() {
       {step === 8 && (
         <div className="space-y-5">
           {provisionedNumber && (
-            <div className="bg-line border-2 border-line rounded-sm p-4 flex items-center justify-between">
+            <div className="bg-line border border-line rounded-sm p-4 flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-muted uppercase tracking-wider">Your Call Slot number</p>
                 <p className="text-xl font-medium text-ink">{formattedProvisionedNumber}</p>
@@ -1933,7 +1909,7 @@ export default function OnboardingPage() {
           </p>
 
           {/* iPhone instructions */}
-          <div className="bg-surface rounded-sm border-2 border-line overflow-hidden">
+          <div className="bg-surface rounded-sm border border-line overflow-hidden">
             <div className="px-4 py-3 bg-surface border-b border-line">
               <p className="text-xs font-bold text-muted uppercase tracking-wider">iPhone</p>
             </div>
@@ -1952,7 +1928,7 @@ export default function OnboardingPage() {
           </div>
 
           {/* Android / carrier code */}
-          <div className="bg-surface rounded-sm border-2 border-line overflow-hidden">
+          <div className="bg-surface rounded-sm border border-line overflow-hidden">
             <div className="px-4 py-3 bg-surface border-b border-line">
               <p className="text-xs font-bold text-muted uppercase tracking-wider">Android or any carrier — dial code (works on all phones)</p>
             </div>
@@ -1977,7 +1953,7 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          <div className="bg-surface rounded-sm border-2 border-line overflow-hidden">
+          <div className="bg-surface rounded-sm border border-line overflow-hidden">
             <div className="px-4 py-3 bg-surface border-b border-line">
               <p className="text-xs font-bold text-muted uppercase tracking-wider">Common US carriers</p>
             </div>
@@ -2000,7 +1976,7 @@ export default function OnboardingPage() {
       {/* Step 7: Go Live (step 6 skipped — no billing) */}
       {step === 7 && (
         <div className="space-y-8">
-          <div className="bg-paper border-2 border-line rounded-sm p-8 text-center">
+          <div className="bg-paper border border-line rounded-sm p-8 text-center">
             <div className="w-16 h-16 bg-paper rounded-sm flex items-center justify-center mx-auto mb-4">
               <svg
                 width="32"
@@ -2055,7 +2031,7 @@ export default function OnboardingPage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="flex items-center gap-4 p-4 bg-surface rounded-sm border-2 border-line"
+                className="flex items-center gap-4 p-4 bg-surface rounded-sm border border-line"
               >
                 <div className="w-8 h-8 rounded-sm bg-paper flex items-center justify-center shrink-0">
                   <svg
@@ -2080,7 +2056,7 @@ export default function OnboardingPage() {
           </div>
 
           {awaitingApproval && (
-            <div className="bg-paper border-2 border-line rounded-sm p-8 text-center">
+            <div className="bg-paper border border-line rounded-sm p-8 text-center">
               <div className="w-16 h-16 bg-paper rounded-sm flex items-center justify-center mx-auto mb-4">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
@@ -2119,7 +2095,7 @@ export default function OnboardingPage() {
                 disabled={loading}
                 className="px-10 py-4 bg-accent text-accent-foreground rounded-sm font-medium text-lg hover:bg-accent-hover transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Setting up..." : "Go Live!"}
+                {loading ? "Setting up…" : "Go live"}
               <svg
                 width="20"
                 height="20"
