@@ -278,8 +278,8 @@ export default function BusinessProfilePage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
-        <div className="h-64 bg-slate-200 rounded-lg animate-pulse" />
+        <div className="h-8 w-48 bg-line/60" />
+        <div className="h-64 bg-line/40" />
       </div>
     );
   }
@@ -301,9 +301,9 @@ export default function BusinessProfilePage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Business Profile</h1>
-          <p className="text-muted-foreground">
-            Update your business details. Changes apply to Call Slot immediately.
+          <h1 className="font-display text-[2.15rem] tracking-tight text-ink">Business</h1>
+          <p className="mt-1 text-[14px] text-muted">
+            Shop details used on forwarded calls.
           </p>
         </div>
         <Button onClick={saveProfile} disabled={saving} className="w-full sm:w-auto">

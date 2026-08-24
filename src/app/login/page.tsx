@@ -11,8 +11,8 @@ export default function AuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-paper">
-          <div className="animate-pulse text-muted">Loading...</div>
+        <div className="flex min-h-screen items-center justify-center bg-paper text-[13px] text-muted">
+          Loading
         </div>
       }
     >
@@ -58,32 +58,37 @@ function AuthPageContent() {
 
   if (status === "loading" || !!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paper">
-        <div className="animate-pulse text-muted">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-paper text-[13px] text-muted">
+        Loading
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-paper px-5 py-8 text-ink sm:px-8">
-      <div className="mx-auto flex max-w-5xl items-center justify-between">
-        <BrandLogo priority />
-        <Link href="/" className="text-[13px] text-muted hover:text-ink">
-          Back
-        </Link>
-      </div>
+    <div className="min-h-screen bg-paper text-ink">
+      <header className="border-b border-line">
+        <div className="mx-auto flex h-[4.25rem] max-w-5xl items-center justify-between px-6 sm:px-8">
+          <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
+          <Link href="/" className="text-[12px] tracking-[0.04em] text-muted hover:text-ink">
+            Back
+          </Link>
+        </div>
+      </header>
 
-      <div className="mx-auto mt-16 grid max-w-5xl gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div>
-          <h1 className="font-display text-4xl leading-[1.1] tracking-tight sm:text-5xl">
-            Stop losing bookings to missed calls.
+      <div className="mx-auto grid max-w-5xl gap-16 px-6 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-6">
+          <h1 className="font-display text-[2.75rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
+            Your voicemail
+            <br />
+            can book.
           </h1>
-          <p className="mt-5 max-w-md text-[16px] leading-relaxed text-muted">
-            Call Slot picks up missed calls for your shop. Callers book a real calendar opening on the keypad, and you get a text confirmation.
+          <p className="mt-7 max-w-[24rem] text-[16px] leading-[1.55] text-muted">
+            Call Slot picks up missed calls for your shop. Callers book a real calendar opening on the keypad.
           </p>
         </div>
-
-        <AuthPanel initialMode={initialMode} />
+        <div className="lg:col-span-6 lg:pt-1">
+          <AuthPanel initialMode={initialMode} />
+        </div>
       </div>
     </div>
   );

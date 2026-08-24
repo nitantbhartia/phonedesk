@@ -66,19 +66,19 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
   };
 
   const fieldClass =
-    "w-full border border-line bg-paper px-3 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted/70 focus:border-ink";
+    "mt-1.5 w-full border border-line bg-paper px-3 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-ink";
 
   return (
-    <div className="w-full max-w-md border border-line bg-surface p-6">
-      <div className="mb-5 flex border-b border-line text-[13px]">
+    <div className="w-full border border-line bg-surface px-6 py-7 sm:px-8 sm:py-8">
+      <div className="mb-7 flex gap-6 border-b border-line text-[12px] tracking-[0.04em]">
         <button
           type="button"
           onClick={() => {
             setAuthMode("signup");
             setAuthError("");
           }}
-          className={`-mb-px border-b px-1 pb-2.5 pr-5 transition-colors ${
-            authMode === "signup" ? "border-accent text-ink" : "border-transparent text-muted"
+          className={`-mb-px border-b pb-2.5 ${
+            authMode === "signup" ? "border-ink text-ink" : "border-transparent text-muted"
           }`}
         >
           Sign up
@@ -89,57 +89,60 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             setAuthMode("signin");
             setAuthError("");
           }}
-          className={`-mb-px border-b px-1 pb-2.5 pr-5 transition-colors ${
-            authMode === "signin" ? "border-accent text-ink" : "border-transparent text-muted"
+          className={`-mb-px border-b pb-2.5 ${
+            authMode === "signin" ? "border-ink text-ink" : "border-transparent text-muted"
           }`}
         >
           Log in
         </button>
       </div>
 
-      <form onSubmit={handleCredentialsAuth} className="space-y-3">
+      <form onSubmit={handleCredentialsAuth} className="space-y-4">
         {authMode === "signup" ? (
-          <input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full name"
-            className={fieldClass}
-          />
+          <label className="block">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Name</span>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className={fieldClass}
+              autoComplete="name"
+            />
+          </label>
         ) : null}
-        <input
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email address"
-          className={fieldClass}
-          required
-        />
-        <input
-          type="password"
-          autoComplete={authMode === "signup" ? "new-password" : "current-password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className={fieldClass}
-          minLength={8}
-          required
-        />
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Email</span>
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={fieldClass}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Password</span>
+          <input
+            type="password"
+            autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={fieldClass}
+            minLength={8}
+            required
+          />
+        </label>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-accent px-4 py-2.5 text-[13px] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
+          className="mt-2 w-full bg-accent px-4 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
         >
-          {isSubmitting
-            ? "Please wait..."
-            : authMode === "signup"
-              ? "Create account"
-              : "Log in"}
+          {isSubmitting ? "Please wait…" : authMode === "signup" ? "Create account" : "Log in"}
         </button>
       </form>
 
-      <div className="my-4 flex items-center gap-3 text-[11px] uppercase tracking-[0.16em] text-muted">
+      <div className="my-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
         <div className="h-px flex-1 bg-line" />
         <span>or</span>
         <div className="h-px flex-1 bg-line" />
@@ -149,12 +152,12 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
         type="button"
         onClick={handleGoogleAuth}
         disabled={isSubmitting}
-        className="w-full border border-ink px-4 py-2.5 text-[13px] text-ink hover:bg-paper disabled:opacity-50"
+        className="w-full border border-ink px-4 py-2.5 text-[12px] tracking-[0.04em] text-ink hover:bg-paper disabled:opacity-50"
       >
         Continue with Google
       </button>
 
-      {authError ? <p className="mt-3 text-sm text-accent">{authError}</p> : null}
+      {authError ? <p className="mt-4 text-[13px] text-accent">{authError}</p> : null}
     </div>
   );
 }

@@ -141,7 +141,7 @@ export default function CallLogPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
         <div>
-          <h1 className="font-display text-4xl tracking-tight text-ink">Call log</h1>
+          <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Call log</h1>
           <p className="text-muted font-medium mt-1">
             Every forwarded call Call Slot picked up — tap any row to see what was booked.
           </p>

@@ -191,20 +191,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   void usage;
 
   return (
-    <div className="flex min-h-screen bg-paper">
-      <div className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between border-b border-line bg-paper px-4 py-3 lg:hidden">
+    <div className="flex min-h-screen bg-paper text-ink">
+      <div className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-line bg-paper px-5 lg:hidden">
         <BrandLogo className="text-[1.35rem] sm:text-[1.35rem]" />
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 text-ink"
+          className="p-1.5 text-ink"
         >
           {sidebarOpen ? (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="18" x2="21" y2="18" />
@@ -214,73 +214,63 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <aside
-        className={`fixed bottom-0 left-0 top-14 z-50 flex w-64 flex-col gap-6 overflow-hidden border-r border-line bg-paper p-6 transition-transform lg:static lg:inset-auto lg:top-auto lg:z-auto lg:w-60 lg:translate-x-0 ${
+        className={`fixed bottom-0 left-0 top-14 z-50 flex w-56 flex-col border-r border-line bg-paper px-5 py-6 transition-transform lg:static lg:inset-auto lg:top-auto lg:z-auto lg:h-auto lg:min-h-screen lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="space-y-5">
-          <div className="hidden lg:block">
-            <BrandLogo />
-          </div>
-
-          <div className="border-t border-line pt-4">
-            <p className="truncate text-[13px] font-medium text-ink">
-              {session?.user?.name || "Call Slot account"}
-            </p>
-            <p className="truncate text-[12px] text-muted">
-              {session?.user?.email || "Signed in"}
-            </p>
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="mt-3 text-[12px] text-muted underline-offset-2 hover:text-ink hover:underline"
-            >
-              Sign out
-            </button>
-          </div>
+        <div className="hidden lg:block">
+          <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          <nav className="space-y-0.5">
-            {finalNavItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(item.href));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  {...(item.tourId ? { "data-tour": item.tourId } : {})}
-                  className={`sidebar-link flex items-center gap-3 border border-transparent px-2 py-2 text-[13px] transition-colors ${
-                    isActive
-                      ? "active"
-                      : "text-muted hover:bg-surface hover:text-ink"
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+        <nav className="mt-10 flex-1 space-y-0.5">
+          {finalNavItems.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                {...(item.tourId ? { "data-tour": item.tourId } : {})}
+                className={`sidebar-link block py-1.5 text-[13px] tracking-[0.01em] ${
+                  isActive ? "active" : "text-muted hover:text-ink"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-line pt-4">
+          <p className="truncate text-[13px] text-ink">
+            {session?.user?.name || "Call Slot account"}
+          </p>
+          <p className="truncate text-[12px] text-muted">
+            {session?.user?.email || "Signed in"}
+          </p>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="mt-3 text-[12px] text-muted hover:text-ink"
+          >
+            Sign out
+          </button>
         </div>
       </aside>
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-ink/30 lg:hidden"
+          className="fixed inset-0 z-40 bg-ink/20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <main className="min-h-screen flex-1 overflow-y-auto p-6 pt-20 lg:p-10 lg:pt-10">
+      <main className="min-h-screen flex-1 overflow-y-auto px-5 pb-16 pt-20 lg:px-12 lg:pt-10">
         {showSubBanner && (
-          <div className="sticky top-20 z-10 mb-6 flex items-center gap-4 border border-line bg-surface px-5 py-4 lg:top-0">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-ink">No active subscription</p>
-              <p className="text-sm text-muted">Call Slot is paused. Subscribe to start taking forwarded calls.</p>
-            </div>
-            <Link href="/settings/billing" className="shrink-0 bg-accent px-4 py-2 text-[13px] text-accent-foreground hover:bg-accent-hover">
+          <div className="mb-8 flex items-baseline justify-between gap-4 border-b border-line pb-4">
+            <p className="text-[13px] text-muted">Call Slot is paused. Subscribe to take forwarded calls.</p>
+            <Link href="/settings/billing" className="bg-accent px-3.5 py-2 text-[12px] text-accent-foreground hover:bg-accent-hover">
               Subscribe
             </Link>
           </div>

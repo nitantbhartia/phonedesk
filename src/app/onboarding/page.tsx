@@ -869,54 +869,44 @@ export default function OnboardingPage() {
 
   // Welcome screen — shown once before the form steps
   if (step === 0) {
-    const firstName = session?.user?.name?.split(" ")[0] ?? "there";
+    const firstName = session?.user?.name?.split(" ")[0];
     return (
-      <div className="min-h-screen bg-paper antialiased flex flex-col items-center justify-center py-12 px-6 relative">
-        <div className="mb-6 relative z-10">
-          <BrandLogo mobileWidth={140} desktopWidth={180} priority />
+      <div className="flex min-h-screen flex-col bg-paper px-6 py-8 text-ink">
+        <div className="mx-auto w-full max-w-xl">
+          <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
         </div>
 
-        <main className="w-full max-w-lg bg-surface rounded-sm border border-line relative z-10 p-10 sm:p-14 text-center">
-          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-            About 5 minutes
-          </p>
-          <h1 className="font-display text-3xl tracking-tight text-ink mb-3">
-            Hey, {firstName}.
+        <main className="mx-auto mt-16 w-full max-w-xl sm:mt-24">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">About five minutes</p>
+          <h1 className="mt-5 font-display text-[2.6rem] leading-[0.98] tracking-[-0.02em] sm:text-5xl">
+            {firstName ? `${firstName}, your voicemail can book.` : "Your voicemail can book."}
           </h1>
-          <p className="text-muted font-medium mb-8 leading-relaxed">
-            Your voicemail can book. Set up Call Slot in about five minutes — forward missed calls, callers press 1 to book, you get text confirmations.
+          <p className="mt-5 max-w-md text-[16px] leading-[1.55] text-muted">
+            Forward missed calls. Callers press a slot. The booking writes to your calendar.
           </p>
 
-          {/* What they'll set up */}
-          <ul className="text-left space-y-3 mb-10">
+          <ol className="mt-12 border-t border-line">
             {[
-              { icon: "🏪", label: "Shop name", desc: "Your brand on every call" },
-              { icon: "📅", label: "Google Calendar", desc: "Real openings + writes" },
-              { icon: "🕐", label: "Hours", desc: "When callers can book" },
-              { icon: "✂️", label: "Up to 3 services", desc: "Short phone menu" },
-              { icon: "📞", label: "Call forwarding", desc: "No-answer → Call Slot" },
-              { icon: "✅", label: "Test booking", desc: "Simulate press 1 → book" },
+              { n: "01", label: "Shop name" },
+              { n: "02", label: "Google Calendar" },
+              { n: "03", label: "Hours" },
+              { n: "04", label: "Services" },
+              { n: "05", label: "Call forwarding" },
+              { n: "06", label: "A test booking" },
             ].map((item) => (
-              <li key={item.label} className="flex items-center gap-3">
-                <span className="w-9 h-9 bg-surface rounded-sm flex items-center justify-center shrink-0 text-base">
-                  {item.icon}
-                </span>
-                <span className="text-sm font-bold text-ink">{item.label}</span>
-                <span className="text-sm text-muted ml-auto">{item.desc}</span>
+              <li key={item.n} className="grid grid-cols-[3rem_1fr] items-baseline gap-4 border-b border-line py-3.5">
+                <span className="font-mono text-[12px] text-accent">{item.n}</span>
+                <span className="text-[15px]">{item.label}</span>
               </li>
             ))}
-          </ul>
+          </ol>
 
           <button
             onClick={() => navigate(1)}
-            className="w-full px-8 py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all flex items-center justify-center gap-2"
+            className="mt-10 bg-accent px-5 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover"
           >
-            Let&apos;s do this
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
-            </svg>
+            Continue
           </button>
-          <p className="text-xs text-muted mt-4">Free to set up · no credit card needed</p>
         </main>
       </div>
     );

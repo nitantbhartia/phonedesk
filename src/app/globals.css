@@ -62,7 +62,5 @@
 }
 
 .sidebar-link.active {
-  background-color: #FAF7F1;
   color: #1C1916;
-  border-color: #D8D0C4;
 }

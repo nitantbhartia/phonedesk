@@ -34,39 +34,38 @@ export function OnboardingLayout({
   const progressPct = ((currentStep - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center bg-paper px-4 py-6 sm:px-6">
-      <div className="relative z-10 mb-6 flex-none">
-        <BrandLogo priority />
+    <div className="flex min-h-screen flex-col bg-paper px-6 py-8 text-ink sm:px-8">
+      <div className="mx-auto w-full max-w-xl">
+        <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
       </div>
 
-      <main className="relative z-10 w-full max-w-2xl overflow-hidden border border-line bg-surface">
-        <div className="border-b border-line bg-paper px-6 py-3">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-              Step {currentStep} of {STEPS.length}
-            </span>
-            <span className="text-[12px] text-ink">{currentLabel}</span>
-          </div>
-          <div className="h-px overflow-hidden bg-line">
-            <div
-              className="h-full bg-accent transition-all duration-500 ease-out"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
+      <main className="mx-auto mt-10 w-full max-w-xl sm:mt-14">
+        <div className="mb-8 flex items-baseline justify-between">
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+            Step {currentStep} of {STEPS.length}
+          </span>
+          <span className="text-[12px] text-ink">{currentLabel}</span>
+        </div>
+        <div className="h-px overflow-hidden bg-line">
+          <div
+            className="h-full bg-accent transition-all duration-500 ease-out"
+            style={{ width: `${progressPct}%` }}
+          />
         </div>
 
-        <div className="px-5 py-7 sm:px-8">
-          <div className="mx-auto max-w-xl">
-            <div
-              key={currentStep}
-              className={`animate-in fade-in duration-300 ${
-                direction === "backward"
-                  ? "slide-in-from-left-4"
-                  : "slide-in-from-right-4"
-              }`}
-            >
-              <h1 className="mb-1 font-display text-2xl tracking-tight text-ink">{title}</h1>
-              <p className="mb-6 text-sm text-muted">{subtitle}</p>
+        <div className="pt-9">
+          <div
+            key={currentStep}
+            className={`animate-in fade-in duration-300 ${
+              direction === "backward"
+                ? "slide-in-from-left-4"
+                : "slide-in-from-right-4"
+            }`}
+          >
+            <h1 className="font-display text-[1.85rem] leading-[1.1] tracking-tight text-ink sm:text-[2.15rem]">
+              {title}
+            </h1>
+            <p className="mt-3 mb-8 max-w-md text-[15px] leading-relaxed text-muted">{subtitle}</p>
 
               {children}
 
@@ -78,7 +77,6 @@ export function OnboardingLayout({
                   </p>
                 </div>
               )}
-            </div>
           </div>
         </div>
       </main>
@@ -100,7 +98,7 @@ export function OnboardingLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className={`block text-[11px] font-medium uppercase tracking-[0.12em] text-muted ${className}`}
+      className={`block font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted ${className}`}
     >
       <span className="inline-flex items-center gap-1.5">
         <span>{children}</span>
@@ -155,9 +153,9 @@ export function OnboardingFooter({
   loading?: boolean;
 }) {
   return (
-    <div className="mt-2 flex items-center justify-between border-t border-line pt-4">
+    <div className="mt-8 flex items-center justify-between border-t border-line pt-5">
       {showBack && onBack ? (
-        <button type="button" onClick={onBack} className="text-[13px] text-muted hover:text-ink">
+        <button type="button" onClick={onBack} className="text-[12px] tracking-[0.04em] text-muted hover:text-ink">
           {backLabel}
         </button>
       ) : (
@@ -167,9 +165,9 @@ export function OnboardingFooter({
         type="button"
         onClick={onNext}
         disabled={nextDisabled || loading}
-        className="flex items-center gap-2 bg-accent px-5 py-2.5 text-[13px] text-accent-foreground hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="bg-accent px-5 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "Please wait..." : nextLabel}
+        {loading ? "Please wait…" : nextLabel}
       </button>
     </div>
   );

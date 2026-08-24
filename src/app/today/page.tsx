@@ -163,7 +163,7 @@ export default function TodayPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-4xl tracking-tight text-ink">Today&apos;s appointments</h1>
+        <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Today</h1>
         <p className="text-muted font-medium mt-1">
           One-tap status updates — customers get auto-notified via SMS
         </p>
