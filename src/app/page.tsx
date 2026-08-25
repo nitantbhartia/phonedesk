@@ -118,29 +118,29 @@ function LandingPageContent() {
               <desc id="call-slot-illustration-desc">An original geometric illustration with a telephone, a sunny dial, and two calendar openings.</desc>
               <defs>
                 <pattern id="diagonal-grid" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <path d="M0 0V28" stroke="#D7E7E1" strokeOpacity=".27" />
+                  <path d="M0 0V28" stroke="#D8D0C4" strokeOpacity=".55" />
                 </pattern>
               </defs>
-              <rect width="700" height="620" fill="#89B7B5" />
+              <rect width="700" height="620" fill="#F3EEE4" />
               <rect width="700" height="620" fill="url(#diagonal-grid)" />
               <g transform="translate(528 126)">
-                <circle r="108" fill="#F1B248" />
-                <circle r="136" fill="none" stroke="#F1B248" strokeOpacity=".22" strokeWidth="14" />
-                <circle r="74" fill="none" stroke="#123A38" strokeOpacity=".75" strokeWidth="3" />
-                <path d="M0-94V-76M94 0H76M0 94V76M-94 0H-76M67-67L54-54M67 67L54 54M-67 67L-54 54M-67-67L-54-54" stroke="#123A38" strokeWidth="4" />
-                <circle r="12" fill="#123A38" />
-                <path d="M0 0V-46M0 0L32 20" stroke="#123A38" strokeWidth="5" strokeLinecap="round" />
-                <text x="-26" y="158" fill="#123A38" fontSize="11" fontFamily="monospace" letterSpacing="2">DIAL</text>
+                <circle r="108" fill="#FAF7F1" />
+                <circle r="136" fill="none" stroke="#D8D0C4" strokeOpacity=".85" strokeWidth="14" />
+                <circle r="74" fill="none" stroke="#1C1916" strokeOpacity=".75" strokeWidth="3" />
+                <path d="M0-94V-76M94 0H76M0 94V76M-94 0H-76M67-67L54-54M67 67L54 54M-67 67L-54 54M-67-67L-54-54" stroke="#1C1916" strokeWidth="4" />
+                <circle r="12" fill="#1C1916" />
+                <path d="M0 0V-46M0 0L32 20" stroke="#1C1916" strokeWidth="5" strokeLinecap="round" />
+                <text x="-26" y="158" fill="#1C1916" fontSize="11" fontFamily="monospace" letterSpacing="2">DIAL</text>
               </g>
               <g>
-                <path d="M153 196C153 158 184 130 222 130H378C416 130 447 158 447 196" stroke="#123A38" strokeWidth="26" strokeLinecap="round" />
-                <path d="M150 181H188V223H150V181ZM412 181H450V223H412V181Z" fill="#D46C49" stroke="#123A38" strokeWidth="6" />
-                <rect x="144" y="205" width="312" height="358" fill="#F8F3E9" stroke="#123A38" strokeWidth="9" />
-                <rect x="144" y="205" width="312" height="65" fill="#123A38" />
+                <path d="M153 196C153 158 184 130 222 130H378C416 130 447 158 447 196" stroke="#1C1916" strokeWidth="26" strokeLinecap="round" />
+                <path d="M150 181H188V223H150V181ZM412 181H450V223H412V181Z" fill="#D46C49" stroke="#1C1916" strokeWidth="6" />
+                <rect x="144" y="205" width="312" height="358" fill="#F8F3E9" stroke="#1C1916" strokeWidth="9" />
+                <rect x="144" y="205" width="312" height="65" fill="#1C1916" />
                 <circle cx="177" cy="237" r="8" fill="#F1B248" />
-                <path d="M205 237H391" stroke="#D7E7E1" strokeWidth="4" />
+                <path d="M205 237H391" stroke="#F3EEE4" strokeWidth="4" />
                 <text x="174" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">PRESS A DIGIT</text>
-                <g fill="#D46C49" stroke="#123A38" strokeWidth="2">
+                <g fill="#D46C49" stroke="#1C1916" strokeWidth="2">
                   <rect x="174" y="335" width="29" height="24" />
                   <rect x="212" y="335" width="29" height="24" />
                   <rect x="250" y="335" width="29" height="24" />
@@ -161,19 +161,19 @@ function LandingPageContent() {
                   <text x="188" y="451">*</text><text x="226" y="451">0</text><text x="264" y="451">#</text>
                 </g>
                 <text x="307" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">OPENINGS</text>
-                <rect x="307" y="335" width="119" height="57" fill="#DCECE5" stroke="#123A38" strokeWidth="3" />
+                <rect x="307" y="335" width="119" height="57" fill="#FAF7F1" stroke="#1C1916" strokeWidth="3" />
                 <text x="320" y="357" fill="#D46C49" fontSize="12" fontWeight="700" fontFamily="monospace">01</text>
-                <path d="M348 353H411M348 370H390" stroke="#123A38" strokeWidth="5" strokeLinecap="square" />
-                <rect x="307" y="401" width="119" height="57" fill="#F1B248" stroke="#123A38" strokeWidth="3" />
-                <text x="320" y="423" fill="#123A38" fontSize="12" fontWeight="700" fontFamily="monospace">02</text>
-                <path d="M348 419H411M348 436H390" stroke="#123A38" strokeWidth="5" strokeLinecap="square" />
+                <path d="M348 353H411M348 370H390" stroke="#1C1916" strokeWidth="5" strokeLinecap="square" />
+                <rect x="307" y="401" width="119" height="57" fill="#D46C49" stroke="#1C1916" strokeWidth="3" />
+                <text x="320" y="423" fill="#F8F3E9" fontSize="12" fontWeight="700" fontFamily="monospace">02</text>
+                <path d="M348 419H411M348 436H390" stroke="#F8F3E9" strokeWidth="5" strokeLinecap="square" />
               </g>
               <g transform="translate(45 575)">
-                <path d="M0 0H220" stroke="#F8F3E9" strokeWidth="2" />
-                <text y="27" fill="#F8F3E9" fontSize="12" fontFamily="monospace" letterSpacing="2">01  /  TWO OPENINGS</text>
+                <path d="M0 0H220" stroke="#1C1916" strokeWidth="2" />
+                <text y="27" fill="#1C1916" fontSize="12" fontFamily="monospace" letterSpacing="2">01  /  TWO OPENINGS</text>
               </g>
             </svg>
-            <div className="absolute left-6 top-6 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#F8F3E9]/80 sm:left-8 sm:top-8">
+            <div className="absolute left-6 top-6 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink/70 sm:left-8 sm:top-8">
               01 / keypad to calendar
             </div>
           </div>

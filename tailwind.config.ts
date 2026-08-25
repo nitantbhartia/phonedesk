@@ -20,7 +20,7 @@ const config: Config = {
         ink: "#1C1916",
         line: "#D8D0C4",
         surface: "#FAF7F1",
-        "accent-hover": "#571F1F",
+        "accent-hover": "#B75338",
         border: "#D8D0C4",
         input: "#D8D0C4",
         ring: "#D46C49",
@@ -44,7 +44,7 @@ const config: Config = {
         },
         accent: {
           DEFAULT: "#D46C49",
-          hover: "#571F1F",
+          hover: "#B75338",
           foreground: "#FAF7F1",
         },
         popover: {
