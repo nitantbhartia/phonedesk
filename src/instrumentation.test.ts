@@ -43,6 +43,7 @@ describe("instrumentation register", () => {
     await register();
     await Promise.resolve();
     await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(onSpy).toHaveBeenCalledWith("uncaughtException", expect.any(Function));
     expect(onSpy).toHaveBeenCalledWith("unhandledRejection", expect.any(Function));

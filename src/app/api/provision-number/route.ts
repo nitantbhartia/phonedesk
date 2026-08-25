@@ -163,7 +163,7 @@ export async function POST(req: Request) {
           data: { onboardingStep: 5 },
         });
 
-        return { phoneNumber: result.phone_number, alreadyProvisioned: false };
+        return { phoneNumber: result.phoneNumber, alreadyProvisioned: false };
       });
     } catch (error) {
       // DB write failed — clean up the Twilio number we already bought.
