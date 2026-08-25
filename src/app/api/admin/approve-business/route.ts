@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
-  provisionRetellPhoneNumber,
-  syncRetellAgent,
-} from "@/lib/retell";
-import { buildRetellWebhookUrl } from "@/lib/retell-auth";
-import { shouldAttachRetellSmsWebhook } from "@/lib/sms";
+  ensureTwilioWebhooks,
+  purchaseTwilioPhoneNumber,
+  releaseTwilioPhoneNumber,
+} from "@/lib/twilio";
 
 /**
  * POST /api/admin/approve-business
  *
  * Approves a business to go live. Sets adminApprovedGoLive, provisions a phone
- * number, syncs the Retell agent, and activates the business.
+ * number, and activates the business.
  *
  * Body: { businessId: "clx..." }
  *
@@ -51,7 +50,6 @@ export async function POST(req: Request) {
     include: {
       phoneNumber: true,
       services: { where: { isActive: true } },
-      retellConfig: true,
       breedRecommendations: { orderBy: { priority: "desc" } },
       groomers: { where: { isActive: true } },
     },
@@ -67,64 +65,54 @@ export async function POST(req: Request) {
     data: { adminApprovedGoLive: true },
   });
 
-  // 2. Ensure Retell agent exists
-  const synced = await syncRetellAgent(business);
-  const agentId = synced.agentId || business.retellConfig?.agentId;
-
-  if (!agentId) {
-    return NextResponse.json(
-      { error: "Failed to create Retell agent" },
-      { status: 500 }
-    );
-  }
-
-  // 3. Provision phone number if not already provisioned
+  // 2. Provision a Twilio phone number if not already provisioned
   let phoneNumber = business.phoneNumber?.number ?? null;
   if (!phoneNumber) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const phoneDigits = (business.phone ?? "").replace(/\D/g, "");
     const areaCode =
       phoneDigits.length >= 10
         ? Number(phoneDigits.slice(phoneDigits.length === 11 ? 1 : 0, 3))
         : undefined;
 
-    const result = await provisionRetellPhoneNumber({
-      agentId,
-      areaCode,
-      nickname: `${business.name} - Call Slot`,
-      smsWebhookUrl: shouldAttachRetellSmsWebhook()
-        ? buildRetellWebhookUrl(appUrl, "/api/sms/webhook")
-        : undefined,
-    });
+    const result = await purchaseTwilioPhoneNumber({ areaCode });
 
     if (
-      typeof result?.phone_number === "string" &&
-      /^\+\d{10,15}$/.test(result.phone_number)
+      typeof result.phoneNumber === "string" &&
+      /^\+\d{10,15}$/.test(result.phoneNumber)
     ) {
-      await prisma.phoneNumber.create({
-        data: {
-          businessId,
-          number: result.phone_number,
-          retellPhoneNumber: result.phone_number,
-          provider: "RETELL",
-        },
-      });
-      phoneNumber = result.phone_number;
+      try {
+        await ensureTwilioWebhooks(result.phoneNumber);
+        await prisma.phoneNumber.create({
+          data: {
+            businessId,
+            number: result.phoneNumber,
+            twilioPhoneNumberSid: result.sid,
+            provider: "TWILIO",
+            isActive: true,
+          },
+        });
+        phoneNumber = result.phoneNumber;
+      } catch (error) {
+        await releaseTwilioPhoneNumber(result.sid).catch((cleanupError) => {
+          console.error("[admin] Failed to clean up Twilio number:", cleanupError);
+        });
+        throw error;
+      }
     } else {
       return NextResponse.json(
-        { error: "Failed to provision phone number from Retell" },
+        { error: "Failed to provision phone number from Twilio" },
         { status: 500 }
       );
     }
   }
 
-  // 4. Activate the business
+  // 3. Activate the business
   await prisma.business.update({
     where: { id: businessId },
     data: { isActive: true },
   });
 
-  // 5. End any lingering demo session
+  // 4. End any lingering demo session
   await prisma.demoSession
     .delete({ where: { businessId } })
     .catch(() => { /* no demo session — that's fine */ });

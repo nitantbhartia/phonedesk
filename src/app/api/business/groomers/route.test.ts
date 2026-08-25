@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/retell", () => ({
-  syncRetellAgent: vi.fn(),
-}));
-
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     groomer: {
@@ -27,7 +23,6 @@ vi.mock("@/lib/route-helpers", () => ({
 import { prisma } from "@/lib/prisma";
 import { parseJsonBody, requireCurrentBusiness } from "@/lib/route-helpers";
 import { DELETE, GET, POST } from "./route";
-import { syncRetellAgent } from "@/lib/retell";
 
 describe("POST /api/business/groomers", () => {
   beforeEach(() => {
@@ -42,8 +37,6 @@ describe("POST /api/business/groomers", () => {
     vi.mocked(prisma.groomer.findFirst).mockReset();
     vi.mocked(prisma.groomer.update).mockReset();
     vi.mocked(prisma.groomer.upsert).mockReset();
-    vi.mocked(prisma.business.findUnique).mockReset();
-    vi.mocked(syncRetellAgent).mockReset();
   });
 
   it("rejects updates for groomers outside the current business", async () => {
@@ -79,7 +72,7 @@ describe("POST /api/business/groomers", () => {
     });
   });
 
-  it("creates groomers and syncs Retell when config exists", async () => {
+  it("creates groomers for the current business", async () => {
     vi.mocked(parseJsonBody).mockResolvedValue({
       data: {
         groomers: [{ name: "Alex", specialties: ["Doodles", "  Baths  "] }],
@@ -89,14 +82,6 @@ describe("POST /api/business/groomers", () => {
       id: "g_1",
       name: "Alex",
     } as never);
-    vi.mocked(prisma.business.findUnique).mockResolvedValue({
-      id: "biz_1",
-      retellConfig: { id: "retell_1" },
-      services: [],
-      groomers: [{ id: "g_1", name: "Alex" }],
-      breedRecommendations: [],
-    } as never);
-
     const response = await POST(new Request("http://localhost/api/business/groomers") as never);
 
     expect(response.status).toBe(200);
@@ -119,7 +104,6 @@ describe("POST /api/business/groomers", () => {
         isActive: true,
       },
     });
-    expect(syncRetellAgent).toHaveBeenCalled();
   });
 
   it("soft-deletes a groomer within the current business", async () => {

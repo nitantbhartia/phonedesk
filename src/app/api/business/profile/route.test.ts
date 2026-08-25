@@ -28,10 +28,6 @@ vi.mock("@/lib/prisma", () => ({
       updateMany: vi.fn(),
       create: vi.fn(),
     },
-    retellConfig: {
-      upsert: vi.fn(),
-      updateMany: vi.fn(),
-    },
     call: {
       count: vi.fn(),
       aggregate: vi.fn(),
@@ -52,10 +48,6 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/retell", () => ({
-  syncRetellAgent: vi.fn(),
-}));
-
 vi.mock("@/lib/breed-recommendations", () => ({
   seedBreedRecommendations: vi.fn(),
 }));
@@ -63,7 +55,6 @@ vi.mock("@/lib/breed-recommendations", () => ({
 import { GET, PATCH, POST } from "./route";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { syncRetellAgent } from "@/lib/retell";
 import { seedBreedRecommendations } from "@/lib/breed-recommendations";
 
 describe("business/profile", () => {
@@ -76,15 +67,12 @@ describe("business/profile", () => {
     vi.mocked(prisma.demoSession.findUnique).mockReset();
     vi.mocked(prisma.service.updateMany).mockReset();
     vi.mocked(prisma.service.create).mockReset();
-    vi.mocked(prisma.retellConfig.upsert).mockReset();
-    vi.mocked(prisma.retellConfig.updateMany).mockReset();
     vi.mocked(prisma.call.count).mockReset();
     vi.mocked(prisma.call.aggregate).mockReset();
     vi.mocked(prisma.appointment.count).mockReset();
     vi.mocked(prisma.appointment.findFirst).mockReset();
     vi.mocked(prisma.bookableSession.count).mockReset();
     vi.mocked(prisma.bookableSession.count).mockResolvedValue(0);
-    vi.mocked(syncRetellAgent).mockReset();
     vi.mocked(seedBreedRecommendations).mockReset();
   });
 
@@ -240,21 +228,12 @@ describe("business/profile", () => {
     expect(payload.demoLeadHint).toEqual({ businessName: "Happy Paws" });
   });
 
-  it("creates a new business, seeds defaults, creates services, and syncs retell when config exists", async () => {
+  it("creates a new business and seeds defaults without Retell", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
-    vi.mocked(prisma.business.findUnique)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: "biz_1",
-        bookingMode: "SOFT",
-        services: [{ name: "Bath", price: 45, isActive: true }],
-        groomers: [],
-        breedRecommendations: [],
-        retellConfig: { agentId: "agent_1", llmId: "llm_1" },
-      } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce(null);
     vi.mocked(prisma.business.create).mockResolvedValue({ id: "biz_1" } as never);
 
     const response = await POST(
@@ -264,7 +243,6 @@ describe("business/profile", () => {
           name: "Paw House",
           ownerName: "Taylor",
           services: [{ name: "Bath", price: "45", duration: "60" }],
-          agentActive: true,
         }),
       }) as never
     );
@@ -285,9 +263,7 @@ describe("business/profile", () => {
         isAddon: false,
       },
     });
-    expect(prisma.retellConfig.upsert).toHaveBeenCalled();
-    expect(syncRetellAgent).toHaveBeenCalled();
-    expect(payload.synced).toBe(true);
+    expect(payload.business).toEqual({ id: "biz_1" });
   });
 
   it("requires name and ownerName when creating a new business", async () => {
@@ -311,21 +287,12 @@ describe("business/profile", () => {
     expect(prisma.business.create).not.toHaveBeenCalled();
   });
 
-  it("saves successfully without syncing when no retell config exists yet", async () => {
+  it("saves successfully without creating or syncing a voice agent", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
-    vi.mocked(prisma.business.findUnique)
-      .mockResolvedValueOnce({ id: "biz_1" } as never)
-      .mockResolvedValueOnce({
-        id: "biz_1",
-        bookingMode: "SOFT",
-        services: [],
-        groomers: [],
-        breedRecommendations: [],
-        retellConfig: null,
-      } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({ id: "biz_1" } as never);
     vi.mocked(prisma.business.update).mockResolvedValue({ id: "biz_1" } as never);
 
     const response = await POST(
@@ -337,18 +304,15 @@ describe("business/profile", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(syncRetellAgent).not.toHaveBeenCalled();
-    expect(payload.synced).toBe(false);
+    expect(payload.business).toEqual({ id: "biz_1" });
   });
 
-  it("returns 500 when the profile saves but the full business reload fails", async () => {
+  it("does not reload or sync an external voice provider after saving", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
-    vi.mocked(prisma.business.findUnique)
-      .mockResolvedValueOnce({ id: "biz_1" } as never)
-      .mockResolvedValueOnce(null);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({ id: "biz_1" } as never);
     vi.mocked(prisma.business.update).mockResolvedValue({ id: "biz_1" } as never);
 
     const response = await POST(
@@ -358,30 +322,17 @@ describe("business/profile", () => {
       }) as never
     );
 
-    expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({
-      business: { id: "biz_1" },
-      error: "Business profile saved, but failed to reload profile for voice sync.",
-    });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ business: { id: "biz_1" } });
   });
 
-  it("returns 502 when retell sync fails after saving", async () => {
+  it("does not fail when no Retell credentials are configured", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
-    vi.mocked(prisma.business.findUnique)
-      .mockResolvedValueOnce({ id: "biz_1" } as never)
-      .mockResolvedValueOnce({
-        id: "biz_1",
-        bookingMode: "SOFT",
-        services: [],
-        groomers: [],
-        breedRecommendations: [],
-        retellConfig: { agentId: "agent_1", llmId: "llm_1" },
-      } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({ id: "biz_1" } as never);
     vi.mocked(prisma.business.update).mockResolvedValue({ id: "biz_1" } as never);
-    vi.mocked(syncRetellAgent).mockRejectedValue(new Error("retell down"));
 
     const response = await POST(
       new Request("http://localhost/api/business/profile", {
@@ -391,24 +342,16 @@ describe("business/profile", () => {
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(502);
-    expect(payload.error).toContain("failed to sync");
+    expect(response.status).toBe(200);
+    expect(payload.business).toEqual({ id: "biz_1" });
   });
 
-  it("patches retell config and safe business fields", async () => {
+  it("patches safe business fields and ignores legacy agent settings", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
-    vi.mocked(prisma.business.findUnique)
-      .mockResolvedValueOnce({ id: "biz_1" } as never)
-      .mockResolvedValueOnce({
-        id: "biz_1",
-        services: [],
-        groomers: [],
-        retellConfig: { agentId: "agent_1", llmId: "llm_1" },
-        breedRecommendations: [],
-      } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({ id: "biz_1" } as never);
     vi.mocked(prisma.business.update).mockResolvedValue({ id: "biz_1", name: "Updated" } as never);
 
     const response = await PATCH(
@@ -424,14 +367,6 @@ describe("business/profile", () => {
     );
     const payload = await response.json();
 
-    expect(prisma.retellConfig.updateMany).toHaveBeenCalledWith({
-      where: { businessId: "biz_1" },
-      data: {
-        isActive: false,
-        voiceId: "11labs-Adrian",
-      },
-    });
-    expect(syncRetellAgent).toHaveBeenCalled();
     expect(prisma.business.update).toHaveBeenCalledWith({
       where: { userId: "user_1" },
       data: { name: "Updated" },
@@ -439,15 +374,12 @@ describe("business/profile", () => {
     expect(payload.business).toEqual({ id: "biz_1", name: "Updated" });
   });
 
-  it("blocks enabling the agent from PATCH without admin approval", async () => {
+  it("does not create a voice agent when legacy settings are submitted", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner" },
     } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
-    vi.mocked(prisma.business.findUnique).mockResolvedValueOnce({
-      id: "biz_1",
-      adminApprovedGoLive: false,
-    } as never);
+    vi.mocked(prisma.business.update).mockResolvedValue({ id: "biz_1" } as never);
 
     const response = await PATCH(
       new Request("http://localhost/api/business/profile", {
@@ -456,11 +388,10 @@ describe("business/profile", () => {
       }) as never
     );
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      error: "Admin approval is required to enable live call answering.",
+      business: { id: "biz_1" },
     });
-    expect(prisma.retellConfig.updateMany).not.toHaveBeenCalled();
   });
 
   it("strips isActive from PATCH when not admin-approved but preserves other safe fields", async () => {

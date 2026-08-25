@@ -2,28 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockValidateEnv,
-  mockFindMany,
-  mockSyncRetellAgent,
+  mockEnsureTwilioWebhooks,
 } = vi.hoisted(() => ({
   mockValidateEnv: vi.fn(),
-  mockFindMany: vi.fn(),
-  mockSyncRetellAgent: vi.fn(),
+  mockEnsureTwilioWebhooks: vi.fn(),
 }));
 
 vi.mock("./lib/env", () => ({
   validateEnv: mockValidateEnv,
 }));
 
-vi.mock("./lib/prisma", () => ({
-  prisma: {
-    business: {
-      findMany: mockFindMany,
-    },
-  },
-}));
-
-vi.mock("./lib/retell", () => ({
-  syncRetellAgent: mockSyncRetellAgent,
+vi.mock("./lib/twilio", () => ({
+  ensureTwilioWebhooks: mockEnsureTwilioWebhooks,
 }));
 
 describe("instrumentation register", () => {
@@ -34,31 +24,31 @@ describe("instrumentation register", () => {
     vi.restoreAllMocks();
     process.env = { ...env, NEXT_RUNTIME: "nodejs" };
     mockValidateEnv.mockReset();
-    mockFindMany.mockReset();
-    mockSyncRetellAgent.mockReset();
+    mockEnsureTwilioWebhooks.mockReset();
   });
 
   afterEach(() => {
     process.env = { ...env };
   });
 
-  it("registers crash handlers, validates env, and syncs active agents", async () => {
+  it("registers crash handlers, validates env, and reconciles Twilio webhooks", async () => {
     const onSpy = vi.spyOn(process, "on").mockImplementation(() => process);
     vi.spyOn(console, "error").mockImplementation(() => {});
-    mockFindMany.mockResolvedValue([
-      { id: "biz_1", retellConfig: { agentId: "agent_1", llmId: "llm_1" } },
-      { id: "biz_2", retellConfig: null },
-    ]);
-    mockSyncRetellAgent.mockResolvedValue(undefined);
+    process.env.TWILIO_ACCOUNT_SID = "AC1234567890";
+    process.env.TWILIO_AUTH_TOKEN = "token1234";
+    process.env.TWILIO_PHONE_NUMBER = "+16195559999";
+    mockEnsureTwilioWebhooks.mockResolvedValue(undefined);
 
     const { register } = await import("./instrumentation");
     await register();
     await Promise.resolve();
     await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(onSpy).toHaveBeenCalledWith("uncaughtException", expect.any(Function));
     expect(onSpy).toHaveBeenCalledWith("unhandledRejection", expect.any(Function));
     expect(mockValidateEnv).toHaveBeenCalled();
+    expect(mockEnsureTwilioWebhooks).toHaveBeenCalledWith("+16195559999");
   });
 
   it("logs env and sync failures without crashing registration", async () => {
@@ -67,7 +57,6 @@ describe("instrumentation register", () => {
     mockValidateEnv.mockImplementation(() => {
       throw new Error("bad env");
     });
-    mockFindMany.mockRejectedValue(new Error("db down"));
 
     const { register } = await import("./instrumentation");
     await register();

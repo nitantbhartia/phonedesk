@@ -29,24 +29,20 @@ vi.mock("@/lib/rate-limit", () => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/retell", () => ({
-  deleteRetellPhoneNumber: vi.fn(),
-  provisionRetellPhoneNumber: vi.fn(),
-  syncRetellAgent: vi.fn(),
-}));
-
-vi.mock("@/lib/retell-auth", () => ({
-  buildRetellWebhookUrl: vi.fn(() => "https://app.example.com/api/sms/webhook"),
+vi.mock("@/lib/twilio", () => ({
+  ensureTwilioWebhooks: vi.fn(),
+  purchaseTwilioPhoneNumber: vi.fn(),
+  releaseTwilioPhoneNumber: vi.fn(),
 }));
 
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import {
-  deleteRetellPhoneNumber,
-  provisionRetellPhoneNumber,
-  syncRetellAgent,
-} from "@/lib/retell";
+  ensureTwilioWebhooks,
+  purchaseTwilioPhoneNumber,
+  releaseTwilioPhoneNumber,
+} from "@/lib/twilio";
 import { POST } from "./route";
 
 describe("POST /api/provision-number", () => {
@@ -63,9 +59,9 @@ describe("POST /api/provision-number", () => {
     vi.mocked(prisma.phoneNumber.findUnique).mockReset();
     vi.mocked(prisma.$transaction).mockReset();
     vi.mocked(rateLimit).mockReset();
-    vi.mocked(syncRetellAgent).mockReset();
-    vi.mocked(provisionRetellPhoneNumber).mockReset();
-    vi.mocked(deleteRetellPhoneNumber).mockReset();
+    vi.mocked(ensureTwilioWebhooks).mockReset();
+    vi.mocked(purchaseTwilioPhoneNumber).mockReset();
+    vi.mocked(releaseTwilioPhoneNumber).mockReset();
     vi.mocked(rateLimit).mockReturnValue({ allowed: true, remaining: 2 } as never);
   });
 
@@ -87,7 +83,6 @@ describe("POST /api/provision-number", () => {
       adminApprovedGoLive: false,
       phoneNumber: null,
       services: [],
-      retellConfig: null,
       breedRecommendations: [],
     } as never);
 
@@ -105,7 +100,6 @@ describe("POST /api/provision-number", () => {
       adminApprovedGoLive: true,
       phoneNumber: { number: "+16195559999" },
       services: [],
-      retellConfig: null,
       breedRecommendations: [],
     } as never);
 
@@ -126,13 +120,14 @@ describe("POST /api/provision-number", () => {
       adminApprovedGoLive: true,
       phoneNumber: null,
       services: [],
-      retellConfig: { agentId: "agent_1" },
       breedRecommendations: [],
     } as never);
     vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue(null);
-    vi.mocked(provisionRetellPhoneNumber).mockResolvedValue({
-      phone_number: "+16195559999",
+    vi.mocked(purchaseTwilioPhoneNumber).mockResolvedValue({
+      sid: "PN123",
+      phoneNumber: "+16195559999",
     } as never);
+    vi.mocked(ensureTwilioWebhooks).mockResolvedValue({ sid: "PN123", phoneNumber: "+16195559999" });
     vi.mocked(prisma.$transaction).mockImplementation(async (fn: never) => fn({
       $executeRaw: vi.fn(),
       phoneNumber: {
@@ -150,19 +145,15 @@ describe("POST /api/provision-number", () => {
       body: JSON.stringify({ areaCode: 619 }),
     }) as never);
 
-    expect(provisionRetellPhoneNumber).toHaveBeenCalledWith({
-      agentId: "agent_1",
-      areaCode: 619,
-      nickname: "Paw House - Call Slot",
-      smsWebhookUrl: "https://app.example.com/api/sms/webhook",
-    });
+    expect(purchaseTwilioPhoneNumber).toHaveBeenCalledWith({ areaCode: 619 });
+    expect(ensureTwilioWebhooks).toHaveBeenCalledWith("+16195559999");
     await expect(response.json()).resolves.toEqual({
       phoneNumber: "+16195559999",
       alreadyProvisioned: false,
     });
   });
 
-  it("omits the sms webhook when sms is disabled", async () => {
+  it("configures both Twilio webhooks even when outbound SMS is disabled", async () => {
     process.env.SMS_ENABLED = "false";
     vi.mocked(getServerSession).mockResolvedValue({ user: { email: "owner@example.com" } } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
@@ -172,13 +163,14 @@ describe("POST /api/provision-number", () => {
       adminApprovedGoLive: true,
       phoneNumber: null,
       services: [],
-      retellConfig: { agentId: "agent_1" },
       breedRecommendations: [],
     } as never);
     vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue(null);
-    vi.mocked(provisionRetellPhoneNumber).mockResolvedValue({
-      phone_number: "+16195559999",
+    vi.mocked(purchaseTwilioPhoneNumber).mockResolvedValue({
+      sid: "PN123",
+      phoneNumber: "+16195559999",
     } as never);
+    vi.mocked(ensureTwilioWebhooks).mockResolvedValue({ sid: "PN123", phoneNumber: "+16195559999" });
     vi.mocked(prisma.$transaction).mockImplementation(async (fn: never) => fn({
       $executeRaw: vi.fn(),
       phoneNumber: {
@@ -196,11 +188,7 @@ describe("POST /api/provision-number", () => {
       body: JSON.stringify({ areaCode: 619 }),
     }) as never);
 
-    expect(provisionRetellPhoneNumber).toHaveBeenCalledWith({
-      agentId: "agent_1",
-      areaCode: 619,
-      nickname: "Paw House - Call Slot",
-      smsWebhookUrl: undefined,
-    });
+    expect(purchaseTwilioPhoneNumber).toHaveBeenCalledWith({ areaCode: 619 });
+    expect(ensureTwilioWebhooks).toHaveBeenCalledWith("+16195559999");
   });
 });

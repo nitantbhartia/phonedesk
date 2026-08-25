@@ -23,16 +23,16 @@ describe("env validation", () => {
       googleClientId: "google-client",
       googleClientSecret: "google-secret",
       databaseUrl: "postgres://db",
-      appUrl: "http://localhost:3000",
+      appUrl: "https://ringpaw.com",
     });
   });
 
-  it("requires retell config in production", async () => {
+  it("does not require Retell config in production", async () => {
     process.env.NODE_ENV = "production";
     delete process.env.RETELL_API_KEY;
 
     const { validateEnv } = await import("./env");
 
-    expect(() => validateEnv()).toThrow("Missing required environment variable: RETELL_API_KEY");
+    expect(() => validateEnv()).not.toThrow();
   });
 });

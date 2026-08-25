@@ -206,7 +206,6 @@ export default function OnboardingPage() {
     setDirection(newStep > step ? "forward" : "backward");
     setStep(newStep);
   }
-  const [provisionError, setProvisionError] = useState("");
 
   // Step 1: Business info
   const [businessName, setBusinessName] = useState("");
@@ -471,7 +470,7 @@ export default function OnboardingPage() {
   // Keep ref in sync with callPhase so the polling closure always sees the latest value
   useEffect(() => { callPhaseRef.current = callPhase; }, [callPhase]);
 
-  // Poll for test call as soon as the number is provisioned — detects calls via Retell webhooks writing to DB
+  // Poll for a real test call when a live number is already provisioned.
   useEffect(() => {
     if (!provisionedNumber) return;
 
@@ -761,37 +760,6 @@ export default function OnboardingPage() {
       redirect: "/onboarding?step=5",
     });
     window.location.href = `/api/calendar/connect?${params}`;
-  }
-
-  async function provisionNumber() {
-    setLoading(true);
-    setProvisionError("");
-    try {
-      const res = await fetch("/api/demo/start", { method: "POST" });
-      const data = await res.json() as { demoNumber?: string; error?: string };
-
-      if (!res.ok) {
-        if (data.error === "demo_unavailable") {
-          throw new Error("All demo lines are busy right now. Please try again in a moment.");
-        }
-        if (data.error === "rate_limited") {
-          throw new Error("Too many test requests from your network. Please try again tomorrow.");
-        }
-        if (data.error === "test_limit_reached") {
-          throw new Error("You've reached the maximum number of test calls. Choose a plan to go live.");
-        }
-        throw new Error(data.error || "Failed to get your test number");
-      }
-
-      setProvisionedNumber(data.demoNumber || "");
-    } catch (error) {
-      console.error("Error starting demo session:", error);
-      setProvisionError(
-        error instanceof Error ? error.message : "Failed to get your test number"
-      );
-    } finally {
-      setLoading(false);
-    }
   }
 
   async function goLive() {
@@ -1767,18 +1735,11 @@ export default function OnboardingPage() {
                 </svg>
               </div>
               <h3 className="text-lg font-bold text-ink mb-2">
-                Let&apos;s set up your test number
+                Try the keypad flow above
               </h3>
               <p className="text-muted font-medium mb-6 max-w-sm mx-auto text-sm">
-                We&apos;ll give you a test line so you can walk the keypad tree. Your dedicated number is assigned when you go live.
+                The dedicated Twilio number is purchased and configured when your shop goes live. No separate test line is needed.
               </p>
-              <button
-                onClick={provisionNumber}
-                disabled={loading}
-                className="px-8 py-3 bg-ink text-surface rounded-sm font-medium hover:bg-opacity-90 transition-all disabled:opacity-50"
-              >
-                {loading ? "Setting up..." : "Get My Test Number"}
-              </button>
             </div>
           ) : (
             <>
@@ -1878,17 +1839,11 @@ export default function OnboardingPage() {
             </>
           )}
 
-          {provisionError ? (
-            <div className="rounded-sm border border-line bg-paper px-4 py-3 text-sm text-accent">
-              {provisionError}
-            </div>
-          ) : null}
-
           <OnboardingFooter
             onBack={() => navigate(4)}
             onNext={() => navigate(7)}
-            nextLabel={provisionedNumber ? "Continue" : "Continue"}
-            nextDisabled={!provisionedNumber || callPhase === "waiting"}
+            nextLabel="Continue"
+            nextDisabled={Boolean(provisionedNumber && callPhase === "waiting")}
           />
         </div>
       )}
