@@ -65,7 +65,7 @@ function AuthPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
+    <div className="studio-auth min-h-screen bg-paper text-ink">
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo />
@@ -78,8 +78,8 @@ function AuthPageContent() {
       <div className="mx-auto grid max-w-[1280px] gap-12 px-6 py-12 sm:px-10 sm:py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-24 lg:px-12 lg:py-28">
         <div className="max-w-[490px]">
           <p className="studio-eyebrow mb-6"><span className="studio-eyebrow-line" />Account / Call Slot</p>
-          <h1 className="max-w-[440px] text-5xl font-bold leading-[0.92] tracking-[-0.065em] sm:text-7xl">
-            Put your shop<br />on the line.
+          <h1 className="max-w-[440px] text-5xl font-bold leading-[0.88] tracking-[-0.075em] sm:text-7xl">
+            Keep the next<br /><span className="text-accent">call moving.</span>
           </h1>
           <p className="mt-7 max-w-[25rem] text-[16px] leading-[1.6] text-muted">
             Sign in to manage your number, calendar, and the next opening your callers hear.

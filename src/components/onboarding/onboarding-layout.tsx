@@ -33,7 +33,7 @@ export function OnboardingLayout({
   const progressPct = ((currentStep - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
+    <div className="studio-onboarding min-h-screen bg-paper text-ink">
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo priority />
@@ -44,7 +44,7 @@ export function OnboardingLayout({
       <main className="mx-auto grid max-w-[1180px] gap-10 px-6 py-10 sm:px-10 sm:py-16 lg:grid-cols-[250px_1fr] lg:gap-20 lg:px-12">
         <aside className="lg:pt-3">
           <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />Onboarding</p>
-          <p className="font-display text-4xl leading-[0.95] tracking-[-0.055em] sm:text-5xl">A few clear steps to a quieter phone.</p>
+          <p className="font-display text-4xl leading-[0.9] tracking-[-0.065em] sm:text-5xl">A few clear steps to a quieter phone.</p>
           <p className="mt-6 text-sm leading-[1.6] text-muted">Tell us about your shop, connect the calendar, and test the call. You can change any of it later.</p>
           <div className="mt-10 hidden border-t border-line pt-4 lg:block">
             <p className="studio-fact-label">Call Slot</p>
@@ -60,7 +60,7 @@ export function OnboardingLayout({
               </span>
               <span className="text-xs font-semibold text-ink">{currentLabel}</span>
             </div>
-            <div className="h-1 bg-line">
+            <div className="h-px bg-line">
               <div
                 className="h-full bg-accent transition-all duration-500 ease-out"
                 style={{ width: `${progressPct}%` }}

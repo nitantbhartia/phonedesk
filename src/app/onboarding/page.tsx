@@ -499,7 +499,7 @@ export default function OnboardingPage() {
               setDetectedCallSummary(newest?.summary ?? null);
               setCallPhase("completed");
             } else {
-              // call_started fired — AI is live
+              // call_started fired — the test line is live
               setCallPhase("in_progress");
             }
           } else if (phase === "in_progress") {
@@ -871,7 +871,7 @@ export default function OnboardingPage() {
   if (step === 0) {
     const firstName = session?.user?.name?.split(" ")[0];
     return (
-      <div className="min-h-screen bg-paper text-ink">
+      <div className="studio-onboarding min-h-screen bg-paper text-ink">
         <header className="border-b border-line">
           <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
             <BrandLogo priority />
