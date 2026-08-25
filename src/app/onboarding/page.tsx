@@ -871,21 +871,28 @@ export default function OnboardingPage() {
   if (step === 0) {
     const firstName = session?.user?.name?.split(" ")[0];
     return (
-      <div className="flex min-h-screen flex-col bg-paper px-6 py-7 text-ink sm:px-10">
-        <div className="mx-auto w-full max-w-3xl">
-          <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
-        </div>
+      <div className="min-h-screen bg-paper text-ink">
+        <header className="border-b border-line">
+          <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
+            <BrandLogo priority />
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Set up your line</span>
+          </div>
+        </header>
 
-        <main className="mx-auto mt-20 w-full max-w-2xl sm:mt-28">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Before the line rings</p>
-          <h1 className="mt-5 font-display text-[2.9rem] leading-[0.95] tracking-[-0.02em] sm:text-6xl">
+        <main className="mx-auto grid max-w-[1180px] gap-10 px-6 py-12 sm:px-10 sm:py-20 lg:grid-cols-[250px_1fr] lg:gap-20 lg:px-12 lg:py-28">
+          <aside className="lg:pt-3">
+            <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />Before the line rings</p>
+            <p className="font-display text-4xl leading-[0.95] tracking-[-0.055em] sm:text-5xl">A quieter phone starts here.</p>
+            <p className="mt-6 text-sm leading-[1.6] text-muted">Five minutes to tell Call Slot what to say, where to look, and when to offer a time.</p>
+          </aside>
+
+          <section className="border border-line bg-surface p-6 sm:p-10">
+          <h1 className="font-display text-4xl leading-[0.95] tracking-[-0.055em] sm:text-6xl">
             {firstName ? `${firstName}, let's put it on the line.` : "Let's put it on the line."}
           </h1>
-          <p className="mt-5 max-w-md text-[16px] leading-[1.55] text-muted">
-            Tell Call Slot what to say, where to look, and when to offer a time.
-          </p>
+          <p className="mt-5 max-w-md text-[16px] leading-[1.55] text-muted">You&apos;ll set up:</p>
 
-          <div className="mt-12 border-y border-line">
+          <div className="mt-6 border-y border-line">
             {[
               "your shop name",
               "your calendar",
@@ -901,10 +908,11 @@ export default function OnboardingPage() {
 
           <button
             onClick={() => navigate(1)}
-            className="mt-10 bg-accent px-5 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover"
+            className="studio-button mt-10"
           >
-            Continue
+            Continue <span aria-hidden="true">↗</span>
           </button>
+          </section>
         </main>
       </div>
     );

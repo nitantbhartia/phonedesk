@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif } from "next/font/google";
+import { DM_Sans, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { Providers } from "@/components/providers";
 
-const plexSans = IBM_Plex_Sans({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-sans",
 });
 
-const instrumentSerif = Instrument_Serif({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-display",
 });
@@ -60,7 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${plexSans.variable} ${instrumentSerif.variable} ${plexMono.variable} font-sans bg-paper text-ink antialiased`}
+        className={`${dmSans.variable} ${spaceGrotesk.variable} ${plexMono.variable} font-sans bg-paper text-ink antialiased`}
       >
         {googleAnalyticsId ? (
           <Suspense fallback={null}>
