@@ -19,6 +19,7 @@ function LandingPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -44,14 +45,21 @@ function LandingPageContent() {
     };
   }, [session, router]);
 
+  useEffect(() => {
+    const handleScroll = () => setIsHeaderScrolled(window.scrollY > 12);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   if (status === "loading" || isResolvingRedirect) {
     return <div className="min-h-screen bg-paper" />;
   }
 
   return (
-    <div className="studio-site min-h-screen overflow-hidden bg-paper text-ink">
-      <header className="border-b border-line">
-        <nav className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
+    <div className="studio-site min-h-screen overflow-x-clip bg-paper text-ink">
+      <header className={`studio-header ${isHeaderScrolled ? "studio-header-scrolled" : ""}`}>
+        <nav className="studio-nav mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo />
           <div className="hidden items-center gap-8 text-[12px] font-semibold tracking-[0.03em] text-muted md:flex">
             <a href="#how-it-works" className="studio-link">How it works</a>
