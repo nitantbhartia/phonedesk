@@ -35,6 +35,10 @@ vi.mock("@/lib/twilio-rest", () => ({
   releaseTwilioPhoneNumber: vi.fn(),
 }));
 
+vi.mock("@/lib/bland", () => ({
+  attachBlandInbound: vi.fn().mockResolvedValue({ ok: true, skipped: true }),
+}));
+
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -43,6 +47,7 @@ import {
   purchaseTwilioPhoneNumber,
   releaseTwilioPhoneNumber,
 } from "@/lib/twilio-rest";
+import { attachBlandInbound } from "@/lib/bland";
 import { POST } from "./route";
 
 describe("POST /api/provision-number", () => {
@@ -62,6 +67,8 @@ describe("POST /api/provision-number", () => {
     vi.mocked(ensureTwilioWebhooks).mockReset();
     vi.mocked(purchaseTwilioPhoneNumber).mockReset();
     vi.mocked(releaseTwilioPhoneNumber).mockReset();
+    vi.mocked(attachBlandInbound).mockReset();
+    vi.mocked(attachBlandInbound).mockResolvedValue({ ok: true, skipped: true } as never);
     vi.mocked(rateLimit).mockReturnValue({ allowed: true, remaining: 2 } as never);
   });
 
@@ -109,6 +116,8 @@ describe("POST /api/provision-number", () => {
       phoneNumber: "+16195559999",
       alreadyProvisioned: true,
     });
+    await Promise.resolve();
+    expect(attachBlandInbound).toHaveBeenCalledWith("+16195559999", "biz_1");
   });
 
   it("provisions a new number and persists it in a transaction", async () => {
@@ -190,5 +199,26 @@ describe("POST /api/provision-number", () => {
 
     expect(purchaseTwilioPhoneNumber).toHaveBeenCalledWith({ areaCode: 619 });
     expect(ensureTwilioWebhooks).toHaveBeenCalledWith("+16195559999");
+  });
+
+  it("still returns the existing number if Bland attach fails", async () => {
+    vi.mocked(attachBlandInbound).mockRejectedValue(new Error("bland down"));
+    vi.mocked(getServerSession).mockResolvedValue({ user: { email: "owner@example.com" } } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({ id: "user_1" } as never);
+    vi.mocked(prisma.business.findUnique).mockResolvedValue({
+      id: "biz_1",
+      adminApprovedGoLive: true,
+      phoneNumber: { number: "+16195559999" },
+      services: [],
+      breedRecommendations: [],
+    } as never);
+
+    const response = await POST(new Request("http://localhost/api/provision-number", { method: "POST" }) as never);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      phoneNumber: "+16195559999",
+      alreadyProvisioned: true,
+    });
   });
 });
