@@ -9,6 +9,16 @@ import {
   purchaseTwilioPhoneNumber,
   releaseTwilioPhoneNumber,
 } from "@/lib/twilio-rest";
+import { attachBlandInbound } from "@/lib/bland";
+
+function queueBlandAttach(phoneNumber: string, businessId: string) {
+  attachBlandInbound(phoneNumber, businessId).catch((error) => {
+    console.error(
+      "[provision-number] Bland inbound attach failed (Twilio number is still assigned):",
+      error
+    );
+  });
+}
 
 async function resolveUserId(session: {
   user?: {
@@ -94,6 +104,7 @@ export async function POST(req: Request) {
 
   // Return existing number if already provisioned
   if (business.phoneNumber) {
+    queueBlandAttach(business.phoneNumber.number, business.id);
     return NextResponse.json({
       phoneNumber: business.phoneNumber.number,
       alreadyProvisioned: true,
@@ -108,6 +119,7 @@ export async function POST(req: Request) {
     });
 
     if (existingPhoneNumber) {
+      queueBlandAttach(existingPhoneNumber.number, business.id);
       return NextResponse.json({
         phoneNumber: existingPhoneNumber.number,
         alreadyProvisioned: true,
@@ -173,6 +185,7 @@ export async function POST(req: Request) {
       throw error;
     }
 
+    queueBlandAttach(provisioned.phoneNumber, business.id);
     return NextResponse.json({
       phoneNumber: provisioned.phoneNumber,
       alreadyProvisioned: provisioned.alreadyProvisioned,

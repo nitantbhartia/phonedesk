@@ -35,4 +35,17 @@ describe("env validation", () => {
 
     expect(() => validateEnv()).not.toThrow();
   });
+
+  it("does not require Bland config to boot", async () => {
+    delete process.env.BLAND_API_KEY;
+    delete process.env.BLAND_ENCRYPTED_TWILIO_KEY;
+    delete process.env.BLAND_TOOL_SECRET;
+
+    const { validateEnv } = await import("./env");
+    const env = validateEnv();
+
+    expect(env.blandApiKey).toBe("");
+    expect(env.blandEncryptedTwilioKey).toBe("");
+    expect(env.blandToolSecret).toBe("");
+  });
 });
