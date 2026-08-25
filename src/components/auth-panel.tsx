@@ -69,11 +69,11 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
     "mt-2 w-full border-x-0 border-b border-t-0 border-line bg-transparent px-0 py-3 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-accent";
 
   return (
-    <div className="w-full max-w-[460px] border border-line bg-surface p-6 sm:p-9">
+    <div className="studio-auth-panel w-full max-w-[460px] border border-line bg-surface p-6 sm:p-9">
       <div className="mb-8 flex items-start justify-between gap-5 border-b border-line pb-6">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Call Slot / account</p>
-          <h2 className="mt-3 font-display text-3xl leading-none tracking-[-0.04em]">Keep the line moving.</h2>
+          <h2 className="mt-3 font-display text-3xl leading-[0.92] tracking-[-0.055em]">Your line, in order.</h2>
         </div>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-line font-mono text-[10px] text-accent">↗</span>
       </div>
@@ -145,7 +145,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
           disabled={isSubmitting}
           className="mt-2 w-full bg-accent px-4 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
         >
-          {isSubmitting ? "Please wait…" : authMode === "signup" ? "Sign the ledger" : "Open account"}
+          {isSubmitting ? "Please wait…" : authMode === "signup" ? "Create account" : "Log in"}
         </button>
       </form>
 

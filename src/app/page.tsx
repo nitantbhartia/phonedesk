@@ -48,7 +48,7 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-paper text-ink">
+    <div className="studio-site min-h-screen overflow-hidden bg-paper text-ink">
       <header className="border-b border-line">
         <nav className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo />
@@ -69,7 +69,7 @@ function LandingPageContent() {
       </header>
 
       <main>
-        <section className="mx-auto grid max-w-[1280px] gap-12 px-6 pb-16 pt-12 sm:px-10 sm:pb-24 sm:pt-20 lg:grid-cols-[0.93fr_1.07fr] lg:items-center lg:gap-16 lg:px-12 lg:pt-24">
+        <section className="mx-auto grid max-w-[1280px] gap-12 px-6 pb-16 pt-12 sm:px-10 sm:pb-24 sm:pt-20 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-16 lg:px-12 lg:pt-24">
           <div>
             <p className="studio-eyebrow mb-7">
               <span className="studio-eyebrow-line" />
@@ -105,14 +105,14 @@ function LandingPageContent() {
             </div>
           </div>
 
-          <div className="studio-illustration relative min-h-[470px] overflow-hidden sm:min-h-[590px]">
+          <div className="studio-illustration relative aspect-[1.08] overflow-hidden">
             <svg
               className="absolute inset-0 h-full w-full"
-              viewBox="0 0 700 650"
+              viewBox="0 0 700 620"
               fill="none"
               role="img"
               aria-labelledby="call-slot-illustration-title call-slot-illustration-desc"
-              preserveAspectRatio="xMidYMid slice"
+              preserveAspectRatio="xMidYMid meet"
             >
               <title id="call-slot-illustration-title">A keypad turning a missed call into two bookable openings</title>
               <desc id="call-slot-illustration-desc">An original geometric illustration with a telephone, a sunny dial, and two calendar openings.</desc>
@@ -120,49 +120,57 @@ function LandingPageContent() {
                 <pattern id="diagonal-grid" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                   <path d="M0 0V28" stroke="#D7E7E1" strokeOpacity=".27" />
                 </pattern>
-                <filter id="soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feDropShadow dx="0" dy="18" stdDeviation="14" floodColor="#153F3B" floodOpacity=".2" />
-                </filter>
               </defs>
-              <rect width="700" height="650" fill="#89B7B5" />
-              <rect width="700" height="650" fill="url(#diagonal-grid)" />
-              <circle cx="530" cy="145" r="116" fill="#F1B248" />
-              <circle cx="530" cy="145" r="146" stroke="#F1B248" strokeOpacity=".2" strokeWidth="16" />
-              <path d="M34 470L287 194L621 470" stroke="#123A38" strokeWidth="18" strokeLinejoin="round" />
-              <path d="M78 470L287 244L560 470" fill="#D46C49" stroke="#F2C27A" strokeWidth="8" strokeLinejoin="round" />
-              <path d="M132 429L287 288L443 429M193 429L287 345L378 429" stroke="#F5C977" strokeWidth="6" />
-              <path d="M27 480H625L604 532H54L27 480Z" fill="#123A38" stroke="#123A38" strokeWidth="8" strokeLinejoin="round" />
-              <path d="M60 503H593" stroke="#F1B248" strokeWidth="7" />
-              <path d="M57 526H587" stroke="#D46C49" strokeWidth="5" />
-              <g filter="url(#soft-shadow)">
-                <rect x="378" y="300" width="222" height="240" rx="10" fill="#F8F3E9" stroke="#123A38" strokeWidth="8" />
-                <rect x="378" y="300" width="222" height="46" fill="#123A38" />
-                <circle cx="406" cy="323" r="7" fill="#F1B248" />
-                <path d="M428 323H557" stroke="#D7E7E1" strokeWidth="4" strokeLinecap="round" />
-                <rect x="403" y="368" width="172" height="53" rx="5" fill="#DCECE5" />
-                <rect x="403" y="436" width="172" height="76" rx="5" fill="#F1B248" />
-                <circle cx="426" cy="394" r="12" fill="#D46C49" />
-                <path d="M420 394H432M426 388V400" stroke="#F8F3E9" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="427" cy="462" r="11" fill="#123A38" />
-                <path d="M421 462L425 466L434 456" stroke="#F8F3E9" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M451 387H550M451 402H520" stroke="#123A38" strokeWidth="6" strokeLinecap="round" />
-                <path d="M451 458H554M451 477H530M451 494H505" stroke="#123A38" strokeWidth="6" strokeLinecap="round" />
+              <rect width="700" height="620" fill="#89B7B5" />
+              <rect width="700" height="620" fill="url(#diagonal-grid)" />
+              <g transform="translate(528 126)">
+                <circle r="108" fill="#F1B248" />
+                <circle r="136" fill="none" stroke="#F1B248" strokeOpacity=".22" strokeWidth="14" />
+                <circle r="74" fill="none" stroke="#123A38" strokeOpacity=".75" strokeWidth="3" />
+                <path d="M0-94V-76M94 0H76M0 94V76M-94 0H-76M67-67L54-54M67 67L54 54M-67 67L-54 54M-67-67L-54-54" stroke="#123A38" strokeWidth="4" />
+                <circle r="12" fill="#123A38" />
+                <path d="M0 0V-46M0 0L32 20" stroke="#123A38" strokeWidth="5" strokeLinecap="round" />
+                <text x="-26" y="158" fill="#123A38" fontSize="11" fontFamily="monospace" letterSpacing="2">DIAL</text>
               </g>
-              <g transform="translate(82 72)">
-                <rect width="145" height="110" fill="#F8F3E9" stroke="#123A38" strokeWidth="5" />
-                <path d="M22 72C22 51 39 34 60 34H65C86 34 103 51 103 72" stroke="#D46C49" strokeWidth="8" />
-                <path d="M22 72H39V88H22V72ZM86 72H103V88H86V72Z" fill="#D46C49" />
-                <path d="M60 33V18M48 36L37 23M72 36L83 23" stroke="#123A38" strokeWidth="5" strokeLinecap="round" />
-                <text x="18" y="103" fill="#123A38" fontSize="10" fontFamily="monospace" letterSpacing="2">MISSED CALL</text>
+              <g>
+                <path d="M153 196C153 158 184 130 222 130H378C416 130 447 158 447 196" stroke="#123A38" strokeWidth="26" strokeLinecap="round" />
+                <path d="M150 181H188V223H150V181ZM412 181H450V223H412V181Z" fill="#D46C49" stroke="#123A38" strokeWidth="6" />
+                <rect x="144" y="205" width="312" height="358" fill="#F8F3E9" stroke="#123A38" strokeWidth="9" />
+                <rect x="144" y="205" width="312" height="65" fill="#123A38" />
+                <circle cx="177" cy="237" r="8" fill="#F1B248" />
+                <path d="M205 237H391" stroke="#D7E7E1" strokeWidth="4" />
+                <text x="174" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">PRESS A DIGIT</text>
+                <g fill="#D46C49" stroke="#123A38" strokeWidth="2">
+                  <rect x="174" y="335" width="29" height="24" />
+                  <rect x="212" y="335" width="29" height="24" />
+                  <rect x="250" y="335" width="29" height="24" />
+                  <rect x="174" y="368" width="29" height="24" />
+                  <rect x="212" y="368" width="29" height="24" />
+                  <rect x="250" y="368" width="29" height="24" />
+                  <rect x="174" y="401" width="29" height="24" />
+                  <rect x="212" y="401" width="29" height="24" />
+                  <rect x="250" y="401" width="29" height="24" />
+                  <rect x="174" y="434" width="29" height="24" />
+                  <rect x="212" y="434" width="29" height="24" />
+                  <rect x="250" y="434" width="29" height="24" />
+                </g>
+                <g fill="#F8F3E9" fontSize="13" fontWeight="700" fontFamily="monospace" textAnchor="middle">
+                  <text x="188" y="352">1</text><text x="226" y="352">2</text><text x="264" y="352">3</text>
+                  <text x="188" y="385">4</text><text x="226" y="385">5</text><text x="264" y="385">6</text>
+                  <text x="188" y="418">7</text><text x="226" y="418">8</text><text x="264" y="418">9</text>
+                  <text x="188" y="451">*</text><text x="226" y="451">0</text><text x="264" y="451">#</text>
+                </g>
+                <text x="307" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">OPENINGS</text>
+                <rect x="307" y="335" width="119" height="57" fill="#DCECE5" stroke="#123A38" strokeWidth="3" />
+                <text x="320" y="357" fill="#D46C49" fontSize="12" fontWeight="700" fontFamily="monospace">01</text>
+                <path d="M348 353H411M348 370H390" stroke="#123A38" strokeWidth="5" strokeLinecap="square" />
+                <rect x="307" y="401" width="119" height="57" fill="#F1B248" stroke="#123A38" strokeWidth="3" />
+                <text x="320" y="423" fill="#123A38" fontSize="12" fontWeight="700" fontFamily="monospace">02</text>
+                <path d="M348 419H411M348 436H390" stroke="#123A38" strokeWidth="5" strokeLinecap="square" />
               </g>
-              <g transform="translate(45 564)">
+              <g transform="translate(45 575)">
                 <path d="M0 0H220" stroke="#F8F3E9" strokeWidth="2" />
                 <text y="27" fill="#F8F3E9" fontSize="12" fontFamily="monospace" letterSpacing="2">01  /  TWO OPENINGS</text>
-              </g>
-              <g transform="translate(590 560) rotate(-12)">
-                <circle cx="0" cy="0" r="38" fill="#F8F3E9" fillOpacity=".2" stroke="#123A38" strokeWidth="3" />
-                <text x="-18" y="-3" fill="#123A38" fontSize="16" fontWeight="700" fontFamily="sans-serif">CS</text>
-                <text x="-19" y="14" fill="#123A38" fontSize="7" fontFamily="monospace">READY</text>
               </g>
             </svg>
             <div className="absolute left-6 top-6 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#F8F3E9]/80 sm:left-8 sm:top-8">
@@ -201,7 +209,7 @@ function LandingPageContent() {
                 <span className="studio-number">02</span>
                 <div className="studio-symbol"><KeypadSymbol /></div>
                 <h3>Press</h3>
-                <p>Callers hear your shop name, then press 1 to book or 9 to leave a message.</p>
+              <p>Callers hear your shop name, then press 1 to book or 9 to get a callback.</p>
               </article>
               <article className="studio-process-card studio-process-card-wide">
                 <span className="studio-number">03</span>
@@ -216,19 +224,19 @@ function LandingPageContent() {
           </div>
         </section>
 
-        <section id="why-call-slot" className="bg-ink text-paper">
+        <section id="why-call-slot" className="bg-accent text-paper">
           <div className="mx-auto grid max-w-[1280px] gap-12 px-6 py-20 sm:px-10 sm:py-28 lg:grid-cols-[1fr_1fr] lg:items-end lg:px-12">
             <div>
               <p className="studio-eyebrow studio-eyebrow-light mb-6"><span className="studio-eyebrow-line" />The Call Slot promise</p>
               <h2 className="max-w-[620px] text-4xl font-bold leading-[0.93] tracking-[-0.06em] sm:text-6xl">
-                Your phone should<br />earn its keep.
+                Your phone should<br /><span className="text-sun">earn its keep.</span>
               </h2>
             </div>
             <div className="lg:justify-self-end">
               <p className="max-w-[390px] text-[18px] leading-[1.55] text-paper/70">
                 One booked appointment pays for the month. If Call Slot doesn&apos;t book one, you don&apos;t pay for one.
               </p>
-              <Link href="/onboarding" className="studio-button studio-button-light mt-8">
+              <Link href="/onboarding" className="studio-button studio-button-sun mt-8">
                 Start with your number <span aria-hidden="true">↗</span>
               </Link>
             </div>

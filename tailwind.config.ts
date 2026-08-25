@@ -23,11 +23,11 @@ const config: Config = {
         "accent-hover": "#571F1F",
         border: "#D8D0C4",
         input: "#D8D0C4",
-        ring: "#6E2C2C",
+        ring: "#D46C49",
         background: "#F3EEE4",
         foreground: "#1C1916",
         primary: {
-          DEFAULT: "#6E2C2C",
+          DEFAULT: "#D46C49",
           foreground: "#FAF7F1",
         },
         secondary: {
@@ -35,7 +35,7 @@ const config: Config = {
           foreground: "#1C1916",
         },
         destructive: {
-          DEFAULT: "#6E2C2C",
+          DEFAULT: "#D46C49",
           foreground: "#FAF7F1",
         },
         muted: {
@@ -43,7 +43,7 @@ const config: Config = {
           foreground: "#6F675E",
         },
         accent: {
-          DEFAULT: "#6E2C2C",
+          DEFAULT: "#D46C49",
           hover: "#571F1F",
           foreground: "#FAF7F1",
         },
