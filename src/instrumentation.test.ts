@@ -12,7 +12,7 @@ vi.mock("./lib/env", () => ({
   validateEnv: mockValidateEnv,
 }));
 
-vi.mock("./lib/twilio", () => ({
+vi.mock("./lib/twilio-rest", () => ({
   ensureTwilioWebhooks: mockEnsureTwilioWebhooks,
 }));
 

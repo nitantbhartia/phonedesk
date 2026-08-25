@@ -8,7 +8,7 @@ import {
   ensureTwilioWebhooks,
   purchaseTwilioPhoneNumber,
   releaseTwilioPhoneNumber,
-} from "@/lib/twilio";
+} from "@/lib/twilio-rest";
 
 async function resolveUserId(session: {
   user?: {

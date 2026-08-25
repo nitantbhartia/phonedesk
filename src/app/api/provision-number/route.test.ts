@@ -29,7 +29,7 @@ vi.mock("@/lib/rate-limit", () => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/twilio", () => ({
+vi.mock("@/lib/twilio-rest", () => ({
   ensureTwilioWebhooks: vi.fn(),
   purchaseTwilioPhoneNumber: vi.fn(),
   releaseTwilioPhoneNumber: vi.fn(),
@@ -42,7 +42,7 @@ import {
   ensureTwilioWebhooks,
   purchaseTwilioPhoneNumber,
   releaseTwilioPhoneNumber,
-} from "@/lib/twilio";
+} from "@/lib/twilio-rest";
 import { POST } from "./route";
 
 describe("POST /api/provision-number", () => {
