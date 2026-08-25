@@ -143,7 +143,8 @@ function LandingPageContent() {
       <main>
         <section className="mx-auto grid max-w-5xl gap-16 px-6 pb-24 pt-20 sm:px-8 sm:pb-28 sm:pt-24 lg:grid-cols-12 lg:items-start lg:gap-12">
           <div className="lg:col-span-7">
-            <h1 className="font-display text-[3.15rem] leading-[0.96] tracking-[-0.02em] text-ink sm:text-[4.6rem] lg:text-[5.15rem]">
+            <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted">Call Slot · ringpaw.com</p>
+            <h1 className="font-display text-[3.15rem] leading-[0.96] tracking-[-0.02em] text-ink sm:text-[4.6rem] lg:text-[5.4rem]">
               Your voicemail
               <br />
               can book.
@@ -215,7 +216,7 @@ Press 9 and we'll call you back.`}
         <section id="price" className="border-t border-line">
           <div className="mx-auto max-w-5xl px-6 py-20 sm:px-8 sm:py-24">
             <h2 className="font-display text-[2.15rem] tracking-tight sm:text-[2.75rem]">Price</h2>
-            <p className="mt-10 font-display text-6xl leading-none tracking-tight sm:text-7xl">$79</p>
+            <p className="mt-10 font-display text-5xl leading-none tracking-tight sm:text-6xl">$79</p>
             <p className="mt-4 text-[16px] text-ink">a month. One shop, one number.</p>
             <p className="mt-2 text-[15px] text-muted">One booked appointment or you don&apos;t pay.</p>
             <Link

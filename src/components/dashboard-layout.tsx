@@ -11,7 +11,7 @@ import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
 const navItems: Array<{ href: string; label: string; tourId?: string; icon: React.ReactNode }> = [
   {
     href: "/dashboard",
-    label: "Dashboard",
+    label: "Call desk",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="3" y="3" width="7" height="7" />

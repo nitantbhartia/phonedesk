@@ -154,28 +154,28 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Billing</h1>
-        <p className="text-muted font-medium mt-1">View your plan and monthly usage.</p>
+        <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Plan &amp; billing</h1>
+        <p className="mt-1 text-[14px] text-muted">One line, one location, $79 a month.</p>
       </div>
 
       {/* Current Plan Usage */}
       <section className="bg-surface rounded-sm border border-line p-6 sm:p-8">
         {subscriptionActive && activePlan ? (
           <>
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-ink">
-                  Current Plan: {activePlan.name}
+                <h2 className="font-display text-2xl text-ink">
+                  {activePlan.name} plan
                   {usage?.subscriptionStatus === "trialing" && (
-                    <span className="ml-2 inline-flex items-center rounded-sm bg-paper px-2.5 py-1 text-xs font-bold text-ink">Trial</span>
+                    <span className="ml-2 inline-flex items-center bg-paper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Trial</span>
                   )}
                 </h2>
                 <p className="text-muted font-medium mt-1">${activePlan.price}/month</p>
               </div>
               <span
-                className={`inline-flex w-fit items-center rounded-sm px-3 py-1 text-xs font-bold ${
+                className={`inline-flex w-fit items-center border border-line px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${
                   isAtLimit
                   ? "bg-paper text-accent"
                   : isNearLimit
@@ -219,16 +219,16 @@ export default function BillingPage() {
             </div>
           </>
         ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-10 h-10 rounded-sm bg-paper flex items-center justify-center shrink-0">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-line bg-paper">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-ink" strokeWidth="2.5">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-ink">No active plan</h2>
-              <p className="text-muted font-medium mt-1">$79/mo — one location, one line. Set STRIPE_PRO_PRICE_ID in env for live checkout.</p>
+              <h2 className="font-display text-2xl text-ink">No active plan</h2>
+              <p className="mt-1 text-[13px] text-muted">$79/mo — one location, one line.</p>
             </div>
           </div>
         )}
@@ -244,62 +244,50 @@ export default function BillingPage() {
           return (
             <article
               key={plan.id}
-              className={`rounded-sm border p-6 sm:p-7 ${
-                isCurrent
-                ? "bg-surface border-line ring-2 ring-accent/40"
-                : plan.popular
-                ? "bg-ink text-surface border-ink"
-                : "bg-surface border-line"
-              }`}
+              className="border border-line bg-surface p-6 sm:p-7"
             >
               <div className="flex items-center justify-between mb-3">
-                <h3 className={`text-xl font-bold ${plan.popular && !isCurrent ? "text-accent" : "text-ink"}`}>
+                <h3 className="font-display text-2xl text-ink">
                   {plan.name}
                 </h3>
                 {isCurrent ? (
-                  <span className="inline-flex items-center rounded-sm bg-paper px-2.5 py-1 text-[11px] font-bold text-ink">
+                  <span className="inline-flex items-center bg-paper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
                     Current
                   </span>
                 ) : null}
                 {plan.popular && !isCurrent ? (
-                  <span className="inline-flex items-center rounded-sm bg-line px-2.5 py-1 text-[11px] font-bold text-ink">
+                  <span className="inline-flex items-center bg-paper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
                     Recommended
                   </span>
                 ) : null}
               </div>
               <div className="mb-6">
-                <span className={`text-4xl font-medium ${plan.popular && !isCurrent ? "text-white" : "text-ink"}`}>
+                <span className="font-display text-4xl text-ink">
                   ${plan.price}
                 </span>
-                <span className={`${plan.popular && !isCurrent ? "text-white/70" : "text-muted"}`}>/mo</span>
+                <span className="text-muted">/mo</span>
               </div>
               <ul className="space-y-2 mb-6">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
-                    className={`flex items-start gap-2 text-sm ${
-                      plan.popular && !isCurrent ? "text-white/85" : "text-ink/80"
-                    }`}
+                    className="flex items-start gap-2 text-sm text-ink/80"
                   >
-                    <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular && !isCurrent ? "text-accent" : "text-ink"}`} />
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
                     {feature}
                   </li>
                 ))}
               </ul>
               {isCurrent ? (
                 <button
-                  className="w-full py-3 rounded-sm border-2 border-line text-ink font-bold text-sm opacity-70 cursor-not-allowed"
+                  className="w-full border border-line py-3 text-sm text-muted opacity-70 cursor-not-allowed"
                   disabled
                 >
                   Current Plan
                 </button>
               ) : (
                 <button
-                  className={`w-full py-3 rounded-sm font-medium text-sm transition-colors disabled:opacity-60 ${
-                    plan.popular
-                    ? "bg-line text-ink hover:bg-surface"
-                    : "border-2 border-ink text-ink hover:bg-ink hover:text-white"
-                  }`}
+                  className="w-full bg-ink py-3 text-sm text-surface transition-colors hover:bg-accent disabled:opacity-60"
                   onClick={() => {
                     if (subscriptionActive && stripeSubscriptionId) {
                       void upgradePlan(plan.id);
@@ -333,10 +321,9 @@ export default function BillingPage() {
 
       {/* Billing Info — only shown when Stripe customer exists */}
       {hasStripeCustomer && (
-        <section className="bg-surface rounded-sm border border-line p-6 sm:p-8">
-          <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="w-5 h-5 text-ink" />
-            <h2 className="text-xl font-bold text-ink">Payment Method</h2>
+        <section className="border border-line bg-surface p-6 sm:p-8">
+          <div className="mb-2">
+            <h2 className="font-display text-2xl text-ink">Payment method</h2>
           </div>
           <div className="text-center py-8 text-muted">
             <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -345,7 +332,7 @@ export default function BillingPage() {
               Open Stripe customer portal to update payment method, invoices, and subscription.
             </p>
             <button
-              className="mt-4 inline-flex items-center px-5 py-2.5 bg-ink text-white rounded-sm font-medium text-sm hover:bg-opacity-90 transition-colors"
+              className="mt-4 inline-flex items-center bg-ink px-5 py-2.5 text-sm text-surface transition-colors hover:bg-opacity-90"
               onClick={() => void openBillingPortal()}
             >
               <Zap className="w-4 h-4 mr-2" /> Open Billing Portal
