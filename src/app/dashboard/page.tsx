@@ -212,7 +212,7 @@ export default function DashboardPage() {
         hour: "numeric",
         minute: "2-digit",
       })
-    : "—";
+    : "None";
 
   return (
     <div>
@@ -227,13 +227,13 @@ export default function DashboardPage() {
 
       <header className="mb-10 flex items-end justify-between gap-6">
         <div>
-          <h1 className="font-display text-[2.6rem] leading-none tracking-tight text-ink">Call desk</h1>
+          <h1 className="font-display text-[2.35rem] leading-none tracking-tight text-ink">Dashboard</h1>
           <p className="mt-2 text-[14px] text-muted">
-            A quiet record of what came through.
+            Forwarded calls that booked or left a callback.
           </p>
         </div>
         <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
-          {agentLive ? "Live" : "Paused"}
+          {agentLive ? "On" : "Paused"}
         </p>
       </header>
 
@@ -292,27 +292,27 @@ export default function DashboardPage() {
 
       {/* Confirmation dialog — turning agent off */}
       {confirmOff && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 px-4">
-          <div className="w-full max-w-sm rounded-sm border border-line bg-surface p-8 text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-surface rounded-sm p-8 max-w-sm w-full text-center">
             <div className="w-14 h-14 bg-paper rounded-sm flex items-center justify-center mx-auto mb-4">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="2.5">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
             </div>
-            <h3 className="mb-2 font-display text-2xl text-ink">Turn off Call Slot?</h3>
+            <h3 className="text-xl font-bold text-ink mb-2">Turn off Call Slot?</h3>
             <p className="text-muted text-sm mb-6">
               Calls will go to voicemail until you turn it back on. You might miss bookings while it&apos;s off.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmOff(false)}
-                className="flex-1 rounded-sm border border-line py-3 text-[12px] text-ink transition-colors hover:bg-paper"
+                className="flex-1 py-3 rounded-sm border-2 border-line font-bold text-ink hover:bg-paper transition-colors"
               >
                 Keep it on
               </button>
               <button
                 onClick={() => { setConfirmOff(false); void toggleAgent(false); }}
-                className="flex-1 rounded-sm bg-accent py-3 text-[12px] text-accent-foreground transition-colors hover:bg-accent-hover"
+                className="flex-1 py-3 rounded-sm bg-accent text-white font-bold hover:bg-accent-hover transition-colors"
               >
                 Turn off
               </button>
@@ -323,15 +323,15 @@ export default function DashboardPage() {
 
       {/* Subscribe prompt modal — shown when unsubscribed user tries to enable agent */}
       {subscribePromptOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 px-4" onClick={() => setSubscribePromptOpen(false)}>
-          <div className="w-full max-w-sm rounded-sm border border-line bg-surface p-8 text-center" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setSubscribePromptOpen(false)}>
+          <div className="bg-surface rounded-sm p-8 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 bg-line rounded-sm flex items-center justify-center mx-auto mb-4">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-ink" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
-            <h3 className="mb-2 font-display text-2xl text-ink">Subscription required</h3>
+            <h3 className="text-xl font-bold text-ink mb-2">Subscription required</h3>
             <p className="text-muted text-sm mb-6">
               You need an active plan to keep Call Slot answering forwarded calls.
             </p>
@@ -339,13 +339,13 @@ export default function DashboardPage() {
               <Link
                 href="/settings/billing"
                 onClick={() => setSubscribePromptOpen(false)}
-                className="w-full rounded-sm bg-ink py-3 text-[12px] text-surface transition-colors hover:bg-opacity-90"
+                className="w-full py-3 bg-ink text-surface rounded-sm font-medium hover:bg-opacity-90 transition-colors "
               >
                 Choose a Plan
               </Link>
               <button
                 onClick={() => setSubscribePromptOpen(false)}
-                className="w-full rounded-sm border border-line py-3 text-[12px] text-ink transition-colors hover:bg-paper"
+                className="w-full py-3 rounded-sm border-2 border-line font-bold text-ink hover:bg-paper transition-colors"
               >
                 Not now
               </button>
@@ -356,11 +356,11 @@ export default function DashboardPage() {
 
       {/* Transcript modal */}
       {transcriptCall && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 px-4" onClick={() => setTranscriptCall(null)}>
-          <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-sm border border-line bg-surface p-8" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setTranscriptCall(null)}>
+          <div className="bg-surface rounded-sm p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="font-display text-2xl text-ink">{transcriptCall.callerName || "Unknown caller"}</h3>
+                <h3 className="text-xl font-bold text-ink">{transcriptCall.callerName || "Unknown Caller"}</h3>
                 <p className="text-sm text-muted">{new Date(transcriptCall.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p>
               </div>
               <button onClick={() => setTranscriptCall(null)} className="text-muted hover:text-ink transition-colors">
@@ -371,20 +371,20 @@ export default function DashboardPage() {
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">{getStatusLabel(transcriptCall)}</p>
               {transcriptCall.appointment && (
                 <div className="bg-paper rounded-sm p-4 border border-line">
-                  <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Booking confirmed</p>
-                  <p className="text-[15px] text-ink">{transcriptCall.appointment.petName} — {transcriptCall.appointment.serviceName}</p>
+                  <p className="text-xs font-bold text-ink uppercase tracking-wider mb-1">Booking Confirmed</p>
+                  <p className="font-bold text-ink">{transcriptCall.appointment.petName} — {transcriptCall.appointment.serviceName}</p>
                   <p className="text-sm text-ink">
                     {new Date(transcriptCall.appointment.startTime).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   </p>
                 </div>
               )}
               <div className="bg-paper rounded-sm p-4">
-                <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Call summary</p>
+                <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">Call Summary</p>
                 <p className="text-sm text-ink leading-relaxed">{transcriptCall.summary || "No summary available for this call."}</p>
               </div>
               {transcriptCall.transcript && (
                 <details className="group">
-                  <summary className="flex cursor-pointer items-center gap-2 text-xs text-muted uppercase tracking-wider transition-colors hover:text-ink">
+                  <summary className="flex items-center gap-2 cursor-pointer text-xs font-bold text-muted uppercase tracking-wider hover:text-ink transition-colors">
                     <svg className="w-3 h-3 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path d="m9 18 6-6-6-6" /></svg>
                     Full Transcript
                   </summary>
@@ -414,7 +414,7 @@ export default function DashboardPage() {
           { label: "Booked", value: String(stats.bookingsConfirmed), note: "30 days" },
           { label: "Revenue", value: `$${stats.revenueProtected.toLocaleString()}`, note: `$${avgServicePrice} avg`, tour: "tour-revenue" },
           { label: "Callbacks", value: String(stats.callbacks), note: "To return" },
-          { label: "Next", value: nextAppointmentLabel, note: stats.nextAppointment?.serviceName || "No upcoming booking" },
+          { label: "Next", value: nextAppointmentLabel, note: stats.nextAppointment?.serviceName || "Schedule" },
         ].map((metric) => (
           <div key={metric.label} {...(metric.tour ? { "data-tour": metric.tour } : {})}>
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">{metric.label}</p>
@@ -558,12 +558,7 @@ export default function DashboardPage() {
         )}
 
         {recentCalls.length === 0 ? (
-            <div className="border-y border-line py-8">
-              <p className="font-display text-2xl text-ink">Nothing on the line yet.</p>
-              <p className="mt-1 text-[13px] text-muted">
-                Forward an unanswered call to Call Slot and the first booking will appear here.
-              </p>
-            </div>
+          <p className="border-t border-line py-8 text-[14px] text-muted">No forwarded calls yet.</p>
         ) : (
           <table className="w-full text-left">
             <thead>

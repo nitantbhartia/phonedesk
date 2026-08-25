@@ -23,7 +23,14 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Save, Plus, Trash2 } from "lucide-react";
+import {
+  Building2,
+  Clock,
+  Save,
+  Plus,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { toast } from "@/components/ui/toast";
 
 const US_TIMEZONES = [
@@ -278,7 +285,7 @@ export default function BusinessProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {fetchError && (
         <div className="flex items-center gap-3 bg-paper border border-line rounded-sm px-5 py-4">
           <p className="flex-1 text-sm text-accent font-medium">{fetchError}</p>
@@ -301,12 +308,12 @@ export default function BusinessProfilePage() {
         </div>
         <Button onClick={saveProfile} disabled={saving} className="w-full sm:w-auto">
           <Save className="w-4 h-4 mr-2" />
-          {saving ? "Saving..." : "Save profile"}
+          {saving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
       {saveStatus && (
-        <div className={`border border-line bg-paper p-3 text-sm ${
+        <div className={`p-3 rounded-lg text-sm ${
           saveStatus.ok
           ? "bg-paper text-ink border border-line"
           : "bg-paper text-ink border border-line"
@@ -317,8 +324,11 @@ export default function BusinessProfilePage() {
 
       {/* Business Info */}
       <Card>
-        <CardHeader className="border-b border-line">
-          <CardTitle>Business information</CardTitle>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Business Information
+          </CardTitle>
           <CardDescription>
             Core details about your shop. Call Slot uses these on forwarded calls.
           </CardDescription>
@@ -374,8 +384,11 @@ export default function BusinessProfilePage() {
 
       {/* Business Hours */}
       <Card>
-        <CardHeader className="border-b border-line">
-          <CardTitle>Business hours</CardTitle>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Business Hours
+          </CardTitle>
           <CardDescription>
             Set your operating hours. Call Slot only offers times inside these hours.
           </CardDescription>
@@ -437,16 +450,19 @@ export default function BusinessProfilePage() {
 
       {/* Groomers / Team */}
       <Card>
-        <CardHeader className="border-b border-line">
-          <CardTitle>Team</CardTitle>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Team
+          </CardTitle>
           <CardDescription>
-            Add people who take appointments at your shop.
+            Add team members if more than one person takes appointments.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {groomers.length === 0 && (
             <p className="text-sm text-muted-foreground py-2">
-              No team members yet. Add people below if you share the calendar.
+              No team members added yet. Add people below.
             </p>
           )}
           {groomers.map((groomer, i) => (
@@ -472,7 +488,7 @@ export default function BusinessProfilePage() {
                     updated[i] = { ...groomer, specialties: e.target.value };
                     setGroomers(updated);
                   }}
-                  placeholder="Specialties or notes"
+                  placeholder="doodles, hand stripping, cats"
                 />
               </div>
               <Button

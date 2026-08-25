@@ -499,7 +499,7 @@ export default function OnboardingPage() {
               setDetectedCallSummary(newest?.summary ?? null);
               setCallPhase("completed");
             } else {
-              // call_started fired — the test line is active
+              // call_started fired — AI is live
               setCallPhase("in_progress");
             }
           } else if (phase === "in_progress") {
@@ -924,18 +924,18 @@ export default function OnboardingPage() {
       {step === 3 && (
         <div className="space-y-5">
           {/* Tab toggle */}
-          <div className="flex border-b border-line">
+          <div className="flex rounded-sm bg-paper p-1">
             <button
               type="button"
               onClick={() => { setSignupModalTab("signup"); setSignupError(""); }}
-              className={`flex-1 border-b-2 py-3 text-[12px] tracking-[0.04em] transition-all ${signupModalTab === "signup" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+              className={`flex-1 py-2 rounded-sm text-sm font-bold transition-all ${signupModalTab === "signup" ? "bg-surface text-ink" : "text-muted hover:text-ink"}`}
             >
               Create account
             </button>
             <button
               type="button"
               onClick={() => { setSignupModalTab("signin"); setSignupError(""); }}
-              className={`flex-1 border-b-2 py-3 text-[12px] tracking-[0.04em] transition-all ${signupModalTab === "signin" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+              className={`flex-1 py-2 rounded-sm text-sm font-bold transition-all ${signupModalTab === "signin" ? "bg-surface text-ink" : "text-muted hover:text-ink"}`}
             >
               Sign in
             </button>
@@ -945,9 +945,14 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={handleGoogleSignup}
-            className="flex w-full items-center justify-center gap-3 border border-line bg-surface py-3.5 text-[12px] tracking-[0.04em] text-ink transition-all hover:bg-paper"
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-sm border border-line bg-surface font-semibold text-ink hover:bg-paper/40 transition-all"
           >
-            <span className="font-display text-xl leading-none">G</span>
+            <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
+              <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.2-2.7-.5-4z" fill="#FFC107"/>
+              <path d="M6.3 14.7l7 5.1C15.1 16.5 19.2 14 24 14c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.6 0-14.2 4.3-17.7 10.7z" fill="#FF3D00"/>
+              <path d="M24 45c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.5C29.6 36 26.9 37 24 37c-6.1 0-10.7-3.1-11.8-8.5l-7 5.4C8.2 40.8 15.5 45 24 45z" fill="#4CAF50"/>
+              <path d="M44.5 20H24v8.5h11.8c-.8 2.4-2.3 4.4-4.3 5.9l6.6 5.5C41.5 37.1 45 31 45 24c0-1.4-.2-2.7-.5-4z" fill="#1976D2"/>
+            </svg>
             Continue with Google
           </button>
 
@@ -960,7 +965,7 @@ export default function OnboardingPage() {
           {signupModalTab === "signup" ? (
             <form onSubmit={handleSignupAndContinue} className="space-y-3">
               <div className="space-y-1">
-                <label className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted">Your name</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Your name</label>
                 <OnboardingInput
                   type="text"
                   required
@@ -971,7 +976,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted">Email</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Email</label>
                 <OnboardingInput
                   type="email"
                   required
@@ -982,7 +987,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted">Password</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Password</label>
                 <OnboardingInput
                   type="password"
                   required
@@ -1004,7 +1009,7 @@ export default function OnboardingPage() {
           ) : (
             <form onSubmit={handleSigninAndContinue} className="space-y-3">
               <div className="space-y-1">
-                <label className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted">Email</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Email</label>
                 <OnboardingInput
                   type="email"
                   required
@@ -1015,7 +1020,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted">Password</label>
+                <label className="text-xs font-bold text-muted uppercase tracking-wide">Password</label>
                 <OnboardingInput
                   type="password"
                   required
@@ -1556,7 +1561,7 @@ export default function OnboardingPage() {
                       height="16"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#6E2C2C"
+                      stroke="#22C55E"
                       strokeWidth="3"
                     >
                       <polyline points="20 6 9 17 4 12" />
@@ -1604,7 +1609,7 @@ export default function OnboardingPage() {
                       height="16"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#6E2C2C"
+                      stroke="#22C55E"
                       strokeWidth="3"
                     >
                       <polyline points="20 6 9 17 4 12" />
@@ -1664,7 +1669,7 @@ export default function OnboardingPage() {
                       height="16"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#6E2C2C"
+                      stroke="#22C55E"
                       strokeWidth="3"
                     >
                       <polyline points="20 6 9 17 4 12" />
@@ -1716,7 +1721,7 @@ export default function OnboardingPage() {
                 disabled={simulateLoading}
                 className="px-4 py-2 rounded-sm bg-ink text-surface text-sm font-bold disabled:opacity-50"
               >
-                {simulateSessionId ? "Replay menu" : "Start a test call"}
+                {simulateSessionId ? "Replay menu" : "Start simulate"}
               </button>
               {["1", "2", "9"].map((digit) => (
                 <button
@@ -1836,10 +1841,10 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Call summary — after completion */}
+              {/* AI call summary — after completion */}
               {callPhase === "completed" && detectedCallSummary && (
                 <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 bg-paper border border-line rounded-sm p-4">
-                <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Call summary</p>
+                  <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Call summary</p>
                   <p className="text-sm text-ink/80 leading-relaxed">{detectedCallSummary}</p>
                 </div>
               )}
@@ -1885,14 +1890,14 @@ export default function OnboardingPage() {
       {step === 8 && (
         <div className="space-y-5">
           {provisionedNumber && (
-            <div className="flex items-center justify-between border border-line bg-surface p-4">
+            <div className="bg-line border border-line rounded-sm p-4 flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-muted uppercase tracking-wider">Your Call Slot number</p>
                 <p className="text-xl font-medium text-ink">{formattedProvisionedNumber}</p>
               </div>
               <button
                 onClick={() => { void navigator.clipboard.writeText(formattedProvisionedNumber); }}
-                className="border border-line bg-paper px-3 py-1.5 text-xs text-muted transition-colors hover:text-ink"
+                className="text-xs font-bold text-muted hover:text-ink px-3 py-1.5 rounded-lg bg-surface border border-line transition-colors"
               >
                 Copy
               </button>
@@ -1937,7 +1942,7 @@ export default function OnboardingPage() {
                 </code>
                 <button
                   onClick={() => { void navigator.clipboard.writeText(`*61*${provisionedNumber.replace(/\D/g, "")}#`); }}
-                  className="shrink-0 border border-line bg-paper px-3 py-1.5 text-xs text-muted transition-colors hover:text-ink"
+                  className="text-xs font-bold text-muted hover:text-ink px-3 py-1.5 rounded-lg bg-surface border border-line transition-colors shrink-0"
                 >
                   Copy
                 </button>
@@ -1978,7 +1983,7 @@ export default function OnboardingPage() {
                 height="32"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#6E2C2C"
+                stroke="#16A34A"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -2034,7 +2039,7 @@ export default function OnboardingPage() {
                     height="16"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#6E2C2C"
+                    stroke="#22C55E"
                     strokeWidth="3"
                   >
                     <polyline points="20 6 9 17 4 12" />
@@ -2053,12 +2058,12 @@ export default function OnboardingPage() {
           {awaitingApproval && (
             <div className="bg-paper border border-line rounded-sm p-8 text-center">
               <div className="w-16 h-16 bg-paper rounded-sm flex items-center justify-center mx-auto mb-4">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1C1916" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
               </div>
-              <h3 className="text-xl font-display text-ink mb-2">
+              <h3 className="text-xl font-bold text-blue-900 mb-2">
                 Your setup is complete!
               </h3>
               <p className="text-ink font-medium leading-relaxed">

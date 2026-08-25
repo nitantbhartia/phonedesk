@@ -77,7 +77,6 @@ function AuthPageContent() {
 
       <div className="mx-auto grid max-w-5xl gap-16 px-6 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-6">
-          <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted">Call Slot · ringpaw.com</p>
           <h1 className="font-display text-[2.75rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
             Your voicemail
             <br />

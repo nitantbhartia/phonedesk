@@ -234,9 +234,9 @@ export default function PricingPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Services &amp; pricing</h1>
-          <p className="mt-1 text-[14px] text-muted">
-            Set the short menu callers can book by phone, plus any specific pricing overrides.
+          <h1 className="font-display text-4xl tracking-tight text-ink">Services &amp; Pricing</h1>
+          <p className="text-muted font-medium mt-1">
+            Manage the services you offer and any breed- or size-specific pricing overrides. These are what callers can book by phone.
           </p>
         </div>
         <button
@@ -259,9 +259,9 @@ export default function PricingPage() {
       <div className="bg-surface rounded-sm border border-line p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div>
-            <h2 className="font-display text-2xl text-ink">Services</h2>
+            <h2 className="font-bold text-ink">Your Services</h2>
             <p className="text-xs text-muted mt-1">
-              Base prices quoted to callers. Mark an add-on when it follows a primary booking.
+              Base prices quoted to callers. Toggle &ldquo;Add-on&rdquo; if this service can be booked after a primary booking.
             </p>
           </div>
           <button
@@ -340,7 +340,7 @@ export default function PricingPage() {
                       }}
                       className="sr-only peer"
                     />
-                    <div className="relative h-5 w-10 rounded-sm bg-ink/20 peer peer-checked:bg-line after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-sm after:bg-surface after:content-[''] after:transition-transform peer-checked:after:translate-x-5" />
+                    <div className="w-10 h-5 bg-ink/20 rounded-full peer peer-checked:bg-line transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:after:translate-x-5" />
                   </label>
                 </div>
                 <button
@@ -400,9 +400,9 @@ export default function PricingPage() {
             <line x1="12" y1="1" x2="12" y2="23" />
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
-          <p className="font-display text-xl text-ink">No additional pricing rules yet</p>
+          <p className="font-bold text-muted">No breed-specific pricing rules yet</p>
           <p className="text-sm text-muted mt-1">
-            Add a rule when a service needs a different price for a specific case.
+            Add rules so quotes stay accurate for specific cases, like a longer service at a higher price.
           </p>
         </div>
       ) : (
@@ -414,7 +414,7 @@ export default function PricingPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-xs font-bold text-muted uppercase tracking-wider">
-                  <th className="px-3 sm:px-6 py-3">Category</th>
+                  <th className="px-3 sm:px-6 py-3">Breed</th>
                   <th className="px-3 sm:px-6 py-3">Size</th>
                   <th className="px-3 sm:px-6 py-3">Price</th>
                   <th className="px-3 sm:px-6 py-3 hidden sm:table-cell">Notes</th>
@@ -425,7 +425,7 @@ export default function PricingPage() {
                 {serviceRules.map((rule) => (
                   <tr key={rule.id} className="hover:bg-surface transition-colors">
                     <td className="px-3 sm:px-6 py-3 text-sm font-medium text-ink">
-                      {rule.breed || "Any category"}
+                      {rule.breed || "Any breed"}
                     </td>
                     <td className="px-3 sm:px-6 py-3 text-sm text-muted">
                       {rule.size || "Any size"}
@@ -455,9 +455,9 @@ export default function PricingPage() {
 
       {/* Add pricing rule form */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30">
-          <div className="mx-4 w-full max-w-md rounded-sm border border-line bg-surface p-6 sm:p-8">
-            <h2 className="mb-4 font-display text-2xl text-ink">Add pricing rule</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-surface rounded-sm p-6 sm:p-8 max-w-md w-full mx-4 ">
+            <h2 className="text-xl font-bold text-ink mb-4">Add Pricing Rule</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-muted uppercase mb-1">
@@ -483,8 +483,8 @@ export default function PricingPage() {
                 <div>
                   <label className="block text-xs font-bold text-muted uppercase mb-1">
                     <span className="inline-flex items-center gap-1">
-                    Category
-                    <InfoIcon text="Optional. Enter a category to apply this price only to that group. Leave blank to match every booking." />
+                      Breed
+                      <InfoIcon text="Optional. Enter a breed name to apply this price only to that breed (e.g. 'Standard Poodle', 'Goldendoodle'). Leave blank to match all breeds." />
                     </span>
                   </label>
                   <input
@@ -499,7 +499,7 @@ export default function PricingPage() {
                   <label className="block text-xs font-bold text-muted uppercase mb-1">
                     <span className="inline-flex items-center gap-1">
                       Size
-                    <InfoIcon text="Optional. Restrict this rule to a specific size. When both fields are set, the rule only applies when both match." />
+                      <InfoIcon text="Optional. Restrict this rule to a specific dog size. When both Breed and Size are set, the rule only applies when both match." />
                     </span>
                   </label>
                   <select
@@ -534,7 +534,7 @@ export default function PricingPage() {
                 <label className="block text-xs font-bold text-muted uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Notes
-            <InfoIcon text="Internal note only — not shared with callers. Use it to remind yourself why this rule exists (e.g. '+$20 for extra time')." />
+                    <InfoIcon text="Internal note only — not shared with callers. Use it to remind yourself why this rule exists (e.g. '+$20 for dematting', 'large dog surcharge')." />
                   </span>
                 </label>
                 <input

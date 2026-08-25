@@ -4,12 +4,12 @@ import React from "react";
 import { BrandLogo } from "@/components/brand-logo";
 
 const STEPS = [
-  { number: 1, label: "Business" },
-  { number: 2, label: "Calendar" },
+  { number: 1, label: "Shop name" },
+  { number: 2, label: "Google Calendar" },
   { number: 3, label: "Hours" },
   { number: 4, label: "Services" },
-  { number: 5, label: "Forwarding" },
-  { number: 6, label: "Test call" },
+  { number: 5, label: "Call forwarding" },
+  { number: 6, label: "Test Call Slot" },
 ];
 
 interface OnboardingLayoutProps {
@@ -39,7 +39,7 @@ export function OnboardingLayout({
       </div>
 
       <main className="mx-auto mt-10 w-full max-w-xl sm:mt-14">
-        <div className="mb-7 flex items-baseline justify-between">
+        <div className="mb-8 flex items-baseline justify-between">
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
             Step {currentStep} of {STEPS.length}
           </span>
@@ -52,7 +52,7 @@ export function OnboardingLayout({
           />
         </div>
 
-        <div className="pt-10">
+        <div className="pt-9">
           <div
             key={currentStep}
             className={`animate-in fade-in duration-300 ${
@@ -64,14 +64,14 @@ export function OnboardingLayout({
             <h1 className="font-display text-[1.85rem] leading-[1.1] tracking-tight text-ink sm:text-[2.15rem]">
               {title}
             </h1>
-            <p className="mb-8 mt-3 max-w-md text-[15px] leading-relaxed text-muted">{subtitle}</p>
+            <p className="mt-3 mb-8 max-w-md text-[15px] leading-relaxed text-muted">{subtitle}</p>
 
               {children}
 
               {proTip && (
-                <div className="mt-6 border-t border-line pt-3">
-                  <p className="text-[12px] leading-relaxed text-muted">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink">Note </span>
+                <div className="mt-5 border border-line bg-paper p-3">
+                  <p className="text-xs text-muted">
+                    <span className="font-medium text-ink">Note: </span>
                     {proTip}
                   </p>
                 </div>
