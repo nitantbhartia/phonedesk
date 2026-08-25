@@ -4,12 +4,12 @@ import React from "react";
 import { BrandLogo } from "@/components/brand-logo";
 
 const STEPS = [
-  { number: 1, label: "Shop name" },
-  { number: 2, label: "Google Calendar" },
+  { number: 1, label: "Business" },
+  { number: 2, label: "Calendar" },
   { number: 3, label: "Hours" },
   { number: 4, label: "Services" },
-  { number: 5, label: "Call forwarding" },
-  { number: 6, label: "Test Call Slot" },
+  { number: 5, label: "Forwarding" },
+  { number: 6, label: "Test call" },
 ];
 
 interface OnboardingLayoutProps {
@@ -33,15 +33,15 @@ export function OnboardingLayout({
   const progressPct = ((currentStep - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper px-6 py-8 text-ink sm:px-8">
-      <div className="mx-auto w-full max-w-xl">
+    <div className="flex min-h-screen flex-col bg-paper px-6 py-7 text-ink sm:px-10">
+      <div className="mx-auto w-full max-w-3xl">
         <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
       </div>
 
-      <main className="mx-auto mt-10 w-full max-w-xl sm:mt-14">
-        <div className="mb-8 flex items-baseline justify-between">
+      <main className="mx-auto mt-12 w-full max-w-2xl sm:mt-20">
+        <div className="mb-6 flex items-baseline justify-between">
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-            Step {currentStep} of {STEPS.length}
+            Sheet {currentStep} / {STEPS.length}
           </span>
           <span className="text-[12px] text-ink">{currentLabel}</span>
         </div>
@@ -52,7 +52,7 @@ export function OnboardingLayout({
           />
         </div>
 
-        <div className="pt-9">
+        <div className="pt-10">
           <div
             key={currentStep}
             className={`animate-in fade-in duration-300 ${
@@ -61,7 +61,7 @@ export function OnboardingLayout({
                 : "slide-in-from-right-4"
             }`}
           >
-            <h1 className="font-display text-[1.85rem] leading-[1.1] tracking-tight text-ink sm:text-[2.15rem]">
+            <h1 className="font-display text-[2.35rem] leading-[1.02] tracking-[-0.02em] text-ink sm:text-[3.2rem]">
               {title}
             </h1>
             <p className="mt-3 mb-8 max-w-md text-[15px] leading-relaxed text-muted">{subtitle}</p>
@@ -69,9 +69,9 @@ export function OnboardingLayout({
               {children}
 
               {proTip && (
-                <div className="mt-5 border border-line bg-paper p-3">
-                  <p className="text-xs text-muted">
-                    <span className="font-medium text-ink">Note: </span>
+                <div className="mt-6 border-t border-line pt-3">
+                  <p className="text-[12px] leading-relaxed text-muted">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink">Note </span>
                     {proTip}
                   </p>
                 </div>

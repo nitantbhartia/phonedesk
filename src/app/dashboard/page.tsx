@@ -203,16 +203,12 @@ export default function DashboardPage() {
     );
   }
 
-  const avgServicePrice = stats.revenueProtected > 0 && stats.bookingsConfirmed > 0
-    ? Math.round(stats.revenueProtected / stats.bookingsConfirmed)
-    : 90;
-  const nextAppointmentLabel = stats.nextAppointment
-    ? new Date(stats.nextAppointment.startTime).toLocaleDateString("en-US", {
-        weekday: "short",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "None";
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date());
 
   return (
     <div>
@@ -225,15 +221,16 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <header className="mb-10 flex items-end justify-between gap-6">
+      <header className="mb-10 flex flex-col gap-5 border-b border-line pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-[2.35rem] leading-none tracking-tight text-ink">Dashboard</h1>
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">{todayLabel}</p>
+          <h1 className="font-display text-[3rem] leading-none tracking-tight text-ink">Daybook</h1>
           <p className="mt-2 text-[14px] text-muted">
-            Forwarded calls that booked or left a callback.
+            Calls, openings, and what followed.
           </p>
         </div>
         <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
-          {agentLive ? "On" : "Paused"}
+          {agentLive ? "Line live" : "Line paused"}
         </p>
       </header>
 
@@ -401,7 +398,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div data-tour="tour-calls" className="grid grid-cols-2 gap-x-8 gap-y-6 border-y border-line py-6 sm:grid-cols-3 lg:grid-cols-6">
+      <div data-tour="tour-calls" className="grid grid-cols-1 gap-y-6 border-y border-line py-7 sm:grid-cols-3 sm:gap-x-8">
         {[
           {
             label: "Calls",
@@ -410,11 +407,8 @@ export default function DashboardPage() {
               ? `${Math.round(((stats.callsThisWeek - stats.callsLastWeek) / stats.callsLastWeek) * 100) === 0 ? "7 days" : `${Math.round(((stats.callsThisWeek - stats.callsLastWeek) / stats.callsLastWeek) * 100) > 0 ? "+" : ""}${Math.round(((stats.callsThisWeek - stats.callsLastWeek) / stats.callsLastWeek) * 100)}%`}`
               : "7 days",
           },
-          { label: "Attempts", value: String(stats.bookingAttempts), note: "30 days" },
-          { label: "Booked", value: String(stats.bookingsConfirmed), note: "30 days" },
-          { label: "Revenue", value: `$${stats.revenueProtected.toLocaleString()}`, note: `$${avgServicePrice} avg`, tour: "tour-revenue" },
-          { label: "Callbacks", value: String(stats.callbacks), note: "To return" },
-          { label: "Next", value: nextAppointmentLabel, note: stats.nextAppointment?.serviceName || "Schedule" },
+          { label: "Slots heard", value: String(stats.bookingAttempts), note: "30 days" },
+          { label: "Booked", value: String(stats.bookingsConfirmed), note: "30 days", tour: "tour-revenue" },
         ].map((metric) => (
           <div key={metric.label} {...(metric.tour ? { "data-tour": metric.tour } : {})}>
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">{metric.label}</p>
@@ -520,7 +514,7 @@ export default function DashboardPage() {
 
       <div data-tour="tour-calllog">
         <div className="mb-3 flex items-baseline justify-between gap-4">
-          <h2 className="font-display text-2xl tracking-tight">Recent activity</h2>
+          <h2 className="font-display text-2xl tracking-tight">The book</h2>
           <div className="flex items-baseline gap-5 text-[12px]">
             <button
               onClick={async () => {
@@ -558,7 +552,12 @@ export default function DashboardPage() {
         )}
 
         {recentCalls.length === 0 ? (
-          <p className="border-t border-line py-8 text-[14px] text-muted">No forwarded calls yet.</p>
+          <div className="border-y border-line py-8">
+            <p className="font-display text-2xl text-ink">The page is still blank.</p>
+            <p className="mt-1 text-[13px] text-muted">
+              Forward an unanswered call and its note will land here.
+            </p>
+          </div>
         ) : (
           <table className="w-full text-left">
             <thead>

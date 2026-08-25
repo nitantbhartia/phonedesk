@@ -66,11 +66,12 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
   };
 
   const fieldClass =
-    "mt-1.5 w-full border border-line bg-paper px-3 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-ink";
+    "mt-2 w-full border-x-0 border-b border-t-0 border-line bg-transparent px-0 py-3 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-ink";
 
   return (
-    <div className="w-full border border-line bg-surface px-6 py-7 sm:px-8 sm:py-8">
-      <div className="mb-7 flex gap-6 border-b border-line text-[12px] tracking-[0.04em]">
+    <div className="w-full max-w-md border-y border-line py-7 sm:py-8">
+      <p className="mb-7 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Account ledger</p>
+      <div className="mb-8 flex gap-6 border-b border-line text-[12px] tracking-[0.04em]">
         <button
           type="button"
           onClick={() => {
@@ -97,10 +98,10 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
         </button>
       </div>
 
-      <form onSubmit={handleCredentialsAuth} className="space-y-4">
+      <form onSubmit={handleCredentialsAuth} className="space-y-5">
         {authMode === "signup" ? (
           <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Name</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Name</span>
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -138,7 +139,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
           disabled={isSubmitting}
           className="mt-2 w-full bg-accent px-4 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
         >
-          {isSubmitting ? "Please wait…" : authMode === "signup" ? "Create account" : "Log in"}
+          {isSubmitting ? "Please wait…" : authMode === "signup" ? "Sign the ledger" : "Open account"}
         </button>
       </form>
 
@@ -152,7 +153,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
         type="button"
         onClick={handleGoogleAuth}
         disabled={isSubmitting}
-        className="w-full border border-ink px-4 py-2.5 text-[12px] tracking-[0.04em] text-ink hover:bg-paper disabled:opacity-50"
+        className="w-full border border-line px-4 py-3 text-[12px] tracking-[0.04em] text-ink hover:bg-paper disabled:opacity-50"
       >
         Continue with Google
       </button>
