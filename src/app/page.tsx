@@ -57,7 +57,7 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="studio-site min-h-screen overflow-hidden bg-paper text-ink">
+    <div className="studio-site min-h-screen overflow-x-clip bg-paper text-ink">
       <header className={`studio-header ${isHeaderScrolled ? "studio-header-scrolled" : ""}`}>
         <nav className="studio-nav mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo />
