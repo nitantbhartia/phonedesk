@@ -63,7 +63,7 @@ function LandingPageContent() {
           </p>
           <section className="border-y border-line bg-surface px-5 py-8 sm:px-10 sm:py-12 lg:px-16 lg:py-14">
             <pre className="whitespace-pre-wrap font-mono text-[clamp(1.05rem,2.5vw,1.65rem)] leading-[1.8] tracking-[-0.02em] text-ink">
-{`Riverside Grooming.
+{`Riverside Studio.
 
 Thank you for calling.
 
