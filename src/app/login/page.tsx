@@ -66,7 +66,7 @@ function AuthPageContent() {
 
   return (
     <div className="studio-auth min-h-screen bg-paper text-ink">
-      <header className="border-b border-line">
+      <header className="studio-chrome-header">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo />
           <Link href="/" className="text-[12px] font-semibold text-muted hover:text-ink">

@@ -67,7 +67,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
   };
 
   const fieldClass =
-    "mt-2 w-full border-x-0 border-b border-t-0 border-line bg-transparent px-0 py-3 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-accent";
+    "studio-glass-input mt-2 w-full border-x-0 border-b border-t-0 border-line bg-transparent px-0 py-3 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-accent";
 
   return (
     <div className="studio-auth-panel w-full max-w-[460px] border border-line bg-surface p-6 sm:p-9">
@@ -146,7 +146,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 w-full bg-accent px-4 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
+          className="studio-button studio-button-full mt-2 w-full bg-accent px-4 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:opacity-50"
         >
           {isSubmitting ? "Please wait…" : authMode === "signup" ? "Create account" : "Log in"}
         </button>
@@ -162,7 +162,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
         type="button"
         onClick={handleGoogleAuth}
         disabled={isSubmitting}
-        className="w-full border border-line px-4 py-3 text-[12px] tracking-[0.04em] text-ink hover:bg-paper disabled:opacity-50"
+        className="studio-glass-secondary w-full border border-line px-4 py-3 text-[12px] tracking-[0.04em] text-ink hover:bg-paper disabled:opacity-50"
       >
         Continue with Google
       </button>

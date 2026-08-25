@@ -34,7 +34,7 @@ export function OnboardingLayout({
 
   return (
     <div className="studio-onboarding min-h-screen bg-paper text-ink">
-      <header className="border-b border-line">
+      <header className="studio-chrome-header">
         <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo priority />
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Set up your line</span>
@@ -52,7 +52,7 @@ export function OnboardingLayout({
           </div>
         </aside>
 
-        <section className="w-full border border-line bg-surface">
+        <section className="studio-onboarding-panel w-full border border-line bg-surface">
           <div className="border-b border-line bg-paper px-6 py-4 sm:px-9">
             <div className="mb-2 flex items-center justify-between">
               <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
@@ -128,7 +128,7 @@ export function OnboardingInput({
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`onboarding-input w-full border border-line bg-paper px-3 py-2.5 text-[15px] text-ink placeholder:text-muted/60 ${className}`}
+      className={`studio-glass-input onboarding-input w-full border border-line bg-paper px-3 py-2.5 text-[15px] text-ink placeholder:text-muted/60 ${className}`}
       {...props}
     />
   );
@@ -141,7 +141,7 @@ export function OnboardingSelect({
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`onboarding-input border border-line bg-paper px-3 py-2 text-sm text-ink ${className}`}
+      className={`studio-glass-input onboarding-input border border-line bg-paper px-3 py-2 text-sm text-ink ${className}`}
       {...props}
     >
       {children}
@@ -179,7 +179,7 @@ export function OnboardingFooter({
         type="button"
         onClick={onNext}
         disabled={nextDisabled || loading}
-        className="bg-accent px-5 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="studio-button studio-button-small bg-accent px-5 py-2.5 text-[12px] tracking-[0.04em] text-accent-foreground hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? "Please wait…" : nextLabel}
       </button>
