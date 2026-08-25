@@ -45,6 +45,6 @@ async function ensureTwilioNumberOnStartup() {
     return;
   }
 
-  const { ensureTwilioWebhooks } = await import("./lib/twilio");
+  const { ensureTwilioWebhooks } = await import("./lib/twilio-rest");
   await ensureTwilioWebhooks(number);
 }

@@ -4,7 +4,7 @@ import {
   ensureTwilioWebhooks,
   purchaseTwilioPhoneNumber,
   releaseTwilioPhoneNumber,
-} from "@/lib/twilio";
+} from "@/lib/twilio-rest";
 
 /**
  * POST /api/admin/approve-business

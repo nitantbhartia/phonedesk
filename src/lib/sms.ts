@@ -1,4 +1,4 @@
-import { getTwilioClient } from "@/lib/twilio";
+import { getTwilioClient } from "@/lib/twilio-rest";
 
 export type SmsProvider = "disabled" | "twilio";
 
