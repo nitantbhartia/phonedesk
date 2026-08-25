@@ -9,6 +9,11 @@ describe("env validation", () => {
     process.env.GOOGLE_CLIENT_SECRET = "google-secret";
     process.env.DATABASE_URL = "postgres://db";
     process.env.NODE_ENV = "development";
+    delete process.env.NEXTAUTH_URL;
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.BLAND_API_KEY;
+    delete process.env.BLAND_ENCRYPTED_TWILIO_KEY;
+    delete process.env.BLAND_TOOL_SECRET;
   });
 
   afterEach(() => {
@@ -24,6 +29,9 @@ describe("env validation", () => {
       googleClientSecret: "google-secret",
       databaseUrl: "postgres://db",
       appUrl: "https://ringpaw.com",
+      blandApiKey: "",
+      blandEncryptedTwilioKey: "",
+      blandToolSecret: "",
     });
   });
 
@@ -37,10 +45,6 @@ describe("env validation", () => {
   });
 
   it("does not require Bland config to boot", async () => {
-    delete process.env.BLAND_API_KEY;
-    delete process.env.BLAND_ENCRYPTED_TWILIO_KEY;
-    delete process.env.BLAND_TOOL_SECRET;
-
     const { validateEnv } = await import("./env");
     const env = validateEnv();
 
