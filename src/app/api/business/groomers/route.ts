@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { syncRetellAgent } from "@/lib/retell";
 import { parseJsonBody, requireCurrentBusiness } from "@/lib/route-helpers";
 
 const groomersSchema = z.object({
@@ -93,24 +92,6 @@ export async function POST(req: NextRequest) {
       });
       results.push(created);
     }
-  }
-
-  // Sync Retell so the AI knows about the groomers
-  try {
-    const businessForSync = await prisma.business.findUnique({
-      where: { id: business.id },
-      include: {
-        services: { where: { isActive: true } },
-        retellConfig: true,
-        groomers: { where: { isActive: true } },
-        breedRecommendations: { orderBy: { priority: "desc" } },
-      },
-    });
-    if (businessForSync?.retellConfig) {
-      await syncRetellAgent(businessForSync);
-    }
-  } catch (err) {
-    console.error("[groomers] Failed to sync Retell:", err);
   }
 
   return NextResponse.json({ groomers: results });

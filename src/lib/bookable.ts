@@ -64,10 +64,11 @@ function assertSafeCopy(text: string) {
 }
 
 export function resolveInboundPath(business?: { inboundPath?: string | null } | null) {
-  const env = process.env.INBOUND_PATH?.trim().toLowerCase();
-  if (env === "retell_agent") return "RETELL_AGENT";
-  if (env === "bookable_voicemail") return "BOOKABLE_VOICEMAIL";
-  return business?.inboundPath || "BOOKABLE_VOICEMAIL";
+  // Call Slot's live line is always the Twilio keypad flow. Keep the legacy
+  // database field readable for old records, but never route a live call to
+  // the retired conversational provider.
+  void business;
+  return "BOOKABLE_VOICEMAIL";
 }
 
 export function phoneBookableServices(services: Service[]) {

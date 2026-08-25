@@ -5,12 +5,10 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { rateLimit } from "@/lib/rate-limit";
 import {
-  deleteRetellPhoneNumber,
-  provisionRetellPhoneNumber,
-  syncRetellAgent,
-} from "@/lib/retell";
-import { buildRetellWebhookUrl } from "@/lib/retell-auth";
-import { shouldAttachRetellSmsWebhook } from "@/lib/sms";
+  ensureTwilioWebhooks,
+  purchaseTwilioPhoneNumber,
+  releaseTwilioPhoneNumber,
+} from "@/lib/twilio";
 
 async function resolveUserId(session: {
   user?: {
@@ -74,7 +72,6 @@ export async function POST(req: Request) {
     include: {
       phoneNumber: true,
       services: { where: { isActive: true } },
-      retellConfig: true,
       breedRecommendations: { orderBy: { priority: "desc" } },
     },
   });
@@ -104,19 +101,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Ensure we have a Retell agent first
-    let agentId = business.retellConfig?.agentId;
-
-    if (!agentId) {
-      const synced = await syncRetellAgent(business);
-      agentId = synced.agentId || undefined;
-    }
-
-    if (!agentId) {
-      throw new Error("Retell agent could not be created");
-    }
-
-    // Check for existing number before calling Retell
+    // Check again before buying a number in case another request completed
+    // between the initial business lookup and this external call.
     const existingPhoneNumber = await prisma.phoneNumber.findUnique({
       where: { businessId: business.id },
     });
@@ -128,20 +114,17 @@ export async function POST(req: Request) {
       });
     }
 
-    // Call Retell outside the transaction to avoid timeout
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const result = await provisionRetellPhoneNumber({
-      agentId,
-      areaCode,
-      nickname: `${business.name} - Call Slot`,
-      smsWebhookUrl: shouldAttachRetellSmsWebhook()
-        ? buildRetellWebhookUrl(appUrl, "/api/sms/webhook")
-        : undefined,
-    });
+    // Buy and configure the Twilio number outside the transaction to avoid
+    // holding a database transaction open during network calls.
+    const result = await purchaseTwilioPhoneNumber({ areaCode });
 
-    if (!isProvisionedPhoneNumber(result?.phone_number)) {
-      throw new Error("Retell returned an invalid phone number");
+    if (!isProvisionedPhoneNumber(result.phoneNumber)) {
+      throw new Error("Twilio returned an invalid phone number");
     }
+
+    // The create request configures the new number, and this idempotent
+    // reconciliation makes sure all required webhooks are applied.
+    await ensureTwilioWebhooks(result.phoneNumber);
 
     // Save to DB in a short transaction (no external calls inside)
     let provisioned: { phoneNumber: string; alreadyProvisioned: boolean };
@@ -157,9 +140,10 @@ export async function POST(req: Request) {
         });
 
         if (existing) {
-          // Another request already provisioned a number; clean up the one we just created
-          await deleteRetellPhoneNumber(result.phone_number).catch((e) => {
-            console.error("Failed to clean up extra Retell number:", e);
+          // Another request already provisioned a number; release the one we
+          // just bought so it does not remain billed and unassigned.
+          await releaseTwilioPhoneNumber(result.sid).catch((e) => {
+            console.error("Failed to clean up extra Twilio number:", e);
           });
           return { phoneNumber: existing.number, alreadyProvisioned: true };
         }
@@ -167,9 +151,10 @@ export async function POST(req: Request) {
         await tx.phoneNumber.create({
           data: {
             businessId: business.id,
-            number: result.phone_number,
-            retellPhoneNumber: result.phone_number,
-            provider: "RETELL",
+            number: result.phoneNumber,
+            twilioPhoneNumberSid: result.sid,
+            provider: "TWILIO",
+            isActive: true,
           },
         });
 
@@ -181,9 +166,9 @@ export async function POST(req: Request) {
         return { phoneNumber: result.phone_number, alreadyProvisioned: false };
       });
     } catch (error) {
-      // DB write failed — clean up the Retell number we already created
-      await deleteRetellPhoneNumber(result.phone_number).catch((cleanupError) => {
-        console.error("Failed to clean up Retell number after DB error:", cleanupError);
+      // DB write failed — clean up the Twilio number we already bought.
+      await releaseTwilioPhoneNumber(result.sid).catch((cleanupError) => {
+        console.error("Failed to clean up Twilio number after DB error:", cleanupError);
       });
       throw error;
     }
@@ -199,7 +184,7 @@ export async function POST(req: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to provision phone number. Check Retell configuration.",
+            : "Failed to provision phone number. Check Twilio configuration.",
       },
       { status: 500 }
     );

@@ -136,6 +136,7 @@ model PhoneNumber {
   business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   number        String        @unique
   retellPhoneNumber String?    @unique // Retell phone number (E.164 identifier)
+  twilioPhoneNumberSid String? @unique // Twilio IncomingPhoneNumber SID
   provider      PhoneProvider @default(RETELL)
   isActive      Boolean       @default(true)
   createdAt     DateTime      @default(now())

@@ -28,19 +28,16 @@ export function validateEnv() {
   required("GOOGLE_CLIENT_SECRET");
   required("DATABASE_URL");
 
-  // Retell (optional in dev, required in prod)
-  if (process.env.NODE_ENV === "production") {
-    required("RETELL_API_KEY");
-    required("NEXT_PUBLIC_APP_URL");
-  }
-
   return {
     secret,
     googleClientId: required("GOOGLE_CLIENT_ID"),
     googleClientSecret: required("GOOGLE_CLIENT_SECRET"),
     databaseUrl: required("DATABASE_URL"),
     retellApiKey: optional("RETELL_API_KEY", ""),
-    appUrl: optional("NEXT_PUBLIC_APP_URL", "http://localhost:3000"),
+    appUrl: optional(
+      "NEXT_PUBLIC_APP_URL",
+      process.env.NEXTAUTH_URL || "https://ringpaw.com"
+    ),
     cronSecret: optional("CRON_SECRET", ""),
     adminSecret: optional("ADMIN_SECRET", ""),
     stripeSecretKey: optional("STRIPE_SECRET_KEY", ""),

@@ -22,8 +22,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import {
-  Bot,
-  Volume2,
   MessageSquare,
   Save,
   ShieldCheck,
@@ -34,14 +32,8 @@ interface BusinessData {
   name: string;
   ownerName: string;
   bookingMode: string;
-  inboundPath: string;
   vaccinePolicy: string;
   isActive: boolean;
-  retellConfig: {
-    greeting: string;
-    voiceId: string;
-    isActive: boolean;
-  } | null;
 }
 
 export default function AgentSettingsPage() {
@@ -53,9 +45,7 @@ export default function AgentSettingsPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Form state
-  const [greeting, setGreeting] = useState("");
   const [bookingMode, setBookingMode] = useState("SOFT");
-  const [inboundPath, setInboundPath] = useState("BOOKABLE_VOICEMAIL");
   const [vaccinePolicy, setVaccinePolicy] = useState("OFF");
   const [isActive, setIsActive] = useState(true);
 
@@ -74,9 +64,7 @@ export default function AgentSettingsPage() {
         const data = await res.json();
         if (data.business) {
           setBusiness(data.business);
-          setGreeting(data.business.retellConfig?.greeting || "");
           setBookingMode(data.business.bookingMode);
-          setInboundPath(data.business.inboundPath || "BOOKABLE_VOICEMAIL");
           setVaccinePolicy(data.business.vaccinePolicy || "OFF");
           setIsActive(data.business.isActive);
         }
@@ -98,17 +86,24 @@ export default function AgentSettingsPage() {
           name: business?.name,
           ownerName: business?.ownerName,
           bookingMode,
-          inboundPath,
+          inboundPath: "BOOKABLE_VOICEMAIL",
           vaccinePolicy,
-          agentActive: isActive,
-          greeting,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         toast.error(data.error || "Failed to save settings");
       } else {
-        toast.success(data.synced ? "Saved and synced" : "Settings saved");
+        const activeRes = await fetch("/api/business/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isActive }),
+        });
+        if (!activeRes.ok) {
+          const activeData = await activeRes.json().catch(() => ({}));
+          throw new Error(activeData.error || "Failed to update line status");
+        }
+        toast.success("Settings saved");
         setLastSaved(new Date());
       }
     } catch {
@@ -151,42 +146,24 @@ export default function AgentSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Inbound path</CardTitle>
+          <CardTitle>Twilio keypad line</CardTitle>
           <CardDescription>
-            Bookable voicemail is the default. The older conversational path stays available but is not used for new shops.
+            Call Slot uses Twilio for the phone line, keypad menu, and voicemail.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Select value={inboundPath} onValueChange={setInboundPath}>
-            <SelectTrigger className="w-80">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="BOOKABLE_VOICEMAIL">
-                Bookable voicemail (keypad)
-              </SelectItem>
-              <SelectItem value="RETELL_AGENT">
-                Legacy conversational line
-              </SelectItem>
-            </SelectContent>
-          </Select>
           <p className="text-sm text-muted-foreground mt-2">
-            {inboundPath === "BOOKABLE_VOICEMAIL"
-              ? "Callers hear your shop name, then press 1 to book or 9 to leave a message."
-              : "Keeps the previous conversational line. Do not use this for the Call Slot pilot."}
+            Callers hear your shop name, then press 1 to book or 9 to leave a message.
           </p>
         </CardContent>
       </Card>
 
-      {/* Agent Status */}
+      {/* Line Status */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="w-5 h-5" />
-                Line status
-              </CardTitle>
+              <CardTitle>Line status</CardTitle>
               <CardDescription>
                 Pause Call Slot if you need forwarded calls to stop being answered.
               </CardDescription>
@@ -199,36 +176,6 @@ export default function AgentSettingsPage() {
             </div>
           </div>
         </CardHeader>
-      </Card>
-
-      {/* Opening Greeting */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Volume2 className="w-5 h-5" />
-            Opening Greeting
-          </CardTitle>
-          <CardDescription>
-            The first thing callers hear when Call Slot picks up.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <textarea
-            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            value={greeting}
-            onChange={(e) => setGreeting(e.target.value.slice(0, 300))}
-            placeholder="Hi! You've reached [Business Name]..."
-            maxLength={300}
-          />
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-muted-foreground">
-              Leave blank to use the auto-generated greeting based on your business name.
-            </p>
-            <p className={`text-xs font-medium tabular-nums ${greeting.length > 260 ? "text-orange-500" : "text-muted-foreground/50"}`}>
-              {greeting.length}/300
-            </p>
-          </div>
-        </CardContent>
       </Card>
 
       {/* Booking Mode */}

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { syncRetellAgent } from "@/lib/retell";
 import { seedBreedRecommendations } from "@/lib/breed-recommendations";
 import { getBookableFunnelSummary } from "@/lib/bookable-analytics";
 import { getCalendarHealth } from "@/lib/calendar-health";
@@ -48,7 +47,6 @@ export async function GET() {
       groomers: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
       phoneNumber: true,
       calendarConnections: { where: { isActive: true } },
-      retellConfig: true,
     },
   });
 
@@ -206,11 +204,6 @@ export async function POST(req: NextRequest) {
     inboundPath,
     vaccinePolicy,
     services,
-    // Agent config fields (optional — sent from agent settings page)
-    agentActive,
-    voiceId,
-    personality,
-    greeting,
   } = body;
 
   const existing = await prisma.business.findUnique({
@@ -232,7 +225,7 @@ export async function POST(req: NextRequest) {
         ...(timezone !== undefined ? { timezone } : {}),
         ...(businessHours !== undefined ? { businessHours } : {}),
         ...(bookingMode !== undefined ? { bookingMode } : {}),
-        ...(inboundPath === "BOOKABLE_VOICEMAIL" || inboundPath === "RETELL_AGENT"
+        ...(inboundPath === "BOOKABLE_VOICEMAIL"
           ? { inboundPath }
           : {}),
         ...(vaccinePolicy !== undefined && ["OFF", "FLAG_ONLY", "REQUIRE"].includes(vaccinePolicy) ? { vaccinePolicy } : {}),
@@ -292,61 +285,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Update RetellConfig if agent config fields were provided
-  const hasRetellUpdates = agentActive !== undefined || voiceId !== undefined || personality !== undefined || greeting !== undefined;
-  if (hasRetellUpdates) {
-    const retellData: Record<string, unknown> = {};
-    if (agentActive !== undefined) retellData.isActive = Boolean(agentActive);
-    if (voiceId !== undefined) retellData.voiceId = String(voiceId);
-    if (personality !== undefined) retellData.personality = personality;
-    if (greeting !== undefined) retellData.greeting = String(greeting);
-
-    // Use upsert to ensure retellConfig exists (handles case where it was never created)
-    await prisma.retellConfig.upsert({
-      where: { businessId: business.id },
-      create: {
-        businessId: business.id,
-        ...retellData,
-      },
-      update: retellData,
-    });
-  }
-
-  // Re-fetch with all relations for Retell sync
-  const fullBusiness = await prisma.business.findUnique({
-    where: { id: business.id },
-    include: {
-      services: { where: { isActive: true } },
-      groomers: { where: { isActive: true } },
-      retellConfig: true,
-      breedRecommendations: { orderBy: { priority: "desc" } },
-    },
-  });
-
-  if (!fullBusiness) {
-    return NextResponse.json(
-      { business, error: "Business profile saved, but failed to reload profile for voice sync." },
-      { status: 500 }
-    );
-  }
-
-  if (fullBusiness.retellConfig) {
-    try {
-      console.log("[Retell Sync] Syncing agent for business", business.id, "bookingMode:", fullBusiness.bookingMode, "agentId:", fullBusiness.retellConfig.agentId, "llmId:", fullBusiness.retellConfig.llmId);
-      await syncRetellAgent(fullBusiness);
-      console.log("[Retell Sync] Success for business", business.id);
-    } catch (error) {
-      console.error("[Retell Sync] Failed for business", business.id, error);
-      return NextResponse.json(
-        { business, error: "Settings saved but failed to sync: " + (error instanceof Error ? error.message : String(error)) },
-        { status: 502 }
-      );
-    }
-  } else {
-    console.log("[Retell Sync] Skipping sync because no Retell config exists yet for business", business.id);
-  }
-
-  return NextResponse.json({ business, synced: Boolean(fullBusiness.retellConfig) });
+  return NextResponse.json({ business });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -358,52 +297,12 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.json();
 
-  // Handle retell config updates (agentActive, voiceId, personality)
-  const hasRetellUpdates = body.agentActive !== undefined || body.voiceId !== undefined || body.personality !== undefined || body.greeting !== undefined;
-  if (hasRetellUpdates) {
-    const business = await prisma.business.findUnique({
-      where: { userId },
-      select: { id: true, stripeSubscriptionStatus: true, adminApprovedGoLive: true },
-    });
-    if (business) {
-      // Turning the agent ON requires admin approval (unless bypassed for testing)
-      if (body.agentActive === true && !stripeBypass && !business.adminApprovedGoLive) {
-        return NextResponse.json(
-          { error: "Admin approval is required to enable live call answering." },
-          { status: 403 }
-        );
-      }
-      const retellData: Record<string, unknown> = {};
-      if (body.agentActive !== undefined) retellData.isActive = Boolean(body.agentActive);
-      if (body.voiceId !== undefined) retellData.voiceId = String(body.voiceId);
-      if (body.personality !== undefined) retellData.personality = body.personality;
-      if (body.greeting !== undefined) retellData.greeting = String(body.greeting);
-      await prisma.retellConfig.updateMany({
-        where: { businessId: business.id },
-        data: retellData,
-      });
-
-      // Sync changes to Retell so greeting/voice/personality take effect
-      const fullBusiness = await prisma.business.findUnique({
-        where: { id: business.id },
-        include: { services: { where: { isActive: true } }, groomers: { where: { isActive: true } }, retellConfig: true, breedRecommendations: { orderBy: { priority: "desc" } } },
-      });
-      if (fullBusiness?.retellConfig) {
-        try {
-          await syncRetellAgent(fullBusiness);
-        } catch (err) {
-          console.error("[PATCH] Failed to sync retell config:", err);
-        }
-      }
-    }
-    delete body.agentActive;
-    delete body.voiceId;
-    delete body.personality;
-    delete body.greeting;
-    if (Object.keys(body).length === 0) {
-      return NextResponse.json({ ok: true });
-    }
-  }
+  // Ignore legacy agent settings. Call Slot is Twilio keypad voicemail and
+  // does not create, update, or require a conversational voice agent.
+  delete body.agentActive;
+  delete body.voiceId;
+  delete body.personality;
+  delete body.greeting;
 
   // Only allow safe fields to be updated
   const allowedFields = ["name", "ownerName", "city", "state", "phone", "address",

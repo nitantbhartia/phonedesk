@@ -85,8 +85,8 @@ export default function DashboardPage() {
   });
   const [recentCalls, setRecentCalls] = useState<RecentCall[]>([]);
   const [loading, setLoading] = useState(true);
-  const [agentLive, setAgentLive] = useState(true);
-  const [agentToggling, setAgentToggling] = useState(false);
+  const [lineLive, setLineLive] = useState(true);
+  const [lineToggling, setLineToggling] = useState(false);
   const [confirmOff, setConfirmOff] = useState(false);
   const [subscribePromptOpen, setSubscribePromptOpen] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
@@ -145,9 +145,7 @@ export default function DashboardPage() {
       if (statsRes.ok) {
         const data = await statsRes.json();
         if (data.stats) setStats(data.stats);
-        if (data.business?.retellConfig) {
-          setAgentLive(data.business.retellConfig.isActive ?? true);
-        }
+        setLineLive(data.business?.isActive ?? true);
         const subStatus = data.business?.stripeSubscriptionStatus;
         setSubscriptionActive(["active", "trialing"].includes(subStatus ?? ""));
         setOnboardingComplete(data.business?.onboardingComplete ?? true);
@@ -174,22 +172,22 @@ export default function DashboardPage() {
     }
   }
 
-  async function toggleAgent(enabled: boolean) {
-    setAgentToggling(true);
-    const prev = agentLive;
-    setAgentLive(enabled);
+  async function toggleLine(enabled: boolean) {
+    setLineToggling(true);
+    const prev = lineLive;
+    setLineLive(enabled);
     try {
       const res = await fetch("/api/business/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agentActive: enabled }),
+        body: JSON.stringify({ isActive: enabled }),
       });
       if (!res.ok) throw new Error();
     } catch {
-      setAgentLive(prev);
-      setFetchError("Failed to update agent status. Please try again.");
+      setLineLive(prev);
+      setFetchError("Failed to update line status. Please try again.");
     } finally {
-      setAgentToggling(false);
+      setLineToggling(false);
     }
   }
 
@@ -230,7 +228,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
-          {agentLive ? "Line live" : "Line paused"}
+          {lineLive ? "Line live" : "Line paused"}
         </p>
       </header>
 
@@ -275,11 +273,11 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {subscriptionActive && !agentLive && (
+      {subscriptionActive && !lineLive && (
         <div className="mb-8 flex items-baseline justify-between gap-4 border-b border-line pb-4">
           <p className="text-[14px] text-accent">Call Slot is paused. Forwarded calls will not be answered.</p>
           <button
-            onClick={() => void toggleAgent(true)}
+            onClick={() => void toggleLine(true)}
             className="text-[12px] tracking-[0.04em] text-ink hover:text-accent"
           >
             Turn back on
@@ -287,7 +285,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Confirmation dialog — turning agent off */}
+      {/* Confirmation dialog — turning the line off */}
       {confirmOff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-surface rounded-sm p-8 max-w-sm w-full text-center">
@@ -308,7 +306,7 @@ export default function DashboardPage() {
                 Keep it on
               </button>
               <button
-                onClick={() => { setConfirmOff(false); void toggleAgent(false); }}
+                onClick={() => { setConfirmOff(false); void toggleLine(false); }}
                 className="flex-1 py-3 rounded-sm bg-accent text-white font-bold hover:bg-accent-hover transition-colors"
               >
                 Turn off
@@ -318,7 +316,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Subscribe prompt modal — shown when unsubscribed user tries to enable agent */}
+      {/* Subscribe prompt modal — shown when unsubscribed user tries to enable the line */}
       {subscribePromptOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setSubscribePromptOpen(false)}>
           <div className="bg-surface rounded-sm p-8 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
