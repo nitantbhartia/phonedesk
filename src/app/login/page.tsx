@@ -66,31 +66,46 @@ function AuthPageContent() {
 
   return (
     <div className="min-h-screen bg-paper text-ink">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-7 sm:px-10">
-        <div className="flex w-full items-center justify-between">
-          <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
-          <Link href="/" className="text-[12px] tracking-[0.04em] text-muted hover:text-ink">
-            Back to ringpaw.com
+      <header className="border-b border-line">
+        <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
+          <BrandLogo />
+          <Link href="/" className="text-[12px] font-semibold text-muted hover:text-ink">
+            Back to Call Slot
           </Link>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-16 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-12 lg:items-start">
-        <div className="lg:col-span-5">
-          <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted">Call Slot · ringpaw.com</p>
-          <h1 className="font-display text-[3rem] leading-[0.95] tracking-[-0.02em] sm:text-6xl">
-            Put your name
-            <br />
-            on the line.
+      <div className="mx-auto grid max-w-[1280px] gap-12 px-6 py-12 sm:px-10 sm:py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-24 lg:px-12 lg:py-28">
+        <div className="max-w-[490px]">
+          <p className="studio-eyebrow mb-6"><span className="studio-eyebrow-line" />Account / Call Slot</p>
+          <h1 className="max-w-[440px] text-5xl font-bold leading-[0.92] tracking-[-0.065em] sm:text-7xl">
+            Put your shop<br />on the line.
           </h1>
-          <p className="mt-7 max-w-[24rem] text-[16px] leading-[1.55] text-muted">
-            A few details, then your unanswered calls can offer the next open time.
+          <p className="mt-7 max-w-[25rem] text-[16px] leading-[1.6] text-muted">
+            Sign in to manage your number, calendar, and the next opening your callers hear.
           </p>
+          <div className="mt-12 grid max-w-[390px] grid-cols-2 border-t border-line pt-5">
+            <div>
+              <p className="studio-fact-label">01</p>
+              <p className="mt-2 text-sm text-muted">Connect your calendar</p>
+            </div>
+            <div className="border-l border-line pl-5">
+              <p className="studio-fact-label">02</p>
+              <p className="mt-2 text-sm text-muted">Book from the phone</p>
+            </div>
+          </div>
         </div>
-        <div className="lg:col-span-6 lg:col-start-7 lg:pt-1">
+        <div className="lg:justify-self-end">
           <AuthPanel initialMode={initialMode} />
         </div>
       </div>
+
+      <footer className="border-t border-line px-6 py-6 sm:px-10 lg:px-12">
+        <div className="mx-auto flex max-w-[1280px] justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+          <span>Call Slot / ringpaw.com</span>
+          <span>Private account access</span>
+        </div>
+      </footer>
     </div>
   );
 }

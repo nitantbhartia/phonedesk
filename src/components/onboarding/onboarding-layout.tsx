@@ -33,51 +33,68 @@ export function OnboardingLayout({
   const progressPct = ((currentStep - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper px-6 py-7 text-ink sm:px-10">
-      <div className="mx-auto w-full max-w-3xl">
-        <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
-      </div>
-
-      <main className="mx-auto mt-12 w-full max-w-2xl sm:mt-20">
-        <div className="mb-6 flex items-baseline justify-between">
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-            Sheet {currentStep} / {STEPS.length}
-          </span>
-          <span className="text-[12px] text-ink">{currentLabel}</span>
+    <div className="min-h-screen bg-paper text-ink">
+      <header className="border-b border-line">
+        <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
+          <BrandLogo priority />
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Set up your line</span>
         </div>
-        <div className="h-px overflow-hidden bg-line">
-          <div
-            className="h-full bg-accent transition-all duration-500 ease-out"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
+      </header>
 
-        <div className="pt-10">
-          <div
-            key={currentStep}
-            className={`animate-in fade-in duration-300 ${
-              direction === "backward"
-                ? "slide-in-from-left-4"
-                : "slide-in-from-right-4"
-            }`}
-          >
-            <h1 className="font-display text-[2.35rem] leading-[1.02] tracking-[-0.02em] text-ink sm:text-[3.2rem]">
-              {title}
-            </h1>
-            <p className="mt-3 mb-8 max-w-md text-[15px] leading-relaxed text-muted">{subtitle}</p>
+      <main className="mx-auto grid max-w-[1180px] gap-10 px-6 py-10 sm:px-10 sm:py-16 lg:grid-cols-[250px_1fr] lg:gap-20 lg:px-12">
+        <aside className="lg:pt-3">
+          <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />Onboarding</p>
+          <p className="font-display text-4xl leading-[0.95] tracking-[-0.055em] sm:text-5xl">A few clear steps to a quieter phone.</p>
+          <p className="mt-6 text-sm leading-[1.6] text-muted">Tell us about your shop, connect the calendar, and test the call. You can change any of it later.</p>
+          <div className="mt-10 hidden border-t border-line pt-4 lg:block">
+            <p className="studio-fact-label">Call Slot</p>
+            <p className="mt-2 text-xs leading-[1.5] text-muted">Missed calls in. Real openings out.</p>
+          </div>
+        </aside>
+
+        <section className="w-full border border-line bg-surface">
+          <div className="border-b border-line bg-paper px-6 py-4 sm:px-9">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                Sheet {currentStep} / {STEPS.length}
+              </span>
+              <span className="text-xs font-semibold text-ink">{currentLabel}</span>
+            </div>
+            <div className="h-1 bg-line">
+              <div
+                className="h-full bg-accent transition-all duration-500 ease-out"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="px-5 py-7 sm:px-9 sm:py-10">
+            <div
+              key={currentStep}
+              className={`animate-in fade-in duration-300 ${
+                direction === "backward"
+                  ? "slide-in-from-left-4"
+                  : "slide-in-from-right-4"
+              }`}
+            >
+              <h1 className="font-display text-4xl leading-[0.95] tracking-[-0.055em] text-ink sm:text-5xl">
+                {title}
+              </h1>
+              <p className="mb-7 mt-3 max-w-xl text-sm leading-[1.6] text-muted">{subtitle}</p>
 
               {children}
 
               {proTip && (
-                <div className="mt-6 border-t border-line pt-3">
-                  <p className="text-[12px] leading-relaxed text-muted">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink">Note </span>
-                    {proTip}
+                <div className="mt-7 flex items-start gap-3 border-t border-line pt-4">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">Note</span>
+                  <p className="text-xs leading-[1.5] text-muted">
+                    <span className="font-semibold text-ink">Pro tip: </span>{proTip}
                   </p>
                 </div>
               )}
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );

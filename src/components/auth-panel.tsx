@@ -66,19 +66,25 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
   };
 
   const fieldClass =
-    "mt-2 w-full border-x-0 border-b border-t-0 border-line bg-transparent px-0 py-3 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-ink";
+    "mt-2 w-full border-x-0 border-b border-t-0 border-line bg-transparent px-0 py-3 text-[15px] text-ink outline-none placeholder:text-muted/50 focus:border-accent";
 
   return (
-    <div className="w-full max-w-md border-y border-line py-7 sm:py-8">
-      <p className="mb-7 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Account ledger</p>
-      <div className="mb-8 flex gap-6 border-b border-line text-[12px] tracking-[0.04em]">
+    <div className="w-full max-w-[460px] border border-line bg-surface p-6 sm:p-9">
+      <div className="mb-8 flex items-start justify-between gap-5 border-b border-line pb-6">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Call Slot / account</p>
+          <h2 className="mt-3 font-display text-3xl leading-none tracking-[-0.04em]">Keep the line moving.</h2>
+        </div>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-line font-mono text-[10px] text-accent">↗</span>
+      </div>
+      <div className="mb-8 flex gap-6 text-[12px] tracking-[0.04em]">
         <button
           type="button"
           onClick={() => {
             setAuthMode("signup");
             setAuthError("");
           }}
-          className={`-mb-px border-b pb-2.5 ${
+          className={`border-b pb-2.5 ${
             authMode === "signup" ? "border-ink text-ink" : "border-transparent text-muted"
           }`}
         >
@@ -90,7 +96,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
             setAuthMode("signin");
             setAuthError("");
           }}
-          className={`-mb-px border-b pb-2.5 ${
+          className={`border-b pb-2.5 ${
             authMode === "signin" ? "border-ink text-ink" : "border-transparent text-muted"
           }`}
         >
