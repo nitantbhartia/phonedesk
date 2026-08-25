@@ -311,9 +311,10 @@
 
 .studio-card-arrow {
   align-self: flex-start;
+  flex: 0 0 auto;
   margin-left: auto;
-  font-size: 1.5rem;
-  line-height: 1;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .studio-auth,
