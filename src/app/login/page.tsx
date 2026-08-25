@@ -66,27 +66,28 @@ function AuthPageContent() {
 
   return (
     <div className="min-h-screen bg-paper text-ink">
-      <header className="border-b border-line">
-        <div className="mx-auto flex h-[4.25rem] max-w-5xl items-center justify-between px-6 sm:px-8">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-7 sm:px-10">
+        <div className="flex w-full items-center justify-between">
           <BrandLogo className="text-[1.4rem] sm:text-[1.45rem]" />
           <Link href="/" className="text-[12px] tracking-[0.04em] text-muted hover:text-ink">
-            Back
+            Back to ringpaw.com
           </Link>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-5xl gap-16 px-6 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-start">
-        <div className="lg:col-span-6">
-          <h1 className="font-display text-[2.75rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
-            Your voicemail
+      <div className="mx-auto grid max-w-6xl gap-16 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-5">
+          <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted">Call Slot · ringpaw.com</p>
+          <h1 className="font-display text-[3rem] leading-[0.95] tracking-[-0.02em] sm:text-6xl">
+            Put your name
             <br />
-            can book.
+            on the line.
           </h1>
           <p className="mt-7 max-w-[24rem] text-[16px] leading-[1.55] text-muted">
-            Call Slot picks up missed calls for your shop. Callers book a real calendar opening on the keypad.
+            A few details, then your unanswered calls can offer the next open time.
           </p>
         </div>
-        <div className="lg:col-span-6 lg:pt-1">
+        <div className="lg:col-span-6 lg:col-start-7 lg:pt-1">
           <AuthPanel initialMode={initialMode} />
         </div>
       </div>

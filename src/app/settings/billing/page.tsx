@@ -154,10 +154,10 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Billing</h1>
-        <p className="text-muted font-medium mt-1">View your plan and monthly usage.</p>
+        <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Plan &amp; billing</h1>
+        <p className="mt-1 text-[14px] text-muted">One line, one location, $79 a month.</p>
       </div>
 
       {/* Current Plan Usage */}
@@ -166,8 +166,8 @@ export default function BillingPage() {
           <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-ink">
-                  Current Plan: {activePlan.name}
+                <h2 className="font-display text-2xl text-ink">
+                  {activePlan.name} plan
                   {usage?.subscriptionStatus === "trialing" && (
                     <span className="ml-2 inline-flex items-center rounded-sm bg-paper px-2.5 py-1 text-xs font-bold text-ink">Trial</span>
                   )}
@@ -244,16 +244,10 @@ export default function BillingPage() {
           return (
             <article
               key={plan.id}
-              className={`rounded-sm border p-6 sm:p-7 ${
-                isCurrent
-                ? "bg-surface border-line ring-2 ring-accent/40"
-                : plan.popular
-                ? "bg-ink text-surface border-ink"
-                : "bg-surface border-line"
-              }`}
+              className="border border-line bg-surface p-6 sm:p-7"
             >
               <div className="flex items-center justify-between mb-3">
-                <h3 className={`text-xl font-bold ${plan.popular && !isCurrent ? "text-accent" : "text-ink"}`}>
+                <h3 className="font-display text-2xl text-ink">
                   {plan.name}
                 </h3>
                 {isCurrent ? (
@@ -268,20 +262,18 @@ export default function BillingPage() {
                 ) : null}
               </div>
               <div className="mb-6">
-                <span className={`text-4xl font-medium ${plan.popular && !isCurrent ? "text-white" : "text-ink"}`}>
+                <span className="font-display text-4xl text-ink">
                   ${plan.price}
                 </span>
-                <span className={`${plan.popular && !isCurrent ? "text-white/70" : "text-muted"}`}>/mo</span>
+                <span className="text-muted">/mo</span>
               </div>
               <ul className="space-y-2 mb-6">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
-                    className={`flex items-start gap-2 text-sm ${
-                      plan.popular && !isCurrent ? "text-white/85" : "text-ink/80"
-                    }`}
+                    className="flex items-start gap-2 text-sm text-ink/80"
                   >
-                    <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular && !isCurrent ? "text-accent" : "text-ink"}`} />
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
                     {feature}
                   </li>
                 ))}
@@ -295,11 +287,7 @@ export default function BillingPage() {
                 </button>
               ) : (
                 <button
-                  className={`w-full py-3 rounded-sm font-medium text-sm transition-colors disabled:opacity-60 ${
-                    plan.popular
-                    ? "bg-line text-ink hover:bg-surface"
-                    : "border-2 border-ink text-ink hover:bg-ink hover:text-white"
-                  }`}
+                  className="w-full bg-ink py-3 text-sm text-surface transition-colors hover:bg-accent disabled:opacity-60"
                   onClick={() => {
                     if (subscriptionActive && stripeSubscriptionId) {
                       void upgradePlan(plan.id);
