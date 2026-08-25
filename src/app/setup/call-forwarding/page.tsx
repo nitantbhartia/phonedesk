@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 /**
  * Redirects to the call-forwarding step of the onboarding flow (step 7),
- * but only if the business already has a Call Slot number provisioned.
+ * but only if the business already has a RingPaw number provisioned.
  * If not, redirects to step 4 (Get Number) so they provision one first.
  * Unauthenticated visitors are sent to the home page.
  */

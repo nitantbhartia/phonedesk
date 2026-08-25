@@ -70,14 +70,14 @@ function AuthPageContent() {
         <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5 sm:px-10 lg:px-12">
           <BrandLogo />
           <Link href="/" className="text-[12px] font-semibold text-muted hover:text-ink">
-            Back to Call Slot
+            Back to RingPaw
           </Link>
         </div>
       </header>
 
       <div className="mx-auto grid max-w-[1280px] gap-12 px-6 py-12 sm:px-10 sm:py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-24 lg:px-12 lg:py-28">
         <div className="max-w-[490px]">
-          <p className="studio-eyebrow mb-6"><span className="studio-eyebrow-line" />Account / Call Slot</p>
+          <p className="studio-eyebrow mb-6"><span className="studio-eyebrow-line" />Account / RingPaw</p>
           <h1 className="max-w-[440px] text-5xl font-bold leading-[0.88] tracking-[-0.075em] sm:text-7xl">
             Keep the next<br /><span className="text-accent">call moving.</span>
           </h1>
@@ -102,7 +102,7 @@ function AuthPageContent() {
 
       <footer className="border-t border-line px-6 py-6 sm:px-10 lg:px-12">
         <div className="mx-auto flex max-w-[1280px] justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-          <span>Call Slot / ringpaw.com</span>
+          <span>RingPaw / ringpaw.com</span>
           <span>Private account access</span>
         </div>
       </footer>

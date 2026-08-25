@@ -234,7 +234,7 @@ export default function DashboardPage() {
 
       {justSubscribed && subscriptionActive && (
         <div className="mb-8 flex items-baseline justify-between gap-4 border-b border-line pb-4">
-          <p className="text-[14px] text-ink">You&apos;re live. Forward unanswered calls to your Call Slot number.</p>
+          <p className="text-[14px] text-ink">You&apos;re live. Forward unanswered calls to your RingPaw number.</p>
           <button onClick={() => setJustSubscribed(false)} className="text-[12px] text-muted hover:text-ink">Dismiss</button>
         </div>
       )}
@@ -256,9 +256,9 @@ export default function DashboardPage() {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-ink text-sm">Manage Call Slot by text</p>
+            <p className="font-bold text-ink text-sm">Manage RingPaw by text</p>
             <p className="text-muted text-sm mt-0.5">
-              Text your Call Slot number to block time, pause bookings, or update services — no app needed.
+              Text your RingPaw number to block time, pause bookings, or update services — no app needed.
               Try <code className="bg-white/60 px-1 py-0.5 rounded text-xs font-bold">&quot;Block tomorrow&quot;</code> or <code className="bg-white/60 px-1 py-0.5 rounded text-xs font-bold">&quot;Pause bookings&quot;</code>.{" "}
               <Link href="/settings/agent" className="underline underline-offset-2 hover:text-ink transition-colors font-semibold">See all commands →</Link>
             </p>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
 
       {subscriptionActive && !lineLive && (
         <div className="mb-8 flex items-baseline justify-between gap-4 border-b border-line pb-4">
-          <p className="text-[14px] text-accent">Call Slot is paused. Forwarded calls will not be answered.</p>
+          <p className="text-[14px] text-accent">RingPaw is paused. Forwarded calls will not be answered.</p>
           <button
             onClick={() => void toggleLine(true)}
             className="text-[12px] tracking-[0.04em] text-ink hover:text-accent"
@@ -294,7 +294,7 @@ export default function DashboardPage() {
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-ink mb-2">Turn off Call Slot?</h3>
+            <h3 className="text-xl font-bold text-ink mb-2">Turn off RingPaw?</h3>
             <p className="text-muted text-sm mb-6">
               Calls will go to voicemail until you turn it back on. You might miss bookings while it&apos;s off.
             </p>
@@ -328,7 +328,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-xl font-bold text-ink mb-2">Subscription required</h3>
             <p className="text-muted text-sm mb-6">
-              You need an active plan to keep Call Slot answering forwarded calls.
+              You need an active plan to keep RingPaw answering forwarded calls.
             </p>
             <div className="flex flex-col gap-3">
               <Link
@@ -480,7 +480,7 @@ export default function DashboardPage() {
         );
       })()}
 
-      {/* SMS Quick Commands card — hidden for Call Slot MVP */}
+      {/* SMS Quick Commands card — hidden for RingPaw MVP */}
       {false && (
       <div className="bg-surface rounded-sm border border-line px-5 py-4 mb-6">
         <div className="flex items-center justify-between mb-3">

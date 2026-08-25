@@ -138,11 +138,11 @@ export async function POST(req: NextRequest) {
   } else if (bookingRate < 40 && totalCalls > 3) {
     insight = `Your booking conversion rate is ${bookingRate}%. Review recent calls — callers may be dropping off before they pick a time.`;
   } else if (totalCalls === 0) {
-    insight = `No calls this week. Make sure Call Slot is active and your shop number is forwarding correctly.`;
+    insight = `No calls this week. Make sure RingPaw is active and your shop number is forwarding correctly.`;
   } else if (topService) {
     insight = `${topService} was your top requested service this week. Highlight it in your greeting or promos to convert similar callers faster.`;
   } else {
-    insight = `Great week! Call Slot handled ${totalCalls} call${totalCalls !== 1 ? "s" : ""} and booked ${bookedCalls} appointment${bookedCalls !== 1 ? "s" : ""}. Keep it up.`;
+    insight = `Great week! RingPaw handled ${totalCalls} call${totalCalls !== 1 ? "s" : ""} and booked ${bookedCalls} appointment${bookedCalls !== 1 ? "s" : ""}. Keep it up.`;
   }
 
   const html = buildDigestHtml({
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
 
   await sendEmail({
     to: toEmail,
-    subject: `📊 Your Call Slot weekly recap — ${business.name}`,
+    subject: `📊 Your RingPaw weekly recap — ${business.name}`,
     html,
     text,
   });
@@ -248,7 +248,7 @@ function buildDigestHtml(d: DigestData): string {
     <div style="background:#fff8e6;border:1.5px solid #d4a85340;border-radius:24px;padding:24px 28px;margin-bottom:16px;">
       <h2 style="color:#3d2b1a;font-size:14px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;">⚠️ Win-Back Opportunity</h2>
       <p style="color:#5c4020;font-size:15px;margin:0;"><strong>${d.lapsingCount} client${d.lapsingCount !== 1 ? "s" : ""}</strong> haven't been in for 6+ weeks.</p>
-      <p style="color:#7a5c42;font-size:13px;margin:6px 0 0;">Open the No-Shows page in Call Slot to send a call or text blast.</p>
+      <p style="color:#7a5c42;font-size:13px;margin:6px 0 0;">Open the No-Shows page in RingPaw to send a call or text blast.</p>
     </div>` : ""}
 
     <!-- Insight -->
@@ -267,7 +267,7 @@ function buildDigestHtml(d: DigestData): string {
 
     <!-- Footer -->
     <p style="color:#a08060;font-size:12px;text-align:center;margin:0;">
-      Call Slot · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com"}/settings/agent" style="color:#a08060;">Manage call answering</a>
+      RingPaw · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com"}/settings/agent" style="color:#a08060;">Manage call answering</a>
     </p>
 
   </div>

@@ -68,7 +68,7 @@ export default function ReviewsPage() {
       <div>
         <h1 className="font-display text-4xl tracking-tight text-ink">Reviews</h1>
         <p className="text-muted font-medium mt-1">
-          Automatically send a Google review request after each appointment. Paste your review link once and Call Slot handles the rest.
+          Automatically send a Google review request after each appointment. Paste your review link once and RingPaw handles the rest.
         </p>
       </div>
 

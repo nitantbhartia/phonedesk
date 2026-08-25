@@ -245,7 +245,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         <div className="border-t border-line pt-4">
           <p className="truncate text-[13px] text-ink">
-            {session?.user?.name || "Call Slot account"}
+            {session?.user?.name || "RingPaw account"}
           </p>
           <p className="truncate text-[12px] text-muted">
             {session?.user?.email || "Signed in"}
@@ -269,7 +269,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <main className="min-h-screen flex-1 overflow-y-auto px-5 pb-16 pt-20 lg:px-12 lg:pt-10">
         {showSubBanner && (
           <div className="mb-8 flex items-baseline justify-between gap-4 border-b border-line pb-4">
-            <p className="text-[13px] text-muted">Call Slot is paused. Subscribe to take forwarded calls.</p>
+            <p className="text-[13px] text-muted">RingPaw is paused. Subscribe to take forwarded calls.</p>
             <Link href="/settings/billing" className="bg-accent px-3.5 py-2 text-[12px] text-accent-foreground hover:bg-accent-hover">
               Subscribe
             </Link>

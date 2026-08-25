@@ -280,7 +280,7 @@ export async function executeCommand(
         data: { businessHours: updatedHours },
       });
 
-      responseMessage = `Business hours updated to ${openStr}-${closeStr} for ${targetDays.join(", ")}. Call Slot will use these new hours.`;
+      responseMessage = `Business hours updated to ${openStr}-${closeStr} for ${targetDays.join(", ")}. RingPaw will use these new hours.`;
       break;
     }
 
@@ -300,7 +300,7 @@ export async function executeCommand(
         data: { isActive: true },
       });
       responseMessage =
-        "Bookings resumed! Call Slot is back to offering times on forwarded calls.";
+        "Bookings resumed! RingPaw is back to offering times on forwarded calls.";
       break;
     }
 
@@ -615,7 +615,7 @@ export async function executeCommand(
   }
 
   // Send response back to owner
-  await sendOutboundSms(replyTo, `[Call Slot] ${responseMessage}`, fromNumber);
+  await sendOutboundSms(replyTo, `[RingPaw] ${responseMessage}`, fromNumber);
 
   return responseMessage;
 }

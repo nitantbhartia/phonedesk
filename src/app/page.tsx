@@ -63,15 +63,15 @@ function LandingPageContent() {
           <BrandLogo />
           <div className="hidden items-center gap-8 text-[12px] font-semibold tracking-[0.03em] text-muted md:flex">
             <a href="#how-it-works" className="studio-link">How it works</a>
-            <a href="#why-call-slot" className="studio-link">Why Call Slot</a>
+            <a href="#why-ringpaw" className="studio-link">Why RingPaw</a>
             <a href="#price" className="studio-link">Price</a>
           </div>
           <div className="flex items-center gap-5">
             <Link href="/login?mode=signin" className="hidden text-[12px] font-semibold text-muted hover:text-ink sm:inline">
               Log in
             </Link>
-            <Link href="/onboarding" className="studio-button studio-button-small">
-              Start <ArrowIcon className="h-4 w-4" />
+            <Link href="/demo" className="studio-button studio-button-small">
+              Hear the demo <ArrowIcon className="h-4 w-4" />
             </Link>
           </div>
         </nav>
@@ -82,21 +82,21 @@ function LandingPageContent() {
           <div>
             <p className="studio-eyebrow mb-7">
               <span className="studio-eyebrow-line" />
-              Bookable voicemail <span>/</span> missed calls <span>/</span> keypad
+              Built for pet groomers <span>/</span> missed calls <span>/</span> booked grooms
             </p>
-            <h1 className="max-w-[650px] text-[clamp(3.4rem,7vw,6.9rem)] font-bold leading-[0.89] tracking-[-0.075em]">
-              Your voicemail can <span className="text-accent">book.</span>
+            <h1 className="max-w-[680px] text-[clamp(3.1rem,5.3vw,5.5rem)] font-bold leading-[0.9] tracking-[-0.068em]">
+              Busy grooming dogs? <span className="text-accent">Missed calls become booked grooms.</span>
             </h1>
-            <p className="mt-8 max-w-[440px] text-[17px] leading-[1.55] text-muted sm:text-[18px]">
-              When your hands are wet and the phone rings, Call Slot answers with two real openings from your calendar. The caller presses a digit. You get the booking.
+            <p className="mt-8 max-w-[490px] text-[17px] leading-[1.55] text-muted sm:text-[18px]">
+              RingPaw answers missed grooming calls, offers real openings from your calendar, books the appointment, and sends the confirmation — while you stay with the dog on your table.
             </p>
             <div className="mt-9 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-              <Link href="/onboarding" className="studio-button">
-                Get a number <ArrowIcon className="h-4 w-4" />
+              <Link href="/demo" className="studio-button">
+                Hear a booking call <ArrowIcon className="h-4 w-4" />
               </Link>
-              <a href="#how-it-works" className="studio-text-link">
-                See how it works <ArrowIcon direction="down" className="h-4 w-4" />
-              </a>
+              <Link href="/onboarding" className="studio-text-link">
+                Start setup <ArrowIcon className="h-4 w-4" />
+              </Link>
             </div>
             <div className="mt-14 grid max-w-[560px] grid-cols-3 border-t border-line pt-5">
               <div>
@@ -104,12 +104,12 @@ function LandingPageContent() {
                 <p className="studio-fact-detail">one clear price</p>
               </div>
               <div className="border-l border-line pl-4 sm:pl-6">
-                <p className="studio-fact-label">one shop</p>
-                <p className="studio-fact-detail">one forwarded line</p>
+                <p className="studio-fact-label">keep your number</p>
+                <p className="studio-fact-detail">forward only missed calls</p>
               </div>
               <div className="border-l border-line pl-4 sm:pl-6">
                 <p className="studio-fact-label">one booking</p>
-                <p className="studio-fact-detail">or you don&apos;t pay</p>
+                <p className="studio-fact-detail">can cover the month</p>
               </div>
             </div>
           </div>
@@ -120,11 +120,11 @@ function LandingPageContent() {
               viewBox="0 0 700 620"
               fill="none"
               role="img"
-              aria-labelledby="call-slot-illustration-title call-slot-illustration-desc"
+              aria-labelledby="ringpaw-illustration-title ringpaw-illustration-desc"
               preserveAspectRatio="xMidYMid meet"
             >
-              <title id="call-slot-illustration-title">A keypad turning a missed call into two bookable openings</title>
-              <desc id="call-slot-illustration-desc">An original geometric illustration with a telephone, a sunny dial, and two calendar openings.</desc>
+              <title id="ringpaw-illustration-title">RingPaw turning a missed grooming call into a booked appointment</title>
+              <desc id="ringpaw-illustration-desc">A telephone keypad offers two real grooming openings from the shop calendar.</desc>
               <defs>
                 <pattern id="diagonal-grid" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                   <path d="M0 0V28" stroke="#D8D0C4" strokeOpacity=".55" />
@@ -179,20 +179,20 @@ function LandingPageContent() {
               </g>
               <g transform="translate(45 575)">
                 <path d="M0 0H220" stroke="#1C1916" strokeWidth="2" />
-                <text y="27" fill="#1C1916" fontSize="12" fontFamily="monospace" letterSpacing="2">01  /  TWO OPENINGS</text>
+                <text y="27" fill="#1C1916" fontSize="12" fontFamily="monospace" letterSpacing="2">01  /  BOOKED GROOM</text>
               </g>
             </svg>
             <div className="absolute left-6 top-6 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink/70 sm:left-8 sm:top-8">
-              01 / keypad to calendar
+              01 / missed call to booking
             </div>
           </div>
         </section>
 
         <section className="border-y border-line bg-surface">
           <div className="mx-auto grid max-w-[1280px] gap-5 px-6 py-8 sm:grid-cols-3 sm:px-10 lg:px-12">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Built for the busy hour</p>
-            <p className="text-sm leading-[1.55] text-muted">No app for callers. No dashboard gymnastics for you. Just a short phone tree connected to the calendar you already use.</p>
-            <p className="text-sm leading-[1.55] text-muted sm:border-l sm:border-line sm:pl-6">Forward your missed calls, keep your number, and let the phone do the small work that costs you bookings.</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Made for independent groomers</p>
+            <p className="text-sm leading-[1.55] text-muted">No app for pet parents. No new front desk for you. Just a fast booking experience connected to the tools your shop already uses.</p>
+            <p className="text-sm leading-[1.55] text-muted sm:border-l sm:border-line sm:pl-6">Works with Google Calendar and Square, so RingPaw only offers times that are actually open.</p>
           </div>
         </section>
 
@@ -200,53 +200,56 @@ function LandingPageContent() {
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
               <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />How it works</p>
-              <h2 className="max-w-[370px] text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-6xl">
-                Three moves.<br /><span className="text-accent">No lost caller.</span>
+              <h2 className="max-w-[420px] text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-6xl">
+                Missed call in.<br /><span className="text-accent">Booked groom out.</span>
               </h2>
               <p className="mt-6 max-w-[320px] text-[15px] leading-[1.6] text-muted">
-                It sounds like your shop, offers times that are actually free, and leaves you with the confirmation.
+                RingPaw keeps the caller moving while you keep grooming. Every step is short, clear, and tied to your real availability.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <article className="studio-process-card">
                 <span className="studio-number">01</span>
                 <div className="studio-symbol"><PhoneSymbol /></div>
-                <h3>Forward</h3>
-                <p>When you can&apos;t pick up, your existing line sends the call to Call Slot.</p>
+                <h3>Missed call</h3>
+                <p>You&apos;re bathing, drying, or clipping. Your shop number forwards only the call you couldn&apos;t answer.</p>
               </article>
               <article className="studio-process-card studio-process-card-dark">
                 <span className="studio-number">02</span>
                 <div className="studio-symbol"><KeypadSymbol /></div>
-                <h3>Press</h3>
-              <p>Callers hear your shop name, then press 1 to book or 9 to get a callback.</p>
+                <h3>RingPaw responds</h3>
+                <p>Pet parents hear your shop name, choose a grooming service, and get real openings without waiting for a callback.</p>
               </article>
-              <article className="studio-process-card studio-process-card-wide">
+              <article className="studio-process-card">
                 <span className="studio-number">03</span>
                 <div className="studio-symbol"><CalendarSymbol /></div>
-                <div>
-                  <h3>Calendar</h3>
-                  <p>The appointment writes to your live calendar. The caller gets a confirmation text. You keep working.</p>
-                </div>
-                <ArrowIcon className="studio-card-arrow" />
+                <h3>Customer books</h3>
+                <p>They pick an open time. RingPaw writes the grooming appointment to Google Calendar or Square.</p>
+              </article>
+              <article className="studio-process-card studio-process-card-confirmed">
+                <span className="studio-number">04</span>
+                <div className="studio-symbol studio-symbol-check" aria-hidden="true">✓</div>
+                <h3>Another appointment</h3>
+                <p>The customer gets a confirmation text. You get the booking — without putting down the clippers.</p>
               </article>
             </div>
           </div>
         </section>
 
-        <section id="why-call-slot" className="bg-accent text-paper">
+        <section id="why-ringpaw" className="bg-accent text-paper">
           <div className="mx-auto grid max-w-[1280px] gap-12 px-6 py-20 sm:px-10 sm:py-28 lg:grid-cols-[1fr_1fr] lg:items-end lg:px-12">
             <div>
-              <p className="studio-eyebrow studio-eyebrow-light mb-6"><span className="studio-eyebrow-line" />The Call Slot promise</p>
+              <p className="studio-eyebrow studio-eyebrow-light mb-6"><span className="studio-eyebrow-line" />The RingPaw promise</p>
               <h2 className="max-w-[620px] text-4xl font-bold leading-[0.93] tracking-[-0.06em] sm:text-6xl">
-                Your phone should<br /><span className="text-sun">earn its keep.</span>
+                Stop letting missed calls<br /><span className="text-sun">become missed grooms.</span>
               </h2>
             </div>
             <div className="lg:justify-self-end">
               <p className="max-w-[390px] text-[18px] leading-[1.55] text-paper/70">
-                One booked appointment pays for the month. If Call Slot doesn&apos;t book one, you don&apos;t pay for one.
+                A single recovered grooming appointment can cover the month. RingPaw helps your phone keep booking even when your hands are full.
               </p>
               <Link href="/onboarding" className="studio-button studio-button-sun mt-8">
-                Start with your number <ArrowIcon className="h-4 w-4" />
+                Start booking missed calls <ArrowIcon className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -256,7 +259,7 @@ function LandingPageContent() {
           <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
               <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />One simple plan</p>
-              <h2 className="text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-6xl">A small line item.<br /><span className="text-accent">A full calendar.</span></h2>
+              <h2 className="text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-6xl">One missed groom costs more.<br /><span className="text-accent">RingPaw costs $79.</span></h2>
             </div>
             <div className="flex flex-col justify-between gap-8 border-t border-line pt-7 sm:flex-row sm:items-end">
               <div>
@@ -264,8 +267,8 @@ function LandingPageContent() {
                 <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted">per month / one shop / one number</p>
               </div>
               <div className="max-w-[260px]">
-                <p className="text-[15px] leading-[1.6] text-muted">Forward missed calls. Keep real openings moving. Cancel any time.</p>
-                <Link href="/onboarding" className="studio-text-link mt-5">Get set up <ArrowIcon className="h-4 w-4" /></Link>
+                <p className="text-[15px] leading-[1.6] text-muted">Answers missed calls, books real openings, and sends confirmations. Cancel any time.</p>
+                <Link href="/onboarding" className="studio-text-link mt-5">Set up RingPaw <ArrowIcon className="h-4 w-4" /></Link>
               </div>
             </div>
           </div>
@@ -282,7 +285,7 @@ function LandingPageContent() {
           <div className="flex gap-5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
             <Link href="/privacy-policy" className="hover:text-ink">Privacy</Link>
             <Link href="/terms" className="hover:text-ink">Terms</Link>
-            <span>© {new Date().getFullYear()} Call Slot</span>
+            <span>© {new Date().getFullYear()} RingPaw</span>
           </div>
         </div>
       </footer>

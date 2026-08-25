@@ -64,7 +64,7 @@ function assertSafeCopy(text: string) {
 }
 
 export function resolveInboundPath(business?: { inboundPath?: string | null } | null) {
-  // Call Slot's live line is always the Twilio keypad flow. Keep the legacy
+  // RingPaw's live line is always the Twilio keypad flow. Keep the legacy
   // database field readable for old records, but never route a live call to
   // the retired conversational provider.
   void business;
@@ -681,7 +681,7 @@ async function bookOfferedSlot(
       servicePrice: service.price,
       startTime: start,
       endTime: end,
-      notes: session.knownCaller ? "Booked via Call Slot" : "Request via Call Slot — awaiting shop confirm",
+      notes: session.knownCaller ? "Booked via RingPaw" : "Request via RingPaw — awaiting shop confirm",
       bookingModeOverride: bookingKind === "AUTO" ? "HARD" : "SOFT",
     });
   } catch (error) {

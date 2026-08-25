@@ -114,7 +114,7 @@ describe("/api/admin/reassign-number", () => {
     expect(response.status).toBe(200);
     expect(updateRetellPhoneNumber).toHaveBeenCalledWith("+16195550100", {
       inboundAgentId: "agent_1",
-      nickname: "New Shop - Call Slot",
+      nickname: "New Shop - RingPaw",
       smsWebhookUrl: "https://app.test/api/sms/webhook",
     });
     expect(prisma.$transaction).toHaveBeenCalledWith([
@@ -161,7 +161,7 @@ describe("/api/admin/reassign-number", () => {
 
     expect(updateRetellPhoneNumber).toHaveBeenCalledWith("+16195550100", {
       inboundAgentId: "agent_1",
-      nickname: "New Shop - Call Slot",
+      nickname: "New Shop - RingPaw",
       smsWebhookUrl: undefined,
     });
   });

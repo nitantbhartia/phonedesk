@@ -320,7 +320,7 @@ export default function BusinessProfilePage() {
         <CardHeader className="border-b border-line">
           <CardTitle>Business information</CardTitle>
           <CardDescription>
-            Core details about your shop. Call Slot uses these on forwarded calls.
+            Core details about your shop. RingPaw uses these on forwarded calls.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -377,7 +377,7 @@ export default function BusinessProfilePage() {
         <CardHeader className="border-b border-line">
           <CardTitle>Business hours</CardTitle>
           <CardDescription>
-            Set your operating hours. Call Slot only offers times inside these hours.
+            Set your operating hours. RingPaw only offers times inside these hours.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

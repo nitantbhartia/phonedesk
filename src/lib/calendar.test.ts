@@ -146,7 +146,7 @@ describe("calendar helpers", () => {
       } as never,
       {
         summary: "Pip booking",
-        description: "Booked via Call Slot",
+        description: "Booked via RingPaw",
         startTime: new Date("2026-03-12T17:00:00.000Z"),
         endTime: new Date("2026-03-12T18:00:00.000Z"),
         attendeeEmail: "jamie@example.com",
@@ -487,7 +487,7 @@ describe("calendar helpers", () => {
 
     expect(conflicts.map((c) => c.source)).toEqual([
       "Square",
-      "Call Slot",
+      "RingPaw",
       "Acuity",
     ]);
   });

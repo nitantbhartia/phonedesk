@@ -29,24 +29,24 @@ const plexMono = IBM_Plex_Mono({
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com";
 
 export const metadata: Metadata = {
-  title: "Call Slot — Your voicemail can book.",
+  title: "RingPaw — Turn missed grooming calls into booked appointments",
   description:
-    "Forward missed calls to Call Slot. Callers pick a time on the keypad, and the booking writes to your calendar.",
+    "RingPaw answers missed calls for pet groomers, books real openings from Google Calendar or Square, and sends appointment confirmations.",
   metadataBase: new URL(APP_URL),
   openGraph: {
-    title: "Call Slot — Your voicemail can book.",
+    title: "RingPaw — Turn missed grooming calls into booked appointments",
     description:
-      "Forward missed calls to Call Slot. Callers pick a time on the keypad, and the booking writes to your calendar.",
+      "Busy grooming dogs? RingPaw answers missed calls, books real openings, and sends confirmations.",
     url: APP_URL,
-    siteName: "Call Slot",
+    siteName: "RingPaw",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Call Slot — Your voicemail can book.",
+    title: "RingPaw — Turn missed grooming calls into booked appointments",
     description:
-      "Forward missed calls to Call Slot. Callers pick a time on the keypad, and the booking writes to your calendar.",
+      "Busy grooming dogs? RingPaw answers missed calls, books real openings, and sends confirmations.",
   },
 };
 

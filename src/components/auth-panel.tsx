@@ -73,7 +73,7 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
     <div className="studio-auth-panel w-full max-w-[460px] border border-line bg-surface p-6 sm:p-9">
       <div className="mb-8 flex items-start justify-between gap-5 border-b border-line pb-6">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Call Slot / account</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">RingPaw / account</p>
           <h2 className="mt-3 font-display text-3xl leading-[0.92] tracking-[-0.055em]">Your line, in order.</h2>
         </div>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-line text-accent">

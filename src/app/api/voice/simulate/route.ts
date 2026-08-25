@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
   if (!business) {
     return NextResponse.json(
-      { error: "No shop found. Pass to= your Call Slot number or businessId." },
+      { error: "No shop found. Pass to= your RingPaw number or businessId." },
       { status: 404 }
     );
   }
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       callerPhone: from,
       status: "IN_PROGRESS",
       isTestCall: true,
-      summary: "Call Slot simulate",
+      summary: "RingPaw simulate",
     },
   });
 

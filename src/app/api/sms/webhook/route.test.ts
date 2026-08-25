@@ -257,7 +257,7 @@ describe("POST /api/sms/webhook", () => {
     expect(sendSms).toHaveBeenNthCalledWith(
       2,
       "+16195550000",
-      "[Call Slot] Jamie cancelled their Full Groom appointment.",
+      "[RingPaw] Jamie cancelled their Full Groom appointment.",
       "+16195559999"
     );
   });
@@ -312,7 +312,7 @@ describe("POST /api/sms/webhook", () => {
     expect(sendSms).toHaveBeenNthCalledWith(
       2,
       "+16195550000",
-      "[Call Slot] Jamie confirmed their Full Groom appointment (Thu, May 21, 9:00 AM).",
+      "[RingPaw] Jamie confirmed their Full Groom appointment (Thu, May 21, 9:00 AM).",
       "+16195559999"
     );
   });
@@ -396,7 +396,7 @@ describe("POST /api/sms/webhook", () => {
     expect(response.status).toBe(200);
     expect(sendSms).toHaveBeenCalledWith(
       "+16195550000",
-      "[Call Slot] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
+      "[RingPaw] Sorry, I had trouble processing that. Try again or text 'help' for available commands.",
       "+16195559999"
     );
   });

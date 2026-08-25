@@ -128,7 +128,7 @@ export default function AgentSettingsPage() {
         <div>
           <h1 className="font-display text-3xl tracking-tight text-ink">Call answering</h1>
           <p className="text-muted-foreground">
-            Call Slot answers forwarded calls with keypad booking. Manage services from the <a href="/settings/pricing" className="underline underline-offset-2 font-medium">Services &amp; Pricing</a> page.
+            RingPaw answers missed grooming calls and books real openings. Manage services from the <a href="/settings/pricing" className="underline underline-offset-2 font-medium">Services &amp; Pricing</a> page.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -146,9 +146,9 @@ export default function AgentSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Twilio keypad line</CardTitle>
+          <CardTitle>Missed-call booking line</CardTitle>
           <CardDescription>
-            Call Slot uses Twilio for the phone line, keypad menu, and voicemail.
+            RingPaw uses your connected phone line to offer grooming services, book open times, and collect callback requests.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -165,7 +165,7 @@ export default function AgentSettingsPage() {
             <div>
               <CardTitle>Line status</CardTitle>
               <CardDescription>
-                Pause Call Slot if you need forwarded calls to stop being answered.
+                Pause RingPaw if you need forwarded calls to stop being answered.
               </CardDescription>
             </div>
             <div className="flex items-center gap-3">
@@ -183,7 +183,7 @@ export default function AgentSettingsPage() {
         <CardHeader>
           <CardTitle>Booking Mode</CardTitle>
           <CardDescription>
-            Choose how Call Slot writes appointments.
+            Choose how RingPaw writes appointments.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -255,7 +255,7 @@ export default function AgentSettingsPage() {
           </CardTitle>
           <CardDescription>
             You can manage your shop by text. Send these commands to
-            your Call Slot number.
+            your RingPaw number.
           </CardDescription>
         </CardHeader>
         <CardContent>

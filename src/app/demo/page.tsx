@@ -428,10 +428,10 @@ function DemoPageInner() {
           <div className="w-full max-w-xl animate-in fade-in duration-300">
             <div className="text-center mb-6">
               <h1 className="font-display text-4xl sm:text-5xl tracking-tight text-ink leading-tight mb-3">
-                Hear Call Slot in action.
+                Hear a missed grooming call become a booking.
               </h1>
               <p className="text-muted font-medium text-lg max-w-md mx-auto leading-relaxed">
-                Listen to a real booking call, then try it live with your own voice.
+                Listen to RingPaw handle a pet parent, then call the live demo and try it yourself.
               </p>
             </div>
             <div className="bg-surface rounded-sm border border-line p-6 mb-2">
@@ -473,7 +473,7 @@ function DemoPageInner() {
                 {livePhase === "waiting" && (
                   <div className="mb-6">
                     <h1 className="text-3xl sm:text-4xl font-medium text-ink leading-tight mb-2">
-                      Hear Call Slot pick up
+                      Hear RingPaw book a groom
                     </h1>
                     <p className="text-muted font-medium text-base max-w-sm mx-auto">
                       Talk through a booking call. 3-minute demo, one call per number.
@@ -507,7 +507,7 @@ function DemoPageInner() {
                 )}
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-lg font-bold text-ink mb-1">Call Slot is on the call!</p>
+                    <p className="text-lg font-bold text-ink mb-1">RingPaw is on the call!</p>
                     <p className="text-3xl font-medium text-ink tabular-nums tracking-wide">
                       {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                     </p>
@@ -516,8 +516,8 @@ function DemoPageInner() {
                 )}
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-medium text-ink mb-1">That was Call Slot!</p>
-                    <p className="text-sm text-muted">Natural, fast, and ready to book 24/7.</p>
+                    <p className="text-xl font-medium text-ink mb-1">That missed call became a booking.</p>
+                    <p className="text-sm text-muted">RingPaw handled the call while the groomer stayed with the dog.</p>
                   </div>
                 )}
               </div>
@@ -684,7 +684,7 @@ function DemoPageInner() {
                     <div className="bg-paper border-2 border-line rounded-sm p-6 text-center">
                       <p className="font-display text-2xl text-ink mb-2">Received.</p>
                       <p className="text-lg font-bold text-ink mb-1">Thanks! We&apos;ll be in touch soon.</p>
-                      <p className="text-sm text-ink">We&apos;ll reach out to set up Call Slot for your shop.</p>
+                      <p className="text-sm text-ink">We&apos;ll reach out to set up RingPaw for your shop.</p>
                     </div>
                   ) : (
                     <>
@@ -762,7 +762,7 @@ function DemoPageInner() {
                   <div className="bg-paper border-2 border-line rounded-sm p-6 text-center">
                     <p className="font-display text-2xl text-ink mb-2">Received.</p>
                     <p className="text-lg font-bold text-ink mb-1">Thanks! We&apos;ll be in touch soon.</p>
-                    <p className="text-sm text-ink">We&apos;ll reach out to set up Call Slot for your shop.</p>
+                    <p className="text-sm text-ink">We&apos;ll reach out to set up RingPaw for your shop.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleLeadSubmit} className="space-y-3">
@@ -873,7 +873,7 @@ function DemoPageInner() {
                   <div className="bg-white/10 border-2 border-white/20 rounded-sm p-6 text-center">
                     <p className="font-display text-2xl text-ink mb-2">Received.</p>
                     <p className="text-lg font-bold text-white mb-1">Thanks! We&apos;ll be in touch soon.</p>
-                    <p className="text-sm text-white/60">We&apos;ll reach out to set up Call Slot for your shop.</p>
+                    <p className="text-sm text-white/60">We&apos;ll reach out to set up RingPaw for your shop.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleLeadSubmit} className="space-y-3">
@@ -940,7 +940,7 @@ function DemoPageInner() {
               onClick={() => document.getElementById("bottom-lead-form")?.scrollIntoView({ behavior: "smooth" })}
               className="flex items-center justify-center gap-2 w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all"
             >
-              Ready to get Call Slot for your shop?
+              Ready to get RingPaw for your shop?
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
             </button>
           </div>
@@ -948,7 +948,7 @@ function DemoPageInner() {
       )}
 
       <footer className="relative z-10 text-center py-6 text-xs text-muted font-medium">
-        © {new Date().getFullYear()} Call Slot · <Link href="/" className="hover:text-ink transition-colors">ringpaw.com</Link>
+        © {new Date().getFullYear()} RingPaw · <Link href="/" className="hover:text-ink transition-colors">ringpaw.com</Link>
       </footer>
     </div>
   );

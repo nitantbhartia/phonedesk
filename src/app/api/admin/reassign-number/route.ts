@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     // Update Retell: point the number at the new business's agent
     await updateRetellPhoneNumber(phoneNumber, {
       inboundAgentId: toAgentId,
-      nickname: `${toBusiness.name} - Call Slot`,
+      nickname: `${toBusiness.name} - RingPaw`,
       smsWebhookUrl: shouldAttachRetellSmsWebhook()
         ? buildRetellWebhookUrl(appUrl, "/api/sms/webhook")
         : undefined,

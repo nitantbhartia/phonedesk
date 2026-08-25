@@ -370,7 +370,7 @@ export function SpawklesDemoClient() {
               Hi Shirine!
             </h1>
             <p className="text-muted font-medium text-base max-w-md mx-auto leading-relaxed">
-              We built Call Slot for shops like Spawkles. Call below to hear missed-call booking in action.
+              We built RingPaw for shops like Spawkles. Call below to hear missed-call booking in action.
             </p>
           </div>
         )}
@@ -414,7 +414,7 @@ export function SpawklesDemoClient() {
                       Hi Shirine!
                     </h1>
                     <p className="text-muted font-medium text-base max-w-sm mx-auto">
-                      Call Call Slot for Spawkles. 4-minute demo call.
+                      Call RingPaw for Spawkles. 4-minute demo call.
                     </p>
                   </div>
                 )}
@@ -446,7 +446,7 @@ export function SpawklesDemoClient() {
                 )}
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-lg font-bold text-ink mb-1">Call Slot is on the call!</p>
+                    <p className="text-lg font-bold text-ink mb-1">RingPaw is on the call!</p>
                     <p className="text-3xl font-medium text-ink tabular-nums tracking-wide">
                       {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                     </p>
@@ -455,7 +455,7 @@ export function SpawklesDemoClient() {
                 )}
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-medium text-ink mb-1">That was Call Slot!</p>
+                    <p className="text-xl font-medium text-ink mb-1">That was RingPaw!</p>
                     <p className="text-sm text-muted">Natural, friendly, and ready to answer 24/7.</p>
                   </div>
                 )}
@@ -624,9 +624,9 @@ export function SpawklesDemoClient() {
                     Try another call
                   </button>
                   <div className="bg-paper rounded-sm p-4 text-center">
-                    <p className="text-sm font-bold text-ink mb-1">Ready to get Call Slot answering your calls?</p>
+                    <p className="text-sm font-bold text-ink mb-1">Ready to get RingPaw answering your calls?</p>
                     <p className="text-xs text-muted">
-                      Reach out to us and we&apos;ll have Call Slot live for Spawkles in no time.
+                      Reach out to us and we&apos;ll have RingPaw live for Spawkles in no time.
                     </p>
                   </div>
                 </div>
@@ -640,7 +640,7 @@ export function SpawklesDemoClient() {
       <footer className="relative z-10 pb-8 pt-4 flex flex-col items-center gap-2">
         <BrandLogo mobileWidth={100} desktopWidth={120} />
         <p className="text-xs text-muted">
-          Powered by Call Slot
+          Powered by RingPaw
         </p>
       </footer>
     </div>

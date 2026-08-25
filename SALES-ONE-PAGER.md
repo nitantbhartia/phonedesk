@@ -1,12 +1,12 @@
-# Call Slot — Sales One-Pager
+# RingPaw — Sales One-Pager
 
-**"Busy grooming dogs? We answer the phone."**
+**"Busy grooming dogs? We turn missed calls into booked appointments."**
 
 ---
 
 ## 60-SECOND PITCH
 
-> "When you're mid-groom and the phone rings, you can't answer — and most customers don't leave a voicemail, they call the next groomer on Google. Call Slot fixes that. Forward missed calls, callers press 1 to book a real calendar opening, and you get a text confirmation. 5-minute setup, connects to Google Calendar, Square, or Acuity, $79/mo. 30-day guarantee — if it doesn't book a single appointment, you pay nothing."
+> "When you're mid-groom and the phone rings, you can't answer — and most customers don't leave a voicemail, they call the next groomer on Google. RingPaw fixes that. Forward missed calls, callers press 1 to book a real calendar opening, and you get a text confirmation. 5-minute setup, connects to Google Calendar, Square, or Acuity, $79/mo. 30-day guarantee — if it doesn't book a single appointment, you pay nothing."
 
 ---
 
@@ -14,7 +14,7 @@
 
 | Plan | Price | Best For |
 |------|-------|----------|
-| **Call Slot** | $79/mo | One location, one forwarded line |
+| **RingPaw** | $79/mo | One location, one forwarded line |
 
 - Overage: $0.40/min | No contracts, no setup fees, cancel anytime
 - **30-day outcome guarantee** — zero bookings = zero charge
@@ -24,7 +24,7 @@
 
 ## FULL FEATURE LIST
 
-### Bookable voicemail (core)
+### Missed-call booking (core)
 - Picks up forwarded missed, busy, and after-hours calls 24/7
 - Shop name first, then keypad: press 1 to book, press 9 to leave a message
 - Offers real calendar openings for up to three phone-bookable services
@@ -122,7 +122,7 @@
 | They say | You say |
 |----------|---------|
 | **"My customers won't want a keypad."** | Callers already know how to press 1. They hear your shop name, pick a real opening, and get a text. *Have them call the demo number right now.* |
-| **"I already have voicemail."** | Most callers don't leave voicemails — they hang up and call the next groomer. Voicemail is a holding pen. Call Slot is a booking machine. |
+| **"I already have voicemail."** | Most callers don't leave voicemails — they hang up and call the next groomer. Voicemail is a holding pen. RingPaw is a booking machine. |
 | **"It's too expensive."** | At $79/mo, one extra booking covers it. If you're missing 2-4 calls/day at $85/groom, that's $170-$340 in lost revenue *daily*. And if it books zero in 30 days, you pay nothing. |
 | **"I'm too busy to set this up."** | 5 minutes. Business name, services, link calendar. Call forwarding is a single code you dial — 30 seconds. You're live by tonight. |
 | **"What if it gets something wrong?"** | It only books open slots — can't double-book. If unsure, it asks the customer to clarify. You get a daily report of every call. Text it commands to block days or adjust anytime. |
@@ -141,4 +141,4 @@
 
 ---
 
-*Call Slot — Your voicemail can book.*
+*RingPaw — Missed grooming calls, booked.*

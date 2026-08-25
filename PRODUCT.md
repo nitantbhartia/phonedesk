@@ -1,10 +1,10 @@
-# Call Slot — voicemail that books
+# RingPaw — missed grooming calls, booked
 
-Display name: **Call Slot**. Short / product id: **callslot**. Former names: Bookable, RingPaw. Validation MVP (v0.1).
+Display name: **RingPaw**. Short / product id: **ringpaw**. Former internal concept: Bookable / Call Slot. Validation MVP (v0.1).
 
 Callers who hit a shop number (or a no-answer / busy / after-hours forward) hear a short shop-branded voicemail. They book with the keypad. This is not a conversational receptionist.
 
-Copy never says AI, virtual receptionist, or assistant. Shop name first. It should feel like voicemail. In-app tagline: **Your voicemail can book.**
+Copy never leads with AI, virtual receptionist, or generic phone automation. Shop name first. Customer-facing promise: **RingPaw turns missed grooming calls into booked appointments.**
 
 ---
 
@@ -32,7 +32,7 @@ If Google can only show busy (no reliable event write), operate in request mode.
 
 Conversational agent, speech recognition, personality, bilingual small talk, SMS-first booking threads, booking links, chat widgets, waitlist / review / lapsing SMS factory, deposits, payments, multi-location, Spanish, breed quoting, a new CRM.
 
-The older Retell conversational agent remains in the repo behind `inboundPath = RETELL_AGENT`. It is not the default inbound path and is not on the Call Slot critical path.
+Legacy and alternate voice-provider paths remain behind their existing feature/configuration boundaries. They are not part of the customer-facing rebrand and must not be refactored during brand-only work.
 
 ---
 
@@ -123,7 +123,7 @@ Events: `call_forwarded`, `menu_started`, `menu_digit_pressed`, `booking_selecte
 
 ## Brand
 
-Customer-facing copy: **Call Slot** / “Your voicemail can book.” Never AI, virtual receptionist, assistant, or voice agent in landing, dashboard, settings, SMS, or voice prompts. Internal identifiers (`BookableSession`, `BOOKABLE_VOICEMAIL`, `/api/voice/*`) stay as-is. Domain may remain ringpaw.com until callslot.ai is live.
+Customer-facing copy: **RingPaw** / “Turn missed grooming calls into booked appointments.” Stay narrow to pet groomers and lead with the missed-call problem, booking outcome, and confirmations. Never lead with AI, virtual receptionist, assistant, or generic voicemail language. Internal identifiers (`BookableSession`, `BOOKABLE_VOICEMAIL`, `/api/voice/*`) stay as-is. The canonical domain is ringpaw.com.
 
 Retell conversational agent stays behind `inboundPath = RETELL_AGENT` (not default owner UX).
 

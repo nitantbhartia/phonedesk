@@ -477,7 +477,7 @@ export default function IntakeFormPage() {
         </div>
 
         <p className="text-center text-muted text-xs mt-4">
-          Powered by Call Slot
+          Powered by RingPaw
         </p>
       </div>
     </div>

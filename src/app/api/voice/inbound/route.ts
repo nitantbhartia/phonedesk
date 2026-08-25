@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       retellCallId: `twilio:${callSid}`,
       callerPhone: from || null,
       status: "IN_PROGRESS",
-      summary: "Call Slot inbound",
+      summary: "RingPaw inbound",
     },
   });
 

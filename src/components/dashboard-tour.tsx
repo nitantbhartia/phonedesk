@@ -20,13 +20,13 @@ interface Step {
 const STEPS: Step[] = [
   {
     title: "Welcome to your dashboard",
-    body: "Call Slot is live on forwarded calls. Let's take a 60-second tour so you know exactly where everything is.",
+    body: "RingPaw is live on forwarded calls. Let's take a 60-second tour so you know exactly where everything is.",
     hint: "Click Next to move through — or Skip if you'd rather explore on your own.",
   },
   {
     targetId: "tour-calls",
     title: "Calls Handled",
-    body: "Every forwarded call Call Slot picked up this week. Each one was a missed call that would have gone to voicemail.",
+    body: "Every forwarded call RingPaw picked up this week. Each one was a missed call that would have gone to voicemail.",
     side: "bottom",
   },
   {
@@ -55,7 +55,7 @@ const STEPS: Step[] = [
   },
   {
     title: "You're all set!",
-    body: "Make a test call to your Call Slot number to hear the keypad tree. You can replay this tour anytime via the \"Take a tour\" link on your dashboard.",
+    body: "Make a test call to your RingPaw number to hear the grooming booking flow. You can replay this tour anytime via the \"Take a tour\" link on your dashboard.",
   },
 ];
 

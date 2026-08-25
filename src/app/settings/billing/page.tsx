@@ -8,14 +8,14 @@ import { CheckCircle, CreditCard, Zap } from "lucide-react";
 const PLANS = [
   {
     id: "PRO",
-    name: "Call Slot",
+    name: "RingPaw",
     price: 79,
     minutes: 300,
     popular: true,
     features: [
       "One location, one line",
-      "Voicemail that books by keypad",
-      "Google Calendar read + write",
+      "Missed-call booking for pet groomers",
+      "Google Calendar + Square support",
       "Owner + caller SMS confirmations",
     ],
   },

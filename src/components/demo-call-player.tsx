@@ -222,7 +222,7 @@ export function DemoCallPlayer({ audioSrc }: { audioSrc?: string }) {
                       : "bg-ink/5 text-muted"
                     }`}
                   >
-                    {currentLine.speaker === "ai" ? "Call Slot" : "Caller"}
+                    {currentLine.speaker === "ai" ? "RingPaw" : "Caller"}
                   </span>
                   <span className="text-[10px] text-muted font-mono">{formatTime(currentLine.time)}</span>
                 </div>

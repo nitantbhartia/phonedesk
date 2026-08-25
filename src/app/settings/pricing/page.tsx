@@ -312,7 +312,7 @@ export default function PricingPage() {
                 <div className="flex-1 sm:w-28 sm:flex-none space-y-1">
                   <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-muted uppercase tracking-wide">
                     Duration (min)
-                    <InfoIcon text="How long this service takes in minutes. Call Slot uses this to block the right amount of time on your calendar." />
+                    <InfoIcon text="How long this service takes in minutes. RingPaw uses this to block the right amount of time on your calendar." />
                   </label>
                   <input
                     type="number"
@@ -519,7 +519,7 @@ export default function PricingPage() {
                 <label className="block text-xs font-bold text-muted uppercase mb-1">
                   <span className="inline-flex items-center gap-1">
                     Price *
-                    <InfoIcon text="The price Call Slot uses when this rule matches. This overrides the base service price for the specified breed and/or size." />
+                    <InfoIcon text="The price RingPaw uses when this rule matches. This overrides the base service price for the specified breed and/or size." />
                   </span>
                 </label>
                 <input

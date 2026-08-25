@@ -3,9 +3,9 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 
 export const metadata: Metadata = {
-  title: "SMS Consent & Opt-In | Call Slot",
+  title: "SMS Consent & Opt-In | RingPaw",
   description:
-    "How customers consent to receive text messages through Call Slot-powered shops.",
+    "How customers consent to receive text messages through RingPaw-powered shops.",
 };
 
 export default function SmsConsentPage() {
@@ -18,14 +18,14 @@ export default function SmsConsentPage() {
           SMS Consent &amp; Opt-In
         </h1>
         <p className="mb-12 border-b border-line pb-12 text-sm text-muted">
-          How customers consent to receive text messages through Call Slot-powered shops
+          How customers consent to receive text messages through RingPaw-powered shops
         </p>
 
         <div className="mb-10 border border-line border-l-accent bg-surface p-8">
           <p className="text-[17px] leading-[1.8]">
-            By providing your phone number when booking an appointment at a Call Slot-powered
+            By providing your phone number when booking an appointment at a RingPaw-powered
             shop, you agree to receive SMS appointment confirmations, reminders, and booking-related
-            notifications from <strong>Call Slot</strong> on behalf of the shop. Message and data rates may apply. Reply{" "}
+            notifications from <strong>RingPaw</strong> on behalf of the shop. Message and data rates may apply. Reply{" "}
             <strong>STOP</strong> to opt out at any time. Reply <strong>HELP</strong> for help.
           </p>
         </div>
@@ -70,7 +70,7 @@ export default function SmsConsentPage() {
             </div>
             <div className="text-sm leading-relaxed text-ink/80">
               I agree to receive SMS appointment confirmations and reminders from{" "}
-              <strong>Call Slot</strong> on behalf of this shop. Message &amp; data rates may
+              <strong>RingPaw</strong> on behalf of this shop. Message &amp; data rates may
               apply. I can reply <strong>STOP</strong> to opt out at any time.
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function SmsConsentPage() {
         </h2>
         <div className="my-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {[
-            { label: "Program Name", value: "Call Slot Appointment Notifications" },
+            { label: "Program Name", value: "RingPaw Appointment Notifications" },
             { label: "Message Frequency", value: "1\u20133 messages per appointment" },
             { label: "To Opt Out", value: "Reply STOP to any message" },
             { label: "For Help", value: "Reply HELP or email support@ringpaw.com" },
@@ -105,15 +105,15 @@ export default function SmsConsentPage() {
         </h2>
         <ul className="mb-3.5 ml-5 list-disc">
           <li className="mb-2 text-ink/80">
-            Hi [Name], this is Call Slot confirming your appointment on [Date] at
+            Hi [Name], this is RingPaw confirming your appointment on [Date] at
             [Time]. Reply STOP to opt out.
           </li>
           <li className="mb-2 text-ink/80">
-            Reminder from Call Slot: your appointment is tomorrow at [Time]. Reply STOP to opt
+            Reminder from RingPaw: your appointment is tomorrow at [Time]. Reply STOP to opt
             out.
           </li>
           <li className="mb-2 text-ink/80">
-            Call Slot: you&apos;re all set for pickup. Reply STOP to opt out.
+            RingPaw: you&apos;re all set for pickup. Reply STOP to opt out.
           </li>
         </ul>
 

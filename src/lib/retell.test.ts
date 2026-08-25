@@ -432,7 +432,7 @@ describe("Retell API helpers", () => {
     const result = await provisionRetellPhoneNumber({
       agentId: "agent_1",
       areaCode: 999,
-      nickname: "Call Slot Line",
+      nickname: "RingPaw Line",
       smsWebhookUrl: "https://app.example.com/api/sms/webhook",
     });
 

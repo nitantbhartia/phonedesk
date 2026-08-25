@@ -214,7 +214,7 @@ describe("extractWebsiteDraftFromPages", () => {
       "https://pawfectplace.com/",
       expect.objectContaining({
         headers: expect.objectContaining({
-          "user-agent": expect.stringContaining("Call Slot Website Importer"),
+          "user-agent": expect.stringContaining("RingPaw Website Importer"),
         }),
       })
     );

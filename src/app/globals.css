@@ -386,6 +386,18 @@
   border-color: rgba(255, 255, 255, 0.36);
 }
 
+.studio-process-card-confirmed {
+  background: rgba(241, 178, 72, 0.16);
+}
+
+.studio-symbol-check {
+  background: #D46C49;
+  color: #F8F3E9;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
 .studio-process-card-wide {
   display: flex;
   min-height: 12rem;

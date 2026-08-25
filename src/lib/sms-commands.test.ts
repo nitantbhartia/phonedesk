@@ -147,7 +147,7 @@ describe("executeCommand", () => {
     });
     expect(sendSms).toHaveBeenCalledWith(
       "+16195550000",
-      '[Call Slot] Added "Puppy Bath" at $55 to your services. Callers can book this on the keypad.',
+      '[RingPaw] Added "Puppy Bath" at $55 to your services. Callers can book this on the keypad.',
       "+16195559999"
     );
     expect(result).toContain('Added "Puppy Bath"');
@@ -189,7 +189,7 @@ describe("executeCommand", () => {
     expect(result).toContain("Business hours updated to 9am-5pm");
     expect(sendSms).toHaveBeenCalledWith(
       "+16195550000",
-      expect.stringContaining("[Call Slot] Business hours updated"),
+      expect.stringContaining("[RingPaw] Business hours updated"),
       "+16195559999"
     );
   });
@@ -395,7 +395,7 @@ describe("executeCommand", () => {
     expect(sendSms).toHaveBeenNthCalledWith(
       2,
       "+16195550000",
-      expect.stringContaining("[Call Slot] Cancelled Jamie's appointment"),
+      expect.stringContaining("[RingPaw] Cancelled Jamie's appointment"),
       "+16195559999"
     );
     expect(result).toContain("Cancelled Jamie's appointment");
@@ -626,7 +626,7 @@ describe("executeCommand", () => {
     expect(result).toContain("I didn't understand that");
     expect(sendSms).toHaveBeenCalledWith(
       "+16195550000",
-      expect.stringContaining("[Call Slot] I didn't understand that."),
+      expect.stringContaining("[RingPaw] I didn't understand that."),
       "+16195559999"
     );
   });
@@ -665,7 +665,7 @@ describe("executeCommand", () => {
     expect(sendSms).toHaveBeenNthCalledWith(
       2,
       "+16195550000",
-      expect.stringContaining("[Call Slot] Buddy is ready for pickup."),
+      expect.stringContaining("[RingPaw] Buddy is ready for pickup."),
       "+16195559999"
     );
     expect(result).toContain("Buddy is ready for pickup");

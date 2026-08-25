@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Call Slot — Your voicemail can book.";
+export const alt = "RingPaw turns missed grooming calls into booked appointments.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -29,7 +29,7 @@ export default function OgImage() {
             display: "flex",
           }}
         >
-          Call Slot
+          RingPaw
         </div>
         <div
           style={{
@@ -40,7 +40,7 @@ export default function OgImage() {
             maxWidth: 900,
           }}
         >
-          Your voicemail can book.
+          Missed grooming calls become booked appointments.
         </div>
         <div
           style={{
@@ -51,7 +51,7 @@ export default function OgImage() {
             maxWidth: 720,
           }}
         >
-          Missed calls pick a time on the keypad. Bookings write to your calendar.
+          RingPaw answers, books a real opening, and sends the confirmation.
         </div>
         <div
           style={{

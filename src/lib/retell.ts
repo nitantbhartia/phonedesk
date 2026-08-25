@@ -660,7 +660,7 @@ export async function provisionRetellPhoneNumber(options: {
     const body: Record<string, unknown> = {
       area_code: areaCode,
       inbound_agent_id: options.agentId,
-      nickname: options.nickname || "Call Slot Line",
+      nickname: options.nickname || "RingPaw Line",
     };
     if (smsWebhook) body.inbound_sms_webhook_url = smsWebhook;
     return retellFetch("/create-phone-number", {

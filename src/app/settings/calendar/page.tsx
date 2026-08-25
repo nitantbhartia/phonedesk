@@ -338,7 +338,7 @@ function CalendarSettingsPageContent() {
             Bookings
           </h1>
           <p className="mt-2 text-[14px] text-muted">
-            Connect your booking tools so Call Slot can manage your availability
+            Connect your booking tools so RingPaw can manage your availability
             in real-time.
           </p>
         </div>
@@ -495,7 +495,7 @@ function CalendarSettingsPageContent() {
           <p className="text-sm text-ink/80 font-medium">
             <strong>Using another booking system?</strong>{" "}
             Connect the same Google Calendar that your booking software syncs
-            with. When Call Slot books an appointment, it&apos;ll show as busy in
+            with. When RingPaw books an appointment, it&apos;ll show as busy in
             your booking system too — preventing double-bookings
             automatically.
           </p>
@@ -508,11 +508,11 @@ function CalendarSettingsPageContent() {
           <h2 className="font-display text-2xl text-ink">
             <span className="inline-flex items-center gap-2">
               Business Hours
-              <InfoIcon text="Call Slot will only offer appointment slots that fall within these hours. Callers asking for times outside your hours will be told you're closed." />
+              <InfoIcon text="RingPaw will only offer appointment slots that fall within these hours. Callers asking for times outside your hours will be told you're closed." />
             </span>
           </h2>
           <p className="text-muted mt-1 text-sm font-medium">
-            Set the hours Call Slot can offer appointment slots.
+            Set the hours RingPaw can offer appointment slots.
           </p>
         </div>
               
@@ -637,7 +637,7 @@ function CalendarSettingsPageContent() {
               <label className="block text-sm font-bold text-muted uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Primary Destination
-                  <InfoIcon text="The calendar where Call Slot writes new bookings. If you have multiple connected calendars, pick the one you use for appointments." />
+                  <InfoIcon text="The calendar where RingPaw writes new bookings. If you have multiple connected calendars, pick the one you use for appointments." />
                 </span>
               </label>
               <div className="relative">
@@ -678,7 +678,7 @@ function CalendarSettingsPageContent() {
               <label className="block text-sm font-bold text-muted uppercase mb-3">
                 <span className="inline-flex items-center gap-1.5">
                   Conflict Checking
-                  <InfoIcon text="Advanced conflict controls are not editable yet. Call Slot already respects conflicts from your connected calendar data." />
+                  <InfoIcon text="Advanced conflict controls are not editable yet. RingPaw already respects conflicts from your connected calendar data." />
                 </span>
               </label>
               <div className="space-y-3">

@@ -1,5 +1,5 @@
 const WEBSITE_IMPORT_USER_AGENT =
-  "Call Slot Website Importer/1.0 (+https://ringpaw.com)";
+  "RingPaw Website Importer/1.0 (+https://ringpaw.com)";
 const MAX_EXTRA_PAGES = 3;
 
 const SERVICE_BLACKLIST = [

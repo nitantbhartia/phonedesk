@@ -91,7 +91,7 @@ describe("GET /api/billing/usage", () => {
       overageMinutes: 0,
       percentUsed: 50,
       plan: "PRO",
-      planName: "Call Slot",
+      planName: "RingPaw",
       subscriptionStatus: "active",
     });
   });

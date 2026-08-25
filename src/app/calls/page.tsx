@@ -143,7 +143,7 @@ export default function CallLogPage() {
         <div>
           <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Call log</h1>
           <p className="text-muted font-medium mt-1">
-            Every forwarded call Call Slot picked up — tap any row to see what was booked.
+            Every forwarded call RingPaw picked up — tap any row to see what was booked.
           </p>
         </div>
         <div className="flex gap-3">

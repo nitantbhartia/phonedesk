@@ -152,32 +152,32 @@ function formatPhoneNumber(value: string) {
 const STEP_CONFIG = [
   {
     title: "What's your shop called?",
-    subtitle: "Call Slot answers your forwarded calls with your shop name first — like voicemail that books.",
+    subtitle: "RingPaw answers the grooming calls you miss using the shop name your customers already know.",
     proTip: "Use the name customers already know from your sign and Google listing.",
   },
   {
     title: "Connect Google Calendar",
-    subtitle: "Call Slot reads your real openings and writes confirmed bookings. Google Calendar is required for v1.",
-    proTip: "If you use Square or Acuity too, you can add them later in Settings.",
+    subtitle: "RingPaw reads your real openings and writes confirmed grooming appointments. Google Calendar is required for setup.",
+    proTip: "Use Square too? You can connect it later in Settings.",
   },
   {
     title: "When are you open?",
-    subtitle: "Call Slot only offers slots during these hours. After hours, callers still hear your shop name and can book the next openings.",
+    subtitle: "RingPaw only offers slots during these hours. After hours, callers still hear your shop name and can book the next openings.",
     proTip: "Match the hours on your door — callers hear these times when they press 2 for pricing.",
   },
   {
     title: "What can callers book by phone?",
-    subtitle: "Add up to three services with duration and optional starting price. Call Slot keeps the menu short.",
+    subtitle: "Add up to three grooming services with duration and optional starting price. RingPaw keeps the booking menu short.",
     proTip: "Keep it to the 2–3 services callers actually book by phone. You can edit these anytime.",
   },
   {
-    title: "Forward missed calls to Call Slot",
+    title: "Forward missed calls to RingPaw",
     subtitle: "Set up no-answer, busy, and after-hours forwarding on your existing shop line.",
     proTip: "Conditional forwarding only kicks in when you don't answer — customers still call your usual number.",
   },
   {
     title: "Walk through a test booking",
-    subtitle: "Press through the keypad tree like a caller would. Success means you're ready for real forwarded calls.",
+    subtitle: "Book a grooming appointment like a caller would. Success means RingPaw is ready for your missed calls.",
     proTip: "You can also curl /api/voice/simulate locally — see the dashboard empty state for an example.",
   },
 ];
@@ -793,7 +793,7 @@ export default function OnboardingPage() {
         setProvisionedNumber(provData.phoneNumber);
       } else if (!provData.alreadyProvisioned) {
         console.error("[goLive] Number provisioning failed:", provData.error);
-        throw new Error(provData.error || "Failed to provision your Call Slot number. Please try again.");
+        throw new Error(provData.error || "Failed to provision your RingPaw number. Please try again.");
       }
 
       // End the demo session now that we have a real number
@@ -851,13 +851,13 @@ export default function OnboardingPage() {
         <main className="mx-auto grid max-w-[1180px] gap-10 px-6 py-12 sm:px-10 sm:py-20 lg:grid-cols-[250px_1fr] lg:gap-20 lg:px-12 lg:py-28">
           <aside className="lg:pt-3">
             <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />Before the line rings</p>
-            <p className="font-display text-4xl leading-[0.95] tracking-[-0.055em] sm:text-5xl">A quieter phone starts here.</p>
-            <p className="mt-6 text-sm leading-[1.6] text-muted">Five minutes to tell Call Slot what to say, where to look, and when to offer a time.</p>
+            <p className="font-display text-4xl leading-[0.95] tracking-[-0.055em] sm:text-5xl">Turn missed calls into booked grooms.</p>
+            <p className="mt-6 text-sm leading-[1.6] text-muted">Five minutes to connect your shop, calendar, grooming services, and missed-call line.</p>
           </aside>
 
           <section className="border border-line bg-surface p-6 sm:p-10">
           <h1 className="font-display text-4xl leading-[0.95] tracking-[-0.055em] sm:text-6xl">
-            {firstName ? `${firstName}, let's put it on the line.` : "Let's put it on the line."}
+            {firstName ? `${firstName}, let's get RingPaw booking.` : "Let's get RingPaw booking."}
           </h1>
           <p className="mt-5 max-w-md text-[16px] leading-[1.55] text-muted">You&apos;ll set up:</p>
 
@@ -866,7 +866,7 @@ export default function OnboardingPage() {
               "your shop name",
               "your calendar",
               "your hours",
-              "your short service menu",
+              "your grooming services",
               "a test call",
             ].map((item) => (
               <p key={item} className="border-b border-line py-3.5 text-[15px] last:border-b-0">
@@ -1108,7 +1108,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="businessName"
-                info="The name spoken to callers when Call Slot picks up (e.g. 'River Street Studio'). Use your full shop name exactly as you'd say it on the phone."
+                info="The name spoken to callers when RingPaw picks up (e.g. 'River Street Studio'). Use your full shop name exactly as you'd say it on the phone."
               >
                 Business Name
               </OnboardingLabel>
@@ -1122,7 +1122,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="ownerName"
-                info="Your first name is used when Call Slot says the shop is with a client right now. Helps callers feel they're still reaching the right person."
+                info="Your first name is used when RingPaw says the shop is with a client right now. Helps callers feel they're still reaching the right person."
               >
                 Owner Name
               </OnboardingLabel>
@@ -1139,7 +1139,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="phone"
-                info="Your existing business phone number. We use the area code to assign you a local Call Slot number that matches your region, so callers see a familiar number."
+                info="Your existing business phone number. We use the area code to assign you a local RingPaw number that matches your region, so callers see a familiar number."
               >
                 Phone Number
               </OnboardingLabel>
@@ -1153,7 +1153,7 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <OnboardingLabel
                 htmlFor="address"
-                info="Your full street address. Call Slot can share this when callers ask where you are."
+                info="Your full street address. RingPaw can share this when callers ask where you are."
               >
                 Address
               </OnboardingLabel>
@@ -1214,7 +1214,7 @@ export default function OnboardingPage() {
 
           {/* Business Hours */}
           <div className="space-y-4">
-            <OnboardingLabel info="Set the days and times you accept appointments. Call Slot will only offer slots within these hours. Toggle a day off to mark it closed.">
+            <OnboardingLabel info="Set the days and times you accept appointments. RingPaw will only offer slots within these hours. Toggle a day off to mark it closed.">
               Business Hours
             </OnboardingLabel>
             <div className="divide-y divide-line border-y border-line">
@@ -1298,7 +1298,7 @@ export default function OnboardingPage() {
       {step === 2 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel info="List the services callers can book by phone, with price and duration. Call Slot uses duration to find available slots and avoid double-booking.">
+            <OnboardingLabel info="List the services callers can book by phone, with price and duration. RingPaw uses duration to find available slots and avoid double-booking.">
               Services &amp; Pricing
             </OnboardingLabel>
             <div className="space-y-3">
@@ -1492,11 +1492,11 @@ export default function OnboardingPage() {
       {step === 4 && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <OnboardingLabel info="Connect the calendar or booking tool you already use. Call Slot reads your live availability before offering any time slot and writes confirmed bookings directly — no double-booking, no manual entry.">
+            <OnboardingLabel info="Connect the calendar or booking tool you already use. RingPaw reads your live availability before offering any time slot and writes confirmed bookings directly — no double-booking, no manual entry.">
               Connect Your Booking System
             </OnboardingLabel>
             <p className="text-sm text-muted -mt-2">
-              Pick whichever tool you already use. Call Slot reads availability and writes bookings directly.
+              Pick whichever tool you already use. RingPaw reads availability and writes bookings directly.
             </p>
             <div className="space-y-3">
               {/* Google Calendar */}
@@ -1670,7 +1670,7 @@ export default function OnboardingPage() {
 
           {!calendarConnected && (
             <p className="text-xs text-muted text-center mt-1">
-              No calendar yet? That&apos;s okay — you can connect it later from Settings. Call Slot will still take calls; it just won&apos;t write bookings automatically until you do.
+              No calendar yet? That&apos;s okay — you can connect it later from Settings. RingPaw will still take calls; it just won&apos;t write bookings automatically until you do.
             </p>
           )}
           <OnboardingFooter
@@ -1721,7 +1721,7 @@ export default function OnboardingPage() {
             )}
             {simulateLog.some((line) => line.includes("booked") || line.includes("requested") || line.includes("call you back")) && (
               <div className="bg-paper border border-line rounded-sm p-4 text-center">
-                <p className="font-bold text-ink">Success — Call Slot is working!</p>
+                <p className="font-bold text-ink">Success — RingPaw is working!</p>
                 <p className="text-sm text-ink/80 mt-1">Forward a real missed call to hear it on a handset, or head to your dashboard.</p>
               </div>
             )}
@@ -1774,14 +1774,14 @@ export default function OnboardingPage() {
 
                 {callPhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-sm font-bold text-ink mb-1">Call Slot is on the line</p>
+                    <p className="text-sm font-bold text-ink mb-1">RingPaw is on the line</p>
                     <p className="text-xs text-muted">Stay on the line — we&apos;ll detect when it&apos;s done.</p>
                   </div>
                 )}
 
                 {callPhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-medium text-ink mb-1">Call Slot booked it.</p>
+                    <p className="text-xl font-medium text-ink mb-1">RingPaw booked it.</p>
                     <p className="text-sm text-muted">Ready to take real calls 24/7.</p>
                   </div>
                 )}
@@ -1854,7 +1854,7 @@ export default function OnboardingPage() {
           {provisionedNumber && (
             <div className="bg-line border border-line rounded-sm p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">Your Call Slot number</p>
+                <p className="text-xs font-bold text-muted uppercase tracking-wider">Your RingPaw number</p>
                 <p className="text-xl font-medium text-ink">{formattedProvisionedNumber}</p>
               </div>
               <button
@@ -1867,7 +1867,7 @@ export default function OnboardingPage() {
           )}
 
           <p className="text-sm text-muted font-medium">
-            Set up <strong className="text-ink">conditional call forwarding</strong> on your business phone so unanswered, busy, and after-hours calls route to Call Slot. Your shop number stays the same.
+            Set up <strong className="text-ink">conditional call forwarding</strong> on your business phone so unanswered, busy, and after-hours calls route to RingPaw. Your shop number stays the same.
           </p>
 
           {/* iPhone instructions */}
@@ -1879,7 +1879,7 @@ export default function OnboardingPage() {
               {[
                 { n: 1, text: <>Open <strong>Settings</strong> → <strong>Phone</strong> → <strong>Call Forwarding</strong></> },
                 { n: 2, text: <>Toggle <strong>Call Forwarding</strong> on</> },
-                { n: 3, text: <><strong>Forward To:</strong> enter <strong>{formattedProvisionedNumber || "your Call Slot number"}</strong></> },
+                { n: 3, text: <><strong>Forward To:</strong> enter <strong>{formattedProvisionedNumber || "your RingPaw number"}</strong></> },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-ink text-white rounded-sm flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{n}</div>
@@ -1922,14 +1922,14 @@ export default function OnboardingPage() {
             <div className="p-4 space-y-3 text-sm text-muted font-medium">
               <p><strong>Verizon / AT&amp;T / T-Mobile:</strong> dial the codes above from your shop handset, or use Settings → Phone → Call Forwarding on iPhone.</p>
               <p><strong>No-answer:</strong> <code className="bg-surface px-1 rounded">*61*NUMBER#</code> · <strong>Busy:</strong> <code className="bg-surface px-1 rounded">*67*NUMBER#</code> · <strong>All calls:</strong> <code className="bg-surface px-1 rounded">*21*NUMBER#</code></p>
-              <p className="text-xs text-muted">Replace NUMBER with your Call Slot line digits only (no +1). To turn off: <code className="bg-surface px-1 rounded">##61#</code> no-answer, <code className="bg-surface px-1 rounded">##67#</code> busy, <code className="bg-surface px-1 rounded">##21#</code> all.</p>
+              <p className="text-xs text-muted">Replace NUMBER with your RingPaw line digits only (no +1). To turn off: <code className="bg-surface px-1 rounded">##61#</code> no-answer, <code className="bg-surface px-1 rounded">##67#</code> busy, <code className="bg-surface px-1 rounded">##21#</code> all.</p>
             </div>
           </div>
 
           <OnboardingFooter
             onBack={() => navigate(2)}
             onNext={() => navigate(5)}
-            nextLabel="Test Call Slot"
+            nextLabel="Test RingPaw"
           />
         </div>
       )}
@@ -1960,13 +1960,13 @@ export default function OnboardingPage() {
               Ready to launch!
             </h3>
             <p className="text-ink font-medium">
-              Call Slot will pick up forwarded calls, offer real calendar openings by keypad, and
+              RingPaw will pick up forwarded calls, offer real calendar openings by keypad, and
               text you confirmations.
             </p>
           </div>
 
           <div className="space-y-3">
-            <OnboardingLabel info="A summary of everything you've configured. Once you click 'Go Live', Call Slot will start answering forwarded calls immediately. You can adjust any setting later from the dashboard.">
+            <OnboardingLabel info="A summary of everything you've configured. Once you click 'Go Live', RingPaw will start answering forwarded calls immediately. You can adjust any setting later from the dashboard.">
               Setup Summary
             </OnboardingLabel>
             {[
@@ -1988,7 +1988,7 @@ export default function OnboardingPage() {
               },
               {
                 label: formattedProvisionedNumber || "Phone number",
-                desc: "Call Slot number provisioned",
+                desc: "RingPaw number provisioned",
               },
             ].map((item) => (
               <div

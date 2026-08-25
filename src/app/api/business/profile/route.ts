@@ -297,7 +297,7 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.json();
 
-  // Ignore legacy agent settings. Call Slot is Twilio keypad voicemail and
+  // Ignore legacy agent settings. RingPaw is Twilio keypad voicemail and
   // does not create, update, or require a conversational voice agent.
   delete body.agentActive;
   delete body.voiceId;

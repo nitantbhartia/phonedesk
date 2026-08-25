@@ -26,7 +26,7 @@ export function BrandLogo({
         <span className="absolute bottom-[5px] left-[5px] h-[5px] w-[5px] bg-current sm:bottom-[6px] sm:left-[6px]" />
         <span className="absolute bottom-[5px] right-[5px] h-[5px] w-[5px] bg-accent sm:bottom-[6px] sm:right-[6px]" />
       </span>
-      Call Slot
+      RingPaw
     </span>
   );
 
@@ -35,7 +35,7 @@ export function BrandLogo({
   }
 
   return href ? (
-    <Link href={href} aria-label="Call Slot home" className="inline-flex max-w-full">
+    <Link href={href} aria-label="RingPaw home" className="inline-flex max-w-full">
       {logo}
     </Link>
   ) : (

@@ -47,7 +47,7 @@ export function OnboardingLayout({
           <p className="font-display text-4xl leading-[0.9] tracking-[-0.065em] sm:text-5xl">A few clear steps to a quieter phone.</p>
           <p className="mt-6 text-sm leading-[1.6] text-muted">Tell us about your shop, connect the calendar, and test the call. You can change any of it later.</p>
           <div className="mt-10 hidden border-t border-line pt-4 lg:block">
-            <p className="studio-fact-label">Call Slot</p>
+            <p className="studio-fact-label">RingPaw</p>
             <p className="mt-2 text-xs leading-[1.5] text-muted">Missed calls in. Real openings out.</p>
           </div>
         </aside>
