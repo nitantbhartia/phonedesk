@@ -1,4 +1,4 @@
-import twilio from "twilio";
+import type twilio from "twilio";
 
 let client: ReturnType<typeof twilio> | null = null;
 
@@ -11,9 +11,10 @@ function getTwilioCredentials() {
   return { accountSid, authToken };
 }
 
-export function getTwilioClient() {
+export async function getTwilioClient() {
   if (!client) {
     const { accountSid, authToken } = getTwilioCredentials();
+    const { default: twilio } = await import("twilio");
     client = twilio(accountSid, authToken);
   }
   return client;
@@ -40,7 +41,8 @@ export async function ensureTwilioWebhooks(e164: string) {
     throw new Error("Twilio phone number must be a valid E.164 number");
   }
 
-  const matches = await getTwilioClient().incomingPhoneNumbers.list({
+  const twilioClient = await getTwilioClient();
+  const matches = await twilioClient.incomingPhoneNumbers.list({
     phoneNumber: e164,
     limit: 20,
   });
@@ -50,7 +52,7 @@ export async function ensureTwilioWebhooks(e164: string) {
     throw new Error(`Twilio phone number ${e164} was not found`);
   }
 
-  await getTwilioClient().incomingPhoneNumbers(incomingNumber.sid).update({
+  await twilioClient.incomingPhoneNumbers(incomingNumber.sid).update({
     ...getTwilioWebhookUrls(),
     voiceMethod: "POST",
     smsMethod: "POST",
@@ -62,7 +64,8 @@ export async function ensureTwilioWebhooks(e164: string) {
 export async function purchaseTwilioPhoneNumber(options: {
   areaCode?: number;
 }) {
-  const available = await getTwilioClient()
+  const twilioClient = await getTwilioClient();
+  const available = await twilioClient
     .availablePhoneNumbers("US")
     .local.list({
       ...(options.areaCode ? { areaCode: options.areaCode } : {}),
@@ -80,7 +83,7 @@ export async function purchaseTwilioPhoneNumber(options: {
     );
   }
 
-  const purchased = await getTwilioClient().incomingPhoneNumbers.create({
+  const purchased = await twilioClient.incomingPhoneNumbers.create({
     phoneNumber: candidate.phoneNumber,
     ...getTwilioWebhookUrls(),
     voiceMethod: "POST",
@@ -94,5 +97,6 @@ export async function purchaseTwilioPhoneNumber(options: {
 }
 
 export async function releaseTwilioPhoneNumber(sid: string) {
-  await getTwilioClient().incomingPhoneNumbers(sid).remove();
+  const twilioClient = await getTwilioClient();
+  await twilioClient.incomingPhoneNumbers(sid).remove();
 }

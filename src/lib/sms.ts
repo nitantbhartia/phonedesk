@@ -47,7 +47,8 @@ export async function sendSms(
   let lastError: Error = new Error("Failed to send SMS");
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      await getTwilioClient().messages.create({ to, from: fromNumber, body });
+      const twilioClient = await getTwilioClient();
+      await twilioClient.messages.create({ to, from: fromNumber, body });
       return;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
