@@ -139,29 +139,34 @@ function LandingPageContent() {
                 <rect x="144" y="205" width="312" height="65" fill="#123A38" />
                 <circle cx="177" cy="237" r="8" fill="#F1B248" />
                 <path d="M205 237H391" stroke="#D7E7E1" strokeWidth="4" />
-                <text x="174" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">NEXT OPENINGS</text>
-                <rect x="174" y="337" width="252" height="64" fill="#DCECE5" stroke="#123A38" strokeWidth="3" />
-                <circle cx="197" cy="369" r="13" fill="#D46C49" />
-                <text x="193" y="374" fill="#F8F3E9" fontSize="14" fontWeight="700" fontFamily="sans-serif">1</text>
-                <path d="M223 363H389M223 378H337" stroke="#123A38" strokeWidth="6" strokeLinecap="square" />
-                <rect x="174" y="413" width="252" height="64" fill="#F1B248" stroke="#123A38" strokeWidth="3" />
-                <circle cx="197" cy="445" r="13" fill="#123A38" />
-                <text x="193" y="450" fill="#F8F3E9" fontSize="14" fontWeight="700" fontFamily="sans-serif">2</text>
-                <path d="M223 439H389M223 454H337" stroke="#123A38" strokeWidth="6" strokeLinecap="square" />
-                <g transform="translate(174 507)">
-                  <circle cx="10" cy="10" r="6" fill="#D46C49" />
-                  <circle cx="34" cy="10" r="6" fill="#D46C49" />
-                  <circle cx="58" cy="10" r="6" fill="#D46C49" />
-                  <circle cx="82" cy="10" r="6" fill="#D46C49" />
-                  <circle cx="10" cy="34" r="6" fill="#D46C49" />
-                  <circle cx="34" cy="34" r="6" fill="#D46C49" />
-                  <circle cx="58" cy="34" r="6" fill="#D46C49" />
-                  <circle cx="82" cy="34" r="6" fill="#D46C49" />
-                  <circle cx="10" cy="58" r="6" fill="#D46C49" />
-                  <circle cx="34" cy="58" r="6" fill="#D46C49" />
-                  <circle cx="58" cy="58" r="6" fill="#D46C49" />
-                  <circle cx="82" cy="58" r="6" fill="#D46C49" />
+                <text x="174" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">PRESS A DIGIT</text>
+                <g fill="#D46C49" stroke="#123A38" strokeWidth="2">
+                  <rect x="174" y="335" width="29" height="24" />
+                  <rect x="212" y="335" width="29" height="24" />
+                  <rect x="250" y="335" width="29" height="24" />
+                  <rect x="174" y="368" width="29" height="24" />
+                  <rect x="212" y="368" width="29" height="24" />
+                  <rect x="250" y="368" width="29" height="24" />
+                  <rect x="174" y="401" width="29" height="24" />
+                  <rect x="212" y="401" width="29" height="24" />
+                  <rect x="250" y="401" width="29" height="24" />
+                  <rect x="174" y="434" width="29" height="24" />
+                  <rect x="212" y="434" width="29" height="24" />
+                  <rect x="250" y="434" width="29" height="24" />
                 </g>
+                <g fill="#F8F3E9" fontSize="13" fontWeight="700" fontFamily="monospace" textAnchor="middle">
+                  <text x="188" y="352">1</text><text x="226" y="352">2</text><text x="264" y="352">3</text>
+                  <text x="188" y="385">4</text><text x="226" y="385">5</text><text x="264" y="385">6</text>
+                  <text x="188" y="418">7</text><text x="226" y="418">8</text><text x="264" y="418">9</text>
+                  <text x="188" y="451">*</text><text x="226" y="451">0</text><text x="264" y="451">#</text>
+                </g>
+                <text x="307" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">OPENINGS</text>
+                <rect x="307" y="335" width="119" height="57" fill="#DCECE5" stroke="#123A38" strokeWidth="3" />
+                <text x="320" y="357" fill="#D46C49" fontSize="12" fontWeight="700" fontFamily="monospace">01</text>
+                <path d="M348 353H411M348 370H390" stroke="#123A38" strokeWidth="5" strokeLinecap="square" />
+                <rect x="307" y="401" width="119" height="57" fill="#F1B248" stroke="#123A38" strokeWidth="3" />
+                <text x="320" y="423" fill="#123A38" fontSize="12" fontWeight="700" fontFamily="monospace">02</text>
+                <path d="M348 419H411M348 436H390" stroke="#123A38" strokeWidth="5" strokeLinecap="square" />
               </g>
               <g transform="translate(45 575)">
                 <path d="M0 0H220" stroke="#F8F3E9" strokeWidth="2" />

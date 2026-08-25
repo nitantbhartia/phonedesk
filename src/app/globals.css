@@ -321,6 +321,12 @@
   background: #F3EEE4;
 }
 
+.studio-site *,
+.studio-auth *,
+.studio-onboarding * {
+  border-radius: 0 !important;
+}
+
 .studio-auth button,
 .studio-auth input,
 .studio-auth select,
