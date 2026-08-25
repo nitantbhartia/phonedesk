@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ArrowIcon } from "@/components/arrow-icon";
 
 type AuthMode = "signin" | "signup";
 
@@ -75,7 +76,9 @@ export function AuthPanel({ initialMode = "signup" }: { initialMode?: AuthMode }
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Call Slot / account</p>
           <h2 className="mt-3 font-display text-3xl leading-[0.92] tracking-[-0.055em]">Your line, in order.</h2>
         </div>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-line font-mono text-[10px] text-accent">↗</span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-line text-accent">
+          <ArrowIcon className="h-4 w-4" />
+        </span>
       </div>
       <div className="mb-8 flex gap-6 text-[12px] tracking-[0.04em]">
         <button

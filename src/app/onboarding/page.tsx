@@ -4,6 +4,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { ArrowIcon } from "@/components/arrow-icon";
 import {
   OnboardingLayout,
   OnboardingLabel,
@@ -910,7 +911,7 @@ export default function OnboardingPage() {
             onClick={() => navigate(1)}
             className="studio-button mt-10"
           >
-            Continue <span aria-hidden="true">↗</span>
+            Continue <ArrowIcon className="h-4 w-4" />
           </button>
           </section>
         </main>

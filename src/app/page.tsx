@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { ArrowIcon } from "@/components/arrow-icon";
 
 export default function LandingPage() {
   return (
@@ -62,7 +63,7 @@ function LandingPageContent() {
               Log in
             </Link>
             <Link href="/onboarding" className="studio-button studio-button-small">
-              Start <span aria-hidden="true">↗</span>
+              Start <ArrowIcon className="h-4 w-4" />
             </Link>
           </div>
         </nav>
@@ -83,10 +84,10 @@ function LandingPageContent() {
             </p>
             <div className="mt-9 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
               <Link href="/onboarding" className="studio-button">
-                Get a number <span aria-hidden="true">↗</span>
+                Get a number <ArrowIcon className="h-4 w-4" />
               </Link>
               <a href="#how-it-works" className="studio-text-link">
-                See how it works <span aria-hidden="true">↓</span>
+                See how it works <ArrowIcon direction="down" className="h-4 w-4" />
               </a>
             </div>
             <div className="mt-14 grid max-w-[560px] grid-cols-3 border-t border-line pt-5">
@@ -218,7 +219,7 @@ function LandingPageContent() {
                   <h3>Calendar</h3>
                   <p>The appointment writes to your live calendar. The caller gets a confirmation text. You keep working.</p>
                 </div>
-                <span className="studio-card-arrow" aria-hidden="true">↗</span>
+                <ArrowIcon className="studio-card-arrow" />
               </article>
             </div>
           </div>
@@ -237,7 +238,7 @@ function LandingPageContent() {
                 One booked appointment pays for the month. If Call Slot doesn&apos;t book one, you don&apos;t pay for one.
               </p>
               <Link href="/onboarding" className="studio-button studio-button-sun mt-8">
-                Start with your number <span aria-hidden="true">↗</span>
+                Start with your number <ArrowIcon className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -256,7 +257,7 @@ function LandingPageContent() {
               </div>
               <div className="max-w-[260px]">
                 <p className="text-[15px] leading-[1.6] text-muted">Forward missed calls. Keep real openings moving. Cancel any time.</p>
-                <Link href="/onboarding" className="studio-text-link mt-5">Get set up <span aria-hidden="true">↗</span></Link>
+                <Link href="/onboarding" className="studio-text-link mt-5">Get set up <ArrowIcon className="h-4 w-4" /></Link>
               </div>
             </div>
           </div>
