@@ -411,9 +411,7 @@ function DemoPageInner() {
     <div className="studio-demo min-h-screen bg-paper antialiased flex flex-col relative">
       <header className="studio-header">
         <nav className="studio-nav mx-auto flex max-w-[1280px] items-center justify-between px-6 py-4 sm:px-10 lg:px-12">
-          <Link href="/" aria-label="RingPaw home">
-            <BrandLogo mobileWidth={120} desktopWidth={140} priority />
-          </Link>
+          <BrandLogo mobileWidth={120} desktopWidth={140} priority />
           <div className="flex items-center gap-4">
             <Link href="/" className="hidden text-xs font-semibold text-muted transition-colors hover:text-ink sm:inline">
               Back to RingPaw
