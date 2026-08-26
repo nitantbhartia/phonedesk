@@ -25,7 +25,7 @@ export default function OgImage() {
             fontSize: 28,
             letterSpacing: 4,
             textTransform: "uppercase",
-            color: "#6F675E",
+            color: "#5F564D",
             display: "flex",
           }}
         >
@@ -46,7 +46,7 @@ export default function OgImage() {
           style={{
             marginTop: 28,
             fontSize: 24,
-            color: "#6F675E",
+            color: "#5F564D",
             display: "flex",
             maxWidth: 720,
           }}

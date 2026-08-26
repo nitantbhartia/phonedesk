@@ -661,7 +661,7 @@ export function SpawklesDemoClient() {
             <h2 className="max-w-[680px] font-display text-4xl font-bold leading-[0.95] tracking-[-0.055em] text-paper sm:text-6xl">
               Turn the next missed inquiry into a booking.
             </h2>
-            <p className="mt-5 max-w-[450px] text-[16px] leading-[1.6] text-paper/70">
+            <p className="mt-5 max-w-[450px] text-[16px] leading-[1.6] text-paper/85">
               RingPaw gives independent grooming shops a calm, reliable way to keep booking while their hands are full.
             </p>
             <Link href="/onboarding" className="studio-button studio-button-light mt-8 inline-flex">

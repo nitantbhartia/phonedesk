@@ -39,8 +39,8 @@ const config: Config = {
           foreground: "#FAF7F1",
         },
         muted: {
-          DEFAULT: "#6F675E",
-          foreground: "#6F675E",
+          DEFAULT: "#5F564D",
+          foreground: "#5F564D",
         },
         accent: {
           DEFAULT: "#D46C49",

@@ -132,7 +132,7 @@ function LandingPageContent() {
               preserveAspectRatio="xMidYMid meet"
             >
               <title id="ringpaw-illustration-title">RingPaw turning a missed grooming call into a booked appointment</title>
-              <desc id="ringpaw-illustration-desc">A telephone keypad offers two real grooming openings from the shop calendar.</desc>
+              <desc id="ringpaw-illustration-desc">A live voice call connects a pet parent to RingPaw, which finds an opening and books a grooming appointment.</desc>
               <defs>
                 <pattern id="diagonal-grid" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                   <path d="M0 0V28" stroke="#D8D0C4" strokeOpacity=".55" />
@@ -140,64 +140,52 @@ function LandingPageContent() {
               </defs>
               <rect width="700" height="620" fill="#F3EEE4" />
               <rect width="700" height="620" fill="url(#diagonal-grid)" />
-              <g transform="translate(528 126)">
-                <circle r="108" fill="#FAF7F1" />
-                <circle r="136" fill="none" stroke="#D8D0C4" strokeOpacity=".85" strokeWidth="14" />
-                <circle r="74" fill="none" stroke="#1C1916" strokeOpacity=".75" strokeWidth="3" />
-                <path d="M0-94V-76M94 0H76M0 94V76M-94 0H-76M67-67L54-54M67 67L54 54M-67 67L-54 54M-67-67L-54-54" stroke="#1C1916" strokeWidth="4" />
-                <circle r="12" fill="#1C1916" />
-                <path d="M0 0V-46M0 0L32 20" stroke="#1C1916" strokeWidth="5" strokeLinecap="round" />
-                <text x="-26" y="158" fill="#1C1916" fontSize="11" fontFamily="monospace" letterSpacing="2">DIAL</text>
+              <path d="M363 340C405 316 421 316 450 316" stroke="#D46C49" strokeWidth="5" strokeLinecap="round" strokeDasharray="2 15" />
+              <g transform="translate(535 120)">
+                <circle r="104" fill="#FAF7F1" />
+                <circle r="126" fill="none" stroke="#D8D0C4" strokeOpacity=".8" strokeWidth="12" />
+                <path d="M-30-10c8-22 22-34 38-38l18 24-18 16c8 18 21 31 39 39l16-18 24 18c-4 17-16 29-38 36-36-8-68-39-79-77Z" fill="#D46C49" stroke="#1C1916" strokeWidth="5" strokeLinejoin="round" />
+                <path d="M-72-47c-11 11-17 24-18 39M-54-67c-18 18-28 38-30 59M74-47c11 11 17 24 18 39M56-67c18 18 28 38 30 59" stroke="#1C1916" strokeWidth="4" strokeLinecap="round" />
+                <text x="-55" y="146" fill="#1C1916" fontSize="11" fontWeight="700" fontFamily="monospace" letterSpacing="2">VOICE LINE</text>
               </g>
-              <g>
-                <path d="M153 196C153 158 184 130 222 130H378C416 130 447 158 447 196" stroke="#1C1916" strokeWidth="26" strokeLinecap="round" />
-                <path d="M150 181H188V223H150V181ZM412 181H450V223H412V181Z" fill="#D46C49" stroke="#1C1916" strokeWidth="6" />
-                <rect x="144" y="205" width="312" height="358" fill="#F8F3E9" stroke="#1C1916" strokeWidth="9" />
-                <rect x="144" y="205" width="312" height="65" fill="#1C1916" />
-                <circle cx="177" cy="237" r="8" fill="#F1B248" />
-                <path d="M205 237H391" stroke="#F3EEE4" strokeWidth="4" />
-                <text x="174" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">PRESS A DIGIT</text>
-                <g fill="#D46C49" stroke="#1C1916" strokeWidth="2">
-                  <rect x="174" y="335" width="29" height="24" />
-                  <rect x="212" y="335" width="29" height="24" />
-                  <rect x="250" y="335" width="29" height="24" />
-                  <rect x="174" y="368" width="29" height="24" />
-                  <rect x="212" y="368" width="29" height="24" />
-                  <rect x="250" y="368" width="29" height="24" />
-                  <rect x="174" y="401" width="29" height="24" />
-                  <rect x="212" y="401" width="29" height="24" />
-                  <rect x="250" y="401" width="29" height="24" />
-                  <rect x="174" y="434" width="29" height="24" />
-                  <rect x="212" y="434" width="29" height="24" />
-                  <rect x="250" y="434" width="29" height="24" />
+              <g transform="translate(80 126)">
+                <rect width="310" height="400" rx="28" fill="#F8F3E9" stroke="#1C1916" strokeWidth="8" />
+                <rect x="17" y="17" width="276" height="56" rx="17" fill="#1C1916" />
+                <circle cx="47" cy="45" r="12" fill="#F1B248" />
+                <path d="M42 45h10M47 40v10" stroke="#1C1916" strokeWidth="2.5" strokeLinecap="round" />
+                <text x="73" y="50" fill="#F8F3E9" fontSize="11" fontWeight="700" fontFamily="monospace" letterSpacing="2">RINGPAW LINE</text>
+                <text x="28" y="122" fill="#6E2C2C" fontSize="11" fontWeight="700" fontFamily="monospace" letterSpacing="2">INCOMING CALL</text>
+                <text x="28" y="154" fill="#1C1916" fontSize="25" fontWeight="700" fontFamily="Georgia, serif">Paws &amp; Polish</text>
+                <circle cx="155" cy="224" r="54" fill="#D46C49" />
+                <path d="M135 210c5-13 13-20 22-22l11 15-11 10c5 11 13 19 24 24l10-11 15 11c-3 11-10 18-23 22-24-6-43-27-48-49Z" fill="#F8F3E9" stroke="#1C1916" strokeWidth="4" strokeLinejoin="round" />
+                <g transform="translate(28 300)" fill="#D46C49">
+                  <rect x="0" y="20" width="8" height="24" rx="4" /><rect x="14" y="7" width="8" height="50" rx="4" /><rect x="28" y="0" width="8" height="64" rx="4" /><rect x="42" y="12" width="8" height="40" rx="4" /><rect x="56" y="4" width="8" height="56" rx="4" /><rect x="70" y="17" width="8" height="30" rx="4" /><rect x="84" y="8" width="8" height="48" rx="4" /><rect x="98" y="22" width="8" height="20" rx="4" />
                 </g>
-                <g fill="#F8F3E9" fontSize="13" fontWeight="700" fontFamily="monospace" textAnchor="middle">
-                  <text x="188" y="352">1</text><text x="226" y="352">2</text><text x="264" y="352">3</text>
-                  <text x="188" y="385">4</text><text x="226" y="385">5</text><text x="264" y="385">6</text>
-                  <text x="188" y="418">7</text><text x="226" y="418">8</text><text x="264" y="418">9</text>
-                  <text x="188" y="451">*</text><text x="226" y="451">0</text><text x="264" y="451">#</text>
-                </g>
-                <text x="307" y="316" fill="#6E2C2C" fontSize="11" fontFamily="monospace" letterSpacing="2">OPENINGS</text>
-                <rect x="307" y="335" width="119" height="57" fill="#FAF7F1" stroke="#1C1916" strokeWidth="3" />
-                <text x="320" y="357" fill="#D46C49" fontSize="12" fontWeight="700" fontFamily="monospace">01</text>
-                <path d="M348 353H411M348 370H390" stroke="#1C1916" strokeWidth="5" strokeLinecap="square" />
-                <rect x="307" y="401" width="119" height="57" fill="#D46C49" stroke="#1C1916" strokeWidth="3" />
-                <text x="320" y="423" fill="#F8F3E9" fontSize="12" fontWeight="700" fontFamily="monospace">02</text>
-                <path d="M348 419H411M348 436H390" stroke="#F8F3E9" strokeWidth="5" strokeLinecap="square" />
+                <text x="214" y="338" fill="#1C1916" fontSize="12" fontWeight="700" fontFamily="monospace">00:42</text>
+                <circle cx="226" cy="418" r="22" fill="#D8D0C4" /><circle cx="268" cy="418" r="22" fill="#6E2C2C" />
+                <path d="M217 418h18M259 410l18 16M277 410l-18 16" stroke="#1C1916" strokeWidth="3" strokeLinecap="round" />
+              </g>
+              <g transform="translate(422 258)">
+                <rect width="220" height="190" rx="20" fill="#FAF7F1" stroke="#1C1916" strokeWidth="4" />
+                <text x="20" y="34" fill="#6E2C2C" fontSize="10" fontWeight="700" fontFamily="monospace" letterSpacing="1.6">OPENING FOUND</text>
+                <text x="20" y="76" fill="#1C1916" fontSize="22" fontWeight="700" fontFamily="Georgia, serif">Thu · 11:00 AM</text>
+                <text x="20" y="104" fill="#5F564D" fontSize="11" fontFamily="monospace" letterSpacing="1.5">FULL GROOM · LUNA</text>
+                <circle cx="34" cy="151" r="14" fill="#D46C49" /><path d="m28 151 4 4 8-9" stroke="#FAF7F1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <text x="58" y="156" fill="#1C1916" fontSize="11" fontWeight="700" fontFamily="monospace" letterSpacing="1.5">BOOKED</text>
               </g>
               <g transform="translate(45 575)">
                 <path d="M0 0H220" stroke="#1C1916" strokeWidth="2" />
-                <text y="27" fill="#1C1916" fontSize="12" fontFamily="monospace" letterSpacing="2">01  /  BOOKED GROOM</text>
+                <text y="27" fill="#1C1916" fontSize="12" fontFamily="monospace" letterSpacing="2">01  /  VOICE TO BOOKING</text>
               </g>
             </svg>
             <div className="absolute left-6 top-6 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink/70 sm:left-8 sm:top-8">
-              01 / inquiry to booking
+              01 / voice inquiry to booking
             </div>
             <div className="studio-booked-badge">
               <span className="studio-booked-check" aria-hidden="true">✓</span>
               <span>
-                <strong>Appointment booked</strong>
-                <small>Confirmation text sent</small>
+                <strong>Call answered</strong>
+                <small>Grooming appointment booked</small>
               </span>
             </div>
           </div>
@@ -206,8 +194,8 @@ function LandingPageContent() {
         <section className="border-y border-line bg-surface">
           <div className="mx-auto grid max-w-[1280px] gap-5 px-6 py-8 sm:grid-cols-3 sm:px-10 lg:px-12">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Made for independent groomers</p>
-            <p className="text-sm leading-[1.55] text-muted">No app for pet parents. No new front desk for you. Just a fast booking experience connected to the tools your shop already uses.</p>
-            <p className="text-sm leading-[1.55] text-muted sm:border-l sm:border-line sm:pl-6">Works with Google Calendar and Square, so RingPaw only offers times that are actually open.</p>
+            <p className="text-sm leading-[1.55] text-muted">No app for pet parents. No new front desk for you. Just a natural voice booking experience connected to the tools your shop already uses.</p>
+            <p className="text-sm leading-[1.55] text-muted sm:border-l sm:border-line sm:pl-6">Works with Google Calendar and Square today, with calendar sync paths for MoeGo and Gingr.</p>
           </div>
         </section>
 
@@ -381,7 +369,7 @@ function LandingPageContent() {
             </div>
             <ol className="studio-setup-steps">
               <li><span>01</span><strong>Shop details</strong><small>Use the name customers know.</small></li>
-              <li><span>02</span><strong>Calendar</strong><small>Connect Google Calendar or Square.</small></li>
+              <li><span>02</span><strong>Calendar</strong><small>Connect Google Calendar, Square, or a synced MoeGo/Gingr calendar.</small></li>
               <li><span>03</span><strong>Services</strong><small>Add your most-booked grooms.</small></li>
               <li><span>04</span><strong>Catch inquiries</strong><small>Keep your existing number.</small></li>
               <li><span>05</span><strong>Test booking</strong><small>Hear the flow before going live.</small></li>
@@ -398,7 +386,7 @@ function LandingPageContent() {
               </h2>
             </div>
             <div className="lg:justify-self-end">
-              <p className="max-w-[390px] text-[18px] leading-[1.55] text-paper/70">
+              <p className="max-w-[390px] text-[18px] leading-[1.55] text-paper/85">
                 A single recovered grooming appointment can cover the month. RingPaw keeps your shop responsive even when your hands are full.
               </p>
               <ul className="mt-7 grid max-w-[420px] gap-3 text-sm font-semibold text-paper/90">
@@ -447,7 +435,7 @@ function LandingPageContent() {
                 Your calendar stays the <span className="text-accent">source of truth.</span>
               </h2>
               <p className="mt-6 max-w-[370px] text-[15px] leading-[1.6] text-muted">
-                RingPaw checks what is actually open before offering a time, then writes the confirmed grooming appointment back where your team already works.
+                RingPaw checks what is actually open before offering a time, then writes the confirmed grooming appointment back where your team already works. Native connections are available for Google Calendar and Square; MoeGo and Gingr work through their calendar sync.
               </p>
             </div>
             <div className="studio-integration-grid">
@@ -463,6 +451,20 @@ function LandingPageContent() {
                 <div>
                   <h3>Square</h3>
                   <p>Keep your services and schedule connected to the system you already use.</p>
+                </div>
+              </article>
+              <article className="studio-integration-card">
+                <div className="studio-integration-mark studio-integration-mark-moego">M</div>
+                <div>
+                  <h3>MoeGo</h3>
+                  <p>Keep MoeGo as your source of truth through its Google Calendar sync.</p>
+                </div>
+              </article>
+              <article className="studio-integration-card">
+                <div className="studio-integration-mark studio-integration-mark-gingr">g</div>
+                <div>
+                  <h3>Gingr</h3>
+                  <p>Bring your Gingr availability over through the calendar your shop already syncs.</p>
                 </div>
               </article>
             </div>
@@ -482,7 +484,7 @@ function LandingPageContent() {
                 No. Keep the shop number your customers already use. RingPaw only steps in when you can&apos;t answer.
               </FaqItem>
               <FaqItem question="Can RingPaw double-book me?">
-                RingPaw offers openings from your connected Google Calendar or Square schedule and writes the confirmed appointment back to it.
+                RingPaw offers openings from your connected Google Calendar or Square schedule and writes the confirmed appointment back to it. If you use MoeGo or Gingr, keep your existing calendar sync in place.
               </FaqItem>
               <FaqItem question="What does the customer receive?">
                 The pet parent chooses an opening and receives a confirmation text with the appointment details.

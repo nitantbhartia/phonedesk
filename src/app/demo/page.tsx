@@ -889,7 +889,7 @@ function DemoPageInner() {
               <h2 className="text-3xl sm:text-5xl font-bold text-paper leading-[0.95] tracking-[-0.05em] mb-4">
                 Turn the next missed inquiry into a booking.
               </h2>
-              <p className="text-paper/60 text-base mb-7">
+              <p className="text-paper/85 text-base mb-7">
                 Leave your info and we&apos;ll help set up RingPaw for your shop.
               </p>
               <div id="bottom-lead-form">

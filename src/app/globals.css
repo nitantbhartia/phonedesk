@@ -14,8 +14,8 @@
     --primary-foreground: #FAF7F1;
     --secondary: #FAF7F1;
     --secondary-foreground: #1C1916;
-    --muted: #6F675E;
-    --muted-foreground: #6F675E;
+    --muted: #5F564D;
+    --muted-foreground: #5F564D;
     --accent: #D46C49;
     --accent-foreground: #FAF7F1;
     --destructive: #D46C49;
@@ -232,7 +232,7 @@
 
 .studio-fact-detail {
   margin-top: 0.35rem;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.67rem;
   line-height: 1.25;
 }
@@ -358,7 +358,7 @@
 
 .studio-booked-badge small {
   margin-top: 0.1rem;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.62rem;
 }
 
@@ -402,7 +402,7 @@
   justify-content: space-between;
   border-bottom: 1px solid #D8D0C4;
   padding: 0.85rem 1.25rem;
-  color: #6F675E;
+  color: #5F564D;
   font-family: var(--font-mono), monospace;
   font-size: 0.6rem;
   font-weight: 600;
@@ -453,7 +453,7 @@
 }
 
 .studio-bubble-caller > span {
-  color: #6F675E;
+  color: #5F564D;
 }
 
 .studio-bubble-ringpaw {
@@ -544,7 +544,7 @@
 .studio-faq p {
   max-width: 42rem;
   padding: 0.85rem 3rem 0 0;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.92rem;
   line-height: 1.65;
 }
@@ -605,7 +605,7 @@
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 0.7rem 1rem;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.8rem;
   font-weight: 700;
 }
@@ -706,13 +706,14 @@
 
 .studio-setup-steps small {
   margin-top: 0.45rem;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.76rem;
   line-height: 1.45;
 }
 
 .studio-integration-grid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.8rem;
 }
 
@@ -735,7 +736,7 @@
 
 .studio-integration-card p {
   margin-top: 0.35rem;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.82rem;
   line-height: 1.5;
 }
@@ -764,7 +765,23 @@
   color: #FAF7F1;
 }
 
+.studio-integration-mark-moego {
+  background: #E8F1EC;
+  color: #2C6848;
+}
+
+.studio-integration-mark-gingr {
+  background: #F7E7DA;
+  color: #9A4A2D;
+  font-family: var(--font-sans), sans-serif;
+  text-transform: lowercase;
+}
+
 @media (max-width: 767px) {
+  .studio-integration-grid {
+    grid-template-columns: 1fr;
+  }
+
   .studio-setup-steps {
     grid-template-columns: 1fr;
     gap: 0;
@@ -809,7 +826,7 @@
 
 .studio-demo-section-label,
 .studio-demo-label {
-  color: #6F675E;
+  color: #5F564D;
   font-family: var(--font-mono), monospace;
   font-size: 0.61rem;
   font-weight: 700;
@@ -852,7 +869,7 @@
   margin-top: 0.8rem;
   border-bottom: 1px solid #D8D0C4;
   padding: 0.8rem 0.1rem;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.78rem;
   font-weight: 600;
   text-align: left;
@@ -888,7 +905,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem 1.15rem;
-  color: #6F675E;
+  color: #5F564D;
   font-family: var(--font-mono), monospace;
   font-size: 0.6rem;
   font-weight: 600;
@@ -1172,7 +1189,7 @@
 .studio-process-card p {
   margin-top: 0.55rem;
   max-width: 19rem;
-  color: #6F675E;
+  color: #5F564D;
   font-size: 0.83rem;
   line-height: 1.5;
 }
@@ -1182,7 +1199,7 @@
 }
 
 .studio-process-card-wide p {
-  color: #6F675E;
+  color: #5F564D;
 }
 
 .studio-card-arrow {
