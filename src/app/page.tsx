@@ -20,6 +20,12 @@ function LandingPageContent() {
   const router = useRouter();
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(false);
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [missedCallsPerDay, setMissedCallsPerDay] = useState(3);
+  const [averageGroomValue, setAverageGroomValue] = useState(85);
+
+  const monthlyMissedCalls = missedCallsPerDay * 26;
+  const recoveredAppointments = Math.round(monthlyMissedCalls * 0.35);
+  const recoverableRevenue = recoveredAppointments * averageGroomValue;
 
   useEffect(() => {
     if (!session) return;
@@ -64,6 +70,7 @@ function LandingPageContent() {
           <div className="hidden items-center gap-8 text-[12px] font-semibold tracking-[0.03em] text-muted md:flex">
             <a href="#how-it-works" className="studio-link">How it works</a>
             <a href="#why-ringpaw" className="studio-link">Why RingPaw</a>
+            <a href="#calculator" className="studio-link">Calculator</a>
             <a href="#price" className="studio-link">Price</a>
           </div>
           <div className="flex items-center gap-5">
@@ -267,6 +274,57 @@ function LandingPageContent() {
           </div>
         </section>
 
+        <section id="calculator" className="border-y border-line bg-surface">
+          <div className="mx-auto grid max-w-[1280px] gap-12 px-6 py-20 sm:px-10 sm:py-28 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:px-12">
+            <div>
+              <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />The missed-call math</p>
+              <h2 className="max-w-[470px] text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-6xl">
+                See what your <span className="text-accent">quiet phone</span> may be costing.
+              </h2>
+              <p className="mt-6 max-w-[400px] text-[16px] leading-[1.65] text-muted">
+                A quick planning estimate for independent groomers. Adjust the numbers to match your shop.
+              </p>
+            </div>
+
+            <div className="studio-calculator">
+              <div className="studio-calculator-controls">
+                <label>
+                  <span>Missed calls on a busy day</span>
+                  <strong>{missedCallsPerDay}</strong>
+                  <input
+                    type="range"
+                    min="1"
+                    max="12"
+                    step="1"
+                    value={missedCallsPerDay}
+                    onChange={(event) => setMissedCallsPerDay(Number(event.target.value))}
+                    aria-label="Missed calls on a busy day"
+                  />
+                </label>
+                <label>
+                  <span>Average groom value</span>
+                  <strong>${averageGroomValue}</strong>
+                  <input
+                    type="range"
+                    min="45"
+                    max="150"
+                    step="5"
+                    value={averageGroomValue}
+                    onChange={(event) => setAverageGroomValue(Number(event.target.value))}
+                    aria-label="Average groom value"
+                  />
+                </label>
+              </div>
+              <div className="studio-calculator-result">
+                <p className="studio-calculator-kicker">Planning estimate / 26 working days</p>
+                <p className="studio-calculator-value">${recoverableRevenue.toLocaleString()}</p>
+                <p className="studio-calculator-caption">potential monthly revenue from {recoveredAppointments} recovered bookings</p>
+                <p className="studio-calculator-note">Based on a conservative 35% recovery estimate. Your results will vary.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="how-it-works" className="mx-auto max-w-[1280px] px-6 py-20 sm:px-10 sm:py-28 lg:px-12">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
             <div>
@@ -304,6 +362,29 @@ function LandingPageContent() {
                 <p>The customer gets a confirmation text. You get the booking — without putting down the clippers.</p>
               </article>
             </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-[1280px] px-6 pb-20 sm:px-10 sm:pb-28 lg:px-12">
+          <div className="studio-setup-path">
+            <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-end">
+              <div>
+                <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />Five minutes to live</p>
+                <h2 className="max-w-[420px] text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-5xl">
+                  Setup that fits between <span className="text-accent">two grooms.</span>
+                </h2>
+              </div>
+              <p className="max-w-[430px] text-[16px] leading-[1.65] text-muted lg:justify-self-end">
+                Connect the tools your shop already uses, test one booking, and let RingPaw handle the next call you miss.
+              </p>
+            </div>
+            <ol className="studio-setup-steps">
+              <li><span>01</span><strong>Shop details</strong><small>Use the name customers know.</small></li>
+              <li><span>02</span><strong>Calendar</strong><small>Connect Google Calendar or Square.</small></li>
+              <li><span>03</span><strong>Services</strong><small>Add your most-booked grooms.</small></li>
+              <li><span>04</span><strong>Forward calls</strong><small>Keep your existing number.</small></li>
+              <li><span>05</span><strong>Test booking</strong><small>Hear the flow before going live.</small></li>
+            </ol>
           </div>
         </section>
 
@@ -352,6 +433,36 @@ function LandingPageContent() {
                 <Link href="/onboarding" className="studio-button mt-7">Set up RingPaw <ArrowIcon className="h-4 w-4" /></Link>
                 <p className="mt-3 text-xs text-muted">Cancel any time.</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y border-line bg-surface">
+          <div className="mx-auto grid max-w-[1280px] gap-10 px-6 py-20 sm:px-10 sm:py-28 lg:grid-cols-[0.7fr_1.3fr] lg:items-center lg:px-12">
+            <div>
+              <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />Plays nice with your stack</p>
+              <h2 className="max-w-[390px] text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-5xl">
+                Your calendar stays the <span className="text-accent">source of truth.</span>
+              </h2>
+              <p className="mt-6 max-w-[370px] text-[15px] leading-[1.6] text-muted">
+                RingPaw checks what is actually open before offering a time, then writes the confirmed grooming appointment back where your team already works.
+              </p>
+            </div>
+            <div className="studio-integration-grid">
+              <article className="studio-integration-card">
+                <div className="studio-integration-mark studio-integration-mark-google">G</div>
+                <div>
+                  <h3>Google Calendar</h3>
+                  <p>Real openings in, confirmed grooms out. No double-booking surprises.</p>
+                </div>
+              </article>
+              <article className="studio-integration-card">
+                <div className="studio-integration-mark studio-integration-mark-square">□</div>
+                <div>
+                  <h3>Square</h3>
+                  <p>Keep your services and schedule connected to the system you already use.</p>
+                </div>
+              </article>
             </div>
           </div>
         </section>
