@@ -228,7 +228,9 @@ export async function configureInboundAgent(options: { phone: string; shop: Blan
     console.error("[bland] BLAND_TOOL_SECRET is not set; inbound agent will have no booking tools until it is configured");
   }
   const encodedPhone = encodeURIComponent(phone);
-  const result = await blandFetch(`/v1/inbound/${encodedPhone}/update`, {
+  // Bland's inbound update endpoint is the number resource itself. The
+  // `/update` suffix returns a 404 and leaves the imported number unconfigured.
+  const result = await blandFetch(`/v1/inbound/${encodedPhone}`, {
     method: "POST",
     encryptedKey,
     body,
