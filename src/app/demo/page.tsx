@@ -408,66 +408,81 @@ function DemoPageInner() {
   const currentScenario = SCENARIOS.find((s) => s.id === selectedScenario) ?? SCENARIOS[0];
 
   return (
-    <div className="min-h-screen bg-paper antialiased flex flex-col relative">
-      <nav className="relative z-10 flex items-center justify-between border-b border-line px-6 py-5 max-w-4xl mx-auto w-full">
-        <Link href="/">
-          <BrandLogo mobileWidth={120} desktopWidth={140} priority />
-        </Link>
-        <Link
-          href="/login"
-          className="bg-accent px-4 py-2 text-[13px] text-accent-foreground hover:bg-accent-hover"
-        >
-          Start
-        </Link>
-      </nav>
+    <div className="studio-demo min-h-screen bg-paper antialiased flex flex-col relative">
+      <header className="studio-header">
+        <nav className="studio-nav mx-auto flex max-w-[1280px] items-center justify-between px-6 py-4 sm:px-10 lg:px-12">
+          <Link href="/" aria-label="RingPaw home">
+            <BrandLogo mobileWidth={120} desktopWidth={140} priority />
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="hidden text-xs font-semibold text-muted transition-colors hover:text-ink sm:inline">
+              Back to RingPaw
+            </Link>
+            <Link href="/onboarding" className="studio-button studio-button-small">
+              Set up your shop <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </nav>
+      </header>
 
-      <main className="flex-1 flex flex-col items-center px-4 py-10 relative z-10 gap-10">
+      <main className="studio-demo-main flex-1 relative z-10">
 
         {/* ── Tier 1: Recorded sample — always visible unless on active live call ── */}
         {!inActiveCall && (
-          <div className="w-full max-w-xl animate-in fade-in duration-300">
-            <div className="text-center mb-6">
-              <h1 className="font-display text-4xl sm:text-5xl tracking-tight text-ink leading-tight mb-3">
-                Hear a missed grooming call become a booking.
+          <section className="studio-demo-hero mx-auto grid w-full max-w-[1280px] items-center gap-10 px-6 py-12 sm:px-10 sm:py-16 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20 lg:px-12 lg:py-20">
+            <div className="animate-in fade-in duration-300">
+              <p className="studio-eyebrow mb-6"><span className="studio-eyebrow-line" />Step 01 / hear it work</p>
+              <h1 className="max-w-[600px] font-display text-5xl font-bold leading-[0.92] tracking-[-0.06em] text-ink sm:text-7xl">
+                Hear a missed call <span className="text-accent">become a booking.</span>
               </h1>
-              <p className="text-muted font-medium text-lg max-w-md mx-auto leading-relaxed">
-                Listen to RingPaw handle a pet parent, then call the live demo and try it yourself.
+              <p className="mt-7 max-w-[480px] text-[17px] font-medium leading-[1.6] text-muted sm:text-lg">
+                Listen to RingPaw handle a pet parent, then call the live demo and try the same flow with your voice.
               </p>
+              <div className="studio-demo-meta mt-8">
+                <span><i /> No signup required</span>
+                <span><i /> About 2 minutes</span>
+                <span><i /> Mock grooming shop</span>
+              </div>
             </div>
-            <div className="bg-surface rounded-sm border border-line p-6 mb-2">
-              <p className="text-xs font-bold text-muted uppercase tracking-widest mb-3 text-center">Real booking call</p>
+            <div className="studio-demo-player-wrap">
+              <div className="studio-demo-section-label">
+                <span>Recorded sample</span>
+                <span>Happy Paws · inbound</span>
+              </div>
+              <div className="studio-demo-player-card">
               <DemoCallPlayer audioSrc="/luna-call.wav" />
+              </div>
+              <button
+                onClick={() => document.getElementById("live-demo")?.scrollIntoView({ behavior: "smooth" })}
+                className="studio-demo-next group"
+              >
+                <span><strong>Next:</strong> try RingPaw with your voice</span>
+                <span className="studio-demo-next-arrow" aria-hidden="true">↓</span>
+              </button>
             </div>
-            <button
-              onClick={() => document.getElementById("live-demo")?.scrollIntoView({ behavior: "smooth" })}
-              className="flex flex-col items-center gap-1 w-full py-3 group"
-            >
-              <span className="text-sm font-bold text-muted group-hover:text-ink transition-colors">Now try it live with your voice</span>
-              <svg className="w-5 h-5 text-accent animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-          </div>
+          </section>
         )}
 
         {/* ── Tier 2: Live demo — number displayed immediately ── */}
-        <div id="live-demo" ref={liveDemoRef} className="w-full max-w-xl scroll-mt-4">
+        <section id="live-demo" ref={liveDemoRef} className="studio-demo-live-section scroll-mt-4">
 
           {/* Loading */}
           {livePhase === "loading" && (
-            <div className="text-center animate-in fade-in duration-300 py-8">
-              <div className="w-20 h-20 bg-surface rounded-sm flex items-center justify-center mx-auto mb-6 ">
+            <div className="studio-demo-loading text-center animate-in fade-in duration-300">
+              <div className="studio-demo-loading-icon">
                 <svg className="animate-spin w-8 h-8 text-muted" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               </div>
-              <p className="text-xl font-bold text-ink mb-2">Setting up your demo line…</p>
-              <p className="text-muted font-medium text-sm">Takes just a second</p>
+              <p className="text-2xl font-bold text-ink mb-2">Setting up your live demo line</p>
+              <p className="text-muted font-medium text-sm">One moment—we&apos;re finding an open number for you.</p>
             </div>
           )}
 
           {/* Active demo — waiting / in_progress / completed */}
           {inActiveCall && (
-            <div className="bg-surface rounded-sm border border-line p-5 sm:p-8 animate-in fade-in duration-300">
+            <div className="studio-demo-live-card animate-in fade-in duration-300">
               <div className="text-center mb-6">
                 {/* Hero heading for waiting state */}
                 {livePhase === "waiting" && (
@@ -476,7 +491,7 @@ function DemoPageInner() {
                       Hear RingPaw book a groom
                     </h1>
                     <p className="text-muted font-medium text-base max-w-sm mx-auto">
-                      Talk through a booking call. 3-minute demo, one call per number.
+                      Call the number below and ask for a grooming appointment. RingPaw will take it from there.
                     </p>
                   </div>
                 )}
@@ -495,14 +510,14 @@ function DemoPageInner() {
 
                 {livePhase === "waiting" && (
                   <>
-                    <p className="text-xs font-bold text-muted uppercase tracking-widest mb-2">Call this number now</p>
+                    <p className="studio-demo-label mb-2">Your live demo line</p>
                     <a
                       href={`tel:${number}`}
                       className="block text-4xl sm:text-6xl font-medium text-ink tracking-wide hover:text-accent transition-colors"
                     >
                       {formattedNumber}
                     </a>
-                    <p className="text-xs text-muted mt-2">Tap to dial on mobile · or enter manually</p>
+                    <p className="text-xs text-muted mt-2">Tap to call on mobile, or dial it from another phone</p>
                   </>
                 )}
                 {livePhase === "in_progress" && (
@@ -524,14 +539,14 @@ function DemoPageInner() {
 
               {/* ── Scenario selector (waiting only) ── */}
               {livePhase === "waiting" && (
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2 text-center">Pick a scenario to try</p>
+                <div className="studio-demo-scenarios mb-5">
+                  <p className="studio-demo-label mb-3 text-center">Choose what to ask for</p>
                   <div className="grid grid-cols-3 gap-2">
                     {SCENARIOS.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setSelectedScenario(s.id)}
-                        className={`flex flex-col items-center gap-1 px-2 py-3 rounded-sm border-2 text-center transition-all ${
+                        className={`studio-demo-scenario flex flex-col items-center gap-1 px-2 py-3 rounded-sm border-2 text-center transition-all ${
                           selectedScenario === s.id
                           ? "border-ink bg-ink/5 "
                           : "border-line bg-surface hover:border-ink/25"
@@ -548,8 +563,8 @@ function DemoPageInner() {
 
               {/* ── Try saying (waiting only) ── */}
               {livePhase === "waiting" && (
-                <div className="bg-paper/70 rounded-sm p-4 border border-line mb-4 transition-all duration-300">
-                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">Try saying →</p>
+                <div className="studio-demo-prompt bg-paper/70 rounded-sm p-4 border border-line mb-5 transition-all duration-300">
+                  <p className="studio-demo-label mb-2">Try saying</p>
                   <p className="text-sm text-ink/80 italic leading-relaxed">
                     &ldquo;{currentScenario.script}&rdquo;
                   </p>
@@ -634,7 +649,7 @@ function DemoPageInner() {
 
               {/* ── Waiting footer ── */}
               {livePhase === "waiting" && (
-                <div className="space-y-3">
+                <div className="studio-demo-waiting-footer space-y-3">
                   <div className="flex items-center justify-center gap-3 py-1 text-muted text-xs font-bold">
                     <span className="flex gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -752,10 +767,11 @@ function DemoPageInner() {
 
           {/* Cooldown */}
           {livePhase === "cooldown" && (
-            <div className="bg-surface rounded-sm border border-line p-10 text-center animate-in fade-in duration-300">
-              <h2 className="text-2xl font-medium text-ink mb-3">You&apos;ve already tried the live demo</h2>
+            <div className="studio-demo-state-card studio-demo-state-card-warm animate-in fade-in duration-300">
+              <p className="studio-demo-label mb-4">Live demo line</p>
+              <h2 className="text-3xl font-bold leading-tight tracking-[-0.04em] text-ink mb-3">You&apos;ve already tried this line</h2>
               <p className="text-muted font-medium mb-6 leading-relaxed">
-                Liked what you heard? Leave your info and we&apos;ll set you up personally.
+                That number is limited to one call. Liked what you heard? Leave your info and we&apos;ll set up RingPaw for your shop.
               </p>
               <div id="lead-form" className="space-y-4">
                 {leadSubmitted ? (
@@ -820,10 +836,11 @@ function DemoPageInner() {
 
           {/* Demo unavailable */}
           {livePhase === "unavailable" && (
-            <div className="bg-surface rounded-sm border border-line p-10 text-center animate-in fade-in duration-300">
-              <h2 className="text-2xl font-medium text-ink mb-3">All demo lines are busy</h2>
-              <p className="text-muted font-medium mb-8">
-                Every line is in use right now. Try again in a minute, or just sign up — setup takes 5 minutes.
+            <div className="studio-demo-state-card animate-in fade-in duration-300">
+              <p className="studio-demo-label mb-4">Live demo line</p>
+              <h2 className="text-3xl font-bold leading-tight tracking-[-0.04em] text-ink mb-3">The live lines are busy</h2>
+              <p className="text-muted font-medium mb-8 leading-relaxed">
+                Every demo number is in use right now. Try again in a minute, or start setting up your own shop line.
               </p>
               <div className="flex flex-col gap-3">
                 <button
@@ -841,37 +858,46 @@ function DemoPageInner() {
 
           {/* Generic error */}
           {livePhase === "error" && (
-            <div className="bg-surface rounded-sm border border-line p-10 text-center animate-in fade-in duration-300">
-              <h2 className="text-2xl font-medium text-ink mb-3">Something went wrong</h2>
-              <p className="text-muted font-medium mb-8">Couldn&apos;t start the demo. Please try again.</p>
-              <button
-                onClick={() => startLiveDemo()}
-                className="w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all "
-              >
-                Try again
-              </button>
+            <div className="studio-demo-state-card animate-in fade-in duration-300">
+              <p className="studio-demo-label mb-4">Live demo line</p>
+              <h2 className="text-3xl font-bold leading-tight tracking-[-0.04em] text-ink mb-3">The live line couldn&apos;t be reserved</h2>
+              <p className="text-muted font-medium mb-8 leading-relaxed">Try once more, or replay the recorded call above while we get the line ready.</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  onClick={() => startLiveDemo()}
+                  className="w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all"
+                >
+                  Try again
+                </button>
+                <button
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  className="w-full rounded-sm border-2 border-line py-4 font-bold text-ink transition-colors hover:bg-paper"
+                >
+                  Replay the call
+                </button>
+              </div>
             </div>
           )}
 
-        </div>
+        </section>
       </main>
 
       {/* Post-demo conversion CTA — hidden when completed or cooldown (they have their own CTAs) */}
-      {livePhase !== "completed" && livePhase !== "cooldown" && <section className="relative z-10 px-4 pb-12">
-        <div className="max-w-xl mx-auto">
-          <div className="bg-ink rounded-sm p-8 sm:p-10 text-center relative overflow-hidden">
+      {livePhase !== "completed" && livePhase !== "cooldown" && <section className="studio-demo-bottom relative z-10 px-6 pb-12 sm:px-10 lg:px-12">
+        <div className="mx-auto max-w-[1280px]">
+          <div className="studio-demo-bottom-card relative overflow-hidden">
             <div className="relative z-10">
-              <p className="text-accent text-sm font-bold uppercase tracking-widest mb-3">Ready to go live?</p>
-              <h2 className="text-2xl sm:text-3xl font-medium text-white leading-tight mb-3">
-                Want this for your shop?
+              <p className="studio-eyebrow studio-eyebrow-light mb-4"><span className="studio-eyebrow-line" />Ready to go live?</p>
+              <h2 className="text-3xl sm:text-5xl font-bold text-paper leading-[0.95] tracking-[-0.05em] mb-4">
+                Turn the next missed call into a booking.
               </h2>
-              <p className="text-white/60 text-base mb-6">
-                Leave your info and we&apos;ll set you up personally.
+              <p className="text-paper/60 text-base mb-7">
+                Leave your info and we&apos;ll help set up RingPaw for your shop.
               </p>
               <div id="bottom-lead-form">
                 {leadSubmitted ? (
-                  <div className="bg-white/10 border-2 border-white/20 rounded-sm p-6 text-center">
-                    <p className="font-display text-2xl text-ink mb-2">Received.</p>
+                    <div className="bg-white/10 border-2 border-white/20 rounded-sm p-6 text-center">
+                    <p className="font-display text-2xl text-paper mb-2">Received.</p>
                     <p className="text-lg font-bold text-white mb-1">Thanks! We&apos;ll be in touch soon.</p>
                     <p className="text-sm text-white/60">We&apos;ll reach out to set up RingPaw for your shop.</p>
                   </div>
@@ -947,8 +973,9 @@ function DemoPageInner() {
         </div>
       )}
 
-      <footer className="relative z-10 text-center py-6 text-xs text-muted font-medium">
-        © {new Date().getFullYear()} RingPaw · <Link href="/" className="hover:text-ink transition-colors">ringpaw.com</Link>
+      <footer className="relative z-10 mx-auto flex w-full max-w-[1280px] items-center justify-between px-6 py-7 text-xs font-medium text-muted sm:px-10 lg:px-12">
+        <span>© {new Date().getFullYear()} RingPaw</span>
+        <Link href="/" className="font-mono uppercase tracking-[0.14em] hover:text-ink transition-colors">ringpaw.com</Link>
       </footer>
     </div>
   );
