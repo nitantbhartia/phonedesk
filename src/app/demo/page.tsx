@@ -431,10 +431,10 @@ function DemoPageInner() {
             <div className="animate-in fade-in duration-300">
               <p className="studio-eyebrow mb-6"><span className="studio-eyebrow-line" />Step 01 / hear it work</p>
               <h1 className="max-w-[600px] font-display text-5xl font-bold leading-[0.92] tracking-[-0.06em] text-ink sm:text-7xl">
-                Hear a missed call <span className="text-accent">become a booking.</span>
+                See a missed inquiry <span className="text-accent">become a booking.</span>
               </h1>
               <p className="mt-7 max-w-[480px] text-[17px] font-medium leading-[1.6] text-muted sm:text-lg">
-                Listen to RingPaw handle a pet parent, then call the live demo and try the same flow with your voice.
+                Listen to RingPaw help a pet parent, then try the live booking line and hear the same calm experience with your voice.
               </p>
               <div className="studio-demo-meta mt-8">
                 <span><i /> No signup required</span>
@@ -445,7 +445,7 @@ function DemoPageInner() {
             <div className="studio-demo-player-wrap">
               <div className="studio-demo-section-label">
                 <span>Recorded sample</span>
-                <span>Happy Paws · inbound</span>
+                <span>Happy Paws · customer inquiry</span>
               </div>
               <div className="studio-demo-player-card">
               <DemoCallPlayer audioSrc="/luna-call.wav" />
@@ -486,10 +486,10 @@ function DemoPageInner() {
                 {livePhase === "waiting" && (
                   <div className="mb-6">
                     <h1 className="text-3xl sm:text-4xl font-medium text-ink leading-tight mb-2">
-                      Hear RingPaw book a groom
+                      See RingPaw recover a booking
                     </h1>
                     <p className="text-muted font-medium text-base max-w-sm mx-auto">
-                      Call the number below and ask for a grooming appointment. RingPaw will take it from there.
+                      Call the number below as a pet parent looking for a grooming appointment. RingPaw will take it from there.
                     </p>
                   </div>
                 )}
@@ -520,7 +520,7 @@ function DemoPageInner() {
                 )}
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-lg font-bold text-ink mb-1">RingPaw is on the call!</p>
+                    <p className="text-lg font-bold text-ink mb-1">RingPaw is helping a customer!</p>
                     <p className="text-3xl font-medium text-ink tabular-nums tracking-wide">
                       {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                     </p>
@@ -529,8 +529,8 @@ function DemoPageInner() {
                 )}
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-xl font-medium text-ink mb-1">That missed call became a booking.</p>
-                    <p className="text-sm text-muted">RingPaw handled the call while the groomer stayed with the dog.</p>
+                    <p className="text-xl font-medium text-ink mb-1">That missed inquiry became a booking.</p>
+                    <p className="text-sm text-muted">RingPaw helped the customer while the groomer stayed with the dog.</p>
                   </div>
                 )}
               </div>
@@ -654,7 +654,7 @@ function DemoPageInner() {
                       <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "120ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "240ms" }} />
                     </span>
-                    Waiting for your call
+                    Waiting for your inquiry
                   </div>
                   <div className="flex items-center justify-center gap-3 text-xs text-muted font-semibold">
                     <span>3-min demo call</span>
@@ -685,7 +685,7 @@ function DemoPageInner() {
                     }}
                     className="w-full py-3 rounded-sm border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
                   >
-                    I&apos;ve already called — check status
+                    I&apos;ve already tried it — check status
                   </button>
                 </div>
               )}
@@ -887,7 +887,7 @@ function DemoPageInner() {
             <div className="relative z-10">
               <p className="studio-eyebrow studio-eyebrow-light mb-4"><span className="studio-eyebrow-line" />Ready to go live?</p>
               <h2 className="text-3xl sm:text-5xl font-bold text-paper leading-[0.95] tracking-[-0.05em] mb-4">
-                Turn the next missed call into a booking.
+                Turn the next missed inquiry into a booking.
               </h2>
               <p className="text-paper/60 text-base mb-7">
                 Leave your info and we&apos;ll help set up RingPaw for your shop.

@@ -29,14 +29,14 @@ const plexMono = IBM_Plex_Mono({
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ringpaw.com";
 
 export const metadata: Metadata = {
-  title: "RingPaw — Turn missed grooming calls into booked appointments",
+  title: "RingPaw — More booked grooms when your hands are full",
   description:
-    "RingPaw answers missed calls for pet groomers, books real openings from Google Calendar or Square, and sends appointment confirmations.",
+    "RingPaw helps independent pet groomers recover missed inquiries, book real openings from Google Calendar or Square, and send appointment confirmations — without outbound AI calls.",
   metadataBase: new URL(APP_URL),
   openGraph: {
-    title: "RingPaw — Turn missed grooming calls into booked appointments",
+    title: "RingPaw — More booked grooms when your hands are full",
     description:
-      "Busy grooming dogs? RingPaw answers missed calls, books real openings, and sends confirmations.",
+      "Busy grooming dogs? RingPaw responds when you can’t, books real openings, and sends confirmations.",
     url: APP_URL,
     siteName: "RingPaw",
     type: "website",
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "RingPaw — Turn missed grooming calls into booked appointments",
+    title: "RingPaw — More booked grooms when your hands are full",
     description:
-      "Busy grooming dogs? RingPaw answers missed calls, books real openings, and sends confirmations.",
+      "Busy grooming dogs? RingPaw responds when you can’t, books real openings, and sends confirmations.",
   },
 };
 

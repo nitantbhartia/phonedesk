@@ -379,10 +379,10 @@ export function SpawklesDemoClient() {
           <div className="studio-demo-hero mx-auto w-full max-w-[760px] px-6 py-12 text-center sm:px-10 sm:py-16">
             <p className="studio-eyebrow mb-6 justify-center"><span className="studio-eyebrow-line" />A RingPaw demo for Spawkles</p>
             <h1 className="font-display text-5xl font-bold leading-[0.92] tracking-[-0.06em] text-ink sm:text-7xl">
-              Hear a missed call <span className="text-accent">become a booking.</span>
+              See a missed inquiry <span className="text-accent">become a booking.</span>
             </h1>
             <p className="mx-auto mt-7 max-w-[520px] text-[17px] font-medium leading-[1.6] text-muted sm:text-lg">
-              Call the Spawkles demo line below and hear how RingPaw keeps a pet parent moving while the groomer keeps working.
+              Try the Spawkles demo line below and hear how RingPaw keeps a pet parent moving while the groomer keeps working.
             </p>
             <div className="studio-demo-meta mt-8 justify-center">
               <span><i /> Spawkles Mobile Dog Grooming</span>
@@ -431,10 +431,10 @@ export function SpawklesDemoClient() {
                   <div className="mb-6">
                     <p className="studio-demo-label mb-4">Spawkles Mobile Dog Grooming</p>
                     <h1 className="text-3xl sm:text-4xl font-bold text-ink leading-tight tracking-[-0.04em] mb-2">
-                      Hear RingPaw book a groom
+                      See RingPaw recover a booking
                     </h1>
                     <p className="text-muted font-medium text-base max-w-sm mx-auto">
-                      Call the number below and ask for a grooming appointment. RingPaw will take it from there.
+                      Call the number below as a pet parent looking for a grooming appointment. RingPaw will take it from there.
                     </p>
                   </div>
                 )}
@@ -466,7 +466,7 @@ export function SpawklesDemoClient() {
                 )}
                 {livePhase === "in_progress" && (
                   <div className="animate-in fade-in duration-300">
-                    <p className="text-lg font-bold text-ink mb-1">RingPaw is on the call!</p>
+                    <p className="text-lg font-bold text-ink mb-1">RingPaw is helping a customer!</p>
                     <p className="text-3xl font-medium text-ink tabular-nums tracking-wide">
                       {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                     </p>
@@ -476,7 +476,7 @@ export function SpawklesDemoClient() {
                 {livePhase === "completed" && (
                   <div className="animate-in fade-in duration-300">
                     <p className="text-xl font-medium text-ink mb-1">That was RingPaw!</p>
-                    <p className="text-sm text-muted">Natural, friendly, and ready to answer 24/7.</p>
+                    <p className="text-sm text-muted">Natural, friendly, and ready whenever your shop is busy.</p>
                   </div>
                 )}
               </div>
@@ -600,7 +600,7 @@ export function SpawklesDemoClient() {
                       <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "120ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "240ms" }} />
                     </span>
-                    Waiting for your call
+                    Waiting for your inquiry
                   </div>
                   <div className="flex items-center justify-center gap-3 text-xs text-muted font-semibold">
                     <span>4-min demo call</span>
@@ -629,7 +629,7 @@ export function SpawklesDemoClient() {
                     }}
                     className="w-full py-3 rounded-sm border-2 border-line text-muted text-sm font-bold hover:border-ink/25 hover:text-muted transition-all"
                   >
-                    I&apos;ve already called — check status
+                    I&apos;ve already tried it — check status
                   </button>
                 </div>
               )}
@@ -644,9 +644,9 @@ export function SpawklesDemoClient() {
                     Try another call
                   </button>
                   <div className="bg-paper rounded-sm p-4 text-center">
-                    <p className="text-sm font-bold text-ink mb-1">Ready to get RingPaw answering your calls?</p>
+                    <p className="text-sm font-bold text-ink mb-1">Ready to have RingPaw recover your bookings?</p>
                     <p className="text-xs text-muted">
-                      Reach out to us and we&apos;ll have RingPaw live for Spawkles in no time.
+                      Reach out to us and we&apos;ll have RingPaw recovering bookings for Spawkles in no time.
                     </p>
                   </div>
                 </div>
@@ -659,7 +659,7 @@ export function SpawklesDemoClient() {
           <div className="studio-demo-bottom-card">
             <p className="studio-eyebrow studio-eyebrow-light mb-4"><span className="studio-eyebrow-line" />Ready to go live?</p>
             <h2 className="max-w-[680px] font-display text-4xl font-bold leading-[0.95] tracking-[-0.055em] text-paper sm:text-6xl">
-              Turn the next missed call into a booking.
+              Turn the next missed inquiry into a booking.
             </h2>
             <p className="mt-5 max-w-[450px] text-[16px] leading-[1.6] text-paper/70">
               RingPaw gives independent grooming shops a calm, reliable way to keep booking while their hands are full.
