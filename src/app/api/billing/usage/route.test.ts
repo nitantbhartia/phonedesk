@@ -86,10 +86,10 @@ describe("GET /api/billing/usage", () => {
     });
     expect(payload).toMatchObject({
       minutesUsed: 150,
-      minutesLimit: 300,
-      minutesRemaining: 150,
+      minutesLimit: 200,
+      minutesRemaining: 50,
       overageMinutes: 0,
-      percentUsed: 50,
+      percentUsed: 75,
       plan: "PRO",
       planName: "RingPaw",
       subscriptionStatus: "active",

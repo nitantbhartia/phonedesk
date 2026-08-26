@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { ArrowIcon } from "@/components/arrow-icon";
+import { RINGPAW_ESTIMATED_CALLS, RINGPAW_PLAN_MINUTES, RINGPAW_PLAN_PRICE } from "@/lib/billing-plans";
 
 export default function LandingPage() {
   return (
@@ -107,8 +108,8 @@ function LandingPageContent() {
             </div>
             <div className="mt-14 grid max-w-[560px] grid-cols-3 border-t border-line pt-5">
               <div>
-                <p className="studio-fact-label">$79/mo</p>
-                <p className="studio-fact-detail">one clear price</p>
+                <p className="studio-fact-label">${RINGPAW_PLAN_PRICE}/mo</p>
+                <p className="studio-fact-detail">{RINGPAW_PLAN_MINUTES} min included</p>
               </div>
               <div className="border-l border-line pl-4 sm:pl-6">
                 <p className="studio-fact-label">keep your number</p>
@@ -416,11 +417,11 @@ function LandingPageContent() {
           <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
               <p className="studio-eyebrow mb-5"><span className="studio-eyebrow-line" />One simple plan</p>
-              <h2 className="text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-6xl">One missed groom costs more.<br /><span className="text-accent">RingPaw costs $79.</span></h2>
+              <h2 className="text-4xl font-bold leading-[0.95] tracking-[-0.055em] sm:text-6xl">One missed groom costs more.<br /><span className="text-accent">RingPaw costs ${RINGPAW_PLAN_PRICE}.</span></h2>
             </div>
             <div className="studio-price-card">
               <div>
-                <p className="text-[clamp(4.5rem,10vw,8rem)] font-bold leading-[0.8] tracking-[-0.08em]">$79</p>
+                <p className="text-[clamp(4.5rem,10vw,8rem)] font-bold leading-[0.8] tracking-[-0.08em]">${RINGPAW_PLAN_PRICE}</p>
                 <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted">per month / one shop / one number</p>
               </div>
               <div className="max-w-[320px]">
@@ -429,6 +430,7 @@ function LandingPageContent() {
                   <li className="studio-price-feature"><span>✓</span> Google Calendar or Square booking</li>
                   <li className="studio-price-feature"><span>✓</span> Customer confirmation texts</li>
                   <li className="studio-price-feature"><span>✓</span> Keep your existing shop number</li>
+                  <li className="studio-price-feature"><span>✓</span> {RINGPAW_PLAN_MINUTES} minutes / month (~{RINGPAW_ESTIMATED_CALLS} two-minute calls)</li>
                 </ul>
                 <Link href="/onboarding" className="studio-button mt-7">Set up RingPaw <ArrowIcon className="h-4 w-4" /></Link>
                 <p className="mt-3 text-xs text-muted">Cancel any time.</p>

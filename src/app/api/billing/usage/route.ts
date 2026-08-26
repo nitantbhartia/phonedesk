@@ -2,13 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-// Minutes included per plan
-const PLAN_MINUTES: Record<string, number> = {
-  STARTER: 75,
-  PRO: 300,
-  BUSINESS: 500,
-};
+import { PLAN_MINUTES } from "@/lib/billing-plans";
 
 const PLAN_NAMES: Record<string, string> = {
   STARTER: "Starter",

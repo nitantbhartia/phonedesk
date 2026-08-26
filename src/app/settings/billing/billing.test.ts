@@ -5,41 +5,18 @@ import { describe, expect, it } from "vitest";
  * do not include overage pricing (removed as too early for pre-launch).
  */
 
-// Replicate the PLANS array from billing page
+// Keep this smoke-test fixture aligned with the single live RingPaw plan.
 const BILLING_PLANS = [
   {
-    id: "STARTER",
-    name: "Solo",
-    price: 99,
-    minutes: 75,
-    features: [
-      "75 minutes/month (~38 calls)",
-      "Everything included",
-      "Calendar integration",
-    ],
-  },
-  {
     id: "PRO",
-    name: "Studio",
-    price: 199,
-    minutes: 300,
-    popular: true,
+    name: "RingPaw",
+    price: 99,
     features: [
-      "300 minutes/month (~150 calls)",
-      "Priority setup",
-      "Square + Google Calendar",
+      "200 minutes/month (~100 two-minute calls)",
+      "One location, one line",
+      "Google Calendar + Square support",
     ],
-  },
-  {
-    id: "BUSINESS",
-    name: "Salon",
-    price: 349,
-    minutes: 500,
-    features: [
-      "500 minutes/month (~250 calls)",
-      "Priority support",
-      "Multi-groomer routing",
-    ],
+    minutes: 200,
   },
 ];
 
@@ -57,14 +34,14 @@ describe("billing plans", () => {
     for (const plan of BILLING_PLANS) {
       const minutesFeature = plan.features.find((f) => f.includes("minutes/month"));
       expect(minutesFeature).toBeDefined();
-      expect(minutesFeature).toMatch(/~\d+ calls/);
+      expect(minutesFeature).toMatch(/~\d+(?: two-minute)? calls/);
     }
   });
 
   it("call count approximations are correct (2 min avg)", () => {
     for (const plan of BILLING_PLANS) {
       const minutesFeature = plan.features.find((f) => f.includes("minutes/month"))!;
-      const callMatch = minutesFeature.match(/~(\d+) calls/);
+      const callMatch = minutesFeature.match(/~(\d+)/);
       expect(callMatch).not.toBeNull();
       const expectedCalls = Math.round(plan.minutes / 2);
       expect(Number(callMatch![1])).toBe(expectedCalls);

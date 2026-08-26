@@ -7,6 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { isOwnerDashboardEmailClient } from "@/lib/owner-auth";
+import { PLAN_MINUTES } from "@/lib/billing-plans";
 
 const navItems: Array<{ href: string; label: string; tourId?: string; icon: React.ReactNode }> = [
   {
@@ -177,10 +178,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           });
         } else if (profile?.business) {
           const plan = profile.business.plan || "STARTER";
-          const limits: Record<string, number> = { STARTER: 75, PRO: 300, BUSINESS: 500 };
           setUsage({
             minutesUsed: profile.stats?.totalCallMinutes ?? 0,
-            minutesLimit: limits[plan] ?? 75,
+            minutesLimit: PLAN_MINUTES[plan] ?? 75,
             plan,
           });
         }

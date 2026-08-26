@@ -34,7 +34,7 @@ RingPaw turns missed grooming calls into booked appointments. It answers with th
 >
 > I built RingPaw for exactly that. Missed calls hear your shop name, pick a real opening on the keypad, and the booking writes to your calendar — all without you touching your phone.
 >
-> Takes 5 minutes to set up. $79/mo. Pays for itself the first call it books.
+> Takes 5 minutes to set up. $99/mo with 200 minutes included. Pays for itself the first call it books.
 >
 > Want to hear it in action? I can send you a number to call right now.
 >
@@ -68,7 +68,7 @@ RingPaw turns missed grooming calls into booked appointments. It answers with th
 
 ## THE PITCH (60 SECONDS)
 
-> "When you're mid-groom and the phone rings, you can't answer — and most customers don't leave a voicemail, they just call the next groomer on Google. RingPaw fixes that. Forward missed calls, callers press 1 to book a real calendar opening, and you get a text confirmation. You don't do anything. It takes about 5 minutes to set up, connects directly to Google, Square, or Acuity, and is $79 a month. We offer a 30-day guarantee — if it doesn't book a single appointment, you pay nothing."
+> "When you're mid-groom and the phone rings, you can't answer — and most customers don't leave a voicemail, they just call the next groomer on Google. RingPaw fixes that. Forward missed calls, callers press 1 to book a real calendar opening, and you get a text confirmation. You don't do anything. It takes about 5 minutes to set up, connects directly to Google, Square, or Acuity, and is $99 a month with 200 minutes included. We offer a 30-day guarantee — if it doesn't book a single appointment, you pay nothing."
 
 ---
 
@@ -76,12 +76,12 @@ RingPaw turns missed grooming calls into booked appointments. It answers with th
 
 | Plan | Price | Best For |
 |------|-------|----------|
-| **RingPaw** | $79/mo | One location, one forwarded line |
+| **RingPaw** | $99/mo | One location, one forwarded line, 200 minutes |
 
 - No contracts, no setup fees, no cancellation fees — month-to-month only
 - **30-day outcome guarantee** — zero bookings = zero charge
 
-**ROI anchor:** Average groom is ~$85. RingPaw is $79/mo. One extra booking per month = paid for. Most groomers see 5–10 extra bookings in their first week.
+**ROI anchor:** Average groom is ~$85. RingPaw is $99/mo with 200 minutes included. Two extra bookings per month = paid for. Most groomers see 5–10 extra bookings in their first week.
 
 ---
 
@@ -94,7 +94,7 @@ RingPaw turns missed grooming calls into booked appointments. It answers with th
 > Most customers don't leave voicemails. They hang up and call the next groomer. Voicemail is a holding pen — RingPaw is a booking machine. The difference is whether that caller becomes your client or your competitor's.
 
 ### "It's too expensive."
-> At $79 a month, one extra booking covers it. Most groomers tell us they were missing 2–4 calls a day — at $85 a groom, that's $170–$340 in lost revenue every single day. RingPaw pays for itself the first morning it's live. And if it doesn't book anything in 30 days, you don't pay — that's our guarantee.
+> At $99 a month, two extra bookings cover it. Most groomers tell us they were missing 2–4 calls a day — at $85 a groom, that's $170–$340 in lost revenue every single day. RingPaw pays for itself the first morning it's live. And if it doesn't book anything in 30 days, you don't pay — that's our guarantee.
 
 ### "I'm too busy to set this up."
 > Setup takes 5 minutes, start to finish. You enter your business name, your services, and link your calendar. We walk you through setting up call forwarding — it's a single code you dial on your phone, takes 30 seconds. That's it. Nothing to maintain after that.

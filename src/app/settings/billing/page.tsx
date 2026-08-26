@@ -4,15 +4,17 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, CreditCard, Zap } from "lucide-react";
+import { RINGPAW_ESTIMATED_CALLS, RINGPAW_PLAN_MINUTES, RINGPAW_PLAN_PRICE } from "@/lib/billing-plans";
 
 const PLANS = [
   {
     id: "PRO",
     name: "RingPaw",
-    price: 79,
-    minutes: 300,
+    price: RINGPAW_PLAN_PRICE,
+    minutes: RINGPAW_PLAN_MINUTES,
     popular: true,
     features: [
+      `${RINGPAW_PLAN_MINUTES} minutes/month (~${RINGPAW_ESTIMATED_CALLS} two-minute calls)`,
       "One location, one line",
       "Missed-call booking for pet groomers",
       "Google Calendar + Square support",
@@ -157,7 +159,7 @@ export default function BillingPage() {
     <div className="space-y-10">
       <div>
         <h1 className="font-display text-[2.35rem] tracking-tight text-ink">Plan &amp; billing</h1>
-        <p className="mt-1 text-[14px] text-muted">One line, one location, $79 a month.</p>
+        <p className="mt-1 text-[14px] text-muted">One line, one location, ${RINGPAW_PLAN_PRICE} a month — about {RINGPAW_ESTIMATED_CALLS} two-minute calls included.</p>
       </div>
 
       {/* Current Plan Usage */}
@@ -228,7 +230,7 @@ export default function BillingPage() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-ink">No active plan</h2>
-              <p className="text-muted font-medium mt-1">$79/mo — one location, one line. Set STRIPE_PRO_PRICE_ID in env for live checkout.</p>
+              <p className="text-muted font-medium mt-1">${RINGPAW_PLAN_PRICE}/mo — one location, one line, {RINGPAW_PLAN_MINUTES} minutes included. Set STRIPE_PRO_PRICE_ID in env for live checkout.</p>
             </div>
           </div>
         )}

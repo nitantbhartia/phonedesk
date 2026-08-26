@@ -111,7 +111,7 @@ Events: `call_forwarded`, `menu_started`, `menu_digit_pressed`, `booking_selecte
 
 ## Pricing
 
-**$79/mo** — one location, one line. Single live plan (no tiers). Set `STRIPE_PRO_PRICE_ID` in env for Stripe checkout.
+**$99/mo** — one location, one line, with 200 minutes included (about 100 two-minute calls). Single live plan (no tiers). Set `STRIPE_PRO_PRICE_ID` in env for Stripe checkout.
 
 ---
 
