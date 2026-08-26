@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -357,46 +358,64 @@ export function SpawklesDemoClient() {
   const currentScenario = SCENARIOS.find((s) => s.id === selectedScenario) ?? SCENARIOS[0];
 
   return (
-    <div className="min-h-screen bg-paper antialiased flex flex-col relative">
-      <nav className="relative z-10 flex items-center justify-center border-b border-line px-6 py-5 max-w-4xl mx-auto w-full">
-        <BrandLogo mobileWidth={120} desktopWidth={140} priority />
-      </nav>
+    <div className="studio-demo min-h-screen bg-paper antialiased flex flex-col relative">
+      <header className="studio-header">
+        <nav className="studio-nav mx-auto flex max-w-[1280px] items-center justify-between px-6 py-4 sm:px-10 lg:px-12">
+          <BrandLogo mobileWidth={120} desktopWidth={140} priority />
+          <div className="flex items-center gap-4">
+            <Link href="/" className="hidden text-xs font-semibold text-muted transition-colors hover:text-ink sm:inline">
+              Back to RingPaw
+            </Link>
+            <Link href="/onboarding" className="studio-button studio-button-small">
+              Set up your shop <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </nav>
+      </header>
 
-      <main className="flex-1 flex flex-col items-center px-4 py-6 relative z-10 gap-6">
+      <main className="studio-demo-main flex-1 relative z-10">
         {/* Intro heading — only when not in active call */}
         {livePhase === "loading" && (
-          <div className="text-center mb-2">
-            <h1 className="text-3xl sm:text-4xl font-medium text-ink leading-tight mb-2">
-              Hi Shirine!
+          <div className="studio-demo-hero mx-auto w-full max-w-[760px] px-6 py-12 text-center sm:px-10 sm:py-16">
+            <p className="studio-eyebrow mb-6 justify-center"><span className="studio-eyebrow-line" />A RingPaw demo for Spawkles</p>
+            <h1 className="font-display text-5xl font-bold leading-[0.92] tracking-[-0.06em] text-ink sm:text-7xl">
+              Hear a missed call <span className="text-accent">become a booking.</span>
             </h1>
-            <p className="text-muted font-medium text-base max-w-md mx-auto leading-relaxed">
-              We built RingPaw for shops like Spawkles. Call below to hear missed-call booking in action.
+            <p className="mx-auto mt-7 max-w-[520px] text-[17px] font-medium leading-[1.6] text-muted sm:text-lg">
+              Call the Spawkles demo line below and hear how RingPaw keeps a pet parent moving while the groomer keeps working.
             </p>
+            <div className="studio-demo-meta mt-8 justify-center">
+              <span><i /> Spawkles Mobile Dog Grooming</span>
+              <span><i /> About 4 minutes</span>
+              <span><i /> No signup required</span>
+            </div>
           </div>
         )}
 
-        <div className="w-full max-w-xl">
+        <section id="live-demo" className="studio-demo-live-section scroll-mt-4">
           {/* Loading */}
           {livePhase === "loading" && (
-            <div className="text-center animate-in fade-in duration-300 py-8">
-              <div className="w-20 h-20 bg-surface rounded-sm flex items-center justify-center mx-auto mb-6 ">
+            <div className="studio-demo-loading text-center animate-in fade-in duration-300">
+              <div className="studio-demo-loading-icon">
                 <svg className="animate-spin w-8 h-8 text-muted" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               </div>
-              <p className="text-xl font-bold text-ink mb-2">Setting up your demo line…</p>
-              <p className="text-muted font-medium text-sm">Takes just a second</p>
+              <p className="text-2xl font-bold text-ink mb-2">Setting up your live demo line</p>
+              <p className="text-muted font-medium text-sm">One moment—we&apos;re finding an open number for you.</p>
             </div>
           )}
 
           {/* Error */}
           {livePhase === "error" && (
-            <div className="text-center animate-in fade-in duration-300 py-8">
-              <p className="text-lg font-bold text-ink mb-3">Something went wrong</p>
+            <div className="studio-demo-state-card animate-in fade-in duration-300">
+              <p className="studio-demo-label mb-4">Spawkles live demo</p>
+              <h2 className="text-3xl font-bold leading-tight tracking-[-0.04em] text-ink mb-3">The live line couldn&apos;t be reserved</h2>
+              <p className="text-muted font-medium mb-8 leading-relaxed">Try once more while we find an open demo line for Spawkles.</p>
               <button
                 onClick={resetDemo}
-                className="px-6 py-3 bg-ink text-surface rounded-sm font-medium text-sm hover:bg-opacity-90 transition-all "
+                className="w-full py-4 bg-ink text-surface rounded-sm font-medium text-lg hover:bg-opacity-90 transition-all"
               >
                 Try again
               </button>
@@ -405,16 +424,17 @@ export function SpawklesDemoClient() {
 
           {/* Active demo — waiting / in_progress / completed */}
           {(livePhase === "waiting" || livePhase === "in_progress" || livePhase === "completed") && (
-            <div className="bg-surface rounded-sm border border-line p-5 sm:p-8 animate-in fade-in duration-300">
+            <div className="studio-demo-live-card animate-in fade-in duration-300">
               <div className="text-center mb-6">
                 {/* Hero heading for waiting state */}
                 {livePhase === "waiting" && (
                   <div className="mb-6">
-                    <h1 className="text-3xl sm:text-4xl font-medium text-ink leading-tight mb-2">
-                      Hi Shirine!
+                    <p className="studio-demo-label mb-4">Spawkles Mobile Dog Grooming</p>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-ink leading-tight tracking-[-0.04em] mb-2">
+                      Hear RingPaw book a groom
                     </h1>
                     <p className="text-muted font-medium text-base max-w-sm mx-auto">
-                      Call RingPaw for Spawkles. 4-minute demo call.
+                      Call the number below and ask for a grooming appointment. RingPaw will take it from there.
                     </p>
                   </div>
                 )}
@@ -434,14 +454,14 @@ export function SpawklesDemoClient() {
                 {/* Phase-specific content */}
                 {livePhase === "waiting" && (
                   <>
-                    <p className="text-xs font-bold text-muted uppercase tracking-widest mb-2">Call this number now</p>
+                    <p className="studio-demo-label mb-2">Your live demo line</p>
                     <a
                       href={`tel:${number}`}
                       className="block text-4xl sm:text-6xl font-medium text-ink tracking-wide hover:text-accent transition-colors"
                     >
                       {formattedNumber}
                     </a>
-                    <p className="text-xs text-muted mt-2">Tap to dial on mobile · or enter manually</p>
+                    <p className="text-xs text-muted mt-2">Tap to call on mobile, or dial it from another phone</p>
                   </>
                 )}
                 {livePhase === "in_progress" && (
@@ -463,14 +483,14 @@ export function SpawklesDemoClient() {
 
               {/* Scenario selector (waiting only) */}
               {livePhase === "waiting" && (
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2 text-center">Pick a scenario to try</p>
+                <div className="studio-demo-scenarios mb-5">
+                  <p className="studio-demo-label mb-3 text-center">Choose what to ask for</p>
                   <div className="grid grid-cols-3 gap-2">
                     {SCENARIOS.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setSelectedScenario(s.id)}
-                        className={`flex flex-col items-center gap-1 px-2 py-3 rounded-sm border-2 text-center transition-all ${
+                        className={`studio-demo-scenario flex flex-col items-center gap-1 px-2 py-3 rounded-sm border-2 text-center transition-all ${
                           selectedScenario === s.id
                           ? "border-ink bg-ink/5 "
                           : "border-line bg-surface hover:border-ink/25"
@@ -487,8 +507,8 @@ export function SpawklesDemoClient() {
 
               {/* Try saying (waiting only) */}
               {livePhase === "waiting" && (
-                <div className="bg-paper/70 rounded-sm p-4 border border-line mb-4 transition-all duration-300">
-                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-2">Try saying →</p>
+                <div className="studio-demo-prompt bg-paper/70 rounded-sm p-4 border border-line mb-5 transition-all duration-300">
+                  <p className="studio-demo-label mb-2">Try saying</p>
                   <p className="text-sm text-ink/80 italic leading-relaxed">
                     &ldquo;{currentScenario.script}&rdquo;
                   </p>
@@ -573,7 +593,7 @@ export function SpawklesDemoClient() {
 
               {/* Waiting footer */}
               {livePhase === "waiting" && (
-                <div className="space-y-3">
+                <div className="studio-demo-waiting-footer space-y-3">
                   <div className="flex items-center justify-center gap-3 py-1 text-muted text-xs font-bold">
                     <span className="flex gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-ink/30 animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -633,15 +653,28 @@ export function SpawklesDemoClient() {
               )}
             </div>
           )}
-        </div>
+        </section>
+
+        <section className="studio-demo-bottom mx-auto max-w-[1280px] px-6 pb-8 sm:px-10 lg:px-12">
+          <div className="studio-demo-bottom-card">
+            <p className="studio-eyebrow studio-eyebrow-light mb-4"><span className="studio-eyebrow-line" />Ready to go live?</p>
+            <h2 className="max-w-[680px] font-display text-4xl font-bold leading-[0.95] tracking-[-0.055em] text-paper sm:text-6xl">
+              Turn the next missed call into a booking.
+            </h2>
+            <p className="mt-5 max-w-[450px] text-[16px] leading-[1.6] text-paper/70">
+              RingPaw gives independent grooming shops a calm, reliable way to keep booking while their hands are full.
+            </p>
+            <Link href="/onboarding" className="studio-button studio-button-light mt-8 inline-flex">
+              Set up your shop <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 pb-8 pt-4 flex flex-col items-center gap-2">
-        <BrandLogo mobileWidth={100} desktopWidth={120} />
-        <p className="text-xs text-muted">
-          Powered by RingPaw
-        </p>
+      <footer className="relative z-10 mx-auto flex w-full max-w-[1280px] items-center justify-between px-6 pb-8 pt-4 text-xs text-muted sm:px-10 lg:px-12">
+        <span>© 2026 RingPaw</span>
+        <span className="font-mono tracking-[0.14em]">RINGPAW.COM</span>
       </footer>
     </div>
   );
